@@ -1,0 +1,18 @@
+[Unit]
+Description=Pump trade service with database wallet storage
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/http/trade_service
+ExecStart=/root/http/trade_service/target/release/pump-trade-service
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=30
+UMask=0077
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

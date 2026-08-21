@@ -1,24 +1,28 @@
-# Runtime secrets
-.env
-.env.*
-!.env.example
-*.key
-*.pem
+# Secrets and wallet material
+**/.env
+**/.env.*
+!**/.env.example
+**/.wallets.passphrase
+**/wallets.json
+**/wallets.json.enc
+**/*.pem
+**/*.key
 
-# Runtime data and local backups
-/data/
-/backups/
-/logs/
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal
-*.db
-*.log
+# Runtime state
+**/data/
+**/logs/
+**/backups/
+**/*.sqlite
+**/*.sqlite-shm
+**/*.sqlite-wal
+**/*.db
+**/*.log
+**/*.pid
 
-# Rust build output
-/target/
-
-# Local editor and OS files
+# Generated files
+**/target/
+**/__pycache__/
+**/*.pyc
 .DS_Store
 .idea/
 .vscode/
