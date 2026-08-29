@@ -79,11 +79,22 @@ This SDK is available in multiple languages:
 | **Python** | [sol-trade-sdk-python](https://github.com/0xfnzero/sol-trade-sdk-python) | Async/await native support |
 | **Go** | [sol-trade-sdk-golang](https://github.com/0xfnzero/sol-trade-sdk-golang) | Concurrent-safe with goroutine support |
 
+## What This SDK Is For
+
+`sol-trade-sdk` is the Rust implementation of the FnZero Solana trading SDK family. It focuses on low-latency transaction construction and submission for Solana DEX trading bots, copy-trading systems, sniper bots, arbitrage strategies, and private trading infrastructure.
+
+| Area | Coverage |
+|------|----------|
+| DEX protocols | PumpFun, PumpSwap, Bonk, Meteora DAMM v2, Raydium AMM v4, Raydium CPMM |
+| Submit lanes | Default Solana RPC plus Jito, Nextblock, ZeroSlot, Temporal, Bloxroute, FlashBlock, BlockRazor, Node1, Astralane, SpeedLanding, and other SWQoS providers |
+| Trading workflows | Buy/sell, exact input/output, copy trading, sniper trading, address lookup tables, durable nonce, middleware, shared infrastructure |
+| Hot-path design | Caller supplies recent blockhash or durable nonce; trade execution avoids RPC reads for blockhash, account, or balance data |
+
 ## 🔖 Current Release
 
-**Rust crate:** `sol-trade-sdk = "4.0.17"`
+**Rust crate:** `sol-trade-sdk = "4.0.23"`
 
-This release refreshes PumpFun native-SOL quote handling so SOL/WSOL sentinels prefer the smaller V1 hot path, keeps the default RPC submit lane active alongside SWQoS lanes, restores the fast-submit result window to 5 seconds, and aligns Raydium CPMM fixed-output swaps with the on-chain `swap_base_out` instruction. Trade execution requires a caller-supplied `recent_blockhash` or durable nonce; hot-path execution does not query RPC for blockhash, account, or balance data.
+This release updates PumpSwap for the July 2026 virtual quote reserve rollout. Pool and event schemas include `virtual_quote_reserves`, and all PumpSwap buy, sell, pricing, and dynamic-fee calculations use `quote_vault_balance + virtual_quote_reserves`.
 
 ## ✨ Features
 
@@ -93,7 +104,7 @@ This release refreshes PumpFun native-SOL quote handling so SOL/WSOL sentinels p
 4. **Raydium CPMM Trading**: Support for Raydium CPMM (Concentrated Pool Market Maker) trading operations
 5. **Raydium AMM V4 Trading**: Support for Raydium AMM V4 (Automated Market Maker) trading operations
 6. **Meteora DAMM V2 Trading**: Support for Meteora DAMM V2 (Dynamic AMM) trading operations
-7. **Multiple MEV Protection**: Support for Jito, Nextblock, ZeroSlot, Temporal, Bloxroute, FlashBlock, BlockRazor, Node1, Astralane and other services
+7. **Multiple MEV Protection**: Support for Jito, Nextblock, ZeroSlot, Temporal, Bloxroute, FlashBlock, BlockRazor, Node1, Astralane, LunarLander and other services
 8. **Concurrent Trading**: Submit through every configured SWQoS provider plus the default RPC lane; the first accepted result can return early while slower routes continue submitting
 9. **Unified Trading Interface**: Use unified trading protocol enums for trading operations
 10. **Middleware System**: Support for custom instruction middleware to modify, add, or remove instructions before transaction execution
@@ -115,14 +126,14 @@ Add the dependency to your `Cargo.toml`:
 
 ```toml
 # Add to your Cargo.toml
-sol-trade-sdk = { path = "./sol-trade-sdk", version = "4.0.17" }
+sol-trade-sdk = { path = "./sol-trade-sdk", version = "4.0.23" }
 ```
 
 ### Use crates.io
 
 ```toml
 # Add to your Cargo.toml
-sol-trade-sdk = "4.0.17"
+sol-trade-sdk = "4.0.23"
 ```
 
 ## 🛠️ Usage Examples
@@ -150,6 +161,14 @@ let swqos_configs: Vec<SwqosConfig> = vec![
     // Astralane: 4th param = AstralaneTransport — Binary (default), Plain (/iris), or Quic
     SwqosConfig::Astralane("your_astralane_api_key".to_string(), SwqosRegion::Frankfurt, None, None), // Binary HTTP /irisb
     SwqosConfig::SpeedLanding("your api_token".to_string(), SwqosRegion::Frankfurt, None),
+    // Lunar Lander: 4th param None = QUIC (default); Some(SwqosTransport::Http) = binary HTTP
+    SwqosConfig::LunarLander("your_hellomoon_api_key".to_string(), SwqosRegion::Frankfurt, None, None),
+    SwqosConfig::LunarLander(
+        "your_hellomoon_api_key".to_string(),
+        SwqosRegion::Frankfurt,
+        None,
+        Some(SwqosTransport::Http),
+    ),
 ];
 // Create TradeConfig instance
 let trade_config = TradeConfig::builder(rpc_url, swqos_configs, commitment)
@@ -256,7 +275,7 @@ Optional builder methods:
 | `.slippage_basis_points(300)` | Set slippage. `300` means 3%. |
 | `.address_lookup_table_account(alt)` | Attach an ALT to reduce transaction size. Useful for large PumpFun V2 transactions. |
 | `.wait_tx_confirmed(true)` | Return only after confirmation. Usually disabled for fastest submit paths. |
-| `.wait_for_all_submits(true)` | In fast-submit mode, wait for all SWQoS lane responses and return all signatures. |
+| `.wait_for_all_submits(true)` | Wait for all SWQoS lane responses and return submitted signatures. Recent-blockhash route variants are not mutually exclusive; durable nonce variants are. |
 | `.simulate(true)` | Build and simulate the transaction instead of sending it. |
 | `.grpc_recv_us(ts)` | Attach upstream receive timestamp for latency tracing. |
 | `.durable_nonce(nonce_info)` | Use durable nonce and clear `recent_blockhash`. Recommended when you start from `SimpleBuyParams::new(...)` / `SimpleSellParams::new(...)`. |
@@ -270,27 +289,33 @@ Optional builder methods:
 When using shred to subscribe to events, due to the nature of shreds, you cannot get complete information about transaction events.
 Please ensure that the parameters your trading logic depends on are available in shreds when using them.
 
+See the [low-latency bot integration checklist](docs/LOW_LATENCY_BOTS.md) for client warmup, blockhash/nonce handling, trade intent, event-state freshness, and bounded requoting.
+
 ### 📊 Usage Examples Summary Table
 
-| Description | Run Command | Source Code |
+The complete bilingual index and safety classification are available in [`examples/README.md`](examples/README.md).
+
+| Description | Run Command | Guide |
 |-------------|-------------|-------------|
-| Simple buy/sell parameter API | `cargo run --package simple_trading` | [examples/simple_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/simple_trading/src/main.rs) |
-| Create and configure TradingClient instance | `cargo run --package trading_client` | [examples/trading_client](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/trading_client/src/main.rs) |
-| Share infrastructure across multiple wallets | `cargo run --package shared_infrastructure` | [examples/shared_infrastructure](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/shared_infrastructure/src/main.rs) |
-| PumpFun token sniping trading | `cargo run --package pumpfun_sniper_trading` | [examples/pumpfun_sniper_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/pumpfun_sniper_trading/src/main.rs) |
-| PumpFun token copy trading | `cargo run --package pumpfun_copy_trading` | [examples/pumpfun_copy_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/pumpfun_copy_trading/src/main.rs) |
-| PumpSwap trading operations | `cargo run --package pumpswap_trading` | [examples/pumpswap_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/pumpswap_trading/src/main.rs) |
-| Raydium CPMM trading operations | `cargo run --package raydium_cpmm_trading` | [examples/raydium_cpmm_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/raydium_cpmm_trading/src/main.rs) |
-| Raydium AMM V4 trading operations | `cargo run --package raydium_amm_v4_trading` | [examples/raydium_amm_v4_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/raydium_amm_v4_trading/src/main.rs) |
-| Meteora DAMM V2 trading operations | `cargo run --package meteora_damm_v2_direct_trading` | [examples/meteora_damm_v2_direct_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/meteora_damm_v2_direct_trading/src/main.rs) |
-| Bonk token sniping trading | `cargo run --package bonk_sniper_trading` | [examples/bonk_sniper_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/bonk_sniper_trading/src/main.rs) |
-| Bonk token copy trading | `cargo run --package bonk_copy_trading` | [examples/bonk_copy_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/bonk_copy_trading/src/main.rs) |
-| Custom instruction middleware example | `cargo run --package middleware_system` | [examples/middleware_system](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/middleware_system/src/main.rs) |
-| Address lookup table example | `cargo run --package address_lookup` | [examples/address_lookup](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/address_lookup/src/main.rs) |
-| Nonce example | `cargo run --package nonce_cache` | [examples/nonce_cache](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/nonce_cache/src/main.rs) |
-| Wrap/unwrap SOL to/from WSOL example | `cargo run --package wsol_wrapper` | [examples/wsol_wrapper](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/wsol_wrapper/src/main.rs) |
-| Seed trading example | `cargo run --package seed_trading` | [examples/seed_trading](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/seed_trading/src/main.rs) |
-| Gas fee strategy example | `cargo run --package gas_fee_strategy` | [examples/gas_fee_strategy](https://github.com/0xfnzero/sol-trade-sdk/tree/main/examples/gas_fee_strategy/src/main.rs) |
+| Simple buy/sell parameter API | `cargo run --package simple_trading` | [README](examples/simple_trading/README.md) |
+| Create and configure TradingClient | `cargo run --package trading_client` | [README](examples/trading_client/README.md) |
+| Share infrastructure across wallets | `cargo run --package shared_infrastructure` | [README](examples/shared_infrastructure/README.md) |
+| PumpFun sniper | `cargo run --package pumpfun_sniper_trading` | [README](examples/pumpfun_sniper_trading/README.md) |
+| PumpFun copy trading | `cargo run --package pumpfun_copy_trading` | [README](examples/pumpfun_copy_trading/README.md) |
+| PumpSwap low-latency stream | `cargo run --package pumpswap_trading` | [README](examples/pumpswap_trading/README.md) |
+| PumpSwap direct RPC flow | `cargo run --package pumpswap_direct_trading` | [README](examples/pumpswap_direct_trading/README.md) |
+| Raydium CPMM | `cargo run --package raydium_cpmm_trading` | [README](examples/raydium_cpmm_trading/README.md) |
+| Raydium AMM V4 | `cargo run --package raydium_amm_v4_trading` | [README](examples/raydium_amm_v4_trading/README.md) |
+| Meteora DAMM V2 | `cargo run --package meteora_damm_v2_direct_trading` | [README](examples/meteora_damm_v2_direct_trading/README.md) |
+| Bonk sniper | `cargo run --package bonk_sniper_trading` | [README](examples/bonk_sniper_trading/README.md) |
+| Bonk copy trading | `cargo run --package bonk_copy_trading` | [README](examples/bonk_copy_trading/README.md) |
+| Instruction middleware | `cargo run --package middleware_system` | [README](examples/middleware_system/README.md) |
+| Address lookup tables | `cargo run --package address_lookup` | [README](examples/address_lookup/README.md) |
+| Durable nonce | `cargo run --package nonce_cache` | [README](examples/nonce_cache/README.md) |
+| Wrap/unwrap SOL and WSOL | `cargo run --package wsol_wrapper` | [README](examples/wsol_wrapper/README.md) |
+| Seed optimization | `cargo run --package seed_trading` | [README](examples/seed_trading/README.md) |
+| Gas fee strategy | `cargo run --package gas_fee_strategy` | [README](examples/gas_fee_strategy/README.md) |
+| Multi-DEX CLI template | `cargo run --package cli_trading` | [README](examples/cli_trading/README.md) |
 
 ### ⚙️ SWQoS Service Configuration
 
@@ -481,6 +506,14 @@ For **PumpSwap** (Pump AMM), `coin_creator_vault_ata` and `coin_creator_vault_au
 - **sol-parser-sdk**: Instruction parser sets them from accounts 17 and 18; the account filler also fills them when the event comes from logs. Use `PumpSwapParams::from_trade(..., e.coin_creator_vault_ata, e.coin_creator_vault_authority, ...)` with the buy/sell event `e`.
 - **solana-streamer**: Instruction parser sets them from `accounts.get(17)` and `accounts.get(18)`. Use the same `from_trade` with the event's `coin_creator_vault_ata` and `coin_creator_vault_authority`.
 
+#### PumpSwap: virtual quote reserves
+
+PumpSwap quotes must use `effective_quote_reserves = pool_quote_token_account.amount + virtual_quote_reserves`. The Pool account and BuyEvent/SellEvent encode `virtual_quote_reserves` as `i128`.
+
+- RPC constructors such as `PumpSwapParams::from_pool_address_by_rpc` read and apply the Pool field automatically.
+- Event fast paths must pass the event's raw `pool_quote_token_reserves` and `virtual_quote_reserves` separately to `PumpSwapParams::from_trade(...)` or `from_trade_with_fee_basis_points(...)`. Do not add them before calling the constructor.
+- The SDK uses effective reserves for buys, sells, prices, and dynamic fee-tier selection. Invalid signed sums return an error instead of wrapping.
+
 ## 🛡️ MEV Protection Services
 
 You can apply for a key through the official website: [Community Website](https://fnzero.dev/swqos)
@@ -491,6 +524,8 @@ You can apply for a key through the official website: [Community Website](https:
 - **BlockRazor**: High-speed transaction execution with API key authentication
 - **Astralane**: Blockchain network acceleration (Binary/Plain HTTP and QUIC)
 - **SpeedLanding**: High-speed transaction execution with API key authentication
+- **Node1**: High-speed transaction execution with API key authentication
+- **LunarLander**: HelloMoon transaction landing service (minimum tip: 0.001 SOL)
 
 ## 📁 Project Structure
 

@@ -12,7 +12,7 @@
 [package]
 edition = "2021"
 name = "sol-trade-sdk"
-version = "4.0.20"
+version = "5.0.0"
 authors = [
     "William <byteblock6@gmail.com>",
     "sgxiang <sgxiang@gmail.com>",
@@ -94,6 +94,10 @@ version = "0.8"
 [dependencies.dashmap]
 version = "6.1.0"
 
+[dependencies.five8_core]
+version = "0.1.2"
+features = ["std"]
+
 [dependencies.fnv]
 version = "1.0.7"
 
@@ -114,6 +118,9 @@ version = "1.7.2"
 
 [dependencies.libc]
 version = "0.2"
+
+[dependencies.lunar-lander-quic-client]
+version = "0.4"
 
 [dependencies.memmap2]
 version = "0.9"

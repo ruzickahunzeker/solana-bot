@@ -561,7 +561,7 @@ impl SdkTradeClient {
             slippage_basis_points: Some(trade.slippage_bps),
             recent_blockhash: Some(trade.recent_blockhash),
             extension_params: params,
-            address_lookup_table_account: None,
+            address_lookup_table_accounts: Vec::new(),
             wait_tx_confirmed: should_wait_lane_confirmation(
                 lane.swqos_type,
                 trade.wait_tx_confirmed,
@@ -671,7 +671,7 @@ impl SdkTradeClient {
             recent_blockhash: Some(trade.recent_blockhash),
             with_tip: true,
             extension_params: params,
-            address_lookup_table_account: None,
+            address_lookup_table_accounts: Vec::new(),
             wait_tx_confirmed: should_wait_lane_confirmation(
                 lane.swqos_type,
                 trade.wait_tx_confirmed,
