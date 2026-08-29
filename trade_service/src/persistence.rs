@@ -478,7 +478,10 @@ mod tests {
     #[test]
     fn meteora_dbc_pool_name_round_trips() {
         assert_eq!(pool_name(Pool::MeteoraDbc), "meteora-dbc");
-        assert_eq!(parse_pool("meteora-dbc".to_string()).unwrap(), Pool::MeteoraDbc);
+        assert_eq!(
+            parse_pool("meteora-dbc".to_string()).unwrap(),
+            Pool::MeteoraDbc
+        );
     }
 
     fn request(idempotency_key: &str, amount_lamports: u64) -> TradeRequest {
