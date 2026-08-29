@@ -157,7 +157,7 @@ fn validate_pool_id_rule(
             Ok(())
         }
         Pool::PumpAmm => Ok(()),
-        Pool::MeteoraDammV2 | Pool::RaydiumAmmV4 | Pool::RaydiumCpmm => {
+        Pool::MeteoraDammV2 | Pool::MeteoraDbc | Pool::RaydiumAmmV4 | Pool::RaydiumCpmm => {
             if pool_id.is_none() {
                 bail!("pool_id is required for {:?}", pool);
             }
@@ -278,6 +278,7 @@ fn validate_quote_mint_for_pool(pool: Pool, quote_mint: &Pubkey) -> anyhow::Resu
         Pool::Pump
         | Pool::PumpAmm
         | Pool::MeteoraDammV2
+        | Pool::MeteoraDbc
         | Pool::RaydiumAmmV4
         | Pool::RaydiumCpmm => {
             if !is_wsol_quote(quote_mint) && !is_usdc_quote(quote_mint) {

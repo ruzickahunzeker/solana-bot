@@ -12,6 +12,7 @@ pub enum Pool {
     PumpAmm,
     Bonk,
     MeteoraDammV2,
+    MeteoraDbc,
     RaydiumAmmV4,
     RaydiumCpmm,
 }

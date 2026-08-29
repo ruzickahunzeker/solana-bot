@@ -953,9 +953,8 @@ fn percent_to_u64(value: f64) -> Result<u64> {
 fn normalize_pool(value: Option<&str>) -> Result<String> {
     let value = value.unwrap_or("pump").trim().to_ascii_lowercase();
     match value.as_str() {
-        "pump" | "pump-amm" | "bonk" | "meteora-damm-v2" | "raydium-amm-v4" | "raydium-cpmm" => {
-            Ok(value)
-        }
+        "pump" | "pump-amm" | "bonk" | "meteora-damm-v2" | "meteora-dbc" | "raydium-amm-v4"
+        | "raydium-cpmm" => Ok(value),
         _ => anyhow::bail!("unsupported trade_service pool {value}"),
     }
 }
@@ -1030,6 +1029,15 @@ mod tests {
         assert_eq!(
             trade_service_pool_id("pump-amm", Some("pool")),
             Some("pool".to_string())
+        );
+    }
+
+    #[test]
+    fn meteora_dbc_is_forwarded_with_pool_id() {
+        assert_eq!(normalize_pool(Some("meteora-dbc")).unwrap(), "meteora-dbc");
+        assert_eq!(
+            trade_service_pool_id("meteora-dbc", Some("dbc-pool")),
+            Some("dbc-pool".to_string())
         );
     }
 

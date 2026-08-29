@@ -963,6 +963,7 @@ SDK 第一版池地址规则：
 - `pump-amm`：`pool_id` 可选；有池地址时建议传。
 - `bonk`：`pool_id` 必须为 `null`，服务用 `mint` 补参数。
 - `meteora-damm-v2`：`pool_id` 必填。
+- `meteora-dbc`：Meteora Dynamic Bonding Curve，`pool_id` 必填；当前支持未迁移池的 `swap2` ExactIn，报价币支持 WSOL、USDC。
 - `raydium-amm-v4`：`pool_id` 必填，表示 AMM address。
 - `raydium-cpmm`：`pool_id` 必填。
 
@@ -1098,7 +1099,7 @@ curl -X POST http://127.0.0.1:18787/v1/trades \
 - 修改类接口必须带 Bearer token。
 - 不允许请求体传私钥。
 - `execution_method` 支持 `sdk` 和 `pumpapi`，默认 `sdk`。
-- `pool` 支持 `pump`、`pump-amm`、`bonk`、`meteora-damm-v2`、`raydium-amm-v4`、`raydium-cpmm`。
+- `pool` 支持 `pump`、`pump-amm`、`bonk`、`meteora-damm-v2`、`meteora-dbc`、`raydium-amm-v4`、`raydium-cpmm`。
 - Meteora/Raydium 第一版必须传 `pool_id`，不自动按 mint 选池。
 - `quote_mint` 支持 WSOL/USDC；`bonk` 额外支持 USD1，不支持 USDC。
 - WSOL 买入使用 `amount_sol`、`amount_lamports` 或 `amount_quote`；USDC/USD1 买入使用 `amount_quote`、`amount_usdc` 或 `amount_quote_units`。

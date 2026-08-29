@@ -19,6 +19,7 @@ use crate::swqos::TradeType;
 use crate::trading::core::params::BonkParams;
 use crate::trading::core::params::DexParamEnum;
 use crate::trading::core::params::MeteoraDammV2Params;
+use crate::trading::core::params::MeteoraDbcParams;
 use crate::trading::core::params::PumpFunParams;
 use crate::trading::core::params::PumpSwapParams;
 use crate::trading::core::params::RaydiumAmmV4Params;
@@ -47,6 +48,7 @@ fn validate_protocol_params(dex_type: DexType, params: &DexParamEnum) -> bool {
         DexType::RaydiumCpmm => params.as_any().downcast_ref::<RaydiumCpmmParams>().is_some(),
         DexType::RaydiumAmmV4 => params.as_any().downcast_ref::<RaydiumAmmV4Params>().is_some(),
         DexType::MeteoraDammV2 => params.as_any().downcast_ref::<MeteoraDammV2Params>().is_some(),
+        DexType::MeteoraDbc => params.as_any().downcast_ref::<MeteoraDbcParams>().is_some(),
     }
 }
 
@@ -61,7 +63,7 @@ fn normalize_swqos_configs(rpc_url: &str, configs: &[SwqosConfig]) -> Vec<SwqosC
 
 /// 按 mint 查找池地址（通用入口，根据 DEX 类型分发，仅 PumpSwap 等已实现的类型会走优化路径）。
 ///
-/// * `dex_type`：PumpSwap 时先走 PDA 再回退 getProgramAccounts，其他类型返回未实现错误。
+/// * `dex_type`：PumpSwap 与 Meteora DBC 使用各自的受限账户查询，其他类型返回未实现错误。
 pub async fn find_pool_by_mint(
     rpc: &SolanaRpcClient,
     mint: &Pubkey,
@@ -69,6 +71,11 @@ pub async fn find_pool_by_mint(
 ) -> Result<Pubkey, anyhow::Error> {
     match dex_type {
         DexType::PumpSwap => crate::instruction::utils::pumpswap::find_pool(rpc, mint).await,
+        DexType::MeteoraDbc => {
+            crate::instruction::utils::meteora_dbc::find_pool_by_base_mint(rpc, mint)
+                .await
+                .map(|(pool, _)| pool)
+        }
         _ => Err(anyhow::anyhow!("find_pool_by_mint not implemented for {:?}", dex_type)),
     }
 }

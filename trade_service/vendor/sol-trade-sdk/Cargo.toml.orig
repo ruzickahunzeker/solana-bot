@@ -101,6 +101,9 @@ num-derive = "0.4.2"
 num-traits = "0.2.19"
 hex = "0.4.3"
 bytemuck = { version = "1.4.0" }
+dynamic-bonding-curve = { git = "https://github.com/MeteoraAg/dynamic-bonding-curve.git", rev = "3b540e94b5b20ba37733de6e25f58522a0cd8961", features = ["no-entrypoint"] }
+dynamic-bonding-curve-sdk = { git = "https://github.com/MeteoraAg/dynamic-bonding-curve.git", rev = "3b540e94b5b20ba37733de6e25f58522a0cd8961" }
+spl-tlv-account-resolution = "=0.11.1"
 arrayref = "0.3.6"
 borsh-derive = "1.5.5"
 indicatif = "0.18.0"

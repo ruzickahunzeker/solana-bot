@@ -522,6 +522,7 @@ fn pool_label(pool: &str) -> &str {
         "pump-amm" => "PumpSwap",
         "bonk" => "Bonk",
         "meteora-damm-v2" => "Meteora",
+        "meteora-dbc" => "Meteora DBC",
         "raydium-amm-v4" => "Raydium AMM V4",
         "raydium-cpmm" => "Raydium CPMM",
         _ => pool,

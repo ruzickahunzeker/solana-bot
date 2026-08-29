@@ -1,5 +1,6 @@
 pub mod bonk;
 pub mod meteora_damm_v2;
+pub mod meteora_dbc;
 pub mod pumpfun;
 pub(crate) mod pumpfun_ix_data;
 pub mod pumpswap;

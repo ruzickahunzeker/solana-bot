@@ -391,6 +391,7 @@ fn pool_name(v: Pool) -> &'static str {
         Pool::PumpAmm => "pump-amm",
         Pool::Bonk => "bonk",
         Pool::MeteoraDammV2 => "meteora-damm-v2",
+        Pool::MeteoraDbc => "meteora-dbc",
         Pool::RaydiumAmmV4 => "raydium-amm-v4",
         Pool::RaydiumCpmm => "raydium-cpmm",
     }
@@ -440,6 +441,7 @@ fn parse_pool(v: String) -> anyhow::Result<Pool> {
         "pump-amm" => Ok(Pool::PumpAmm),
         "bonk" => Ok(Pool::Bonk),
         "meteora-damm-v2" => Ok(Pool::MeteoraDammV2),
+        "meteora-dbc" => Ok(Pool::MeteoraDbc),
         "raydium-amm-v4" => Ok(Pool::RaydiumAmmV4),
         "raydium-cpmm" => Ok(Pool::RaydiumCpmm),
         _ => bail!("invalid pool {v}"),
@@ -472,6 +474,12 @@ fn parse_status(v: String) -> anyhow::Result<TradeStatus> {
 mod tests {
     use super::*;
     use solana_sdk::pubkey::Pubkey;
+
+    #[test]
+    fn meteora_dbc_pool_name_round_trips() {
+        assert_eq!(pool_name(Pool::MeteoraDbc), "meteora-dbc");
+        assert_eq!(parse_pool("meteora-dbc".to_string()).unwrap(), Pool::MeteoraDbc);
+    }
 
     fn request(idempotency_key: &str, amount_lamports: u64) -> TradeRequest {
         TradeRequest {

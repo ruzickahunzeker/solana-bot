@@ -474,6 +474,7 @@ amount_quote_units
 | `pump-amm` | 可选，建议传 | WSOL、USDC | PumpSwap |
 | `bonk` | 必须省略 | WSOL、USD1 | Bonk/LaunchLab 路径 |
 | `meteora-damm-v2` | 必填 | WSOL、USDC | 必须传真实池地址 |
+| `meteora-dbc` | 必填 | WSOL、USDC | 未迁移的 Dynamic Bonding Curve 池；使用 `swap2` ExactIn |
 | `raydium-amm-v4` | 必填 | WSOL、USDC | 必须传真实池地址 |
 | `raydium-cpmm` | 必填 | WSOL、USDC | 必须传真实池地址 |
 

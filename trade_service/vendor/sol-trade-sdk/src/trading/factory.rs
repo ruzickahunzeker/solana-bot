@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::instruction::{
     bonk::BonkInstructionBuilder, meteora_damm_v2::MeteoraDammV2InstructionBuilder,
+    meteora_dbc::MeteoraDbcInstructionBuilder,
     pumpfun::PumpFunInstructionBuilder, pumpswap::PumpSwapInstructionBuilder,
     raydium_amm_v4::RaydiumAmmV4InstructionBuilder, raydium_cpmm::RaydiumCpmmInstructionBuilder,
 };
@@ -17,6 +18,7 @@ pub enum DexType {
     RaydiumCpmm,
     RaydiumAmmV4,
     MeteoraDammV2,
+    MeteoraDbc,
 }
 
 /// 交易工厂 - 用于创建不同协议的交易执行器
@@ -32,6 +34,7 @@ impl TradeFactory {
             DexType::RaydiumCpmm => Self::raydium_cpmm_executor(),
             DexType::RaydiumAmmV4 => Self::raydium_amm_v4_executor(),
             DexType::MeteoraDammV2 => Self::meteora_damm_v2_executor(),
+            DexType::MeteoraDbc => Self::meteora_dbc_executor(),
         }
     }
 
@@ -92,6 +95,16 @@ impl TradeFactory {
             std::sync::LazyLock::new(|| {
                 let instruction_builder = Arc::new(MeteoraDammV2InstructionBuilder);
                 Arc::new(GenericTradeExecutor::new(instruction_builder, "MeteoraDammV2"))
+            });
+        INSTANCE.clone()
+    }
+
+    #[inline]
+    fn meteora_dbc_executor() -> Arc<dyn TradeExecutor> {
+        static INSTANCE: std::sync::LazyLock<Arc<dyn TradeExecutor>> =
+            std::sync::LazyLock::new(|| {
+                let instruction_builder = Arc::new(MeteoraDbcInstructionBuilder);
+                Arc::new(GenericTradeExecutor::new(instruction_builder, "MeteoraDbc"))
             });
         INSTANCE.clone()
     }

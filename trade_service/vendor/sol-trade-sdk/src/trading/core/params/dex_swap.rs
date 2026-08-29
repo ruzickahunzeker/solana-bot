@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use super::bonk::BonkParams;
 use super::meteora_damm_v2::MeteoraDammV2Params;
+use super::meteora_dbc::MeteoraDbcParams;
 use super::pumpfun::PumpFunParams;
 use super::pumpswap::PumpSwapParams;
 use super::raydium_amm_v4::RaydiumAmmV4Params;
@@ -32,6 +33,7 @@ pub enum DexParamEnum {
     RaydiumCpmm(RaydiumCpmmParams),
     RaydiumAmmV4(RaydiumAmmV4Params),
     MeteoraDammV2(MeteoraDammV2Params),
+    MeteoraDbc(MeteoraDbcParams),
 }
 
 impl DexParamEnum {
@@ -45,6 +47,7 @@ impl DexParamEnum {
             DexParamEnum::RaydiumCpmm(p) => p,
             DexParamEnum::RaydiumAmmV4(p) => p,
             DexParamEnum::MeteoraDammV2(p) => p,
+            DexParamEnum::MeteoraDbc(p) => p,
         }
     }
 }

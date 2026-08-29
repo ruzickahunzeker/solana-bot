@@ -138,7 +138,13 @@ fn route_from_event(event: &PumpApiEvent) -> Option<ResolvedPoolRoute> {
 fn supported_pool(pool: &str) -> bool {
     matches!(
         pool,
-        "pump" | "pump-amm" | "bonk" | "meteora-damm-v2" | "raydium-amm-v4" | "raydium-cpmm"
+        "pump"
+            | "pump-amm"
+            | "bonk"
+            | "meteora-damm-v2"
+            | "meteora-dbc"
+            | "raydium-amm-v4"
+            | "raydium-cpmm"
     )
 }
 

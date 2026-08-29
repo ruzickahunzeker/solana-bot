@@ -617,7 +617,13 @@ fn fast_route_block_reason(
     let pool = event.pool.as_deref().unwrap_or("");
     if !matches!(
         pool,
-        "pump" | "pump-amm" | "bonk" | "meteora-damm-v2" | "raydium-amm-v4" | "raydium-cpmm"
+        "pump"
+            | "pump-amm"
+            | "bonk"
+            | "meteora-damm-v2"
+            | "meteora-dbc"
+            | "raydium-amm-v4"
+            | "raydium-cpmm"
     ) {
         return Some(format!("unsupported trade_service pool {pool}"));
     }

@@ -43,6 +43,10 @@ tcp://127.0.0.1:8939
 
 可以同时启动多个订阅客户端。
 
+归一化消息会把明确的 `meteora-dbc`、`dynamic-bonding-curve`、`dbc` 标记映射为
+`meteora-dbc`。泛称 `meteora` 仍映射为 `meteora-damm-v2`，避免把 DAMM 与 DBC
+误认为同一种交易协议。
+
 ## 监听指定钱包买入同一 mint
 
 新增 `wallet_watch_recorder.py`，用于订阅本 bridge 广播的 PumpAPI raw event，并保存目标钱包买入记录。

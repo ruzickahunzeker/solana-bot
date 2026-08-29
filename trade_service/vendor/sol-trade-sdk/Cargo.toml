@@ -76,6 +76,18 @@ version = "0.5.1"
 [dependencies.bytemuck]
 version = "1.4.0"
 
+[dependencies.dynamic-bonding-curve]
+git = "https://github.com/MeteoraAg/dynamic-bonding-curve.git"
+rev = "3b540e94b5b20ba37733de6e25f58522a0cd8961"
+features = ["no-entrypoint"]
+
+[dependencies.dynamic-bonding-curve-sdk]
+git = "https://github.com/MeteoraAg/dynamic-bonding-curve.git"
+rev = "3b540e94b5b20ba37733de6e25f58522a0cd8961"
+
+[dependencies.spl-tlv-account-resolution]
+version = "=0.11.1"
+
 [dependencies.chrono]
 version = "0.4.39"
 

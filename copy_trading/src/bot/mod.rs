@@ -3376,6 +3376,7 @@ fn pool_display_name(pool: &str) -> &str {
         "pump-amm" => "PumpSwap",
         "bonk" => "Bonk",
         "meteora-damm-v2" => "Meteora",
+        "meteora-dbc" => "Meteora DBC",
         "raydium-amm-v4" => "Raydium AMM V4",
         "raydium-cpmm" => "Raydium CPMM",
         _ => pool,
@@ -3500,7 +3501,7 @@ fn strategy_input_prompt(field: &str) -> &'static str {
         "max_slippage_bps" => "发送滑点百分比，例如 15 表示 15%（1500 bps）",
         "max_signal_delay_ms" => "发送最大延迟毫秒，0 表示不限，例如 1000",
         "allowed_pools" => {
-            "发送允许 Pool，逗号分隔；发送 all 表示全部。例如 pump,pump-amm,meteora-damm-v2"
+            "发送允许 Pool，逗号分隔；发送 all 表示全部。例如 pump,pump-amm,meteora-dbc"
         }
         _ => "发送新的数值",
     }

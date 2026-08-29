@@ -7,7 +7,7 @@ use sol_trade_sdk::swqos::{
     AstralaneTransport, SwqosConfig, SwqosRegion, SwqosTransport, SwqosType, TradeType,
 };
 use sol_trade_sdk::trading::core::params::{
-    BonkParams, DexParamEnum, MeteoraDammV2Params, PumpFunParams, PumpSwapParams,
+    BonkParams, DexParamEnum, MeteoraDammV2Params, MeteoraDbcParams, PumpFunParams, PumpSwapParams,
     RaydiumAmmV4Params, RaydiumCpmmParams,
 };
 use sol_trade_sdk::trading::factory::DexType;
@@ -427,6 +427,15 @@ impl SdkTradeClient {
                     )?;
                     Ok(())
                 }
+                Pool::MeteoraDbc => {
+                    let pool_id = pool_id.context("pool_id is required for meteora-dbc")?;
+                    let params =
+                        MeteoraDbcParams::from_pool_address_by_rpc(lane.client.get_rpc(), pool_id)
+                            .await?;
+                    ensure_pool_contains_mint("meteora-dbc", mint, &[params.base_mint])?;
+                    ensure_pool_contains_quote("meteora-dbc", quote_mint, &[params.quote_mint])?;
+                    Ok(())
+                }
                 Pool::RaydiumAmmV4 => {
                     let pool_id = pool_id.context("pool_id is required for raydium-amm-v4")?;
                     let params = RaydiumAmmV4Params::from_amm_address_by_rpc(
@@ -746,6 +755,14 @@ impl SdkTradeClient {
                 )?;
                 DexParamEnum::MeteoraDammV2(params)
             }
+            Pool::MeteoraDbc => {
+                let pool_id = pool_id.context("pool_id is required for meteora-dbc")?;
+                let params =
+                    MeteoraDbcParams::from_pool_address_by_rpc(client.get_rpc(), pool_id).await?;
+                ensure_pool_contains_mint("meteora-dbc", mint, &[params.base_mint])?;
+                ensure_pool_contains_quote("meteora-dbc", quote_mint, &[params.quote_mint])?;
+                DexParamEnum::MeteoraDbc(params)
+            }
             Pool::RaydiumAmmV4 => {
                 let pool_id = pool_id.context("pool_id is required for raydium-amm-v4")?;
                 let params =
@@ -948,7 +965,10 @@ impl SdkTradeClient {
         for (lane_index, lane) in default_lanes.iter().enumerate() {
             let rpc = lane.client.get_rpc();
             let lane_result = tokio::time::timeout(Duration::from_secs(5), async {
-                let pump_result = PumpFunParams::from_mint_by_rpc(rpc, mint).await;
+                let (pump_result, dbc_result) = tokio::join!(
+                    PumpFunParams::from_mint_by_rpc(rpc, mint),
+                    MeteoraDbcParams::from_base_mint_by_rpc(rpc, mint),
+                );
                 if let Ok(params) = &pump_result {
                     if !params.bonding_curve.complete {
                         return Ok(ResolvePoolResponse {
@@ -959,6 +979,18 @@ impl SdkTradeClient {
                         });
                     }
                 }
+                if let Ok(params) = &dbc_result {
+                    return Ok(ResolvePoolResponse {
+                        mint: mint.to_string(),
+                        pool: Pool::MeteoraDbc,
+                        pool_id: Some(params.pool.to_string()),
+                        quote_mint: params.quote_mint.to_string(),
+                    });
+                }
+                let dbc_error = match dbc_result {
+                    Err(error) => error,
+                    Ok(_) => unreachable!("successful DBC resolution returned above"),
+                };
 
                 let pump_amm_result = match find_pool_by_mint(rpc, mint, DexType::PumpSwap).await {
                     Ok(pool_address) => {
@@ -975,10 +1007,10 @@ impl SdkTradeClient {
                     }),
                     Err(pump_amm_error) => match pump_result {
                         Ok(_) => Err(format!(
-                            "pump bonding curve is complete but PumpSwap pool is unavailable: {pump_amm_error}"
+                            "pump bonding curve is complete but migrated pools are unavailable: pump-amm={pump_amm_error}; meteora-dbc={dbc_error}"
                         )),
                         Err(pump_error) => Err(format!(
-                            "no supported pool found for mint; pump={pump_error}; pump-amm={pump_amm_error}"
+                            "no supported pool found for mint; pump={pump_error}; pump-amm={pump_amm_error}; meteora-dbc={dbc_error}"
                         )),
                     },
                 }
@@ -1192,6 +1224,7 @@ fn trade_token_type_for_buy(pool: Pool, quote_mint: &Pubkey) -> anyhow::Result<T
             Pool::PumpAmm
             | Pool::Bonk
             | Pool::MeteoraDammV2
+            | Pool::MeteoraDbc
             | Pool::RaydiumAmmV4
             | Pool::RaydiumCpmm => TradeTokenType::WSOL,
         });
@@ -1437,6 +1470,7 @@ fn dex_type(pool: Pool) -> DexType {
         Pool::PumpAmm => DexType::PumpSwap,
         Pool::Bonk => DexType::Bonk,
         Pool::MeteoraDammV2 => DexType::MeteoraDammV2,
+        Pool::MeteoraDbc => DexType::MeteoraDbc,
         Pool::RaydiumAmmV4 => DexType::RaydiumAmmV4,
         Pool::RaydiumCpmm => DexType::RaydiumCpmm,
     }

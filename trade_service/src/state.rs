@@ -120,6 +120,7 @@ pub fn cache_key(pool: Pool, mint: &str, pool_id: Option<&str>) -> String {
         },
         Pool::Bonk => format!("bonk:{mint}"),
         Pool::MeteoraDammV2 => format!("meteora-damm-v2:{}", pool_id.unwrap_or(mint)),
+        Pool::MeteoraDbc => format!("meteora-dbc:{}", pool_id.unwrap_or(mint)),
         Pool::RaydiumAmmV4 => format!("raydium-amm-v4:{}", pool_id.unwrap_or(mint)),
         Pool::RaydiumCpmm => format!("raydium-cpmm:{}", pool_id.unwrap_or(mint)),
     }
