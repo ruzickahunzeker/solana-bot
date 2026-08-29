@@ -16,7 +16,7 @@ for the source revision.
 
 ## Resolution flow
 
-`POST /internal/pools/resolve` queries Pump and DBC concurrently. DBC lookup is
+`POST /v1/pools/resolve` queries Pump and DBC concurrently. DBC lookup is
 restricted by the current VirtualPool account size, discriminator, and base mint
 offset. A successful result includes the real pool address and quote mint:
 
