@@ -118,8 +118,14 @@ impl InstructionBuilder for MeteoraDammV2InstructionBuilder {
         }
 
         // Create buy instruction
-        let mut account_metas =
-            Vec::with_capacity(14 + usize::from(protocol_params.include_rate_limiter_sysvar));
+        //
+        // cp-amm swap2 (pinocchio path) always expects a fixed referral slot.
+        // When there is no referral, Anchor/optional encoding uses the program
+        // id as the None placeholder; omitting it shifts event_authority and
+        // triggers ConstraintSeeds (2006).
+        let mut account_metas = Vec::with_capacity(
+            14 + usize::from(protocol_params.include_rate_limiter_sysvar),
+        );
         account_metas.extend([
             accounts::AUTHORITY_META,                      // Pool Authority (readonly)
             AccountMeta::new(protocol_params.pool, false), // Pool
@@ -129,14 +135,13 @@ impl InstructionBuilder for MeteoraDammV2InstructionBuilder {
             AccountMeta::new(protocol_params.token_b_vault, false), // Token B Vault
             AccountMeta::new_readonly(protocol_params.token_a_mint, false), // Token A Mint (readonly)
             AccountMeta::new_readonly(protocol_params.token_b_mint, false), // Token B Mint (readonly)
-            AccountMeta::new(params.payer.pubkey(), true), // User Transfer Authority
+            AccountMeta::new_readonly(params.payer.pubkey(), true), // User Transfer Authority (IDL: signer only)
             AccountMeta::new_readonly(protocol_params.token_a_program, false), // Token Program (readonly)
             AccountMeta::new_readonly(protocol_params.token_b_program, false), // Token Program (readonly)
-        ]);
-        account_metas.push(optional_referral_token_account_meta(
-            protocol_params.referral_token_account,
-        ));
-        account_metas.extend([
+            match protocol_params.referral_token_account {
+                Some(referral) => AccountMeta::new(referral, false),
+                None => accounts::METEORA_DAMM_V2_META,
+            },
             AccountMeta::new_readonly(get_event_authority_pda(), false), // Event Authority (readonly)
             accounts::METEORA_DAMM_V2_META,                              // Program (readonly)
         ]);
@@ -245,9 +250,10 @@ impl InstructionBuilder for MeteoraDammV2InstructionBuilder {
             );
         }
 
-        // Create buy instruction
-        let mut account_metas =
-            Vec::with_capacity(14 + usize::from(protocol_params.include_rate_limiter_sysvar));
+        // Same fixed referral slot rule as buy (see comment there).
+        let mut account_metas = Vec::with_capacity(
+            14 + usize::from(protocol_params.include_rate_limiter_sysvar),
+        );
         account_metas.extend([
             accounts::AUTHORITY_META,                      // Pool Authority (readonly)
             AccountMeta::new(protocol_params.pool, false), // Pool
@@ -257,14 +263,13 @@ impl InstructionBuilder for MeteoraDammV2InstructionBuilder {
             AccountMeta::new(protocol_params.token_b_vault, false), // Token B Vault
             AccountMeta::new_readonly(protocol_params.token_a_mint, false), // Token A Mint (readonly)
             AccountMeta::new_readonly(protocol_params.token_b_mint, false), // Token B Mint (readonly)
-            AccountMeta::new(params.payer.pubkey(), true), // User Transfer Authority
+            AccountMeta::new_readonly(params.payer.pubkey(), true), // User Transfer Authority (IDL: signer only)
             AccountMeta::new_readonly(protocol_params.token_a_program, false), // Token Program (readonly)
             AccountMeta::new_readonly(protocol_params.token_b_program, false), // Token Program (readonly)
-        ]);
-        account_metas.push(optional_referral_token_account_meta(
-            protocol_params.referral_token_account,
-        ));
-        account_metas.extend([
+            match protocol_params.referral_token_account {
+                Some(referral) => AccountMeta::new(referral, false),
+                None => accounts::METEORA_DAMM_V2_META,
+            },
             AccountMeta::new_readonly(get_event_authority_pda(), false), // Event Authority (readonly)
             accounts::METEORA_DAMM_V2_META,                              // Program (readonly)
         ]);
@@ -298,15 +303,6 @@ impl InstructionBuilder for MeteoraDammV2InstructionBuilder {
         }
 
         Ok(instructions)
-    }
-}
-
-fn optional_referral_token_account_meta(
-    referral_token_account: Option<solana_sdk::pubkey::Pubkey>,
-) -> AccountMeta {
-    match referral_token_account {
-        Some(referral_token_account) => AccountMeta::new(referral_token_account, false),
-        None => accounts::METEORA_DAMM_V2_META,
     }
 }
 
@@ -375,13 +371,14 @@ mod tests {
             max_sender_concurrency: 0,
             effective_core_ids: Arc::new(Vec::new()),
             check_min_tip: false,
+            transaction_version: crate::common::TradeTransactionVersion::V0,
             grpc_recv_us: None,
             use_exact_sol_amount: None,
         }
     }
 
     #[tokio::test]
-    async fn meteora_uses_program_id_placeholder_for_missing_referral_account() {
+    async fn meteora_uses_program_id_placeholder_when_referral_absent() {
         let instructions = MeteoraDammV2InstructionBuilder
             .build_buy_instructions(&swap_params(meteora_params(None)))
             .await
@@ -469,5 +466,44 @@ mod tests {
 
         assert_eq!(ix.accounts[2].pubkey, expected_wsol_ata);
         assert_ne!(ix.accounts[2].pubkey, wrong_sol_ata);
+    }
+
+    #[tokio::test]
+    async fn meteora_buy_create_output_account_uses_pool_output_token_program() {
+        let protocol_params = MeteoraDammV2Params::new(
+            pk(1),
+            pk(2),
+            pk(3),
+            crate::constants::WSOL_TOKEN_ACCOUNT,
+            pk(4),
+            crate::constants::TOKEN_PROGRAM,
+            crate::constants::TOKEN_PROGRAM_2022,
+        );
+        let mut params = swap_params(protocol_params);
+        params.create_output_mint_ata = true;
+
+        let instructions =
+            MeteoraDammV2InstructionBuilder.build_buy_instructions(&params).await.unwrap();
+        let expected_output_ata =
+            crate::common::fast_fn::get_associated_token_address_with_program_id_fast_use_seed(
+                &params.payer.pubkey(),
+                &pk(4),
+                &crate::constants::TOKEN_PROGRAM_2022,
+                params.open_seed_optimize,
+            );
+        let wrong_output_ata =
+            crate::common::fast_fn::get_associated_token_address_with_program_id_fast_use_seed(
+                &params.payer.pubkey(),
+                &pk(4),
+                &crate::constants::TOKEN_PROGRAM,
+                params.open_seed_optimize,
+            );
+        let swap_ix = instructions.last().unwrap();
+
+        assert_eq!(instructions[0].program_id, crate::constants::SYSTEM_PROGRAM);
+        assert_eq!(instructions[1].program_id, crate::constants::TOKEN_PROGRAM_2022);
+        assert_eq!(swap_ix.accounts[3].pubkey, expected_output_ata);
+        assert_ne!(swap_ix.accounts[3].pubkey, wrong_output_ata);
+        assert_eq!(swap_ix.accounts[10].pubkey, crate::constants::TOKEN_PROGRAM_2022);
     }
 }

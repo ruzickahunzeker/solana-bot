@@ -6,8 +6,8 @@ After=network-online.target trade-service-db.service
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/http/copy_trading
-ExecStart=/root/http/copy_trading/target/release/copy-trading
+WorkingDirectory=/root/http/sol-bot/copy_trading
+ExecStart=/root/http/sol-bot/copy_trading/target/release/copy-trading
 Restart=on-failure
 RestartSec=2
 TimeoutStopSec=30

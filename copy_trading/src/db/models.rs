@@ -21,6 +21,7 @@ pub struct UserTradeSettings {
     pub default_tip_sol: f64,
     pub default_buy_preset_slot: usize,
     pub default_sell_preset_slot: usize,
+    pub quick_trade_confirmation_enabled: bool,
     pub buy_presets_sol: [f64; 5],
     pub sell_presets_percent: [f64; 5],
 }
@@ -136,6 +137,7 @@ pub struct OrderSummary {
     pub status: String,
     pub amount_sol: Option<f64>,
     pub sell_percent: Option<f64>,
+    pub request_json: Option<String>,
     pub tx_signature: Option<String>,
     pub error: Option<String>,
     pub created_at: String,

@@ -43,6 +43,17 @@ pub fn global_settings_keyboard(settings: &UserTradeSettings) -> InlineKeyboardM
             InlineKeyboardButton::callback("买入金额设置", "settings:buy"),
             InlineKeyboardButton::callback("卖出比例设置", "settings:sell"),
         ],
+        vec![InlineKeyboardButton::callback(
+            format!(
+                "快速交易确认: {}",
+                if settings.quick_trade_confirmation_enabled {
+                    "开启"
+                } else {
+                    "关闭"
+                }
+            ),
+            "settings:toggle_quick_confirmation",
+        )],
         vec![
             InlineKeyboardButton::callback("刷新", "settings:refresh"),
             InlineKeyboardButton::callback("返回主页", "menu:main"),

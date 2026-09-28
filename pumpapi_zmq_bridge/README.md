@@ -17,7 +17,7 @@ python3 -m pip install orjson pyzmq websockets
 ## 启动
 
 ```bash
-cd /root/http/pumpapi_zmq_bridge
+cd /root/http/sol-bot/pumpapi_zmq_bridge
 ./pumpapi_zmq_bridge.py
 ```
 
@@ -70,14 +70,14 @@ nya666pQkP3PzWxi7JngU3rRMHuc7zbLK8c8wxQ4qpT
 先启动 bridge：
 
 ```bash
-cd /root/http/pumpapi_zmq_bridge
+cd /root/http/sol-bot/pumpapi_zmq_bridge
 ./pumpapi_zmq_bridge.py
 ```
 
 另一个窗口启动钱包监听：
 
 ```bash
-cd /root/http/pumpapi_zmq_bridge
+cd /root/http/sol-bot/pumpapi_zmq_bridge
 ./wallet_watch_recorder.py
 ```
 
@@ -87,7 +87,7 @@ cd /root/http/pumpapi_zmq_bridge
 WATCH_WALLETS=CCCCQCrL6zVjnDeucDzcxJgxAs5ahNmrhw1CDexPhqrd,nya666pQkP3PzWxi7JngU3rRMHuc7zbLK8c8wxQ4qpT \
 WALLET_MATCH_WINDOW_SECONDS=3600 \
 HIGH_TRACK_SECONDS=600 \
-WALLET_WATCH_DB=/root/http/pumpapi_zmq_bridge/data/wallet_watch.sqlite \
+WALLET_WATCH_DB=/root/http/sol-bot/pumpapi_zmq_bridge/data/wallet_watch.sqlite \
 ZMQ_ENDPOINT=tcp://127.0.0.1:8939 \
 ./wallet_watch_recorder.py
 ```
@@ -122,14 +122,14 @@ rm -f /tmp/wallet_watch_test.sqlite
 或直接查 SQLite：
 
 ```bash
-sqlite3 /root/http/pumpapi_zmq_bridge/data/wallet_watch.sqlite \
+sqlite3 /root/http/sol-bot/pumpapi_zmq_bridge/data/wallet_watch.sqlite \
   "select matched_at_ms,mint,first_wallet,second_wallet,first_signature,second_signature from mint_wallet_matches order by matched_at_ms desc limit 20;"
 ```
 
 查看高点表：
 
 ```bash
-sqlite3 /root/http/pumpapi_zmq_bridge/data/wallet_watch.sqlite \
+sqlite3 /root/http/sol-bot/pumpapi_zmq_bridge/data/wallet_watch.sqlite \
   "select mint,high_market_cap_quote,high_market_cap_quote_signature,high_price,tracking_done from mint_10m_highs order by first_matched_at_ms desc limit 20;"
 ```
 
@@ -141,13 +141,16 @@ ZMQ_BIND=tcp://127.0.0.1:8939
 ZMQ_SNDHWM=10000
 ZMQ_PUBLISH_NORMALIZED=true
 PUMPAPI_CAPTURE_LIMIT=0
+STONKFUN_ROUTE_FILE=/root/http/sol-bot/pumpapi_zmq_bridge/data/stonkfun_mints.txt
 
 WATCH_WALLETS=CCCCQCrL6zVjnDeucDzcxJgxAs5ahNmrhw1CDexPhqrd,nya666pQkP3PzWxi7JngU3rRMHuc7zbLK8c8wxQ4qpT
 WALLET_MATCH_WINDOW_SECONDS=3600
 HIGH_TRACK_SECONDS=600
-WALLET_WATCH_DB=/root/http/pumpapi_zmq_bridge/data/wallet_watch.sqlite
+WALLET_WATCH_DB=/root/http/sol-bot/pumpapi_zmq_bridge/data/wallet_watch.sqlite
 ZMQ_ENDPOINT=tcp://127.0.0.1:8939
 ```
+
+`STONKFUN_ROUTE_FILE` 保存已由 StonkFun LaunchLab 配置确认的 mint。Bridge 使用该索引把这些 mint 迁移后的 `raydium-cpmm` 事件规范化为 `stonkfun-swap`；文件只包含 mint，每行一个。
 
 `ZMQ_BIND` 支持逗号分隔多个地址：
 

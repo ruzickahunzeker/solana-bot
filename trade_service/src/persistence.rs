@@ -334,6 +334,9 @@ pub fn request_hash(
         "wallet_id": wallet_id, "side": side_name(request.side), "pool": pool_name(request.pool),
         "mint": value.mint.to_string(), "quote_mint": value.quote_mint.to_string(),
         "pool_id": value.pool_id.map(|v| v.to_string()), "amount_units": value.amount_lamports,
+        "settlement_asset": format!("{:?}", value.settlement_asset),
+        "sol_hop_pool": value.sol_hop_pool.map(pool_name),
+        "sol_hop_pool_id": value.sol_hop_pool_id.map(|v| v.to_string()),
         "sell_percent": value.sell_percent, "slippage_bps": value.slippage_bps,
         "tip_sol_bits": value.tip_sol.to_bits(), "execution_method": execution_name(value.execution_method),
         "simulate": value.simulate, "use_mev": value.use_mev,
@@ -390,6 +393,8 @@ fn pool_name(v: Pool) -> &'static str {
         Pool::Pump => "pump",
         Pool::PumpAmm => "pump-amm",
         Pool::Bonk => "bonk",
+        Pool::StonkFun => "stonkfun",
+        Pool::StonkFunSwap => "stonkfun-swap",
         Pool::MeteoraDammV2 => "meteora-damm-v2",
         Pool::MeteoraDbc => "meteora-dbc",
         Pool::RaydiumAmmV4 => "raydium-amm-v4",
@@ -440,6 +445,8 @@ fn parse_pool(v: String) -> anyhow::Result<Pool> {
         "pump" => Ok(Pool::Pump),
         "pump-amm" => Ok(Pool::PumpAmm),
         "bonk" => Ok(Pool::Bonk),
+        "stonkfun" | "stonk-fun" => Ok(Pool::StonkFun),
+        "stonkfun-swap" | "stonk-fun-swap" => Ok(Pool::StonkFunSwap),
         "meteora-damm-v2" => Ok(Pool::MeteoraDammV2),
         "meteora-dbc" => Ok(Pool::MeteoraDbc),
         "raydium-amm-v4" => Ok(Pool::RaydiumAmmV4),
@@ -484,6 +491,17 @@ mod tests {
         );
     }
 
+    #[test]
+    fn stonkfun_pool_names_round_trip() {
+        assert_eq!(pool_name(Pool::StonkFun), "stonkfun");
+        assert_eq!(pool_name(Pool::StonkFunSwap), "stonkfun-swap");
+        assert_eq!(parse_pool("stonkfun".to_string()).unwrap(), Pool::StonkFun);
+        assert_eq!(
+            parse_pool("stonkfun-swap".to_string()).unwrap(),
+            Pool::StonkFunSwap
+        );
+    }
+
     fn request(idempotency_key: &str, amount_lamports: u64) -> TradeRequest {
         TradeRequest {
             wallet_id: Some("main".to_string()),
@@ -491,6 +509,9 @@ mod tests {
             pool: Pool::Pump,
             mint: Pubkey::new_unique().to_string(),
             pool_id: None,
+            settlement_asset: None,
+            sol_hop_pool: None,
+            sol_hop_pool_id: None,
             quote_mint: None,
             amount_sol: None,
             amount_lamports: Some(amount_lamports),
@@ -516,6 +537,9 @@ mod tests {
             mint: request.mint.parse().unwrap(),
             quote_mint: crate::models::WSOL_MINT.parse().unwrap(),
             pool_id: None,
+            settlement_asset: crate::models::SettlementAsset::Quote,
+            sol_hop_pool: None,
+            sol_hop_pool_id: None,
             amount_lamports: request.amount_lamports,
             sell_percent: None,
             slippage_bps: 500,

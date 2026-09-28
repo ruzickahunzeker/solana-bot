@@ -9,24 +9,14 @@ pub mod accounts {
 
     pub const PROGRAM: Pubkey = pubkey!("dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN");
     pub const POOL_AUTHORITY: Pubkey = pubkey!("FhVo3mqL8PW5pH5U2CN4XE33DokiyZnUwuGpH2hmHLuM");
-    pub const SYSVAR_INSTRUCTIONS: Pubkey =
-        pubkey!("Sysvar1nstructions1111111111111111111111111");
+    pub const SYSVAR_INSTRUCTIONS: Pubkey = pubkey!("Sysvar1nstructions1111111111111111111111111");
 
-    pub const PROGRAM_META: AccountMeta = AccountMeta {
-        pubkey: PROGRAM,
-        is_signer: false,
-        is_writable: false,
-    };
-    pub const POOL_AUTHORITY_META: AccountMeta = AccountMeta {
-        pubkey: POOL_AUTHORITY,
-        is_signer: false,
-        is_writable: false,
-    };
-    pub const SYSVAR_INSTRUCTIONS_META: AccountMeta = AccountMeta {
-        pubkey: SYSVAR_INSTRUCTIONS,
-        is_signer: false,
-        is_writable: false,
-    };
+    pub const PROGRAM_META: AccountMeta =
+        AccountMeta { pubkey: PROGRAM, is_signer: false, is_writable: false };
+    pub const POOL_AUTHORITY_META: AccountMeta =
+        AccountMeta { pubkey: POOL_AUTHORITY, is_signer: false, is_writable: false };
+    pub const SYSVAR_INSTRUCTIONS_META: AccountMeta =
+        AccountMeta { pubkey: SYSVAR_INSTRUCTIONS, is_signer: false, is_writable: false };
 }
 
 pub const VIRTUAL_POOL_DISCRIMINATOR: [u8; 8] = [213, 224, 5, 209, 98, 69, 119, 92];
@@ -37,21 +27,11 @@ pub const VIRTUAL_POOL_ACCOUNT_SIZE: u64 = 8 + 416;
 pub const BASE_MINT_OFFSET: usize = 136;
 
 pub fn decode_virtual_pool(account: &Account) -> anyhow::Result<VirtualPool> {
-    decode_account(
-        account,
-        accounts::PROGRAM,
-        VIRTUAL_POOL_DISCRIMINATOR,
-        "VirtualPool",
-    )
+    decode_account(account, accounts::PROGRAM, VIRTUAL_POOL_DISCRIMINATOR, "VirtualPool")
 }
 
 pub fn decode_pool_config(account: &Account) -> anyhow::Result<PoolConfig> {
-    decode_account(
-        account,
-        accounts::PROGRAM,
-        POOL_CONFIG_DISCRIMINATOR,
-        "PoolConfig",
-    )
+    decode_account(account, accounts::PROGRAM, POOL_CONFIG_DISCRIMINATOR, "PoolConfig")
 }
 
 fn decode_account<T: bytemuck::Pod + Copy>(
@@ -63,10 +43,7 @@ fn decode_account<T: bytemuck::Pod + Copy>(
     if account.owner != owner {
         bail!("{name} account is not owned by Meteora DBC");
     }
-    let actual = account
-        .data
-        .get(..8)
-        .context("DBC account is shorter than its discriminator")?;
+    let actual = account.data.get(..8).context("DBC account is shorter than its discriminator")?;
     if actual != discriminator {
         bail!("invalid Meteora DBC {name} discriminator");
     }
@@ -122,14 +99,13 @@ pub async fn find_pool_by_base_mint(
         sort_results: None,
     };
     #[allow(deprecated)]
-    let accounts = rpc
-        .get_program_accounts_with_config(&accounts::PROGRAM, config)
-        .await?;
+    let accounts = rpc.get_program_ui_accounts_with_config(&accounts::PROGRAM, config).await?;
     let mut decoded = accounts
         .into_iter()
-        .filter_map(|(address, account)| {
-            decode_virtual_pool(&account)
-                .ok()
+        .filter_map(|(address, ui_account)| {
+            ui_account
+                .to_account()
+                .and_then(|account| decode_virtual_pool(&account).ok())
                 .map(|pool| (address, pool))
         })
         .collect::<Vec<_>>();

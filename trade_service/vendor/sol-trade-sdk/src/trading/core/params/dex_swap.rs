@@ -1,5 +1,5 @@
 use crate::common::nonce_cache::DurableNonceInfo;
-use crate::common::{GasFeeStrategy, SolanaRpcClient};
+use crate::common::{GasFeeStrategy, SolanaRpcClient, TradeTransactionVersion};
 use crate::swqos::{SwqosClient, TradeType};
 use crate::trading::MiddlewareManager;
 use core_affinity::CoreId;
@@ -11,10 +11,14 @@ use std::sync::Arc;
 use super::bonk::BonkParams;
 use super::meteora_damm_v2::MeteoraDammV2Params;
 use super::meteora_dbc::MeteoraDbcParams;
+use super::meteora_dlmm::MeteoraDlmmParams;
 use super::pumpfun::PumpFunParams;
 use super::pumpswap::PumpSwapParams;
 use super::raydium_amm_v4::RaydiumAmmV4Params;
+use super::raydium_clmm::RaydiumClmmParams;
 use super::raydium_cpmm::RaydiumCpmmParams;
+use super::stonkfun_via_sol::StonkFunViaSolParams;
+use super::whirlpool::WhirlpoolParams;
 
 /// Concurrency + core binding config for parallel submit (precomputed at SDK init, one param on hot path). Uses Arc so no borrow of SwapParams.
 #[derive(Clone)]
@@ -29,10 +33,21 @@ pub struct SenderConcurrencyConfig {
 pub enum DexParamEnum {
     PumpFun(PumpFunParams),
     PumpSwap(PumpSwapParams),
+    LaunchLab(BonkParams),
     Bonk(BonkParams),
+    StonkFun(BonkParams),
+    /// Graduated StonkFun pool parameters backed by the external CPMM venue.
+    StonkFunSwap(RaydiumCpmmParams),
+    /// SOL ↔ quote ↔ meme two-hop for wallets that do not hold the StonkFun quote.
+    ///
+    /// Works for both the LaunchLab curve and graduated CPMM meme legs.
+    StonkFunViaSol(StonkFunViaSolParams),
     RaydiumCpmm(RaydiumCpmmParams),
     RaydiumAmmV4(RaydiumAmmV4Params),
     MeteoraDammV2(MeteoraDammV2Params),
+    RaydiumClmm(RaydiumClmmParams),
+    OrcaWhirlpool(WhirlpoolParams),
+    MeteoraDlmm(MeteoraDlmmParams),
     MeteoraDbc(MeteoraDbcParams),
 }
 
@@ -43,10 +58,17 @@ impl DexParamEnum {
         match self {
             DexParamEnum::PumpFun(p) => p,
             DexParamEnum::PumpSwap(p) => p,
+            DexParamEnum::LaunchLab(p) => p,
             DexParamEnum::Bonk(p) => p,
+            DexParamEnum::StonkFun(p) => p,
+            DexParamEnum::StonkFunSwap(p) => p,
+            DexParamEnum::StonkFunViaSol(p) => p,
             DexParamEnum::RaydiumCpmm(p) => p,
             DexParamEnum::RaydiumAmmV4(p) => p,
             DexParamEnum::MeteoraDammV2(p) => p,
+            DexParamEnum::RaydiumClmm(p) => p,
+            DexParamEnum::OrcaWhirlpool(p) => p,
+            DexParamEnum::MeteoraDlmm(p) => p,
             DexParamEnum::MeteoraDbc(p) => p,
         }
     }
@@ -105,6 +127,8 @@ pub struct SwapParams {
     pub effective_core_ids: Arc<Vec<CoreId>>,
     /// Whether to check minimum tip per SWQOS (from TradeConfig.check_min_tip). When false, skip filter for lower latency.
     pub check_min_tip: bool,
+    /// Solana transaction construction mode selected by `TradeConfig`.
+    pub transaction_version: TradeTransactionVersion,
     /// Optional event receive time in microseconds (same scale as sol-parser-sdk clock::now_micros). Used as timing start when log_enabled.
     pub grpc_recv_us: Option<i64>,
     /// Use exact quote-input buy instructions (legacy PumpFun uses SOL quote; V2/PumpSwap use generic quote).

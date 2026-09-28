@@ -15,10 +15,10 @@ use crate::idempotency::ReserveResult;
 use crate::models::{
     BatchTradeItemResponse, BatchTradeRequest, BatchTradeResponse, CreateVanityJobRequest,
     CreateWalletRequest, ErrorResponse, ExportWalletResponse, HealthResponse,
-    ManagedWalletResponse, ManagedWalletsResponse, ReadyResponse, ResolvePoolRequest,
-    SolTransferAmountMode, SolTransferRequest, SolTransferResponse, TradeRequest, TradeResponse,
-    TradeStatus, UpdateWalletRequest, WalletBalanceItem, WalletBalancesResponse, WalletsResponse,
-    WarmupRequest, WarmupResponse,
+    ManagedWalletResponse, ManagedWalletsResponse, QuoteBalanceResponse, ReadyResponse,
+    ResolvePoolRequest, SolTransferAmountMode, SolTransferRequest, SolTransferResponse,
+    TradeRequest, TradeResponse, TradeStatus, UpdateWalletRequest, WalletBalanceItem,
+    WalletBalancesResponse, WalletsResponse, WarmupRequest, WarmupResponse,
 };
 use crate::persistence::DurableReserve;
 use crate::state::{cache_key, new_request_id};
@@ -43,6 +43,10 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/batch/trades", post(create_batch_trades))
         .route("/v1/trades/:request_id", get(get_trade))
         .route("/internal/wallet-balances", get(wallet_balances))
+        .route(
+            "/internal/wallets/:wallet_id/quote-balance/:mint",
+            get(quote_balance),
+        )
         .route("/internal/wallets/vanity-jobs", post(create_vanity_job))
         .route(
             "/internal/wallets/vanity-jobs/:job_id",
@@ -59,6 +63,49 @@ pub fn router(state: AppState) -> Router {
 struct OwnerQuery {
     owner_type: String,
     owner_id: String,
+}
+
+async fn quote_balance(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Path((wallet_id, mint)): Path<(String, String)>,
+    Query(owner): Query<OwnerQuery>,
+) -> Response {
+    if let Err(response) = authorize_internal(&state, &headers, peer) {
+        return response;
+    }
+    let wallet = match state.wallet_repository.get(&wallet_id).await {
+        Ok(wallet) => wallet,
+        Err(error_value) => return error(StatusCode::NOT_FOUND, error_value.to_string()),
+    };
+    if !wallet.enabled
+        || !((wallet.owner_type == owner.owner_type && wallet.owner_id == owner.owner_id)
+            || (wallet.owner_type == "system" && wallet.owner_id == "global"))
+    {
+        return error(StatusCode::FORBIDDEN, "wallet owner mismatch");
+    }
+    let mint = match mint.parse::<solana_sdk::pubkey::Pubkey>() {
+        Ok(mint) => mint,
+        Err(_) => return error(StatusCode::BAD_REQUEST, "invalid quote mint"),
+    };
+    let Some(client) = state.wallets.get(&wallet_id) else {
+        return error(StatusCode::SERVICE_UNAVAILABLE, "wallet is not loaded");
+    };
+    match client.quote_balance(&mint).await {
+        Ok((decimals, balance_units, balance_lamports)) => Json(QuoteBalanceResponse {
+            wallet_id,
+            quote_mint: mint.to_string(),
+            decimals,
+            balance_units,
+            balance_lamports,
+        })
+        .into_response(),
+        Err(error_value) => error(
+            StatusCode::BAD_GATEWAY,
+            crate::sanitize::redact_urls(&error_value.to_string()),
+        ),
+    }
 }
 
 async fn wallet_balances(

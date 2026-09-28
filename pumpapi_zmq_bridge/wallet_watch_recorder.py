@@ -12,7 +12,7 @@ import zmq
 
 
 DEFAULT_ENDPOINT = "tcp://127.0.0.1:8939"
-DEFAULT_DB = "/root/http/pumpapi_zmq_bridge/data/wallet_watch.sqlite"
+DEFAULT_DB = "/root/http/sol-bot/pumpapi_zmq_bridge/data/wallet_watch.sqlite"
 DEFAULT_WALLETS = (
     "CCCCQCrL6zVjnDeucDzcxJgxAs5ahNmrhw1CDexPhqrd,"
     "nya666pQkP3PzWxi7JngU3rRMHuc7zbLK8c8wxQ4qpT"

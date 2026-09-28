@@ -8,7 +8,7 @@ use sol_trade_sdk::swqos::{
 };
 use sol_trade_sdk::trading::core::params::{
     BonkParams, DexParamEnum, MeteoraDammV2Params, MeteoraDbcParams, PumpFunParams, PumpSwapParams,
-    RaydiumAmmV4Params, RaydiumCpmmParams,
+    RaydiumAmmV4Params, RaydiumCpmmParams, StonkFunParams, StonkFunViaSolParams,
 };
 use sol_trade_sdk::trading::factory::DexType;
 use sol_trade_sdk::{
@@ -52,6 +52,8 @@ pub struct ExecuteTrade {
     pub mint: Pubkey,
     pub quote_mint: Pubkey,
     pub pool_id: Option<Pubkey>,
+    pub sol_hop_pool: Option<Pool>,
+    pub sol_hop_pool_id: Option<Pubkey>,
     pub amount_lamports: Option<u64>,
     pub sell_percent: Option<u64>,
     pub slippage_bps: u64,
@@ -165,6 +167,7 @@ impl SdkTradeClient {
     pub fn rpcs(&self) -> Vec<Arc<sol_trade_sdk::common::SolanaRpcClient>> {
         self.lanes
             .iter()
+            .filter(|lane| lane.swqos_type == SwqosType::Default)
             .map(|lane| lane.client.get_rpc().clone())
             .collect()
     }
@@ -232,6 +235,20 @@ impl SdkTradeClient {
             "wallet balance unavailable: {}",
             last_error.unwrap_or_else(|| "no Default RPC lane configured".to_string())
         )
+    }
+
+    pub async fn quote_balance(&self, mint: &Pubkey) -> anyhow::Result<(u8, u64, u64)> {
+        let lane = self
+            .lanes
+            .iter()
+            .find(|lane| lane.swqos_type == SwqosType::Default)
+            .context("no Default RPC lane configured")?;
+        let rpc = lane.client.get_rpc();
+        let wallet = self.wallet();
+        let supply = rpc.get_token_supply(mint).await?;
+        let balance = self.token_balance(&lane.client, mint).await?;
+        let sol_balance = rpc.get_balance(&wallet).await?;
+        Ok((supply.decimals, balance, sol_balance))
     }
 
     pub async fn wallet_balances(&self, wallets: &[Pubkey]) -> anyhow::Result<Vec<u64>> {
@@ -383,86 +400,122 @@ impl SdkTradeClient {
     ) -> anyhow::Result<()> {
         let mut last_error = None;
         for lane in self.execution_lanes() {
-            let result = match pool {
-                Pool::Pump => {
-                    let params =
-                        PumpFunParams::from_mint_by_rpc(lane.client.get_rpc(), mint).await?;
-                    if params.bonding_curve.complete {
-                        bail!("pump bonding curve is complete");
+            let result: anyhow::Result<()> = async {
+                match pool {
+                    Pool::Pump => {
+                        let params =
+                            PumpFunParams::from_mint_by_rpc(lane.client.get_rpc(), mint).await?;
+                        if params.bonding_curve.complete {
+                            bail!("pump bonding curve is complete");
+                        }
+                        Ok(())
                     }
-                    Ok(())
-                }
-                Pool::PumpAmm => {
-                    let params = if let Some(pool_id) = pool_id {
-                        PumpSwapParams::from_pool_address_by_rpc(lane.client.get_rpc(), pool_id)
-                            .await?
-                    } else {
-                        PumpSwapParams::from_mint_by_rpc(lane.client.get_rpc(), mint).await?
-                    };
-                    ensure_pool_contains_quote(
-                        "pump-amm",
-                        quote_mint,
-                        &[params.base_mint, params.quote_mint],
-                    )?;
-                    Ok(())
-                }
-                Pool::Bonk => BonkParams::from_mint_by_rpc(
-                    lane.client.get_rpc(),
-                    mint,
-                    is_usd1_quote(quote_mint),
-                )
-                .await
-                .map(|_| ()),
-                Pool::MeteoraDammV2 => {
-                    let pool_id = pool_id.context("pool_id is required for meteora-damm-v2")?;
-                    let params = MeteoraDammV2Params::from_pool_address_by_rpc(
+                    Pool::PumpAmm => {
+                        let params = if let Some(pool_id) = pool_id {
+                            PumpSwapParams::from_pool_address_by_rpc(lane.client.get_rpc(), pool_id)
+                                .await?
+                        } else {
+                            PumpSwapParams::from_mint_by_rpc(lane.client.get_rpc(), mint).await?
+                        };
+                        ensure_pool_contains_quote(
+                            "pump-amm",
+                            quote_mint,
+                            &[params.base_mint, params.quote_mint],
+                        )?;
+                        Ok(())
+                    }
+                    Pool::Bonk => BonkParams::from_mint_by_rpc(
                         lane.client.get_rpc(),
-                        pool_id,
+                        mint,
+                        is_usd1_quote(quote_mint),
                     )
-                    .await?;
-                    ensure_pool_contains_quote(
-                        "meteora-damm-v2",
-                        quote_mint,
-                        &[params.token_a_mint, params.token_b_mint],
-                    )?;
-                    Ok(())
-                }
-                Pool::MeteoraDbc => {
-                    let pool_id = pool_id.context("pool_id is required for meteora-dbc")?;
-                    let params =
-                        MeteoraDbcParams::from_pool_address_by_rpc(lane.client.get_rpc(), pool_id)
+                    .await
+                    .map(|_| ()),
+                    Pool::StonkFun => {
+                        let pool_id = pool_id.context("pool_id is required for stonkfun")?;
+                        load_stonkfun_params(lane.client.get_rpc(), pool_id, mint, quote_mint)
                             .await?;
-                    ensure_pool_contains_mint("meteora-dbc", mint, &[params.base_mint])?;
-                    ensure_pool_contains_quote("meteora-dbc", quote_mint, &[params.quote_mint])?;
-                    Ok(())
+                        Ok(())
+                    }
+                    Pool::StonkFunSwap => {
+                        let pool_id = pool_id.context("pool_id is required for stonkfun-swap")?;
+                        let params = RaydiumCpmmParams::from_pool_address_by_rpc(
+                            lane.client.get_rpc(),
+                            pool_id,
+                        )
+                        .await?;
+                        ensure_pool_contains_mint(
+                            "stonkfun-swap",
+                            mint,
+                            &[params.base_mint, params.quote_mint],
+                        )?;
+                        ensure_pool_contains_quote(
+                            "stonkfun-swap",
+                            quote_mint,
+                            &[params.base_mint, params.quote_mint],
+                        )?;
+                        Ok(())
+                    }
+                    Pool::MeteoraDammV2 => {
+                        let pool_id = pool_id.context("pool_id is required for meteora-damm-v2")?;
+                        let params = MeteoraDammV2Params::from_pool_address_by_rpc(
+                            lane.client.get_rpc(),
+                            pool_id,
+                        )
+                        .await?;
+                        ensure_pool_contains_quote(
+                            "meteora-damm-v2",
+                            quote_mint,
+                            &[params.token_a_mint, params.token_b_mint],
+                        )?;
+                        Ok(())
+                    }
+                    Pool::MeteoraDbc => {
+                        let pool_id = pool_id.context("pool_id is required for meteora-dbc")?;
+                        let params = MeteoraDbcParams::from_pool_address_by_rpc(
+                            lane.client.get_rpc(),
+                            pool_id,
+                        )
+                        .await?;
+                        ensure_pool_contains_mint("meteora-dbc", mint, &[params.base_mint])?;
+                        ensure_pool_contains_quote(
+                            "meteora-dbc",
+                            quote_mint,
+                            &[params.quote_mint],
+                        )?;
+                        Ok(())
+                    }
+                    Pool::RaydiumAmmV4 => {
+                        let pool_id = pool_id.context("pool_id is required for raydium-amm-v4")?;
+                        let params = RaydiumAmmV4Params::from_amm_address_by_rpc(
+                            lane.client.get_rpc(),
+                            *pool_id,
+                        )
+                        .await?;
+                        ensure_pool_contains_quote(
+                            "raydium-amm-v4",
+                            quote_mint,
+                            &[params.coin_mint, params.pc_mint],
+                        )?;
+                        Ok(())
+                    }
+                    Pool::RaydiumCpmm => {
+                        let pool_id = pool_id.context("pool_id is required for raydium-cpmm")?;
+                        let params = RaydiumCpmmParams::from_pool_address_by_rpc(
+                            lane.client.get_rpc(),
+                            pool_id,
+                        )
+                        .await?;
+                        ensure_pool_contains_quote(
+                            "raydium-cpmm",
+                            quote_mint,
+                            &[params.base_mint, params.quote_mint],
+                        )?;
+                        Ok(())
+                    }
                 }
-                Pool::RaydiumAmmV4 => {
-                    let pool_id = pool_id.context("pool_id is required for raydium-amm-v4")?;
-                    let params = RaydiumAmmV4Params::from_amm_address_by_rpc(
-                        lane.client.get_rpc(),
-                        *pool_id,
-                    )
-                    .await?;
-                    ensure_pool_contains_quote(
-                        "raydium-amm-v4",
-                        quote_mint,
-                        &[params.coin_mint, params.pc_mint],
-                    )?;
-                    Ok(())
-                }
-                Pool::RaydiumCpmm => {
-                    let pool_id = pool_id.context("pool_id is required for raydium-cpmm")?;
-                    let params =
-                        RaydiumCpmmParams::from_pool_address_by_rpc(lane.client.get_rpc(), pool_id)
-                            .await?;
-                    ensure_pool_contains_quote(
-                        "raydium-cpmm",
-                        quote_mint,
-                        &[params.base_mint, params.quote_mint],
-                    )?;
-                    Ok(())
-                }
-            };
+            }
+            .await;
             match result {
                 Ok(()) => return Ok(()),
                 Err(error) => {
@@ -552,11 +605,26 @@ impl SdkTradeClient {
                 &trade.mint,
                 &trade.quote_mint,
                 trade.pool_id.as_ref(),
+                trade.sol_hop_pool,
+                trade.sol_hop_pool_id.as_ref(),
             )
             .await?;
         let dex_type = dex_type(trade.pool);
-        let input_token_type = trade_token_type_for_buy(trade.pool, &trade.quote_mint)?;
+        let input_token_type = if trade.sol_hop_pool_id.is_some() {
+            TradeTokenType::SOL
+        } else {
+            trade_token_type_for_buy(trade.pool, &trade.quote_mint)?
+        };
         let amount = trade.amount_lamports.context("amount_lamports missing")?;
+        if matches!(trade.pool, Pool::StonkFun | Pool::StonkFunSwap)
+            && !is_wsol_quote(&trade.quote_mint)
+            && trade.sol_hop_pool_id.is_none()
+        {
+            let balance = self.token_balance(&lane.client, &trade.quote_mint).await?;
+            if balance < amount {
+                bail!("quote token balance insufficient: available {balance} units, requested {amount} units");
+            }
+        }
         let fixed_output_token_amount = match trade.pool {
             Pool::MeteoraDammV2 => Some(1),
             _ => None,
@@ -669,11 +737,17 @@ impl SdkTradeClient {
                 &trade.mint,
                 &trade.quote_mint,
                 trade.pool_id.as_ref(),
+                trade.sol_hop_pool,
+                trade.sol_hop_pool_id.as_ref(),
             )
             .await?;
         let sell_params = TradeSellParams {
             dex_type: dex_type(trade.pool),
-            output_token_type: trade_token_type_for_sell(trade.pool, &trade.quote_mint)?,
+            output_token_type: if trade.sol_hop_pool_id.is_some() {
+                TradeTokenType::SOL
+            } else {
+                trade_token_type_for_sell(trade.pool, &trade.quote_mint)?
+            },
             mint: trade.mint,
             input_token_amount: 0,
             slippage_basis_points: Some(trade.slippage_bps),
@@ -709,6 +783,8 @@ impl SdkTradeClient {
         mint: &Pubkey,
         quote_mint: &Pubkey,
         pool_id: Option<&Pubkey>,
+        sol_hop_pool: Option<Pool>,
+        sol_hop_pool_id: Option<&Pubkey>,
     ) -> anyhow::Result<DexParamEnum> {
         Ok(match pool {
             Pool::Pump => DexParamEnum::PumpFun(
@@ -737,6 +813,44 @@ impl SdkTradeClient {
                     .await
                     .map_err(|error| describe_bonk_param_error(mint, quote_mint, error))?,
             ),
+            Pool::StonkFun => {
+                let pool_id = pool_id.context("pool_id is required for stonkfun")?;
+                let params =
+                    load_stonkfun_params(client.get_rpc(), pool_id, mint, quote_mint).await?;
+                if let Some(sol_hop_pool_id) = sol_hop_pool_id {
+                    let hop =
+                        load_stonkfun_sol_hop(client, sol_hop_pool, sol_hop_pool_id, quote_mint)
+                            .await?;
+                    DexParamEnum::StonkFunViaSol(StonkFunViaSolParams::curve_with_cpmm(params, hop))
+                } else {
+                    DexParamEnum::StonkFun(params)
+                }
+            }
+            Pool::StonkFunSwap => {
+                let pool_id = pool_id.context("pool_id is required for stonkfun-swap")?;
+                let params =
+                    RaydiumCpmmParams::from_pool_address_by_rpc(client.get_rpc(), pool_id).await?;
+                ensure_pool_contains_mint(
+                    "stonkfun-swap",
+                    mint,
+                    &[params.base_mint, params.quote_mint],
+                )?;
+                ensure_pool_contains_quote(
+                    "stonkfun-swap",
+                    quote_mint,
+                    &[params.base_mint, params.quote_mint],
+                )?;
+                if let Some(sol_hop_pool_id) = sol_hop_pool_id {
+                    let hop =
+                        load_stonkfun_sol_hop(client, sol_hop_pool, sol_hop_pool_id, quote_mint)
+                            .await?;
+                    DexParamEnum::StonkFunViaSol(StonkFunViaSolParams::graduated_with_cpmm(
+                        params, hop,
+                    ))
+                } else {
+                    DexParamEnum::StonkFunSwap(params)
+                }
+            }
             Pool::MeteoraDammV2 => {
                 let pool_id = pool_id.context("pool_id is required for meteora-damm-v2")?;
                 let params =
@@ -814,12 +928,17 @@ impl SdkTradeClient {
                 return self.token_balance_from_atas(client, mint).await;
             }
         };
+        if accounts.is_empty() {
+            return Ok(0);
+        }
         let mut total = 0_u64;
+        let mut parsed_count = 0_u64;
         for account in accounts {
             if let UiAccountData::Json(parsed) = account.account.data {
                 if parsed.program != "spl-token" && parsed.program != "spl-token-2022" {
                     continue;
                 }
+                parsed_count += 1;
                 let amount = parsed
                     .parsed
                     .get("info")
@@ -832,10 +951,11 @@ impl SdkTradeClient {
                 total = total.saturating_add(amount);
             }
         }
-        if total > 0 {
-            return Ok(total);
+        if parsed_count == 0 {
+            self.token_balance_from_atas(client, mint).await
+        } else {
+            Ok(total)
         }
-        self.token_balance_from_atas(client, mint).await
     }
 
     async fn token_balance_from_atas(
@@ -1205,6 +1325,49 @@ fn ensure_pool_contains_quote(
     )
 }
 
+async fn load_stonkfun_params(
+    rpc: &sol_trade_sdk::common::SolanaRpcClient,
+    pool_id: &Pubkey,
+    mint: &Pubkey,
+    quote_mint: &Pubkey,
+) -> anyhow::Result<StonkFunParams> {
+    use sol_trade_sdk::instruction::utils::bonk::{accounts, fetch_pool_state};
+
+    let state = fetch_pool_state(rpc, pool_id).await?;
+    ensure_pool_contains_mint("stonkfun", mint, &[state.base_mint])?;
+    ensure_pool_contains_quote("stonkfun", quote_mint, &[state.quote_mint])?;
+    if state.platform_config != accounts::STONKFUN_STANDARD_PLATFORM_CONFIG
+        && state.platform_config != accounts::STONKFUN_REWARD_PLATFORM_CONFIG
+    {
+        bail!(
+            "launchlab pool {} is not a recognized StonkFun platform: {}",
+            pool_id,
+            state.platform_config
+        );
+    }
+    StonkFunParams::from_pool_by_rpc(rpc, pool_id).await
+}
+
+async fn load_stonkfun_sol_hop(
+    client: &TradingClient,
+    pool: Option<Pool>,
+    pool_id: &Pubkey,
+    quote_mint: &Pubkey,
+) -> anyhow::Result<RaydiumCpmmParams> {
+    if pool != Some(Pool::RaydiumCpmm) {
+        bail!("stonkfun Via-SOL only supports a Raydium CPMM SOL hop");
+    }
+    let params = RaydiumCpmmParams::from_pool_address_by_rpc(client.get_rpc(), pool_id).await?;
+    let mints = [params.base_mint, params.quote_mint];
+    ensure_pool_contains_quote("stonkfun Via-SOL hop", quote_mint, &mints)?;
+    let wsol = Pubkey::from_str(WSOL_MINT).expect("known WSOL mint must be valid");
+    ensure_pool_contains_quote("stonkfun Via-SOL hop", &wsol, &mints)?;
+    if quote_mint == &wsol {
+        bail!("stonkfun Via-SOL hop requires a non-WSOL quote mint");
+    }
+    Ok(params)
+}
+
 fn trade_token_type_for_buy(pool: Pool, quote_mint: &Pubkey) -> anyhow::Result<TradeTokenType> {
     if is_usdc_quote(quote_mint) {
         if pool == Pool::Bonk {
@@ -1213,8 +1376,8 @@ fn trade_token_type_for_buy(pool: Pool, quote_mint: &Pubkey) -> anyhow::Result<T
         return Ok(TradeTokenType::USDC);
     }
     if is_usd1_quote(quote_mint) {
-        if pool != Pool::Bonk {
-            bail!("USD1 quote is only supported for bonk in this SDK");
+        if !matches!(pool, Pool::Bonk | Pool::StonkFun | Pool::StonkFunSwap) {
+            bail!("USD1 quote is only supported for bonk or stonkfun in this SDK");
         }
         return Ok(TradeTokenType::USD1);
     }
@@ -1223,11 +1386,16 @@ fn trade_token_type_for_buy(pool: Pool, quote_mint: &Pubkey) -> anyhow::Result<T
             Pool::Pump => TradeTokenType::SOL,
             Pool::PumpAmm
             | Pool::Bonk
+            | Pool::StonkFun
+            | Pool::StonkFunSwap
             | Pool::MeteoraDammV2
             | Pool::MeteoraDbc
             | Pool::RaydiumAmmV4
             | Pool::RaydiumCpmm => TradeTokenType::WSOL,
         });
+    }
+    if matches!(pool, Pool::StonkFun | Pool::StonkFunSwap) {
+        return Ok(TradeTokenType::Token(*quote_mint));
     }
     bail!("unsupported quote_mint {quote_mint}")
 }
@@ -1240,13 +1408,16 @@ fn trade_token_type_for_sell(pool: Pool, quote_mint: &Pubkey) -> anyhow::Result<
         return Ok(TradeTokenType::USDC);
     }
     if is_usd1_quote(quote_mint) {
-        if pool != Pool::Bonk {
-            bail!("USD1 quote is only supported for bonk in this SDK");
+        if !matches!(pool, Pool::Bonk | Pool::StonkFun | Pool::StonkFunSwap) {
+            bail!("USD1 quote is only supported for bonk or stonkfun in this SDK");
         }
         return Ok(TradeTokenType::USD1);
     }
     if is_wsol_quote(quote_mint) {
         return Ok(TradeTokenType::SOL);
+    }
+    if matches!(pool, Pool::StonkFun | Pool::StonkFunSwap) {
+        return Ok(TradeTokenType::Token(*quote_mint));
     }
     bail!("unsupported quote_mint {quote_mint}")
 }
@@ -1469,6 +1640,7 @@ fn dex_type(pool: Pool) -> DexType {
         Pool::Pump => DexType::PumpFun,
         Pool::PumpAmm => DexType::PumpSwap,
         Pool::Bonk => DexType::Bonk,
+        Pool::StonkFun | Pool::StonkFunSwap => DexType::StonkFun,
         Pool::MeteoraDammV2 => DexType::MeteoraDammV2,
         Pool::MeteoraDbc => DexType::MeteoraDbc,
         Pool::RaydiumAmmV4 => DexType::RaydiumAmmV4,

@@ -34,9 +34,8 @@ impl MeteoraDbcParams {
             bail!("Meteora DBC pool {pool_address} has migrated");
         }
         let pool_config = fetch_config(rpc, &state.config).await?;
-        let mint_accounts = rpc
-            .get_multiple_accounts(&[state.base_mint, pool_config.quote_mint])
-            .await?;
+        let mint_accounts =
+            rpc.get_multiple_accounts(&[state.base_mint, pool_config.quote_mint]).await?;
         let base_token_program = mint_accounts
             .first()
             .and_then(Option::as_ref)

@@ -654,6 +654,10 @@ impl LiveExecutor {
             mint: request.mint.to_string(),
             pool_id,
             quote_mint: request.event.quote_mint.clone(),
+            amount_quote_units: None,
+            settlement_asset: None,
+            sol_hop_pool: None,
+            sol_hop_pool_id: None,
             amount_sol: request.amount_sol,
             sell_percent,
             slippage_percent: request.execution.slippage_bps as f64 / 100.0,
@@ -903,6 +907,10 @@ fn build_strategy_trade_request_parts(
         mint: mint.to_string(),
         pool_id,
         quote_mint: event.quote_mint.clone(),
+        amount_quote_units: None,
+        settlement_asset: None,
+        sol_hop_pool: None,
+        sol_hop_pool_id: None,
         amount_sol,
         sell_percent,
         slippage_percent: execution.slippage_bps as f64 / 100.0,
@@ -953,13 +961,13 @@ fn percent_to_u64(value: f64) -> Result<u64> {
 fn normalize_pool(value: Option<&str>) -> Result<String> {
     let value = value.unwrap_or("pump").trim().to_ascii_lowercase();
     match value.as_str() {
-        "pump" | "pump-amm" | "bonk" | "meteora-damm-v2" | "meteora-dbc" | "raydium-amm-v4"
-        | "raydium-cpmm" => Ok(value),
+        "pump" | "pump-amm" | "bonk" | "stonkfun" | "stonkfun-swap" | "meteora-damm-v2"
+        | "meteora-dbc" | "raydium-amm-v4" | "raydium-cpmm" => Ok(value),
         _ => anyhow::bail!("unsupported trade_service pool {value}"),
     }
 }
 
-fn trade_service_pool_id(pool: &str, pool_id: Option<&str>) -> Option<String> {
+pub(crate) fn trade_service_pool_id(pool: &str, pool_id: Option<&str>) -> Option<String> {
     match pool {
         "pump" | "bonk" => None,
         _ => pool_id.map(ToString::to_string),

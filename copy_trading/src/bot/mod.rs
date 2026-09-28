@@ -33,7 +33,10 @@ use keyboards::{
     wallet_transfer_target_keyboard, watch_delete_confirm_keyboard, watch_detail_keyboard,
     watch_wallets_keyboard,
 };
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 use teloxide::{
     adaptors::DefaultParseMode,
     dispatching::UpdateFilterExt,
@@ -62,6 +65,7 @@ pub struct BotState {
     pending: Arc<Mutex<HashMap<i64, PendingAction>>>,
     panels: Arc<Mutex<HashMap<i64, TradePanelSession>>>,
     transfers: Arc<Mutex<HashMap<i64, TransferDraft>>>,
+    trades_in_flight: Arc<Mutex<HashSet<i64>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -209,6 +213,73 @@ struct TradeDraft {
     amount: f64,
     execution: ExecutionParams,
     route: ResolvedPoolRoute,
+    quote_amount: Option<String>,
+}
+
+fn custom_quote_route(route: &ResolvedPoolRoute) -> bool {
+    matches!(route.pool.as_str(), "stonkfun" | "stonkfun-swap")
+        && !matches!(
+            route.quote_mint.as_str(),
+            "So11111111111111111111111111111111111111112"
+                | "So11111111111111111111111111111111111111111"
+        )
+}
+
+fn quote_amount_units(text: &str, decimals: u8) -> Result<u64> {
+    let (whole, fraction) = text.trim().split_once('.').unwrap_or((text.trim(), ""));
+    if whole.is_empty()
+        || !whole.bytes().all(|value| value.is_ascii_digit())
+        || !fraction.bytes().all(|value| value.is_ascii_digit())
+        || fraction.len() > decimals as usize
+        || decimals > 18
+    {
+        anyhow::bail!("Quote 金额格式或精度不正确");
+    }
+    let scale = 10_u64.pow(decimals as u32);
+    let whole = whole.parse::<u64>()?;
+    let fraction = if fraction.is_empty() {
+        0
+    } else {
+        fraction
+            .parse::<u64>()?
+            .checked_mul(10_u64.pow(decimals as u32 - fraction.len() as u32))
+            .context("Quote 金额过大")?
+    };
+    let units = whole
+        .checked_mul(scale)
+        .and_then(|value| value.checked_add(fraction))
+        .context("Quote 金额过大")?;
+    if units == 0 {
+        anyhow::bail!("Quote 金额必须大于零");
+    }
+    Ok(units)
+}
+
+fn format_quote_units(units: u64, decimals: u8) -> String {
+    let scale = 10_u64.pow(decimals.min(18) as u32);
+    if scale == 1 {
+        return units.to_string();
+    }
+    let fraction = format!("{:0width$}", units % scale, width = decimals as usize);
+    format!("{}.{}", units / scale, fraction.trim_end_matches('0'))
+        .trim_end_matches('.')
+        .to_string()
+}
+
+fn quote_order_amount(request_json: Option<&str>) -> Option<String> {
+    let request: serde_json::Value = serde_json::from_str(request_json?).ok()?;
+    let quote = request.get("quote_mint")?.as_str()?;
+    let amount = request
+        .get("amount_quote")
+        .and_then(serde_json::Value::as_str)
+        .map(ToString::to_string)
+        .or_else(|| {
+            request
+                .get("amount_quote_units")
+                .and_then(serde_json::Value::as_u64)
+                .map(|value| format!("{value} 最小单位"))
+        })?;
+    Some(format!("{amount} {}", short_text(quote)))
 }
 
 impl BotState {
@@ -232,6 +303,7 @@ impl BotState {
             pending: Arc::new(Mutex::new(HashMap::new())),
             panels: Arc::new(Mutex::new(HashMap::new())),
             transfers: Arc::new(Mutex::new(HashMap::new())),
+            trades_in_flight: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 }
@@ -1586,6 +1658,7 @@ async fn show_orders(bot: &HtmlBot, chat_id: ChatId, state: &BotState, user_id: 
                 .amount_sol
                 .map(|value| format!("{value} SOL"))
                 .or_else(|| order.sell_percent.map(|value| format!("{value}%")))
+                .or_else(|| quote_order_amount(order.request_json.as_deref()))
                 .unwrap_or_else(|| "-".to_string());
             lines.push(format!(
                 "{} {} {} {}\n<code>{}</code>",
@@ -1664,18 +1737,13 @@ async fn send_new_trade_panel(
         tab,
         route,
     );
-    let wallet_label =
-        panel_wallet_label(state, user_id, session.active_execution().wallet_id).await;
-    bot.edit_message_text(
-        chat_id,
-        resolving.id,
-        session.text(&wallet_label, settings.use_mev),
-    )
-    .reply_markup(session.keyboard(&settings))
-    .await?;
+    if session.custom_quote() && session.tab == PanelTab::Limit {
+        session.tab = PanelTab::Quick;
+        session.notice = Some("自定义 Quote 限价单尚未支持".to_string());
+    }
     session.message_id = Some(resolving.id);
     state.panels.lock().await.insert(telegram_id, session);
-    Ok(())
+    render_trade_panel(bot, chat_id, resolving.id, state, user_id, telegram_id).await
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1713,6 +1781,10 @@ async fn open_trade_panel_at_message(
         tab,
         route,
     );
+    if session.custom_quote() && session.tab == PanelTab::Limit {
+        session.tab = PanelTab::Quick;
+        session.notice = Some("自定义 Quote 限价单尚未支持".to_string());
+    }
     session.message_id = Some(message_id);
     state.panels.lock().await.insert(telegram_id, session);
     render_trade_panel(bot, chat_id, message_id, state, user_id, telegram_id).await
@@ -1732,11 +1804,40 @@ async fn render_trade_panel(
     let settings = load_user_trade_settings(state, user_id).await?;
     let wallet_label =
         panel_wallet_label(state, user_id, session.active_execution().wallet_id).await;
+    let quote_balance = if session.custom_quote() && session.tab == PanelTab::Quick {
+        match session.active_execution().wallet_id {
+            Some(wallet_id) => match state.db.get_wallet(user_id, wallet_id).await {
+                Ok(wallet) => match wallet.external_wallet_id.as_deref() {
+                    Some(remote_id) => match state
+                        .trade_client
+                        .quote_balance(user_id, remote_id, &session.route.quote_mint)
+                        .await
+                    {
+                        Ok(balance) => format!(
+                            "\nQuote 余额: {} {}",
+                            format_quote_units(balance.balance_units, balance.decimals),
+                            session.quote_label()
+                        ),
+                        Err(_) => "\nQuote 余额: 查询失败".to_string(),
+                    },
+                    None => "\nQuote 余额: 钱包未绑定".to_string(),
+                },
+                Err(_) => "\nQuote 余额: 钱包不可用".to_string(),
+            },
+            None => "\nQuote 余额: 未选择钱包".to_string(),
+        }
+    } else {
+        String::new()
+    };
     let result = bot
         .edit_message_text(
             chat_id,
             message_id,
-            session.text(&wallet_label, settings.use_mev),
+            format!(
+                "{}{}",
+                session.text(&wallet_label, settings.use_mev),
+                quote_balance
+            ),
         )
         .reply_markup(session.keyboard(&settings))
         .await;
@@ -1825,7 +1926,13 @@ async fn handle_trade_panel_callback(
             return Ok(());
         }
         "panel:tab:quick" => session.tab = PanelTab::Quick,
-        "panel:tab:limit" => session.tab = PanelTab::Limit,
+        "panel:tab:limit" => {
+            if session.custom_quote() {
+                session.notice = Some("自定义 Quote 限价单尚未支持，请使用快速交易".to_string());
+            } else {
+                session.tab = PanelTab::Limit;
+            }
+        }
         "panel:side:buy" => match session.tab {
             PanelTab::Quick => session.quick.side = PanelSide::Buy,
             PanelTab::Limit => session.limit.side = PanelSide::Buy,
@@ -1890,7 +1997,11 @@ async fn handle_trade_panel_callback(
             session.limit.execution.wallet_id = Some(wallet_id);
         }
         "panel:refresh" => {
+            let previous_route = session.route.clone();
             session.route = resolve_pool_route(state, &session.mint, true).await?;
+            if session.route != previous_route {
+                session.quick.buy_amount_quote = None;
+            }
             state
                 .wallet_service
                 .sync_trade_service_wallets(user_id)
@@ -1934,58 +2045,22 @@ async fn handle_trade_panel_callback(
             );
             return Ok(());
         }
-        "panel:confirm" => {
-            let side = match session.quick.side {
-                PanelSide::Buy => TradeSide::Buy,
-                PanelSide::Sell => TradeSide::Sell,
-            };
-            let amount = if session.quick.side == PanelSide::Buy {
-                session.quick.buy_amount_sol
-            } else {
-                session.quick.sell_percent
-            };
-            let mut execution = session.quick.execution.clone();
-            if !settings.use_mev {
-                execution.mev_mode = "none".to_string();
+        value if value == "panel:confirm" || value.starts_with("panel:confirm:") => {
+            if let Some(expected_side) = value.strip_prefix("panel:confirm:") {
+                if expected_side != session.quick.side.as_str() {
+                    return Ok(());
+                }
             }
-            let draft = TradeDraft {
-                side,
-                mint: session.mint.clone(),
-                amount,
-                execution,
-                route: session.route.clone(),
-            };
-            validate_trade_draft(&draft)?;
-            let wallet_label = panel_wallet_label(state, user_id, draft.execution.wallet_id).await;
-            state.pending.lock().await.insert(
-                telegram_id,
-                PendingAction::ConfirmTrade {
-                    draft: draft.clone(),
-                },
-            );
-            bot.edit_message_text(
-                chat_id,
-                message_id,
-                format!(
-                    "确认交易\n钱包: {}\n动作: {}\nMint: <code>{}</code>\nPool: {}{}\n数量: {} {}\n模式: {}\n滑点: {}%\n小费: {} SOL\nMEV Provider: {}",
-                    wallet_label,
-                    draft.side.label(),
-                    draft.mint,
-                    pool_display_name(&draft.route.pool),
-                    pool_id_suffix(draft.route.pool_id.as_deref()),
-                    trade_panel::trim_float(draft.amount),
-                    if matches!(draft.side, TradeSide::Buy) { "SOL" } else { "%" },
-                    execution_mode_label(draft.execution.mode),
-                    draft.execution.slippage_bps as f64 / 100.0,
-                    draft.execution.tip_sol,
-                    if settings.use_mev { &draft.execution.mev_mode } else { "全局关闭" },
-                ),
-            )
-            .reply_markup(trade_panel::confirm_keyboard())
-            .await?;
+            let draft = quick_trade_draft(&session, &settings)?;
+            state.panels.lock().await.insert(telegram_id, session);
+            submit_quick_trade(bot, chat_id, message_id, state, user_id, telegram_id, draft)
+                .await?;
             return Ok(());
         }
         "panel:create_limit" => {
+            if session.custom_quote() {
+                anyhow::bail!("自定义 Quote 限价单尚未支持");
+            }
             create_limit_order_from_panel(
                 bot,
                 chat_id,
@@ -1999,7 +2074,19 @@ async fn handle_trade_panel_callback(
             return Ok(());
         }
         _ if data.starts_with("panel:preset:") => {
-            let index: usize = data.trim_start_matches("panel:preset:").parse()?;
+            if session.custom_quote() && session.active_side() == PanelSide::Buy {
+                return Ok(());
+            }
+            let parts = data.split(':').collect::<Vec<_>>();
+            let (expected_side, index_text) = match parts.as_slice() {
+                ["panel", "preset", side, index] => (Some(*side), *index),
+                ["panel", "preset", index] => (None, *index),
+                _ => anyhow::bail!("invalid preset callback"),
+            };
+            if expected_side.is_some_and(|side| side != session.active_side().as_str()) {
+                return Ok(());
+            }
+            let index: usize = index_text.parse()?;
             let presets = if session.active_side() == PanelSide::Buy {
                 settings.buy_presets_sol
             } else {
@@ -2009,6 +2096,13 @@ async fn handle_trade_panel_callback(
                 anyhow::bail!("invalid preset index");
             };
             session.set_active_amount(value);
+            if session.tab == PanelTab::Quick && !settings.quick_trade_confirmation_enabled {
+                let draft = quick_trade_draft(&session, &settings)?;
+                state.panels.lock().await.insert(telegram_id, session);
+                submit_quick_trade(bot, chat_id, message_id, state, user_id, telegram_id, draft)
+                    .await?;
+                return Ok(());
+            }
         }
         _ => return Ok(()),
     }
@@ -2029,40 +2123,79 @@ async fn apply_trade_panel_input(
     text: &str,
 ) -> Result<()> {
     let value = text.trim().parse::<f64>()?;
-    let mut panels = state.panels.lock().await;
-    let Some(session) = panels.get_mut(&telegram_id) else {
-        anyhow::bail!("交易面板已过期");
+    let settings = load_user_trade_settings(state, user_id).await?;
+    let immediate_draft = {
+        let mut panels = state.panels.lock().await;
+        let Some(session) = panels.get_mut(&telegram_id) else {
+            anyhow::bail!("交易面板已过期");
+        };
+        match field {
+            PanelInputField::Amount => {
+                if session.custom_quote()
+                    && session.tab == PanelTab::Quick
+                    && session.active_side() == PanelSide::Buy
+                {
+                    // Preserve the original decimal text until the on-chain mint precision is known.
+                    if text.trim().contains('e') || text.trim().contains('E') {
+                        anyhow::bail!("Quote 金额请使用普通小数格式");
+                    }
+                }
+                if !value.is_finite()
+                    || value <= 0.0
+                    || (session.active_side() == PanelSide::Sell
+                        && (value > 100.0 || value.fract() != 0.0))
+                {
+                    anyhow::bail!("买入金额必须大于 0；卖出比例必须是 1 到 100 的整数");
+                }
+                if session.custom_quote()
+                    && session.tab == PanelTab::Quick
+                    && session.active_side() == PanelSide::Buy
+                {
+                    session.quick.buy_amount_quote = Some(text.trim().to_string());
+                } else {
+                    session.set_active_amount(value);
+                }
+            }
+            PanelInputField::TriggerValue => {
+                if value <= 0.0 || !value.is_finite() {
+                    anyhow::bail!("触发数值必须大于 0");
+                }
+                session.set_active_trigger_value(value);
+            }
+            PanelInputField::Slippage => {
+                if !(0.0..=100.0).contains(&value) {
+                    anyhow::bail!("滑点必须在 0% 到 100% 之间");
+                }
+                session.active_execution_mut().slippage_bps = (value * 100.0).round() as u64;
+            }
+            PanelInputField::Tip => {
+                if value < 0.0 || !value.is_finite() {
+                    anyhow::bail!("小费必须大于或等于 0");
+                }
+                session.active_execution_mut().tip_sol = value;
+            }
+        }
+        if matches!(field, PanelInputField::Amount)
+            && session.tab == PanelTab::Quick
+            && !settings.quick_trade_confirmation_enabled
+        {
+            Some(quick_trade_draft(session, &settings)?)
+        } else {
+            None
+        }
     };
-    match field {
-        PanelInputField::Amount => {
-            if value <= 0.0
-                || (session.active_side() == PanelSide::Sell
-                    && (value > 100.0 || value.fract() != 0.0))
-            {
-                anyhow::bail!("买入金额必须大于 0；卖出比例必须是 1 到 100 的整数");
-            }
-            session.set_active_amount(value);
-        }
-        PanelInputField::TriggerValue => {
-            if value <= 0.0 || !value.is_finite() {
-                anyhow::bail!("触发数值必须大于 0");
-            }
-            session.set_active_trigger_value(value);
-        }
-        PanelInputField::Slippage => {
-            if !(0.0..=100.0).contains(&value) {
-                anyhow::bail!("滑点必须在 0% 到 100% 之间");
-            }
-            session.active_execution_mut().slippage_bps = (value * 100.0).round() as u64;
-        }
-        PanelInputField::Tip => {
-            if value < 0.0 || !value.is_finite() {
-                anyhow::bail!("小费必须大于或等于 0");
-            }
-            session.active_execution_mut().tip_sol = value;
-        }
+    if let Some(draft) = immediate_draft {
+        return submit_quick_trade(
+            bot,
+            chat_id,
+            panel_message_id,
+            state,
+            user_id,
+            telegram_id,
+            draft,
+        )
+        .await;
     }
-    drop(panels);
     render_trade_panel(bot, chat_id, panel_message_id, state, user_id, telegram_id).await
 }
 
@@ -2139,6 +2272,15 @@ async fn create_limit_order_from_panel(
 }
 
 fn validate_trade_draft(draft: &TradeDraft) -> Result<()> {
+    if matches!(draft.side, TradeSide::Buy) && custom_quote_route(&draft.route) {
+        if draft.quote_amount.as_deref().unwrap_or("").is_empty() {
+            anyhow::bail!("请先输入 Quote 买入金额");
+        }
+        if draft.execution.method != ExecutionMethod::Sdk {
+            anyhow::bail!("自定义 Quote 交易请使用 SDK 执行方式");
+        }
+        return draft.execution.validate();
+    }
     let size = match draft.side {
         TradeSide::Buy => OrderSize::FixedBuySol {
             amount_sol: draft.amount,
@@ -2149,6 +2291,38 @@ fn validate_trade_draft(draft: &TradeDraft) -> Result<()> {
     };
     size.validate()?;
     draft.execution.validate()
+}
+
+fn quick_trade_draft(
+    session: &TradePanelSession,
+    settings: &UserTradeSettings,
+) -> Result<TradeDraft> {
+    let side = match session.quick.side {
+        PanelSide::Buy => TradeSide::Buy,
+        PanelSide::Sell => TradeSide::Sell,
+    };
+    let amount = match session.quick.side {
+        PanelSide::Buy => session.quick.buy_amount_sol,
+        PanelSide::Sell => session.quick.sell_percent,
+    };
+    let mut execution = session.quick.execution.clone();
+    if !settings.use_mev {
+        execution.mev_mode = "none".to_string();
+    }
+    let draft = TradeDraft {
+        side,
+        mint: session.mint.clone(),
+        amount,
+        execution,
+        route: session.route.clone(),
+        quote_amount: if session.quick.side == PanelSide::Buy && session.custom_quote() {
+            session.quick.buy_amount_quote.clone()
+        } else {
+            None
+        },
+    };
+    validate_trade_draft(&draft)?;
+    Ok(draft)
 }
 
 fn manual_mev_settings(mev_mode: &str) -> Result<(bool, Option<String>)> {
@@ -2179,6 +2353,7 @@ async fn show_order_detail(
         .amount_sol
         .map(|value| format!("{value} SOL"))
         .or_else(|| order.sell_percent.map(|value| format!("{value}%")))
+        .or_else(|| quote_order_amount(order.request_json.as_deref()))
         .unwrap_or_else(|| "-".to_string());
     let request_summary = order
         .request_json
@@ -2893,12 +3068,26 @@ async fn handle_trade_text(
             return Ok(());
         }
     };
+    if matches!(side, TradeSide::Buy) && custom_quote_route(&route) {
+        return open_trade_panel_at_message(
+            bot,
+            chat_id,
+            resolving.id,
+            state,
+            app_user.id,
+            telegram_id,
+            mint,
+            PanelTab::Quick,
+        )
+        .await;
+    }
     let draft = TradeDraft {
         side: side.clone(),
         mint: mint.to_string(),
         amount,
         execution,
         route,
+        quote_amount: None,
     };
     state.pending.lock().await.insert(
         telegram_id,
@@ -2982,6 +3171,19 @@ async fn create_limit_order_from_text(
         return Ok(());
     }
 
+    if matches!(side, TradeSide::Buy) {
+        let route = resolve_pool_route(state, mint, false).await?;
+        if custom_quote_route(&route) {
+            bot.send_message(
+                chat_id,
+                "该池以自定义 Quote 计价，请在快速交易面板设置 Quote 金额。",
+            )
+            .reply_markup(back_to_main_keyboard())
+            .await?;
+            return Ok(());
+        }
+    }
+
     let wallet = state.db.active_wallet(user_id).await?;
     let settings = load_user_trade_settings(state, user_id).await?;
     let action = direction.action(&side);
@@ -3038,6 +3240,35 @@ async fn create_limit_order_from_text(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
+async fn submit_quick_trade(
+    bot: &HtmlBot,
+    chat_id: ChatId,
+    message_id: MessageId,
+    state: &BotState,
+    user_id: i64,
+    telegram_id: i64,
+    draft: TradeDraft,
+) -> Result<()> {
+    let acquired = state.trades_in_flight.lock().await.insert(telegram_id);
+    if !acquired {
+        return Ok(());
+    }
+    let result =
+        execute_trade_draft(bot, chat_id, message_id, state, user_id, telegram_id, draft).await;
+    state.trades_in_flight.lock().await.remove(&telegram_id);
+    if let Err(error_value) = result {
+        bot.edit_message_text(
+            chat_id,
+            message_id,
+            format!("交易未提交：{}", escape_html(&error_value.to_string())),
+        )
+        .reply_markup(trade_menu_keyboard())
+        .await?;
+    }
+    Ok(())
+}
+
 async fn execute_pending_trade(
     bot: &HtmlBot,
     chat_id: ChatId,
@@ -3046,15 +3277,36 @@ async fn execute_pending_trade(
     user_id: i64,
     telegram_id: i64,
 ) -> Result<()> {
+    let acquired = state.trades_in_flight.lock().await.insert(telegram_id);
+    if !acquired {
+        return Ok(());
+    }
     let Some(PendingAction::ConfirmTrade { draft }) =
         state.pending.lock().await.remove(&telegram_id)
     else {
+        state.trades_in_flight.lock().await.remove(&telegram_id);
         bot.edit_message_text(chat_id, message_id, "没有待确认交易")
             .reply_markup(trade_menu_keyboard())
             .await?;
         return Ok(());
     };
 
+    let result =
+        execute_trade_draft(bot, chat_id, message_id, state, user_id, telegram_id, draft).await;
+    state.trades_in_flight.lock().await.remove(&telegram_id);
+    result
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn execute_trade_draft(
+    bot: &HtmlBot,
+    chat_id: ChatId,
+    message_id: MessageId,
+    state: &BotState,
+    user_id: i64,
+    telegram_id: i64,
+    draft: TradeDraft,
+) -> Result<()> {
     bot.edit_message_text(
         chat_id,
         message_id,
@@ -3085,6 +3337,15 @@ async fn execute_pending_trade(
     let idempotency_key = format!("manual-{}-{}", side, Uuid::new_v4());
 
     if execution.mode.is_dry_run() {
+        let dry_run_request = custom_quote_route(&draft.route).then(|| {
+            serde_json::json!({
+                "quote_mint": draft.route.quote_mint,
+                "amount_quote": draft.quote_amount,
+                "pool": draft.route.pool,
+                "pool_id": draft.route.pool_id,
+            })
+            .to_string()
+        });
         let order_id = state
             .db
             .insert_order(
@@ -3094,25 +3355,31 @@ async fn execute_pending_trade(
                 None,
                 &draft.mint,
                 side,
-                matches!(draft.side, TradeSide::Buy).then_some(draft.amount),
+                (matches!(draft.side, TradeSide::Buy) && !custom_quote_route(&draft.route))
+                    .then_some(draft.amount),
                 matches!(draft.side, TradeSide::Sell).then_some(draft.amount),
                 "dry_run",
                 &idempotency_key,
-                None,
+                dry_run_request.as_deref(),
                 None,
                 None,
                 None,
             )
             .await?;
-        bot.edit_message_text(
+        show_opposite_trade_panel(
+            bot,
             chat_id,
             message_id,
+            state,
+            user_id,
+            telegram_id,
+            &draft,
             format!(
-                "Dry-run 交易已记录\n订单: <code>{}</code>\n未调用 trade_service。",
+                "Dry-run {}已记录\n订单: <code>{}</code>\n未调用 trade_service。",
+                draft.side.label(),
                 order_id
             ),
         )
-        .reply_markup(trade_menu_keyboard())
         .await?;
         return Ok(());
     }
@@ -3197,15 +3464,62 @@ async fn execute_pending_trade(
     };
 
     let (use_mev, mev_provider) = manual_mev_settings(&execution.mev_mode)?;
+    if custom_quote_route(&draft.route) && execution.method != ExecutionMethod::Sdk {
+        anyhow::bail!("自定义 Quote 交易请使用 SDK 执行方式");
+    }
+    let quote_units = if matches!(draft.side, TradeSide::Buy) && custom_quote_route(&draft.route) {
+        let current_route = resolve_pool_route(state, &draft.mint, true).await?;
+        if current_route != draft.route {
+            anyhow::bail!("池或 Quote 已变化，请刷新交易面板");
+        }
+        let quote = state
+            .trade_client
+            .quote_balance(user_id, &trade_service_wallet_id, &draft.route.quote_mint)
+            .await?;
+        if quote.quote_mint != draft.route.quote_mint {
+            anyhow::bail!("Quote Mint 不匹配");
+        }
+        let units = quote_amount_units(
+            draft
+                .quote_amount
+                .as_deref()
+                .context("请输入 Quote 买入金额")?,
+            quote.decimals,
+        )?;
+        if execution.mode == ExecutionMode::Live && quote.balance_units < units {
+            anyhow::bail!(
+                "Quote 余额不足：可用 {}，需要 {}",
+                format_quote_units(quote.balance_units, quote.decimals),
+                draft.quote_amount.as_deref().unwrap_or("-")
+            );
+        }
+        if execution.mode == ExecutionMode::Live
+            && quote.balance_lamports
+                < 3_000_000 + (execution.tip_sol * 1_000_000_000.0).ceil() as u64
+        {
+            anyhow::bail!("SOL 余额不足以支付交易费用及可能的代币账户租金");
+        }
+        Some(units)
+    } else {
+        None
+    };
     let request = TradeRequest {
         wallet_id: Some(trade_service_wallet_id),
         execution_method: execution.method.as_str().to_string(),
         side: side.to_string(),
         pool: draft.route.pool.clone(),
         mint: draft.mint.clone(),
-        pool_id: draft.route.pool_id.clone(),
+        pool_id: crate::executor::trade_service_pool_id(
+            &draft.route.pool,
+            draft.route.pool_id.as_deref(),
+        ),
         quote_mint: Some(draft.route.quote_mint.clone()),
-        amount_sol: matches!(draft.side, TradeSide::Buy).then_some(draft.amount),
+        amount_quote_units: quote_units,
+        settlement_asset: None,
+        sol_hop_pool: None,
+        sol_hop_pool_id: None,
+        amount_sol: (matches!(draft.side, TradeSide::Buy) && quote_units.is_none())
+            .then_some(draft.amount),
         sell_percent: matches!(draft.side, TradeSide::Sell).then_some(draft.amount.round() as u64),
         slippage_percent: execution.slippage_bps as f64 / 100.0,
         tip_sol: execution.tip_sol,
@@ -3262,20 +3576,32 @@ async fn execute_pending_trade(
                     None,
                 )
                 .await?;
-            bot.edit_message_text(
-                chat_id,
-                message_id,
-                format!(
-                    "订单已进入 trade_service\n钱包 ID: <code>{}</code>\n状态: {}\n订单: <code>{}</code>\n远端请求: <code>{}</code>\n签名: <code>{}</code>",
-                    request.wallet_id.as_deref().unwrap_or("-"),
-                    status,
-                    order_id,
-                    response.request_id.as_deref().unwrap_or("-"),
-                    response.signature.as_deref().unwrap_or("-")
-                ),
-            )
-            .reply_markup(trade_menu_keyboard())
-            .await?;
+            let result_text = format!(
+                "上笔{}已进入 trade_service\n钱包 ID: <code>{}</code>\n状态: {}\n订单: <code>{}</code>\n远端请求: <code>{}</code>\n签名: <code>{}</code>",
+                draft.side.label(),
+                request.wallet_id.as_deref().unwrap_or("-"),
+                status,
+                order_id,
+                response.request_id.as_deref().unwrap_or("-"),
+                response.signature.as_deref().unwrap_or("-")
+            );
+            if status == "failed" || response.error.is_some() {
+                bot.edit_message_text(chat_id, message_id, result_text)
+                    .reply_markup(trade_menu_keyboard())
+                    .await?;
+            } else {
+                show_opposite_trade_panel(
+                    bot,
+                    chat_id,
+                    message_id,
+                    state,
+                    user_id,
+                    telegram_id,
+                    &draft,
+                    result_text,
+                )
+                .await?;
+            }
         }
         Err(err) => {
             let error = err.to_string();
@@ -3313,6 +3639,42 @@ async fn execute_pending_trade(
     }
 
     Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn show_opposite_trade_panel(
+    bot: &HtmlBot,
+    chat_id: ChatId,
+    message_id: MessageId,
+    state: &BotState,
+    user_id: i64,
+    telegram_id: i64,
+    draft: &TradeDraft,
+    notice: String,
+) -> Result<()> {
+    let completed_side = match draft.side {
+        TradeSide::Buy => PanelSide::Buy,
+        TradeSide::Sell => PanelSide::Sell,
+    };
+    let panel_updated = {
+        let mut panels = state.panels.lock().await;
+        match panels.get_mut(&telegram_id) {
+            Some(session)
+                if session.message_id == Some(message_id) && session.mint == draft.mint =>
+            {
+                session.show_opposite_quick_side(completed_side, notice.clone());
+                true
+            }
+            _ => false,
+        }
+    };
+    if !panel_updated {
+        bot.edit_message_text(chat_id, message_id, notice)
+            .reply_markup(trade_menu_keyboard())
+            .await?;
+        return Ok(());
+    }
+    render_trade_panel(bot, chat_id, message_id, state, user_id, telegram_id).await
 }
 
 async fn record_manual_blocked(
@@ -4033,6 +4395,7 @@ fn user_trade_settings_defaults(config: &AppConfig, user_id: i64) -> UserTradeSe
             config.default_buy_amount_sol,
         ),
         default_sell_preset_slot: closest_slot(&config.quick_sell_presets_percent, 100.0),
+        quick_trade_confirmation_enabled: true,
         buy_presets_sol: config.quick_buy_presets_sol,
         sell_presets_percent: config.quick_sell_presets_percent,
     }
@@ -4183,6 +4546,21 @@ async fn handle_settings_callback(
             }
             SettingsPage::Mev
         }
+        "settings:toggle_quick_confirmation" => {
+            state
+                .db
+                .update_user_trade_setting(
+                    user_id,
+                    "quick_trade_confirmation_enabled",
+                    if settings.quick_trade_confirmation_enabled {
+                        "0"
+                    } else {
+                        "1"
+                    },
+                )
+                .await?;
+            SettingsPage::Home
+        }
         value if value.starts_with("settings:select:provider:") => {
             let provider = value.trim_start_matches("settings:select:provider:");
             if !MEV_PROVIDERS.contains(&provider) {
@@ -4310,13 +4688,18 @@ fn global_settings_text(_config: &AppConfig, settings: &UserTradeSettings) -> St
         .join("% / ");
 
     format!(
-        "全局设置\n\n默认模式: {}\n执行方式: {}\n滑点: {}%\n小费: {} SOL\nUSE_MEV: {}\nMEV Provider: {}\n买入快捷金额: {} SOL\n卖出快捷比例: {}%",
+        "全局设置\n\n默认模式: {}\n执行方式: {}\n滑点: {}%\n小费: {} SOL\nUSE_MEV: {}\nMEV Provider: {}\n快速交易确认: {}\n买入快捷金额: {} SOL\n卖出快捷比例: {}%",
         execution_mode_setting_label(&settings.default_execution_mode),
         settings.default_execution_method.to_ascii_uppercase(),
         trim_float(settings.default_slippage_bps as f64 / 100.0),
         trim_float(settings.default_tip_sol),
         if settings.use_mev { "开启" } else { "关闭" },
         settings.default_mev_provider,
+        if settings.quick_trade_confirmation_enabled {
+            "开启"
+        } else {
+            "关闭"
+        },
         buy_presets,
         sell_presets,
     )
@@ -4327,5 +4710,33 @@ fn execution_mode_setting_label(value: &str) -> &'static str {
         "Live"
     } else {
         "Dry-run"
+    }
+}
+
+#[cfg(test)]
+mod quote_amount_tests {
+    use super::{format_quote_units, quote_amount_units};
+
+    #[test]
+    fn converts_quote_decimal_exactly() {
+        assert_eq!(quote_amount_units("9.03156134", 8).unwrap(), 903_156_134);
+        assert_eq!(format_quote_units(903_156_134, 8), "9.03156134");
+        assert_eq!(quote_amount_units("1", 6).unwrap(), 1_000_000);
+    }
+
+    #[test]
+    fn rejects_precision_and_overflow() {
+        assert!(quote_amount_units("0.000000001", 8).is_err());
+        assert!(quote_amount_units("1e3", 8).is_err());
+        assert!(quote_amount_units("18446744073709551616", 8).is_err());
+        assert!(quote_amount_units("0", 8).is_err());
+    }
+
+    #[test]
+    fn quote_order_amount_is_not_labeled_sol() {
+        let request = r#"{"quote_mint":"Xsf9mBktVB9BSU5kf4nHxPq5hCBJ2j2ui3ecFGxPRGc","amount_quote_units":903156134}"#;
+        assert!(super::quote_order_amount(Some(request))
+            .unwrap()
+            .contains("903156134 最小单位"));
     }
 }

@@ -249,6 +249,12 @@ impl Database {
             "TEXT NOT NULL DEFAULT 'dry_run'",
         )
         .await?;
+        self.ensure_column(
+            "user_trade_settings",
+            "quick_trade_confirmation_enabled",
+            "INTEGER NOT NULL DEFAULT 1",
+        )
+        .await?;
         Ok(())
     }
 
@@ -312,8 +318,8 @@ impl Database {
             "INSERT OR IGNORE INTO user_trade_settings
              (user_id, use_mev, default_mev_provider, default_execution_mode, default_execution_method,
               default_slippage_bps, default_tip_sol, default_buy_preset_slot,
-              default_sell_preset_slot)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              default_sell_preset_slot, quick_trade_confirmation_enabled)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         )
         .bind(defaults.user_id)
         .bind(i64::from(defaults.use_mev))
@@ -324,6 +330,7 @@ impl Database {
         .bind(defaults.default_tip_sol)
         .bind((defaults.default_buy_preset_slot + 1) as i64)
         .bind((defaults.default_sell_preset_slot + 1) as i64)
+        .bind(i64::from(defaults.quick_trade_confirmation_enabled))
         .execute(&mut *tx)
         .await?;
         for (side, values) in [
@@ -351,7 +358,7 @@ impl Database {
         let row = sqlx::query(
             "SELECT user_id, use_mev, default_mev_provider, default_execution_mode, default_execution_method,
                     default_slippage_bps, default_tip_sol, default_buy_preset_slot,
-                    default_sell_preset_slot
+                    default_sell_preset_slot, quick_trade_confirmation_enabled
              FROM user_trade_settings WHERE user_id = ?",
         )
         .bind(user_id)
@@ -393,6 +400,8 @@ impl Database {
                 as usize,
             default_sell_preset_slot: (row.get::<i64, _>("default_sell_preset_slot") - 1)
                 .clamp(0, 4) as usize,
+            quick_trade_confirmation_enabled: row.get::<i64, _>("quick_trade_confirmation_enabled")
+                != 0,
             buy_presets_sol: buy,
             sell_presets_percent: sell,
         })
@@ -413,6 +422,7 @@ impl Database {
             "default_tip_sol",
             "default_buy_preset_slot",
             "default_sell_preset_slot",
+            "quick_trade_confirmation_enabled",
         ]
         .contains(&field)
         {
@@ -1732,7 +1742,7 @@ impl Database {
 
     pub async fn list_recent_orders(&self, user_id: i64, limit: i64) -> Result<Vec<OrderSummary>> {
         let rows = sqlx::query(
-            "SELECT id, mint, side, status, amount_sol, sell_percent, tx_signature, error, created_at
+            "SELECT id, mint, side, status, amount_sol, sell_percent, trade_service_request_json, tx_signature, error, created_at
              FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
         )
         .bind(user_id)
@@ -1749,6 +1759,7 @@ impl Database {
                 status: row.get("status"),
                 amount_sol: row.get("amount_sol"),
                 sell_percent: row.get("sell_percent"),
+                request_json: row.get("trade_service_request_json"),
                 tx_signature: row.get("tx_signature"),
                 error: row.get("error"),
                 created_at: row.get("created_at"),
@@ -2036,7 +2047,7 @@ impl Database {
     ) -> Result<Option<OrderSummary>> {
         let needle = format!("%\"limit_order_id\":\"{}\"%", limit_order_id);
         let row = sqlx::query(
-            "SELECT id, mint, side, status, amount_sol, sell_percent, tx_signature, error, created_at
+            "SELECT id, mint, side, status, amount_sol, sell_percent, trade_service_request_json, tx_signature, error, created_at
              FROM orders
              WHERE user_id = ? AND trade_service_request_json LIKE ?
              ORDER BY created_at DESC
@@ -2054,6 +2065,7 @@ impl Database {
             status: row.get("status"),
             amount_sol: row.get("amount_sol"),
             sell_percent: row.get("sell_percent"),
+            request_json: row.get("trade_service_request_json"),
             tx_signature: row.get("tx_signature"),
             error: row.get("error"),
             created_at: row.get("created_at"),
@@ -2375,6 +2387,7 @@ mod tests {
             default_tip_sol: 0.0001,
             default_buy_preset_slot: 2,
             default_sell_preset_slot: 4,
+            quick_trade_confirmation_enabled: true,
             buy_presets_sol: [0.001, 0.005, 0.01, 0.05, 0.1],
             sell_presets_percent: [10.0, 25.0, 50.0, 75.0, 100.0],
         };
@@ -2385,6 +2398,7 @@ mod tests {
         assert_eq!(seeded.default_buy_preset_slot, 2);
         assert_eq!(seeded.buy_presets_sol[2], 0.01);
         assert_eq!(seeded.default_execution_mode, "dry_run");
+        assert!(seeded.quick_trade_confirmation_enabled);
 
         db.update_user_trade_setting(user.id, "use_mev", "1")
             .await
@@ -2395,12 +2409,16 @@ mod tests {
         db.update_user_trade_setting(user.id, "default_execution_mode", "live")
             .await
             .unwrap();
+        db.update_user_trade_setting(user.id, "quick_trade_confirmation_enabled", "0")
+            .await
+            .unwrap();
         db.update_user_trade_preset(user.id, "buy", 4, 0.2)
             .await
             .unwrap();
         let updated = db.get_user_trade_settings(user.id).await.unwrap();
         assert!(updated.use_mev);
         assert_eq!(updated.default_execution_mode, "live");
+        assert!(!updated.quick_trade_confirmation_enabled);
         assert_eq!(updated.default_buy_preset_slot, 3);
         assert_eq!(updated.buy_presets_sol[3], 0.2);
     }

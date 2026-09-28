@@ -118,12 +118,16 @@ fn route_from_event(event: &PumpApiEvent) -> Option<ResolvedPoolRoute> {
     if mint.is_empty() || quote_mint.is_empty() || !supported_pool(&pool) {
         return None;
     }
-    let pool_id = event
-        .pool_id
-        .as_deref()
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(ToString::to_string);
+    let pool_id = if matches!(pool.as_str(), "pump" | "bonk") {
+        None
+    } else {
+        event
+            .pool_id
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(ToString::to_string)
+    };
     if !matches!(pool.as_str(), "pump" | "bonk") && pool_id.is_none() {
         return None;
     }
@@ -141,6 +145,8 @@ fn supported_pool(pool: &str) -> bool {
         "pump"
             | "pump-amm"
             | "bonk"
+            | "stonkfun"
+            | "stonkfun-swap"
             | "meteora-damm-v2"
             | "meteora-dbc"
             | "raydium-amm-v4"
@@ -176,5 +182,14 @@ mod tests {
         let route = route_from_event(&event(Some("pool-1"))).unwrap();
         assert_eq!(route.pool, "pump-amm");
         assert_eq!(route.pool_id.as_deref(), Some("pool-1"));
+    }
+
+    #[test]
+    fn pump_event_route_discards_pool_id() {
+        let mut event = event(Some("bonding-curve"));
+        event.pool = Some("pump".to_string());
+        let route = route_from_event(&event).unwrap();
+        assert_eq!(route.pool, "pump");
+        assert_eq!(route.pool_id, None);
     }
 }

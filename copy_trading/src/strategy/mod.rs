@@ -620,6 +620,8 @@ fn fast_route_block_reason(
         "pump"
             | "pump-amm"
             | "bonk"
+            | "stonkfun"
+            | "stonkfun-swap"
             | "meteora-damm-v2"
             | "meteora-dbc"
             | "raydium-amm-v4"
@@ -633,6 +635,12 @@ fn fast_route_block_reason(
     if side == "buy" {
         if let Some(quote_mint) = event.quote_mint.as_deref() {
             if !matches!(quote_mint, WSOL | SOL) {
+                if matches!(pool, "stonkfun" | "stonkfun-swap") {
+                    return Some(
+                        "自定义 Quote 跟买尚未设置 Quote 金额；当前 SOL 策略金额不可用于该池"
+                            .to_string(),
+                    );
+                }
                 return Some(format!("unsupported fast follow quote mint {quote_mint}"));
             }
         }

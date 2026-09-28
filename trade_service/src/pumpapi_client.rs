@@ -7,7 +7,7 @@ use solana_commitment_config::{CommitmentConfig, CommitmentLevel};
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::transaction::VersionedTransaction;
-use solana_transaction_status::UiTransactionEncoding;
+use solana_transaction_status_client_types::UiTransactionEncoding;
 use std::str::FromStr;
 use std::time::Duration;
 use tokio::time::{sleep, Instant};

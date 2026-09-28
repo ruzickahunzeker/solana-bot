@@ -4,14 +4,17 @@ use std::str::FromStr;
 
 use crate::config::Config;
 use crate::models::{
-    ExecutionMethod, MevProvider, Pool, Side, TradeRequest, WarmupRequest, SOL_MINT, USD1_MINT,
-    USDC_MINT, WSOL_MINT,
+    ExecutionMethod, MevProvider, Pool, SettlementAsset, Side, TradeRequest, WarmupRequest,
+    SOL_MINT, USD1_MINT, USDC_MINT, WSOL_MINT,
 };
 
 pub struct NormalizedTrade {
     pub mint: Pubkey,
     pub quote_mint: Pubkey,
     pub pool_id: Option<Pubkey>,
+    pub settlement_asset: SettlementAsset,
+    pub sol_hop_pool: Option<Pool>,
+    pub sol_hop_pool_id: Option<Pubkey>,
     pub amount_lamports: Option<u64>,
     pub sell_percent: Option<u64>,
     pub slippage_bps: u64,
@@ -45,6 +48,7 @@ pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result
     if request.idempotency_key.trim().is_empty() {
         bail!("idempotency_key is required");
     }
+    validate_amount_fields(request)?;
     let mint = parse_pubkey("mint", &request.mint)?;
     let pool_id = parse_optional_pubkey("pool_id", request.pool_id.as_deref())?;
     let quote_mint = normalize_quote_mint(request.quote_mint.as_deref())?;
@@ -59,10 +63,20 @@ pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result
         bail!("tip_sol must be greater than or equal to 0");
     }
     let (use_mev, mev_provider) = normalize_mev_override(request)?;
+    let settlement_asset = request.settlement_asset.unwrap_or(SettlementAsset::Quote);
+    let sol_hop_pool_id =
+        parse_optional_pubkey("sol_hop_pool_id", request.sol_hop_pool_id.as_deref())?;
+    validate_via_sol(
+        request,
+        config,
+        &quote_mint,
+        settlement_asset,
+        sol_hop_pool_id,
+    )?;
 
     let (amount_lamports, sell_percent) = match request.side {
         Side::Buy => {
-            let amount = normalize_amount_units(request, config, &quote_mint)?;
+            let amount = normalize_amount_units(request, config, &quote_mint, settlement_asset)?;
             if amount == 0 {
                 bail!("buy amount must be greater than 0");
             }
@@ -86,6 +100,9 @@ pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result
         mint,
         quote_mint,
         pool_id,
+        settlement_asset,
+        sol_hop_pool: request.sol_hop_pool,
+        sol_hop_pool_id,
         amount_lamports,
         sell_percent,
         slippage_bps,
@@ -95,6 +112,27 @@ pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result
         mev_provider,
         simulate: request.simulate,
     })
+}
+
+fn validate_amount_fields(request: &TradeRequest) -> anyhow::Result<()> {
+    let count = [
+        request.amount_sol.is_some(),
+        request.amount_lamports.is_some(),
+        request.amount_quote.is_some(),
+        request.amount_usdc.is_some(),
+        request.amount_quote_units.is_some(),
+    ]
+    .into_iter()
+    .filter(|present| *present)
+    .count();
+    match request.side {
+        Side::Buy if count > 1 => bail!("buy request must provide at most one amount field"),
+        Side::Sell if count > 0 => bail!("sell request must not provide buy amount fields"),
+        Side::Buy if request.sell_percent.is_some() => {
+            bail!("buy request must not provide sell_percent")
+        }
+        _ => Ok(()),
+    }
 }
 
 fn validate_execution_method(
@@ -157,7 +195,12 @@ fn validate_pool_id_rule(
             Ok(())
         }
         Pool::PumpAmm => Ok(()),
-        Pool::MeteoraDammV2 | Pool::MeteoraDbc | Pool::RaydiumAmmV4 | Pool::RaydiumCpmm => {
+        Pool::StonkFun
+        | Pool::StonkFunSwap
+        | Pool::MeteoraDammV2
+        | Pool::MeteoraDbc
+        | Pool::RaydiumAmmV4
+        | Pool::RaydiumCpmm => {
             if pool_id.is_none() {
                 bail!("pool_id is required for {:?}", pool);
             }
@@ -170,7 +213,23 @@ fn normalize_amount_units(
     request: &TradeRequest,
     config: &Config,
     quote_mint: &Pubkey,
+    settlement_asset: SettlementAsset,
 ) -> anyhow::Result<u64> {
+    if settlement_asset == SettlementAsset::Sol {
+        if request.amount_quote.is_some()
+            || request.amount_usdc.is_some()
+            || request.amount_quote_units.is_some()
+        {
+            bail!("settlement_asset=sol accepts only amount_sol or amount_lamports");
+        }
+        if let Some(amount_sol) = request.amount_sol {
+            return token_to_units("amount_sol", amount_sol, 9);
+        }
+        if let Some(amount_lamports) = request.amount_lamports {
+            return Ok(amount_lamports);
+        }
+        return token_to_units("DEFAULT_BUY_SOL", config.default_buy_sol, 9);
+    }
     if let Some(units) = request.amount_quote_units {
         return Ok(units);
     }
@@ -201,6 +260,10 @@ fn normalize_amount_units(
         bail!("USD1 quote requires amount_quote");
     }
 
+    if !is_wsol_quote(quote_mint) {
+        bail!("custom quote token requires amount_quote_units");
+    }
+
     if request.amount_usdc.is_some() {
         bail!("amount_usdc is only valid when quote_mint is USDC");
     }
@@ -214,6 +277,50 @@ fn normalize_amount_units(
         return Ok(amount_lamports);
     }
     token_to_units("DEFAULT_BUY_SOL", config.default_buy_sol, 9)
+}
+
+fn validate_via_sol(
+    request: &TradeRequest,
+    config: &Config,
+    quote_mint: &Pubkey,
+    settlement_asset: SettlementAsset,
+    sol_hop_pool_id: Option<Pubkey>,
+) -> anyhow::Result<()> {
+    if settlement_asset != SettlementAsset::Sol {
+        if request.sol_hop_pool.is_some() || sol_hop_pool_id.is_some() {
+            bail!("sol_hop_pool and sol_hop_pool_id require settlement_asset=sol");
+        }
+        return Ok(());
+    }
+    if !matches!(request.pool, Pool::StonkFun | Pool::StonkFunSwap) {
+        bail!("settlement_asset=sol is only supported for stonkfun pools");
+    }
+    if is_wsol_quote(quote_mint) {
+        bail!("settlement_asset=sol is unnecessary when quote_mint is WSOL");
+    }
+    if !config.stonkfun_via_sol.enabled {
+        bail!("stonkfun Via-SOL is disabled by STONKFUN_VIA_SOL_ENABLED");
+    }
+    if request.sol_hop_pool != Some(Pool::RaydiumCpmm) {
+        bail!("stonkfun Via-SOL currently requires sol_hop_pool=raydium-cpmm");
+    }
+    if sol_hop_pool_id.is_none() {
+        bail!("sol_hop_pool_id is required for stonkfun Via-SOL");
+    }
+    if matches!(request.side, Side::Buy) {
+        let requested_sol = request
+            .amount_sol
+            .or_else(|| {
+                request
+                    .amount_lamports
+                    .map(|value| value as f64 / 1_000_000_000.0)
+            })
+            .unwrap_or(config.default_buy_sol);
+        if requested_sol > config.stonkfun_via_sol.max_buy_sol {
+            bail!("stonkfun Via-SOL buy exceeds STONKFUN_VIA_SOL_MAX_BUY_SOL");
+        }
+    }
+    Ok(())
 }
 
 fn normalize_slippage_bps(request: &TradeRequest, config: &Config) -> anyhow::Result<u64> {
@@ -262,9 +369,6 @@ fn normalize_quote_mint(value: Option<&str>) -> anyhow::Result<Pubkey> {
     if pubkey == parse_known_pubkey(SOL_MINT) {
         return Ok(parse_known_pubkey(WSOL_MINT));
     }
-    if !is_wsol_quote(&pubkey) && !is_usdc_quote(&pubkey) && !is_usd1_quote(&pubkey) {
-        bail!("quote_mint must be WSOL, USDC, or USD1");
-    }
     Ok(pubkey)
 }
 
@@ -275,6 +379,7 @@ fn validate_quote_mint_for_pool(pool: Pool, quote_mint: &Pubkey) -> anyhow::Resu
                 bail!("bonk quote_mint must be WSOL or USD1");
             }
         }
+        Pool::StonkFun | Pool::StonkFunSwap => {}
         Pool::Pump
         | Pool::PumpAmm
         | Pool::MeteoraDammV2

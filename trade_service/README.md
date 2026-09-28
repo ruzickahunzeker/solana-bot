@@ -31,15 +31,15 @@ LOCAL_TRADE_API_TOKEN=replace-with-local-random-token
 
 # 多钱包可选配置。优先使用加密钱包文件。
 DEFAULT_WALLET_ID=main
-WALLETS_CONFIG_ENCRYPTED=/root/http/trade_service/wallets.json.enc
-WALLETS_CONFIG_PASSPHRASE_FILE=/root/http/trade_service/.wallets.passphrase
+WALLETS_CONFIG_ENCRYPTED=/root/http/sol-bot/trade_service/wallets.json.enc
+WALLETS_CONFIG_PASSPHRASE_FILE=/root/http/sol-bot/trade_service/.wallets.passphrase
 WALLET_STORAGE_MODE=file
 WALLET_DATABASE_URL=sqlite://./data/wallets.sqlite
 WALLET_DB_BUSY_TIMEOUT_MS=5000
-WALLET_DATABASE_PASSPHRASE_FILE=/root/http/trade_service/.wallets.passphrase
+WALLET_DATABASE_PASSPHRASE_FILE=/root/http/sol-bot/trade_service/.wallets.passphrase
 
 # 明文兼容模式，不建议长期使用。
-# WALLETS_CONFIG=/root/http/trade_service/wallets.json
+# WALLETS_CONFIG=/root/http/sol-bot/trade_service/wallets.json
 
 TRADE_HTTP_ADDR=127.0.0.1:18787
 DEFAULT_BUY_SOL=0.001
@@ -155,7 +155,7 @@ base58 编码的 Solana keypair secret。单钱包兼容模式使用。只放在
 建议权限：
 
 ```bash
-chmod 600 /root/http/trade_service/wallets.json
+chmod 600 /root/http/sol-bot/trade_service/wallets.json
 ```
 
 `WALLETS_CONFIG_ENCRYPTED`
@@ -171,7 +171,7 @@ chmod 600 /root/http/trade_service/wallets.json
 配套 passphrase 有两种方式：
 
 ```env
-WALLETS_CONFIG_PASSPHRASE_FILE=/root/http/trade_service/.wallets.passphrase
+WALLETS_CONFIG_PASSPHRASE_FILE=/root/http/sol-bot/trade_service/.wallets.passphrase
 ```
 
 或：
@@ -183,7 +183,7 @@ WALLETS_CONFIG_PASSPHRASE=只建议临时 shell 使用，不建议写入 .env
 迁移明文 `wallets.json` 到加密文件：
 
 ```bash
-cd /root/http/trade_service
+cd /root/http/sol-bot/trade_service
 umask 077
 openssl rand -base64 48 > .wallets.passphrase
 cargo run --release --bin encrypt_wallets -- \
@@ -196,9 +196,9 @@ chmod 600 .wallets.passphrase wallets.json.enc
 然后 `.env` 使用：
 
 ```env
-WALLETS_CONFIG_ENCRYPTED=/root/http/trade_service/wallets.json.enc
-WALLETS_CONFIG_PASSPHRASE_FILE=/root/http/trade_service/.wallets.passphrase
-# WALLETS_CONFIG=/root/http/trade_service/wallets.json
+WALLETS_CONFIG_ENCRYPTED=/root/http/sol-bot/trade_service/wallets.json.enc
+WALLETS_CONFIG_PASSPHRASE_FILE=/root/http/sol-bot/trade_service/.wallets.passphrase
+# WALLETS_CONFIG=/root/http/sol-bot/trade_service/wallets.json
 ```
 
 确认服务能用加密文件启动后，再处理旧明文 `wallets.json`。
@@ -254,14 +254,14 @@ Authorization: Bearer $LOCAL_TRADE_API_TOKEN
 服务启动会优先读取当前目录或其上级目录的 `.env`；如果没有找到，还会从可执行文件所在目录往上查找 `.env`。因此推荐从项目目录启动：
 
 ```bash
-cd /root/http/trade_service
+cd /root/http/sol-bot/trade_service
 ./target/release/pump-trade-service
 ```
 
 curl 所在 shell 也需要有同一个 token。可以临时从 `.env` 加载：
 
 ```bash
-cd /root/http/trade_service
+cd /root/http/sol-bot/trade_service
 set -a
 source .env
 set +a
@@ -308,6 +308,16 @@ buy/sell 请求没有传 `slippage_percent` 时使用的默认滑点，单位百
 默认小费，单位 SOL。SDK 路径会把它传给交易 gas fee strategy，可供 Jito/SWQoS lane 使用。
 
 当请求使用 `execution_method:"pumpapi"` 时，单笔 `tip_sol` 会转换成 PumpAPI 的 `priorityFee`；如果单笔没有传 `tip_sol`，使用 `PUMPAPI_DEFAULT_PRIORITY_FEE_SOL`。
+
+`STONKFUN_VIA_SOL_ENABLED`
+
+是否允许 StonkFun 自定义 Quote 使用原子两跳 `SOL -> Quote -> Meme`（卖出反向执行）。默认 `false`。开启后请求仍必须显式传 `settlement_asset:"sol"`、`sol_hop_pool:"raydium-cpmm"` 和经过确认的 `sol_hop_pool_id`；服务会从链上校验第二跳池同时包含 WSOL 与目标 Quote。
+
+`STONKFUN_VIA_SOL_MAX_BUY_SOL`
+
+Via-SOL 单笔买入上限，单位 SOL，默认 `0.1`。该限制只收紧 Via-SOL，不改变其他交易路径。
+
+自定义 Quote 直接交易时，买入请求传 `amount_quote_units`（Quote 最小单位），钱包须预先持有该 Quote。受内部鉴权保护的 `GET /internal/wallets/:wallet_id/quote-balance/:mint?owner_type=copy_trading&owner_id=<用户ID>` 返回链上 Mint 精度、Quote 最小单位余额及 SOL lamports 余额；钱包必须属于该用户或为可见的 system 钱包。该接口供 Telegram 面板显示余额和精确换算金额使用。
 
 `ENABLE_SIMULATE`
 
@@ -370,7 +380,7 @@ blockhash 最大可用年龄。超过这个时间，交易请求会被拒绝，�
 
 ## MEV / SWQoS 配置
 
-当前已支持通过 `sol-trade-sdk 4.0.15` 接入以下 SWQoS lane：
+当前已支持通过 `sol-trade-sdk 5.0.4` 接入以下 SWQoS lane：
 
 - Jito：高性能 block space。
 - Temporal：时间敏感交易。
@@ -620,7 +630,7 @@ PumpAPI 全仓卖出示例：
 PumpAPI curl 模拟买入：
 
 ```bash
-cd /root/http/trade_service
+cd /root/http/sol-bot/trade_service
 set -a
 source .env
 set +a
@@ -653,7 +663,7 @@ echo
 ## 编译
 
 ```bash
-cd /root/http/trade_service
+cd /root/http/sol-bot/trade_service
 cargo check
 cargo build --release
 ```
@@ -661,7 +671,7 @@ cargo build --release
 ## 启动
 
 ```bash
-cd /root/http/trade_service
+cd /root/http/sol-bot/trade_service
 cargo run --release
 ```
 
@@ -718,7 +728,7 @@ curl http://127.0.0.1:18787/ready
 
 如果 `.env` 设置了 `REQUIRE_MEV_SUBMIT=true`，实际下单只会使用 `active_swqos_lanes` 里的 MEV/SWQoS 通道；`swqos_lanes` 里即使仍显示 `Default`，也只是配置清单，不代表下单会走普通 RPC fallback。默认建议只开启 Astralane，其他 provider 有最低 tip 要求时先保持关闭。
 
-`MEV_USE_BACKUP_RPCS=false` 时，MEV/SWQoS 发单只用主 `RPC_URL` 构造一条执行 lane，备份 RPC 仍保留给 blockhash/RPC 能力；这样能避免某条备份 RPC 返回 403 时干扰 Astralane 排障。
+`MEV_USE_BACKUP_RPCS=false` 时，MEV/SWQoS 发单只用主 `RPC_URL` 构造一条执行 lane，备份 RPC 仍保留给 blockhash/RPC 能力；这样能避免某条备份 RPC 返回 403 时干扰 Astralane 排障。设为 `true` 后，每个已启用的 MEV Provider 都会基于 `RPC_URL`、`BACKUP_RPC_URLS` 依次建立执行 lane；主 RPC 在读取 Pool、Mint 或构建交易时遇到 429、超时等错误，会使用相同 Provider 和下一条 RPC 重试。生产环境应确保所有备用 RPC 都允许当前 SDK 使用的 `getProgramAccounts`、`getMultipleAccounts` 和交易模拟请求。
 
 ```json
 {
@@ -962,6 +972,8 @@ SDK 第一版池地址规则：
 - `pump`：`pool_id` 必须为 `null`。
 - `pump-amm`：`pool_id` 可选；有池地址时建议传。
 - `bonk`：`pool_id` 必须为 `null`，服务用 `mint` 补参数。
+- `stonkfun`：`pool_id` 必填，服务校验 StonkFun 配置、base mint 与 quote mint。
+- `stonkfun-swap`：`pool_id` 必填，表示 StonkFun 迁移后的 Raydium CPMM 池。
 - `meteora-damm-v2`：`pool_id` 必填。
 - `meteora-dbc`：Meteora Dynamic Bonding Curve，`pool_id` 必填；当前支持未迁移池的 `swap2` ExactIn，报价币支持 WSOL、USDC。
 - `raydium-amm-v4`：`pool_id` 必填，表示 AMM address。
@@ -1099,9 +1111,9 @@ curl -X POST http://127.0.0.1:18787/v1/trades \
 - 修改类接口必须带 Bearer token。
 - 不允许请求体传私钥。
 - `execution_method` 支持 `sdk` 和 `pumpapi`，默认 `sdk`。
-- `pool` 支持 `pump`、`pump-amm`、`bonk`、`meteora-damm-v2`、`meteora-dbc`、`raydium-amm-v4`、`raydium-cpmm`。
+- `pool` 支持 `pump`、`pump-amm`、`bonk`、`stonkfun`、`stonkfun-swap`、`meteora-damm-v2`、`meteora-dbc`、`raydium-amm-v4`、`raydium-cpmm`。
 - Meteora/Raydium 第一版必须传 `pool_id`，不自动按 mint 选池。
-- `quote_mint` 支持 WSOL/USDC；`bonk` 额外支持 USD1，不支持 USDC。
+- `quote_mint` 支持 WSOL/USDC；`bonk` 额外支持 USD1，不支持 USDC；StonkFun 支持任意 SPL Token，但自定义 Quote 买入必须传原始 `amount_quote_units`。
 - WSOL 买入使用 `amount_sol`、`amount_lamports` 或 `amount_quote`；USDC/USD1 买入使用 `amount_quote`、`amount_usdc` 或 `amount_quote_units`。
 - sell 的 `sell_percent` 必须是 `1..=100`。
 - `execution_method:"pumpapi"` 第一版不支持 `use_mev:true`，卖出只支持 `sell_percent:100`。
@@ -1113,7 +1125,7 @@ curl -X POST http://127.0.0.1:18787/v1/trades \
 当前使用：
 
 ```toml
-sol-trade-sdk = "4.0.15"
+sol-trade-sdk = "5.0.4"
 ```
 
 SDK 参数通过 RPC helper 补齐：

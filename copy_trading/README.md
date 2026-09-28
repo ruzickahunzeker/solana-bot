@@ -4,7 +4,7 @@
 
 边界：
 
-- 不修改 `trade_service` 的既有交易 API 和交易执行路径；钱包余额、自定义地址和 SOL 转账使用独立的本机内部接口
+- 交易由独立的 `trade_service` 执行；钱包余额、Quote 余额、自定义地址和 SOL 转账使用受鉴权的本机内部接口
 - 手动实盘下单只通过 `trade_service` HTTP API；跟单执行先走独立 executor
 - 钱包私钥只以密文形式落库
 - Telegram 小范围白名单使用
@@ -69,7 +69,7 @@ ENABLE_STREAM_CONSUMER=true
 
 要求：
 
-- 需要先启动 `/root/http/pumpapi_zmq_bridge/pumpapi_zmq_bridge.py`。
+- 需要先启动 `/root/http/sol-bot/pumpapi_zmq_bridge/pumpapi_zmq_bridge.py`。
 - 事件默认只做入库和 dry-run；只有策略明确切到 Live，且全局开关、readiness、钱包绑定和风控全部通过时，才会自动提交实盘订单。
 
 ### trade_service
@@ -243,13 +243,13 @@ Pool 不作为快速交易或限价单的界面参数。跟单和限价执行时
 - 自定义钱包：创建时可选普通钱包、自定义 1 到 4 位 Base58 开头或结尾。任务面板原地显示状态、尝试次数，并提供刷新和取消。生成工作在 `trade_service` 内完成，Telegram 不接触生成出的私钥。
 - SOL 转账：可选择另一个已绑定钱包或输入外部地址，金额支持 50%、100% 和自定义 SOL；确认页之后才调用内部接口。固定金额和 50% 会保留动态免租余额及安全余量；100% 扣除精确网络手续费后把来源 SOL 账户清到 0。系统全局钱包是否允许转出由 `trade_service` 的内部接口配置控制。
 - SOL 转账不属于 Public Trade API：外部 Trade API 仍只支持买卖，不开放通用转账能力。转账没有 Pool、滑点、小费或 MEV 参数。
-- 全局设置：在原消息中修改默认模式、执行方式、滑点、小费、`USE_MEV`、MEV Provider，以及五档买入金额和五档卖出比例；模式、执行方式、Provider 和默认档位会展开全部选项，点选后返回上一级。设置写入 SQL，环境变量只负责首次初始化。
+- 全局设置：在原消息中修改默认模式、执行方式、滑点、小费、`USE_MEV`、MEV Provider、快速交易确认开关，以及五档买入金额和五档卖出比例；模式、执行方式、Provider 和默认档位会展开全部选项，点选后返回上一级。设置写入 SQL，环境变量只负责首次初始化。快速交易确认默认开启。
 - 跟单设置：添加 watch wallet、启用/暂停、改标签、删除。
 - 策略：命中 watch wallet 后会自动创建默认策略；点击跟踪钱包进入策略面板，可设置启停、Dry-run / Live、固定或比例买入、卖出比例、滑点、小费、MEV 和最大延迟等。
 - 信号：`/signals` 查看最近 dry-run 信号、mint 详情和延迟。
 - 持仓：`/positions` 查看 dry-run 模拟持仓。
 - 限价单：`/limits` 通过“创建限价单”进入原地面板，可组合限价买卖、高低方向以及价格/市值触发；pending 限价单可独立修改模式、滑点、小费和 MEV，PumpAPI 数据流触发后会生成执行订单并发送 Telegram 通知。
-- 快速交易：买入/卖出会先生成确认页，点击确认后才会执行。
+- 快速交易：确认开启时，金额按钮只选择数值，底部“确认买入/卖出”按钮会立即提交，不再出现第二次确认；确认关闭时，点击买入 SOL 或卖出百分比预设会直接提交，自定义数值输入完成后也会直接提交。提交期间同一用户只能有一笔请求，旧方向按钮在面板切换后会失效。
 - 直接发送一个 Mint 地址会打开原地刷新的交换/限价面板；买卖预设、滑点、小费、钱包、模式和 MEV Provider 都在同一条 Telegram 消息中操作。价格或市值输入按钮只进入等待输入状态，输入完成后才刷新原面板。
 - MEV Provider 不再逐个轮换；全局设置、交易面板、跟单策略和限价单会列出全部可用 Provider，并用 `✅` 标记当前选项。
 - 添加跟踪钱包必须使用“跟单设置 → 添加”或 `/watch_add`，避免把 Mint 误当成跟踪钱包。跟单策略保留独立 Pool 筛选；交换和限价不提供 Pool 筛选。
@@ -262,3 +262,8 @@ Pool 不作为快速交易或限价单的界面参数。跟单和限价执行时
 - PumpAPI 跟单事件会通过 executor 生成 dry-run signal/order/position；策略切换为 `Live` 后，在 readiness、钱包绑定和策略风控都通过时提交到 `trade_service`。
 - 通过策略筛选的跟单信号会自动写入 `orders.status=dry_run`，便于在 `/orders` 中复盘“如果实盘会下什么单”。
 - `orders.wallet_id` 继续保存本系统钱包 ID，`orders.trade_service_request_id` 保存远端请求 ID；后续 `trade_service` 钱包迁移到 SQL 时可以保持这层接口不变。
+## 自定义 Quote 快速交易
+
+StonkFun / StonkFunSwap 池若使用非 SOL 的 Quote（包括 USDC、USD1 或其他 Token），快速买入面板会显示 Quote Mint 和所选钱包的 Quote 余额。买入金额输入该 Quote 的数量，程序从 Trade Service 查询链上小数位后精确转换为 `amount_quote_units`。钱包必须预先持有 Quote，并留有 SOL 支付手续费及可能的代币账户租金。卖出仍使用百分比，所得为该 Quote，不会自动兑换为 SOL。普通 SOL 预设不会用于自定义 Quote；自定义 Quote 限价买入及 SOL 金额跟买目前仍被拦截。
+
+TG 使用的 Trade Service 须包含 `/internal/wallets/:wallet_id/quote-balance/:mint` 接口。部署时先更新 Trade Service，再更新 copy_trading，避免旧服务没有此接口。

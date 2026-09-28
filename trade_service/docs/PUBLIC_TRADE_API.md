@@ -1,6 +1,6 @@
 # Public Trade API 对接文档
 
-文档版本：2026-08-04  
+文档版本：2026-09-03  
 适用服务：`trade_service`（`pump-trade-service`）  
 默认端口：`18787`
 
@@ -24,8 +24,10 @@
 
 | 配置 | 当前值 | 影响 |
 |---|---:|---|
+| Trade API 服务端 | `43.157.26.254:18787` | `trade_service` 所在的当前服务器 |
+| 本次接入调用端 | `45.76.94.27` | 从该服务器向 Trade API 发送交易请求 |
 | `TRADE_HTTP_ADDR` | `0.0.0.0:18787` | 服务监听公网网卡 |
-| `TRADE_ALLOWED_CLIENT_IPS` | `43.166.214.34` | 这是允许的**调用方出口 IP**，不一定是 API 服务地址 |
+| `TRADE_ALLOWED_CLIENT_IPS` | `43.166.214.34,45.76.94.27` | 允许的**调用方出口 IP**列表 |
 | `WALLET_STORAGE_MODE` | `database` | 钱包密文存储在数据库中 |
 | `TRADE_PERSISTENCE_MODE` | `durable` | 交易和幂等键持久化 |
 | `ENABLE_SIMULATE` | `true` | 请求未传 `simulate` 时默认模拟 |
@@ -41,18 +43,41 @@
 
 ### 2.1 Base URL
 
-由服务部署方提供：
+在调用端服务器 `45.76.94.27` 上使用以下 Trade API 地址：
 
 ```text
-http://<TRADE_SERVICE_HOST>:18787
+http://43.157.26.254:18787
 ```
 
-示例环境变量：
+在 `45.76.94.27` 上配置环境变量：
 
 ```bash
-export TRADE_API_BASE_URL="http://<TRADE_SERVICE_HOST>:18787"
+export TRADE_API_BASE_URL="http://43.157.26.254:18787"
 export TRADE_API_TOKEN="<LOCAL_TRADE_API_TOKEN>"
 ```
+
+本次连接方向如下：
+
+```text
+交易调用端 45.76.94.27
+        |
+        | HTTP :18787 + Bearer Token
+        v
+Trade API 43.157.26.254:18787
+```
+
+`45.76.94.27` 是调用方出口 IP，不是 API 地址。它已加入 Trade API 的 `TRADE_ALLOWED_CLIENT_IPS`。如果该服务器经过 NAT，应确认其实际公网出口仍是 `45.76.94.27`，否则会收到 `403 client ip not allowed`。
+
+请在 `45.76.94.27` 上执行快速检查：
+
+```bash
+curl -sS --connect-timeout 5 "$TRADE_API_BASE_URL/health"
+
+curl -sS --connect-timeout 5 "$TRADE_API_BASE_URL/ready" \
+  -H "Authorization: Bearer $TRADE_API_TOKEN"
+```
+
+当前地址使用明文 HTTP。跨公网调用时应限制来源 IP，并优先通过 HTTPS 反向代理或加密隧道访问。
 
 ### 2.2 Bearer Token
 
@@ -128,7 +153,7 @@ Content-Type: application/json
 | `GET` | `/health` | 无 | 进程存活检查 |
 | `GET` | `/ready` | IP + Bearer | 交易就绪检查 |
 | `GET` | `/v1/wallets` | IP + Bearer | 查询可用于交易的钱包 |
-| `POST` | `/v1/pools/resolve` | IP + Bearer | 按 Mint 自动解析 Pump/PumpSwap Pool |
+| `POST` | `/v1/pools/resolve` | IP + Bearer | 按 Mint 自动解析 Pump、PumpSwap 或 Meteora DBC Pool |
 | `POST` | `/v1/cache/warmup` | IP + Bearer | 预热指定 Pool 的交易参数 |
 | `POST` | `/v1/trades` | IP + Bearer | 创建单钱包交易 |
 | `POST` | `/v1/batch/trades` | IP + Bearer | 创建多钱包交易 |
@@ -290,7 +315,18 @@ Pump bonding curve 未完成时：
 }
 ```
 
-当前自动解析器只探测 Pump bonding curve 和 PumpSwap。Bonk、Meteora、Raydium 的 Pool 信息必须由 PumpAPI 数据流、Pool 数据库或其他可信索引器提供。
+Meteora DBC 时：
+
+```json
+{
+  "mint": "<TOKEN_MINT>",
+  "pool": "meteora-dbc",
+  "pool_id": "<METEORA_DBC_POOL_ADDRESS>",
+  "quote_mint": "So11111111111111111111111111111111111111112"
+}
+```
+
+当前自动解析器探测 Pump bonding curve、PumpSwap 和 Meteora DBC。Bonk、Meteora DAMM v2、Raydium AMM v4/CPMM 的 Pool 信息仍须由 PumpAPI 数据流、Pool 数据库或其他可信索引器提供。
 
 无法解析时通常返回 `502 Bad Gateway`：
 
@@ -438,6 +474,9 @@ PumpAPI 执行器当前限制：
 | `mint` | string | 是 | 目标 Token 的 Solana Mint 公钥 |
 | `pool_id` | string/null | 视 Pool | 交易池地址 |
 | `quote_mint` | string | 否 | 默认 WSOL；SOL Mint 会被规范化为 WSOL |
+| `settlement_asset` | `quote` / `sol` | 否 | 默认 `quote`；StonkFun 自定义 Quote 两跳交易显式使用 `sol` |
+| `sol_hop_pool` | enum | Via-SOL 必填 | 首版只允许 `raydium-cpmm` |
+| `sol_hop_pool_id` | string | Via-SOL 必填 | WSOL/Quote 第二跳池；服务会读取链上账户校验交易对 |
 | `amount_sol` | number | 买入可选 | SOL/WSOL 买入金额，9 位精度 |
 | `amount_lamports` | uint64 | 买入可选 | SOL/WSOL 最小单位金额 |
 | `amount_quote` | number | 买入可选 | 通用 quote 金额；WSOL 9 位，USDC/USD1 6 位 |
@@ -455,7 +494,7 @@ PumpAPI 执行器当前限制：
 | `source_signature` | string | 否 | 跟单来源交易签名 |
 | `idempotency_key` | string | 是 | 同一钱包范围内的业务幂等键，不能为空 |
 
-买入金额字段只应传一个。代码的实际优先级为：
+买入金额字段最多只能传一个，传多个会拒绝。直接 Quote 结算按 Quote 类型选择金额字段；`settlement_asset:"sol"` 只接受 `amount_sol` 或 `amount_lamports`。
 
 ```text
 amount_quote_units
@@ -464,7 +503,26 @@ amount_quote_units
   -> WSOL: amount_quote -> amount_sol -> amount_lamports -> DEFAULT_BUY_SOL
 ```
 
-传入多个金额字段不会全部参与计算，而是按上述优先级取一个。接入方不要依赖这种覆盖行为。
+StonkFun Via-SOL 示例（功能开关默认关闭）：
+
+```json
+{
+  "wallet_id": "main",
+  "side": "buy",
+  "pool": "stonkfun",
+  "mint": "MEME_MINT",
+  "pool_id": "STONKFUN_POOL",
+  "quote_mint": "CUSTOM_QUOTE_MINT",
+  "settlement_asset": "sol",
+  "sol_hop_pool": "raydium-cpmm",
+  "sol_hop_pool_id": "WSOL_QUOTE_CPMM_POOL",
+  "amount_sol": 0.001,
+  "slippage_percent": 15,
+  "execution_method": "sdk",
+  "simulate": true,
+  "idempotency_key": "stonk-via-sol-dry-run-001"
+}
+```
 
 ### 8.5 Pool 与 Quote 支持矩阵
 
@@ -473,6 +531,8 @@ amount_quote_units
 | `pump` | 必须省略 | WSOL、USDC | Pump bonding curve |
 | `pump-amm` | 可选，建议传 | WSOL、USDC | PumpSwap |
 | `bonk` | 必须省略 | WSOL、USD1 | Bonk/LaunchLab 路径 |
+| `stonkfun` | 必填 | WSOL、USDC、USD1、任意 SPL Token | 自定义 Quote 可直接传 `amount_quote_units`，或在开关开启后显式走 Via-SOL |
+| `stonkfun-swap` | 必填 | WSOL、USDC、USD1、任意 SPL Token | 自定义 Quote 可直接传 `amount_quote_units`，或在开关开启后显式走 Via-SOL |
 | `meteora-damm-v2` | 必填 | WSOL、USDC | 必须传真实池地址 |
 | `meteora-dbc` | 必填 | WSOL、USDC | 未迁移的 Dynamic Bonding Curve 池；使用 `swap2` ExactIn |
 | `raydium-amm-v4` | 必填 | WSOL、USDC | 必须传真实池地址 |
@@ -814,6 +874,9 @@ curl -sS -X POST "$TRADE_API_BASE_URL/v1/batch/trades" \
 | `pool_id is required` | Meteora/Raydium SDK 路径缺少池地址 |
 | `pool_id is not used for this pool` | Pump/Bonk SDK 路径不应传池地址 |
 | `quote_mint must be WSOL, USDC, or USD1` | Quote 不在允许列表 |
+| `stonkfun Via-SOL is disabled` | 服务端功能开关未开启 |
+| `sol_hop_pool_id is required` | Via-SOL 缺少 WSOL/Quote 第二跳池地址 |
+| `Via-SOL hop pool does not contain` | 第二跳池与 WSOL/Quote 不匹配，拒绝交易 |
 | `sell_percent must be between 1 and 100` | 卖出比例非法 |
 | `slippage must be between 0% and 100%` | 滑点非法 |
 | `<provider> has no enabled execution lane` | 指定 Provider 未启用或初始化失败 |
@@ -898,7 +961,7 @@ async function createTrade(): Promise<TradeResponse> {
 4. 使用 `simulate:true` 分别完成 SDK 买入和卖出。
 5. 对同一请求重复提交，确认 `request_id` 不变且 `duplicate=true`。
 6. 用相同幂等键修改金额，确认返回 `409`。
-7. 验证 `/v1/pools/resolve` 的 Pump 和 PumpSwap 两类结果。
+7. 验证 `/v1/pools/resolve` 的 Pump、PumpSwap 和 Meteora DBC 结果。
 8. 使用 `simulate:false` 做经授权的最小金额实盘。
 9. 根据返回签名独立查询链上 `confirmed/finalized` 和交易错误。
 10. 验证服务重启后原订单仍可通过 `request_id` 查询。
@@ -916,7 +979,7 @@ async function createTrade(): Promise<TradeResponse> {
 - 链上 `confirmed/finalized` 自动回写。
 - 按钱包、Mint、状态分页查询历史订单。
 - Webhook/SSE/WebSocket 订单状态推送。
-- Bonk、Meteora、Raydium 的统一 Pool 自动解析数据库。
+- Bonk、Meteora DAMM v2、Raydium AMM v4/CPMM 的统一 Pool 自动解析数据库。
 - OpenAPI/Swagger schema。
 
 如果要提供给非完全受信任的第三方，必须先补齐路由级权限、TLS、调用方身份、限流、审计和私钥管理接口隔离。

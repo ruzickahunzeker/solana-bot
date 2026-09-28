@@ -16,6 +16,9 @@ use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use tracing::{error, info, warn};
 
+const STONKFUN_STANDARD_PLATFORM_CONFIG: &str = "4E876qZTE9FJMrBzgVtBrSrzz2TLivB5Y5QXPjB4gZL7";
+const STONKFUN_REWARD_PLATFORM_CONFIG: &str = "6BwHHDg3u1854jC8PDLXvR4spTcLNaoBxLJNGC4nTESt";
+
 pub fn spawn_zmq_consumer(
     endpoint: String,
     db: Database,
@@ -163,24 +166,30 @@ fn is_followable_event(event: &PumpApiEvent) -> bool {
         return false;
     };
     let tx_type = tx_type.trim().to_ascii_lowercase();
-    matches!(tx_type.as_str(), "buy" | "sell" | "create") && event.mint.is_some()
+    matches!(tx_type.as_str(), "buy" | "sell") && event.mint.is_some()
 }
 
 fn parse_payload(raw: &[u8]) -> Option<PumpApiEvent> {
     let received_unix_ms = Utc::now().timestamp_millis();
     let value: Value = serde_json::from_slice(raw).ok()?;
     let raw_json = String::from_utf8_lossy(raw).to_string();
-    Some(PumpApiEvent {
-        signature: text_field(&value, &["signature"]),
-        mint: text_field(&value, &["mint"]),
-        pool: text_field(
+    let pool = classify_pool(
+        text_field(
             &value,
             &["trade_service_pool", "pool", "event_pool", "dex", "amm"],
         ),
+        text_field(&value, &["launchpad_config", "launchpadConfig"]),
+        text_field(&value, &["platform"]),
+    );
+    Some(PumpApiEvent {
+        signature: text_field(&value, &["signature"]),
+        mint: text_field(&value, &["mint"]),
+        pool,
         pool_id: text_field(&value, &["pool_id", "poolId", "ammId", "amm_id"]),
         quote_mint: text_field(&value, &["quote_mint", "quoteMint"]),
         tx_type: text_field(&value, &["tx_type", "txType", "action"]),
-        signer: text_field(&value, &["txSigner", "signer"]).or_else(|| first_trader(&value)),
+        signer: text_field(&value, &["tx_signer", "txSigner", "signer"])
+            .or_else(|| first_trader(&value)),
         sol_in_pool: number_field(&value, &["sol_in_pool", "solInPool"]),
         tokens_in_pool: number_field(&value, &["tokens_in_pool", "tokensInPool"]),
         quote_in_pool: number_field(&value, &["quote_in_pool", "quoteInPool"]),
@@ -188,6 +197,29 @@ fn parse_payload(raw: &[u8]) -> Option<PumpApiEvent> {
         received_unix_ms,
         raw_json,
     })
+}
+
+fn classify_pool(
+    pool: Option<String>,
+    launchpad_config: Option<String>,
+    platform: Option<String>,
+) -> Option<String> {
+    let pool = pool?;
+    let normalized = pool.trim().to_ascii_lowercase().replace('_', "-");
+    if matches!(
+        normalized.as_str(),
+        "raydium-launchpad" | "raydium-launchlab"
+    ) && (platform
+        .as_deref()
+        .is_some_and(|value| value.trim().eq_ignore_ascii_case("stonkfun"))
+        || matches!(
+            launchpad_config.as_deref(),
+            Some(STONKFUN_STANDARD_PLATFORM_CONFIG) | Some(STONKFUN_REWARD_PLATFORM_CONFIG)
+        ))
+    {
+        return Some("stonkfun".to_string());
+    }
+    Some(normalized)
 }
 
 fn text_field(value: &Value, names: &[&str]) -> Option<String> {
@@ -247,10 +279,82 @@ fn normalize_timestamp_ms(value: i64) -> i64 {
 }
 
 fn first_trader(value: &Value) -> Option<String> {
-    value
-        .get("tradersInvolved")
-        .and_then(Value::as_array)
-        .and_then(|items| items.first())
-        .and_then(Value::as_str)
+    let traders = value.get("tradersInvolved")?;
+    if let Some(items) = traders.as_array() {
+        return items
+            .first()
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+    }
+    traders
+        .as_object()
+        .and_then(|items| items.keys().next())
         .map(ToString::to_string)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn classifies_known_stonkfun_launchpad_configs() {
+        for config in [
+            STONKFUN_STANDARD_PLATFORM_CONFIG,
+            STONKFUN_REWARD_PLATFORM_CONFIG,
+        ] {
+            assert_eq!(
+                classify_pool(
+                    Some("raydium-launchpad".to_string()),
+                    Some(config.to_string()),
+                    None,
+                )
+                .as_deref(),
+                Some("stonkfun")
+            );
+        }
+    }
+
+    #[test]
+    fn leaves_other_launchlab_platforms_unclassified() {
+        assert_eq!(
+            classify_pool(
+                Some("raydium-launchpad".to_string()),
+                Some("BuM6KDpWiTcxvrpXywWFiw45R2RNH8WURdvqoTDV1BW4".to_string()),
+                None,
+            )
+            .as_deref(),
+            Some("raydium-launchpad")
+        );
+    }
+
+    #[test]
+    fn classifies_official_stonkfun_platform_field() {
+        assert_eq!(
+            classify_pool(
+                Some("raydium-launchpad".to_string()),
+                Some("unknown-config".to_string()),
+                Some("stonkfun".to_string()),
+            )
+            .as_deref(),
+            Some("stonkfun")
+        );
+    }
+
+    #[test]
+    fn create_event_is_not_followable() {
+        let event = parse_payload(
+            br#"{"action":"create","mint":"mint","pool":"pump","quoteMint":"So11111111111111111111111111111111111111112"}"#,
+        )
+        .unwrap();
+        assert!(!is_followable_event(&event));
+    }
+
+    #[test]
+    fn reads_first_trader_from_current_object_shape() {
+        let event = parse_payload(
+            br#"{"action":"buy","mint":"mint","pool":"pump","tradersInvolved":{"wallet":{}}}"#,
+        )
+        .unwrap();
+        assert_eq!(event.signer.as_deref(), Some("wallet"));
+    }
 }

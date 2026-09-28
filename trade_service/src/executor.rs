@@ -119,6 +119,8 @@ pub async fn execute_trade(
         mint: normalized.mint,
         quote_mint: normalized.quote_mint,
         pool_id: normalized.pool_id,
+        sol_hop_pool: normalized.sol_hop_pool,
+        sol_hop_pool_id: normalized.sol_hop_pool_id,
         amount_lamports: normalized.amount_lamports,
         sell_percent: normalized.sell_percent,
         slippage_bps: normalized.slippage_bps,

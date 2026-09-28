@@ -213,6 +213,7 @@ CREATE TABLE IF NOT EXISTS user_trade_settings (
   default_tip_sol REAL NOT NULL DEFAULT 0.0001,
   default_buy_preset_slot INTEGER NOT NULL DEFAULT 3,
   default_sell_preset_slot INTEGER NOT NULL DEFAULT 5,
+  quick_trade_confirmation_enabled INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

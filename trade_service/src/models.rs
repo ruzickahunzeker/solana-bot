@@ -11,6 +11,10 @@ pub enum Pool {
     Pump,
     PumpAmm,
     Bonk,
+    #[serde(rename = "stonkfun", alias = "stonk-fun")]
+    StonkFun,
+    #[serde(rename = "stonkfun-swap", alias = "stonk-fun-swap")]
+    StonkFunSwap,
     MeteoraDammV2,
     MeteoraDbc,
     RaydiumAmmV4,
@@ -86,6 +90,15 @@ pub struct ResolvePoolResponse {
 }
 
 #[derive(Debug, Serialize)]
+pub struct QuoteBalanceResponse {
+    pub wallet_id: String,
+    pub quote_mint: String,
+    pub decimals: u8,
+    pub balance_units: u64,
+    pub balance_lamports: u64,
+}
+
+#[derive(Debug, Serialize)]
 pub struct WarmupResponse {
     pub ok: bool,
     pub cache_key: String,
@@ -99,6 +112,9 @@ pub struct TradeRequest {
     pub mint: String,
     pub pool_id: Option<String>,
     pub quote_mint: Option<String>,
+    pub settlement_asset: Option<SettlementAsset>,
+    pub sol_hop_pool: Option<Pool>,
+    pub sol_hop_pool_id: Option<String>,
     pub amount_sol: Option<f64>,
     pub amount_lamports: Option<u64>,
     pub amount_quote: Option<f64>,
@@ -115,6 +131,13 @@ pub struct TradeRequest {
     pub source: Option<String>,
     pub source_signature: Option<String>,
     pub idempotency_key: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SettlementAsset {
+    Quote,
+    Sol,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

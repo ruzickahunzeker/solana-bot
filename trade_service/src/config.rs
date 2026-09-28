@@ -28,6 +28,7 @@ pub struct Config {
     pub blockhash_max_age_ms: u64,
     pub mev: MevConfig,
     pub pumpapi: PumpApiConfig,
+    pub stonkfun_via_sol: StonkFunViaSolConfig,
     pub trade_persistence: TradePersistenceConfig,
 }
 
@@ -112,6 +113,12 @@ pub struct PumpApiConfig {
     pub lightning_enabled: bool,
 }
 
+#[derive(Debug, Clone)]
+pub struct StonkFunViaSolConfig {
+    pub enabled: bool,
+    pub max_buy_sol: f64,
+}
+
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
         let rpc_urls = rpc_urls()?;
@@ -135,6 +142,10 @@ impl Config {
             bail!(
                 "non-loopback TRADE_HTTP_ADDR requires TRADE_ALLOWED_CLIENT_IPS, e.g. 43.166.214.34"
             );
+        }
+        let stonkfun_via_sol_max_buy_sol: f64 = parse_env("STONKFUN_VIA_SOL_MAX_BUY_SOL", 0.1)?;
+        if !stonkfun_via_sol_max_buy_sol.is_finite() || stonkfun_via_sol_max_buy_sol <= 0.0 {
+            bail!("STONKFUN_VIA_SOL_MAX_BUY_SOL must be greater than 0");
         }
 
         Ok(Self {
@@ -171,6 +182,10 @@ impl Config {
             blockhash_max_age_ms: parse_env("BLOCKHASH_MAX_AGE_MS", 2_000)?,
             mev: MevConfig::from_env()?,
             pumpapi: PumpApiConfig::from_env()?,
+            stonkfun_via_sol: StonkFunViaSolConfig {
+                enabled: parse_bool("STONKFUN_VIA_SOL_ENABLED", false)?,
+                max_buy_sol: stonkfun_via_sol_max_buy_sol,
+            },
             trade_persistence: TradePersistenceConfig::from_env()?,
         })
     }

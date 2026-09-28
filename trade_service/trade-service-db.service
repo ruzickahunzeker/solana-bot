@@ -6,8 +6,8 @@ After=network-online.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/http/trade_service
-ExecStart=/root/http/trade_service/target/release/pump-trade-service
+WorkingDirectory=/root/http/sol-bot/trade_service
+ExecStart=/root/http/sol-bot/trade_service/target/release/pump-trade-service
 Restart=on-failure
 RestartSec=2
 TimeoutStopSec=30

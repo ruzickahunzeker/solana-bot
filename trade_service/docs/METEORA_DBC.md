@@ -73,7 +73,7 @@ For every buy or sell, the SDK:
 
 ## Verification commands
 
-Run these commands from `/root/http/trade_service` after reviewing the diff:
+Run these commands from `/root/http/sol-bot/trade_service` after reviewing the diff:
 
 ```bash
 cargo fmt --all -- --check

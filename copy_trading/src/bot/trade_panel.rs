@@ -25,6 +25,13 @@ impl PanelSide {
             Self::Sell => "卖出",
         }
     }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Buy => "buy",
+            Self::Sell => "sell",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -114,6 +121,7 @@ pub enum PanelInputField {
 pub struct QuickPanelDraft {
     pub side: PanelSide,
     pub buy_amount_sol: f64,
+    pub buy_amount_quote: Option<String>,
     pub sell_percent: f64,
     pub execution: ExecutionParams,
 }
@@ -139,6 +147,7 @@ pub struct TradePanelSession {
     pub tab: PanelTab,
     pub quick: QuickPanelDraft,
     pub limit: LimitPanelDraft,
+    pub notice: Option<String>,
 }
 
 impl TradePanelSession {
@@ -170,6 +179,7 @@ impl TradePanelSession {
             quick: QuickPanelDraft {
                 side: PanelSide::Buy,
                 buy_amount_sol: settings.buy_presets_sol[settings.default_buy_preset_slot],
+                buy_amount_quote: None,
                 sell_percent: settings.sell_presets_percent[settings.default_sell_preset_slot],
                 execution: common(),
             },
@@ -184,7 +194,30 @@ impl TradePanelSession {
                 execution: common(),
                 expiry: PanelExpiry::Unlimited,
             },
+            notice: None,
         }
+    }
+
+    pub fn show_opposite_quick_side(&mut self, completed_side: PanelSide, notice: String) {
+        self.tab = PanelTab::Quick;
+        self.quick.side = match completed_side {
+            PanelSide::Buy => PanelSide::Sell,
+            PanelSide::Sell => PanelSide::Buy,
+        };
+        self.notice = Some(notice);
+    }
+
+    pub fn custom_quote(&self) -> bool {
+        matches!(self.route.pool.as_str(), "stonkfun" | "stonkfun-swap")
+            && !matches!(
+                self.route.quote_mint.as_str(),
+                "So11111111111111111111111111111111111111112"
+                    | "So11111111111111111111111111111111111111111"
+            )
+    }
+
+    pub fn quote_label(&self) -> String {
+        short_text(&self.route.quote_mint)
     }
 
     pub fn active_execution_mut(&mut self) -> &mut ExecutionParams {
@@ -267,16 +300,30 @@ impl TradePanelSession {
     }
 
     pub fn text(&self, wallet_label: &str, use_mev: bool) -> String {
-        match self.tab {
+        let panel = match self.tab {
             PanelTab::Quick => self.quick_text(wallet_label, use_mev),
             PanelTab::Limit => self.limit_text(wallet_label, use_mev),
+        };
+        match self.notice.as_deref() {
+            Some(notice) => format!("{notice}\n\n{panel}"),
+            None => panel,
         }
     }
 
     fn quick_text(&self, wallet_label: &str, use_mev: bool) -> String {
         let execution = &self.quick.execution;
         let amount = match self.quick.side {
+            PanelSide::Buy if self.custom_quote() => format!(
+                "{} {}",
+                self.quick.buy_amount_quote.as_deref().unwrap_or("未设置"),
+                self.quote_label()
+            ),
             PanelSide::Buy => format!("{} SOL", trim_float(self.quick.buy_amount_sol)),
+            PanelSide::Sell if self.custom_quote() => format!(
+                "{}% (卖出后收到 {})",
+                trim_float(self.quick.sell_percent),
+                self.quote_label()
+            ),
             PanelSide::Sell => format!("{}%", trim_float(self.quick.sell_percent)),
         };
         format!(
@@ -302,6 +349,7 @@ impl TradePanelSession {
     fn limit_text(&self, wallet_label: &str, use_mev: bool) -> String {
         let execution = &self.limit.execution;
         let amount = match self.limit.side {
+            PanelSide::Buy if self.custom_quote() => "暂不支持自定义 Quote 限价买入".to_string(),
             PanelSide::Buy => format!("{} SOL", trim_float(self.limit.buy_amount_sol)),
             PanelSide::Sell => format!("{}%", trim_float(self.limit.sell_percent)),
         };
@@ -426,17 +474,29 @@ impl TradePanelSession {
         } else {
             settings.sell_presets_percent
         };
-        for pair in [[0usize, 1usize], [2, 3]] {
-            rows.push(
-                pair.into_iter()
-                    .map(|index| preset_button(self, presets[index], index))
-                    .collect(),
-            );
+        let one_click = self.tab == PanelTab::Quick && !settings.quick_trade_confirmation_enabled;
+        if self.active_side() == PanelSide::Buy && self.custom_quote() {
+            rows.push(vec![InlineKeyboardButton::callback(
+                format!(
+                    "金额: {} {}",
+                    self.quick.buy_amount_quote.as_deref().unwrap_or("设置"),
+                    self.quote_label()
+                ),
+                "panel:input:amount",
+            )]);
+        } else {
+            for pair in [[0usize, 1usize], [2, 3]] {
+                rows.push(
+                    pair.into_iter()
+                        .map(|index| preset_button(self, presets[index], index, one_click))
+                        .collect(),
+                );
+            }
+            rows.push(vec![
+                preset_button(self, presets[4], 4, one_click),
+                InlineKeyboardButton::callback("自定义", "panel:input:amount"),
+            ]);
         }
-        rows.push(vec![
-            preset_button(self, presets[4], 4),
-            InlineKeyboardButton::callback("自定义", "panel:input:amount"),
-        ]);
 
         if self.tab == PanelTab::Limit {
             rows.push(vec![
@@ -474,23 +534,42 @@ impl TradePanelSession {
                 "panel:expiry",
             )]);
         }
-        rows.push(vec![InlineKeyboardButton::callback(
-            if self.tab == PanelTab::Quick {
-                "确认交易"
+        if self.tab == PanelTab::Limit {
+            rows.push(vec![InlineKeyboardButton::callback(
+                "创建限价单",
+                "panel:create_limit",
+            )]);
+        } else if settings.quick_trade_confirmation_enabled {
+            let amount = if self.custom_quote() && self.active_side() == PanelSide::Buy {
+                self.quick
+                    .buy_amount_quote
+                    .clone()
+                    .unwrap_or_else(|| "未设置".to_string())
             } else {
-                "创建限价单"
-            },
-            if self.tab == PanelTab::Quick {
-                "panel:confirm"
+                trim_float(self.active_amount())
+            };
+            let unit = if self.custom_quote() && self.active_side() == PanelSide::Buy {
+                self.quote_label()
+            } else if self.active_side() == PanelSide::Buy {
+                "SOL".to_string()
             } else {
-                "panel:create_limit"
-            },
-        )]);
+                "%".to_string()
+            };
+            rows.push(vec![InlineKeyboardButton::callback(
+                format!("确认{} {} {}", self.active_side().label(), amount, unit),
+                format!("panel:confirm:{}", self.active_side().as_str()),
+            )]);
+        }
         InlineKeyboardMarkup::new(rows)
     }
 }
 
-fn preset_button(session: &TradePanelSession, value: f64, index: usize) -> InlineKeyboardButton {
+fn preset_button(
+    session: &TradePanelSession,
+    value: f64,
+    index: usize,
+    one_click: bool,
+) -> InlineKeyboardButton {
     let selected = (session.active_amount() - value).abs() < f64::EPSILON;
     let unit = if session.active_side() == PanelSide::Buy {
         "SOL"
@@ -499,12 +578,17 @@ fn preset_button(session: &TradePanelSession, value: f64, index: usize) -> Inlin
     };
     InlineKeyboardButton::callback(
         format!(
-            "{}{} {}",
-            if selected { "✅ " } else { "" },
+            "{}{}{} {}",
+            if selected && !one_click { "✅ " } else { "" },
+            if one_click {
+                format!("{} ", session.active_side().label())
+            } else {
+                String::new()
+            },
             trim_float(value),
             unit
         ),
-        format!("panel:preset:{index}"),
+        format!("panel:preset:{}:{index}", session.active_side().as_str()),
     )
 }
 
@@ -550,19 +634,9 @@ pub fn trim_float(value: f64) -> String {
     text.trim_end_matches('0').trim_end_matches('.').to_string()
 }
 
-pub fn confirm_keyboard() -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new(vec![
-        vec![InlineKeyboardButton::callback("确认执行", "panel:execute")],
-        vec![InlineKeyboardButton::callback(
-            "取消",
-            "panel:cancel_confirm",
-        )],
-    ])
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{PanelDirection, PanelTab, TradePanelSession, TriggerMetric};
+    use super::{PanelDirection, PanelSide, PanelTab, TradePanelSession, TriggerMetric};
     use crate::{
         db::models::UserTradeSettings, execution_params::ExecutionMode,
         trade_client::ResolvedPoolRoute,
@@ -586,6 +660,7 @@ mod tests {
             default_tip_sol: 0.0001,
             default_buy_preset_slot: 3,
             default_sell_preset_slot: 1,
+            quick_trade_confirmation_enabled: true,
             buy_presets_sol: [0.001, 0.005, 0.01, 0.2, 0.5],
             sell_presets_percent: [10.0, 25.0, 50.0, 75.0, 100.0],
         };
@@ -605,5 +680,54 @@ mod tests {
         assert_eq!(panel.limit.execution.mode, ExecutionMode::DryRun);
         assert_eq!(panel.quick.buy_amount_sol, 0.2);
         assert_eq!(panel.quick.sell_percent, 25.0);
+
+        let confirmation_keyboard = serde_json::to_string(&panel.keyboard(&settings)).unwrap();
+        assert!(confirmation_keyboard.contains("确认买入 0.2 SOL"));
+        assert!(confirmation_keyboard.contains("panel:confirm"));
+
+        let mut one_click_settings = settings.clone();
+        one_click_settings.quick_trade_confirmation_enabled = false;
+        let one_click_keyboard =
+            serde_json::to_string(&panel.keyboard(&one_click_settings)).unwrap();
+        assert!(one_click_keyboard.contains("买入 0.01 SOL"));
+        assert!(!one_click_keyboard.contains("panel:confirm"));
+    }
+
+    #[test]
+    fn completed_quick_trade_switches_to_opposite_side() {
+        let settings = UserTradeSettings {
+            user_id: 1,
+            use_mev: false,
+            default_mev_provider: "auto".to_string(),
+            default_execution_mode: "dry_run".to_string(),
+            default_execution_method: "sdk".to_string(),
+            default_slippage_bps: 1500,
+            default_tip_sol: 0.0001,
+            default_buy_preset_slot: 2,
+            default_sell_preset_slot: 2,
+            quick_trade_confirmation_enabled: true,
+            buy_presets_sol: [0.001, 0.005, 0.01, 0.05, 0.1],
+            sell_presets_percent: [10.0, 25.0, 50.0, 75.0, 100.0],
+        };
+        let mut panel = TradePanelSession::new(
+            "So11111111111111111111111111111111111111112".to_string(),
+            None,
+            &settings,
+            PanelTab::Quick,
+            ResolvedPoolRoute {
+                mint: "So11111111111111111111111111111111111111112".to_string(),
+                pool: "pump".to_string(),
+                pool_id: None,
+                quote_mint: "So11111111111111111111111111111111111111112".to_string(),
+            },
+        );
+
+        panel.show_opposite_quick_side(PanelSide::Buy, "买入已提交".to_string());
+        assert_eq!(panel.quick.side, PanelSide::Sell);
+        assert_eq!(panel.notice.as_deref(), Some("买入已提交"));
+
+        panel.show_opposite_quick_side(PanelSide::Sell, "卖出已提交".to_string());
+        assert_eq!(panel.quick.side, PanelSide::Buy);
+        assert_eq!(panel.notice.as_deref(), Some("卖出已提交"));
     }
 }

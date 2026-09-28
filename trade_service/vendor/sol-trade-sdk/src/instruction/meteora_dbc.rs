@@ -24,7 +24,10 @@ pub struct MeteoraDbcInstructionBuilder;
 
 #[async_trait::async_trait]
 impl InstructionBuilder for MeteoraDbcInstructionBuilder {
-    async fn build_buy_instructions(&self, params: &SwapParams) -> anyhow::Result<Vec<Instruction>> {
+    async fn build_buy_instructions(
+        &self,
+        params: &SwapParams,
+    ) -> anyhow::Result<Vec<Instruction>> {
         let protocol = dbc_params(params)?;
         validate_quote_mint(protocol)?;
         build_exact_in(params, protocol, false, true).await
@@ -63,20 +66,13 @@ async fn build_exact_in(
     swap_base_for_quote: bool,
     is_buy: bool,
 ) -> anyhow::Result<Vec<Instruction>> {
-    let amount_in = params.input_amount.filter(|amount| *amount > 0).context(
-        if is_buy {
-            "Meteora DBC buy amount is not set"
-        } else {
-            "Meteora DBC sell amount is not set"
-        },
-    )?;
-    let minimum_amount_out = quote_minimum_amount_out(
-        params,
-        protocol,
-        swap_base_for_quote,
-        amount_in,
-    )
-    .await?;
+    let amount_in = params.input_amount.filter(|amount| *amount > 0).context(if is_buy {
+        "Meteora DBC buy amount is not set"
+    } else {
+        "Meteora DBC sell amount is not set"
+    })?;
+    let minimum_amount_out =
+        quote_minimum_amount_out(params, protocol, swap_base_for_quote, amount_in).await?;
 
     let (input_mint, input_program, output_mint, output_program) = if swap_base_for_quote {
         (
@@ -179,10 +175,7 @@ async fn quote_minimum_amount_out(
     swap_base_for_quote: bool,
     amount_in: u64,
 ) -> anyhow::Result<u64> {
-    let rpc = params
-        .rpc
-        .as_ref()
-        .context("Meteora DBC quote requires an RPC client")?;
+    let rpc = params.rpc.as_ref().context("Meteora DBC quote requires an RPC client")?;
     let current_slot = rpc.get_slot().await?;
     let current_timestamp = if protocol.pool_config.activation_type == 1 {
         rpc.get_block_time(current_slot)

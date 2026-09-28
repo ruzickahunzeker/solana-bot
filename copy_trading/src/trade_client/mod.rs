@@ -21,6 +21,10 @@ pub struct TradeRequest {
     pub mint: String,
     pub pool_id: Option<String>,
     pub quote_mint: Option<String>,
+    pub amount_quote_units: Option<u64>,
+    pub settlement_asset: Option<String>,
+    pub sol_hop_pool: Option<String>,
+    pub sol_hop_pool_id: Option<String>,
     pub amount_sol: Option<f64>,
     pub sell_percent: Option<u64>,
     pub slippage_percent: f64,
@@ -118,6 +122,14 @@ pub struct WalletBalanceItem {
 pub struct WalletBalancesResponse {
     pub fetched_at_ms: u128,
     pub wallets: Vec<WalletBalanceItem>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct QuoteBalanceResponse {
+    pub quote_mint: String,
+    pub decimals: u8,
+    pub balance_units: u64,
+    pub balance_lamports: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -315,6 +327,27 @@ impl TradeServiceClient {
             .context("failed to query wallet balances")?;
         self.decode_response(response, "query wallet balances")
             .await
+    }
+
+    pub async fn quote_balance(
+        &self,
+        user_id: i64,
+        wallet_id: &str,
+        mint: &str,
+    ) -> Result<QuoteBalanceResponse> {
+        let response = self
+            .authorized(self.client.get(format!(
+                "{}/internal/wallets/{}/quote-balance/{}",
+                self.base_url, wallet_id, mint
+            )))
+            .query(&[
+                ("owner_type", "copy_trading"),
+                ("owner_id", &user_id.to_string()),
+            ])
+            .send()
+            .await
+            .context("failed to query quote balance")?;
+        self.decode_response(response, "query quote balance").await
     }
 
     pub async fn create_vanity_job(
