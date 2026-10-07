@@ -61,14 +61,14 @@ impl MeteoraDlmmParams {
         };
         let state = fetch_lb_pair(rpc, lb_pair).await?;
         // swap_for_y = true when selling X for Y.
-        let swap_for_y =
-            if input_mint == &state.token_x_mint && output_mint == &state.token_y_mint {
-                true
-            } else if input_mint == &state.token_y_mint && output_mint == &state.token_x_mint {
-                false
-            } else {
-                anyhow::bail!("DLMM swap mints do not match pool");
-            };
+        let swap_for_y = if input_mint == &state.token_x_mint && output_mint == &state.token_y_mint
+        {
+            true
+        } else if input_mint == &state.token_y_mint && output_mint == &state.token_x_mint {
+            false
+        } else {
+            anyhow::bail!("DLMM swap mints do not match pool");
+        };
         let bin_arrays =
             resolve_bin_arrays_for_swap(rpc, lb_pair, state.active_id, swap_for_y).await?;
         let mint_accounts =

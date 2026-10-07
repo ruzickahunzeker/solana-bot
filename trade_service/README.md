@@ -313,6 +313,8 @@ buy/sell 请求没有传 `slippage_percent` 时使用的默认滑点，单位百
 
 是否允许 StonkFun 自定义 Quote 使用原子两跳 `SOL -> Quote -> Meme`（卖出反向执行）。默认 `false`。开启后请求仍必须显式传 `settlement_asset:"sol"`、`sol_hop_pool:"raydium-cpmm"` 和经过确认的 `sol_hop_pool_id`；服务会从链上校验第二跳池同时包含 WSOL 与目标 Quote。
 
+受保护的 `POST /v1/pools/sol-hop` 接受 `{"quote_mint":"..."}`，在此开关开启时查询 Raydium CPMM 的两个 mint 槽位，返回链上验证过的 `WSOL/Quote` 池；无可用池返回 `available:false`。TG 快速交易只在找到该池时提供 SOL 两跳选项，提交前会重新查询。此接口不是成交报价，不能据此展示预计到手数量或价格影响；当前不自动搜索 AMM v4 或三跳路径。
+
 `STONKFUN_VIA_SOL_MAX_BUY_SOL`
 
 Via-SOL 单笔买入上限，单位 SOL，默认 `0.1`。该限制只收紧 Via-SOL，不改变其他交易路径。

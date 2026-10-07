@@ -9,10 +9,7 @@ use crate::{
         utils::meteora_dlmm::{PROGRAM_ID, SWAP2_DISCRIMINATOR},
     },
     swqos::TradeType,
-    trading::core::{
-        params::DexParamEnum,
-        traits::InstructionBuilder,
-    },
+    trading::core::{params::DexParamEnum, traits::InstructionBuilder},
 };
 
 #[tokio::test]
@@ -47,14 +44,8 @@ async fn meteora_dlmm_mainnet_simulates_sol_to_usdc_buy() {
         DexParamEnum::MeteoraDlmm(pool),
     );
     params.fixed_output_amount = Some(1);
-    let business = MeteoraDlmmInstructionBuilder
-        .build_buy_instructions(&params)
-        .await
-        .unwrap();
-    let swap = business
-        .iter()
-        .find(|ix| ix.program_id == PROGRAM_ID)
-        .expect("dlmm swap2");
+    let business = MeteoraDlmmInstructionBuilder.build_buy_instructions(&params).await.unwrap();
+    let swap = business.iter().find(|ix| ix.program_id == PROGRAM_ID).expect("dlmm swap2");
     assert_eq!(&swap.data[..8], &SWAP2_DISCRIMINATOR);
 
     mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "dlmm sol→usdc buy").await;
@@ -100,14 +91,8 @@ async fn meteora_dlmm_mainnet_simulates_usdc_to_sol_after_hop() {
     let sell_ixs = MeteoraDlmmInstructionBuilder.build_sell_instructions(&sell).await.unwrap();
 
     let business = mainnet_sim::concat_ixs([hop_ixs, sell_ixs]);
-    mainnet_sim::run_business_sim(
-        &rpc,
-        &wallet,
-        business,
-        &[],
-        "dlmm after SOL→USDC: usdc→sol",
-    )
-    .await;
+    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "dlmm after SOL→USDC: usdc→sol")
+        .await;
 }
 
 #[tokio::test]
@@ -206,18 +191,8 @@ async fn meteora_dlmm_alt_pool_mainnet_simulates_sol_to_usdc_buy() {
         DexParamEnum::MeteoraDlmm(pool),
     );
     params.fixed_output_amount = Some(1);
-    let business = MeteoraDlmmInstructionBuilder
-        .build_buy_instructions(&params)
-        .await
-        .unwrap();
-    mainnet_sim::run_business_sim(
-        &rpc,
-        &wallet,
-        business,
-        &[],
-        "dlmm alt-pool sol→usdc buy",
-    )
-    .await;
+    let business = MeteoraDlmmInstructionBuilder.build_buy_instructions(&params).await.unwrap();
+    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "dlmm alt-pool sol→usdc buy").await;
 }
 
 #[tokio::test]

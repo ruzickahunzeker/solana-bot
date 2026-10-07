@@ -3,10 +3,9 @@ use std::sync::Arc;
 use crate::instruction::{
     bonk::BonkInstructionBuilder, meteora_damm_v2::MeteoraDammV2InstructionBuilder,
     meteora_dbc::MeteoraDbcInstructionBuilder, meteora_dlmm::MeteoraDlmmInstructionBuilder,
-    pumpfun::PumpFunInstructionBuilder,
-    pumpswap::PumpSwapInstructionBuilder, raydium_amm_v4::RaydiumAmmV4InstructionBuilder,
-    raydium_clmm::RaydiumClmmInstructionBuilder, raydium_cpmm::RaydiumCpmmInstructionBuilder,
-    whirlpool::WhirlpoolInstructionBuilder,
+    pumpfun::PumpFunInstructionBuilder, pumpswap::PumpSwapInstructionBuilder,
+    raydium_amm_v4::RaydiumAmmV4InstructionBuilder, raydium_clmm::RaydiumClmmInstructionBuilder,
+    raydium_cpmm::RaydiumCpmmInstructionBuilder, whirlpool::WhirlpoolInstructionBuilder,
 };
 
 use super::core::{executor::GenericTradeExecutor, traits::TradeExecutor};
@@ -22,10 +21,10 @@ pub enum DexType {
     RaydiumCpmm,
     RaydiumAmmV4,
     MeteoraDammV2,
+    MeteoraDbc,
     RaydiumClmm,
     OrcaWhirlpool,
     MeteoraDlmm,
-    MeteoraDbc,
 }
 
 /// 交易工厂 - 用于创建不同协议的交易执行器
@@ -43,10 +42,10 @@ impl TradeFactory {
             DexType::RaydiumCpmm => Self::raydium_cpmm_executor(),
             DexType::RaydiumAmmV4 => Self::raydium_amm_v4_executor(),
             DexType::MeteoraDammV2 => Self::meteora_damm_v2_executor(),
+            DexType::MeteoraDbc => Self::meteora_dbc_executor(),
             DexType::RaydiumClmm => Self::raydium_clmm_executor(),
             DexType::OrcaWhirlpool => Self::whirlpool_executor(),
             DexType::MeteoraDlmm => Self::meteora_dlmm_executor(),
-            DexType::MeteoraDbc => Self::meteora_dbc_executor(),
         }
     }
 

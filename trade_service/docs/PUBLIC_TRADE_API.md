@@ -503,7 +503,27 @@ amount_quote_units
   -> WSOL: amount_quote -> amount_sol -> amount_lamports -> DEFAULT_BUY_SOL
 ```
 
+### 只读 SOL 买入路线预览
+
+`POST /v1/quotes/sol-buy` 使用现有 Trade API 鉴权，接受 `{"wallet_id":"2TE","mint":"目标 mint","amount_lamports":1000000,"slippage_bps":1500}`。请求仅支持 0.0001–0.1 SOL、1–3000 bps；返回 `quote_id`、绑定钱包、15 秒有效期、`expected_output_units`、`minimum_output_units`、`price_impact_percent` 和路线各跳。`GET /v1/quotes/sol-buy/:quote_id?wallet_id=2TE` 只检查内存报价是否存在、未过期且与钱包 ID/公钥匹配，不重新查询价格。服务重启会使全部报价失效。当前使用公开 Jupiter Lite Quote API，固定只读地址；`executable` **恒为 `false`**。这两个接口不签名、不提交交易，也不表示该路线已通过本地钱包模拟。不要把返回值直接用于 Live 按钮或当成成交承诺；交易执行、费用校验和幂等接入仍需单独实现。
+
+`POST /v1/quotes/sol-buy/:quote_id/preflight?wallet_id=2TE` 会重新取价，要求路线不变且最低到手不降低，再请求构建未签名交易。它验证交易的 Solana 消息结构、付款公钥和空签名槽，从默认 RPC 解析地址查找表并校验所有账户索引；核实目标 Mint 属于 SPL Token 或 Token-2022，且绑定钱包的目标 ATA 出现在交易中并可写。Compute Budget 指令限制 CU 为 140 万以内、计算优先费为 100,000 lamports 以内，聚合器提供费用元数据时才交叉核对，缺失值不当作零。显式 System 指令只允许付款钱包发起的标准转账，总额不得超过买入金额加 0.02 SOL，且可写账户数不得超过 64。随后独立模拟未签名交易（`sig_verify:false`）；返回 `local_simulation_ok`、`target_ata`、`top_level_programs`、账户及指令数量、`explicit_system_spend_lamports`，以及 RPC 提供时的模拟手续费、计算消耗、付款钱包扣款、内部指令组数、`simulated_target_token_delta_units` 和 `simulated_target_token_post_units`。目标代币增量仅在目标 ATA/Mint 的前后余额记录都存在且唯一时计算；若小于报价最低到手量则拒绝，缺失时为 `null`，不能视为已验证。结束余额来自 RPC 模拟返回的目标 ATA 账户，校验 token program、Mint、钱包 owner 和初始化状态；仅有结束余额不代表买入增量。已返回的手续费与付款钱包扣款若超限也会拒绝。**不返回交易字节，不签名，不广播**。顶层程序清单只是审计信息，内部费用和全部可写目的地仍未审完，因此 `instruction_audit_passed:false`、`executable:false` 恒定。不得把预检成功当成下单授权。
+
+Jupiter 优先费声明与交易指令计算值允许最多 1 lamport 的舍入差；CU limit 必须完全一致。真正的费用上限始终按交易指令计算值校验。
+
+预检还会从同一默认 RPC 读取付款钱包和目标 ATA 的交易前账户状态，并返回 `baseline_slot`、`simulation_slot`。只有两个 slot 相同时才展示 `observed_same_slot_payer_debit_lamports` 与 `observed_same_slot_target_token_delta_units`；这两个值仅供排查，**不用于通过最低到手或最大扣款校验**，因为同一 slot 内账户状态也可能变化。严格校验仍只依赖模拟 RPC 自身返回的前后余额字段；缺失时相关校验仍是未知。
+
+RPC 提供内部指令时，预检会校验内部指令所属的外层编号、程序 ID 和账户索引是否属于交易消息，并返回 `simulated_inner_instruction_count`、`simulated_inner_programs`。这些字段仅是清单，不表示内部调用已通过语义或费用审计。
+
+若内部 System Program 指令都可识别为标准转账，预检还返回 `simulated_inner_payer_system_spend_lamports`，并与顶层显式转账合并检查买入金额加 0.02 SOL 的上限。任一内部 System 指令无法解析时该字段为 `null`，不能据此推断总支出；Token Program 和其他 CPI 费用仍未覆盖。
+
+目标 ATA 的交易前和模拟后账户使用 SPL Token / Token-2022 的结构化解析器验证初始化状态、Mint、钱包 owner 与原始数量；无效账户直接拒绝，避免只凭固定字节位置推断余额。
+
+顶层和 RPC 返回的内部 Token 指令若把目标 ATA 作为首个操作账户，预检仅接受账户初始化类指令；从目标 ATA 转出、授权、关闭或冻结等操作会拒绝。目标 ATA 作为转入目的地不会因这条规则被拒绝。该规则不覆盖其他中间 token 账户或聚合器程序内部语义，不能作为 Live 放行条件。
+
 StonkFun Via-SOL 示例（功能开关默认关闭）：
+
+第一跳可通过同一鉴权方式调用 `POST /v1/pools/sol-hop`，请求体为 `{"quote_mint":"CUSTOM_QUOTE_MINT"}`。响应包含 `available`、`pool`、`pool_id` 和 `reason`；目前仅扫描并校验 Raydium CPMM 的 `WSOL/Quote` 池，且 `STONKFUN_VIA_SOL_ENABLED` 必须开启。`available:true` 只代表池结构可用于两跳，不是成交报价；下单前应重新查询并核对 `pool_id`，不能据此显示预计到手数量或价格影响。找不到直达池时返回 `available:false`，不会自动改用三跳或聚合器。
 
 ```json
 {

@@ -9,10 +9,7 @@ use crate::{
         utils::raydium_amm_v4::{SWAP_BASE_IN_V2_DISCRIMINATOR, SWAP_BASE_OUT_V2_DISCRIMINATOR},
     },
     swqos::TradeType,
-    trading::core::{
-        params::DexParamEnum,
-        traits::InstructionBuilder,
-    },
+    trading::core::{params::DexParamEnum, traits::InstructionBuilder},
 };
 
 #[tokio::test]
@@ -23,7 +20,9 @@ async fn raydium_amm_v4_mainnet_simulates_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDT).await else { return; };
+    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDT).await else {
+        return;
+    };
     assert_eq!(pool.coin_mint, crate::constants::WSOL_TOKEN_ACCOUNT);
     assert_eq!(pool.pc_mint, fixtures::USDT_MINT);
     assert!(pool.coin_reserve > 0 && pool.pc_reserve > 0);
@@ -40,7 +39,9 @@ async fn raydium_amm_v4_mainnet_simulates_buy() {
     let business = RaydiumAmmV4InstructionBuilder.build_buy_instructions(&params).await.unwrap();
     let swap = business
         .iter()
-        .find(|ix| ix.program_id == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4)
+        .find(|ix| {
+            ix.program_id == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4
+        })
         .expect("amm v4 swap ix");
     assert_eq!(&swap.data[..1], SWAP_BASE_IN_V2_DISCRIMINATOR);
     assert!(u64::from_le_bytes(swap.data[9..17].try_into().unwrap()) > 0);
@@ -56,7 +57,9 @@ async fn raydium_amm_v4_mainnet_simulates_buy_and_sell() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDT).await else { return; };
+    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDT).await else {
+        return;
+    };
 
     let buy = mainnet_sim::swap_params(
         wallet.clone(),
@@ -72,8 +75,7 @@ async fn raydium_amm_v4_mainnet_simulates_buy_and_sell() {
         let swap = buy_ixs
             .iter()
             .find(|ix| {
-                ix.program_id
-                    == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4
+                ix.program_id == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4
                     && ix.data.len() >= 17
                     && &ix.data[..1] == SWAP_BASE_IN_V2_DISCRIMINATOR
             })
@@ -110,7 +112,9 @@ async fn raydium_amm_v4_mainnet_simulates_exact_out_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDT).await else { return; };
+    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDT).await else {
+        return;
+    };
 
     // First quote an exact-in to pick a reachable exact-out target.
     let probe = mainnet_sim::swap_params(
@@ -127,8 +131,7 @@ async fn raydium_amm_v4_mainnet_simulates_exact_out_buy() {
         let swap = probe_ixs
             .iter()
             .find(|ix| {
-                ix.program_id
-                    == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4
+                ix.program_id == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4
                     && ix.data.len() >= 17
                     && &ix.data[..1] == SWAP_BASE_IN_V2_DISCRIMINATOR
             })
@@ -169,7 +172,9 @@ async fn raydium_amm_v4_wsol_usdc_mainnet_simulates_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDC).await else { return; };
+    let Some(pool) = mainnet_sim::load_amm_v4(&rpc, fixtures::AMM_V4_WSOL_USDC).await else {
+        return;
+    };
     assert_eq!(pool.coin_mint, crate::constants::WSOL_TOKEN_ACCOUNT);
     assert_eq!(pool.pc_mint, fixtures::USDC_MINT);
 
@@ -185,7 +190,9 @@ async fn raydium_amm_v4_wsol_usdc_mainnet_simulates_buy() {
     let business = RaydiumAmmV4InstructionBuilder.build_buy_instructions(&params).await.unwrap();
     let swap = business
         .iter()
-        .find(|ix| ix.program_id == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4)
+        .find(|ix| {
+            ix.program_id == crate::instruction::utils::raydium_amm_v4::accounts::RAYDIUM_AMM_V4
+        })
         .expect("amm v4 swap");
     assert_eq!(&swap.data[..1], SWAP_BASE_IN_V2_DISCRIMINATOR);
 
@@ -215,9 +222,7 @@ async fn raydium_amm_v4_wsol_usdt_mainnet_simulates_sell_leg_after_buy_probe() {
         DexParamEnum::RaydiumAmmV4(pool.clone()),
     );
     let buy_ixs = RaydiumAmmV4InstructionBuilder.build_buy_instructions(&buy).await.unwrap();
-    let sell_amount = mainnet_sim::amm_v4_min_out(&buy_ixs)
-        .map(|v| (v / 2).max(1))
-        .unwrap_or(1);
+    let sell_amount = mainnet_sim::amm_v4_min_out(&buy_ixs).map(|v| (v / 2).max(1)).unwrap_or(1);
 
     let mut sell = mainnet_sim::swap_params(
         wallet.clone(),
@@ -234,14 +239,8 @@ async fn raydium_amm_v4_wsol_usdt_mainnet_simulates_sell_leg_after_buy_probe() {
     let sell_ixs = RaydiumAmmV4InstructionBuilder.build_sell_instructions(&sell).await.unwrap();
 
     let business = mainnet_sim::concat_ixs([buy_ixs, sell_ixs]);
-    mainnet_sim::run_business_sim(
-        &rpc,
-        &wallet,
-        business,
-        &[],
-        "amm_v4 wsol↔usdt small roundtrip",
-    )
-    .await;
+    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "amm_v4 wsol↔usdt small roundtrip")
+        .await;
 }
 
 #[tokio::test]
@@ -322,12 +321,5 @@ async fn raydium_amm_v4_mainnet_simulates_exact_out_usdc_buy() {
         .expect("exact-out swap");
     assert_eq!(&swap.data[..1], SWAP_BASE_OUT_V2_DISCRIMINATOR);
 
-    mainnet_sim::run_business_sim(
-        &rpc,
-        &wallet,
-        business,
-        &[],
-        "amm_v4 wsol→usdc exact-out",
-    )
-    .await;
+    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "amm_v4 wsol→usdc exact-out").await;
 }

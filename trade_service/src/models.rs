@@ -81,6 +81,19 @@ pub struct ResolvePoolRequest {
     pub mint: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ResolveSolHopRequest {
+    pub quote_mint: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ResolveSolHopResponse {
+    pub available: bool,
+    pub pool: Option<Pool>,
+    pub pool_id: Option<String>,
+    pub reason: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct ResolvePoolResponse {
     pub mint: String,

@@ -10,9 +10,7 @@ use crate::{
     },
     swqos::TradeType,
     trading::core::{
-        params::{
-            DexParamEnum, StonkFunViaSolParams,
-        },
+        params::{DexParamEnum, StonkFunViaSolParams},
         traits::InstructionBuilder,
     },
     BuyAmount, SellAmount, SimpleBuyParams, SimpleSellParams, TradeTokenType,
@@ -27,17 +25,25 @@ async fn via_sol_graduated_mainnet_creates_wallet_and_simulates_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let graduated =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
+    let graduated = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
+            return;
+        };
+        v
+    };
     assert!(sol_hop.base_reserve > 0 && sol_hop.quote_reserve > 0);
 
     let via = StonkFunViaSolParams::graduated_with_cpmm(graduated, sol_hop);
     let params = mainnet_sim::swap_params(
         wallet.clone(),
         TradeType::Buy,
-        crate::constants::WSOL_TOKEN_ACCOUNT,
+        crate::constants::SOL_TOKEN_ACCOUNT,
         fixtures::GRAD_MEME_KNOTS,
         50_000,
         300,
@@ -66,16 +72,25 @@ async fn via_sol_curve_mainnet_creates_wallet_and_simulates_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let curve = { let Some(v) = mainnet_sim::load_stonkfun_curve(&rpc, &fixtures::CURVE_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else { return; }; v };
+    let curve = {
+        let Some(v) = mainnet_sim::load_stonkfun_curve(&rpc, &fixtures::CURVE_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else {
+            return;
+        };
+        v
+    };
     assert_eq!(curve.quote_mint, fixtures::CURVE_QUOTE_CARDS);
 
     let via = StonkFunViaSolParams::curve_with_cpmm(curve, sol_hop);
     let params = mainnet_sim::swap_params(
         wallet.clone(),
         TradeType::Buy,
-        crate::constants::WSOL_TOKEN_ACCOUNT,
+        crate::constants::SOL_TOKEN_ACCOUNT,
         fixtures::CURVE_MEME,
         10_000,
         500,
@@ -100,17 +115,25 @@ async fn via_sol_graduated_mainnet_creates_wallet_and_simulates_sell_after_virtu
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let graduated =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
+    let graduated = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
+            return;
+        };
+        v
+    };
     let via_buy = StonkFunViaSolParams::graduated_with_cpmm(graduated.clone(), sol_hop.clone());
     let via_sell = StonkFunViaSolParams::graduated_with_cpmm(graduated, sol_hop);
 
     let buy_params = mainnet_sim::swap_params(
         wallet.clone(),
         TradeType::Buy,
-        crate::constants::WSOL_TOKEN_ACCOUNT,
+        crate::constants::SOL_TOKEN_ACCOUNT,
         fixtures::GRAD_MEME_KNOTS,
         50_000,
         300,
@@ -153,28 +176,36 @@ async fn via_sol_graduated_mainnet_hot_path_minimal_simulates_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let graduated =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
+    let graduated = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
+            return;
+        };
+        v
+    };
     let via = StonkFunViaSolParams::graduated_with_cpmm(graduated, sol_hop);
 
     let setup = mainnet_sim::swap_params(
         wallet.clone(),
         TradeType::Buy,
-        crate::constants::WSOL_TOKEN_ACCOUNT,
+        crate::constants::SOL_TOKEN_ACCOUNT,
         fixtures::GRAD_MEME_KNOTS,
         50_000,
         300,
         DexParamEnum::StonkFunViaSol(via.clone()),
     );
     let setup_ixs = StonkFunInstructionBuilder.build_buy_instructions(&setup).await.unwrap();
-    let mut ata_and_wrap: Vec<_> = setup_ixs
-        .into_iter()
-        .filter(|ix| ix.program_id != cpmm_accounts::RAYDIUM_CPMM)
-        .collect();
+    let mut ata_and_wrap: Vec<_> =
+        setup_ixs.into_iter().filter(|ix| ix.program_id != cpmm_accounts::RAYDIUM_CPMM).collect();
 
     let mut hot = setup;
+    // Setup wraps SOL once; the hot trade spends that prepared WSOL balance.
+    hot.input_mint = crate::constants::WSOL_TOKEN_ACCOUNT;
     hot.create_input_mint_ata = false;
     hot.close_input_mint_ata = false;
     hot.create_output_mint_ata = false;
@@ -207,15 +238,23 @@ async fn via_sol_graduated_mainnet_higher_slippage_and_larger_input_simulates() 
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let graduated =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
+    let graduated = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
+            return;
+        };
+        v
+    };
     let via = StonkFunViaSolParams::graduated_with_cpmm(graduated, sol_hop);
     let params = mainnet_sim::swap_params(
         wallet.clone(),
         TradeType::Buy,
-        crate::constants::WSOL_TOKEN_ACCOUNT,
+        crate::constants::SOL_TOKEN_ACCOUNT,
         fixtures::GRAD_MEME_KNOTS,
         200_000,
         800,
@@ -241,16 +280,25 @@ async fn via_sol_curve_mainnet_creates_wallet_and_simulates_sell_after_virtual_b
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let curve = { let Some(v) = mainnet_sim::load_stonkfun_curve(&rpc, &fixtures::CURVE_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else { return; }; v };
+    let curve = {
+        let Some(v) = mainnet_sim::load_stonkfun_curve(&rpc, &fixtures::CURVE_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else {
+            return;
+        };
+        v
+    };
     let via_buy = StonkFunViaSolParams::curve_with_cpmm(curve.clone(), sol_hop.clone());
     let via_sell = StonkFunViaSolParams::curve_with_cpmm(curve.clone(), sol_hop);
 
     let buy_params = mainnet_sim::swap_params(
         wallet.clone(),
         TradeType::Buy,
-        crate::constants::WSOL_TOKEN_ACCOUNT,
+        crate::constants::SOL_TOKEN_ACCOUNT,
         fixtures::CURVE_MEME,
         10_000,
         500,
@@ -284,10 +332,11 @@ async fn via_sol_curve_mainnet_creates_wallet_and_simulates_sell_after_virtual_b
     sell_via.close_input_mint_ata = false;
     sell_via.create_output_mint_ata = false;
     sell_via.close_output_mint_ata = false;
-    let sell_via_ixs =
-        StonkFunInstructionBuilder.build_sell_instructions(&sell_via).await.unwrap();
+    let sell_via_ixs = StonkFunInstructionBuilder.build_sell_instructions(&sell_via).await.unwrap();
     assert!(
-        sell_via_ixs.iter().any(|ix| ix.program_id == crate::instruction::utils::bonk::accounts::BONK),
+        sell_via_ixs
+            .iter()
+            .any(|ix| ix.program_id == crate::instruction::utils::bonk::accounts::BONK),
         "via_sol curve sell must include LaunchLab leg"
     );
     assert!(
@@ -308,8 +357,7 @@ async fn via_sol_curve_mainnet_creates_wallet_and_simulates_sell_after_virtual_b
     curve_only.close_input_mint_ata = false;
     curve_only.create_output_mint_ata = false;
     curve_only.close_output_mint_ata = false;
-    let sell_ixs =
-        StonkFunInstructionBuilder.build_sell_instructions(&curve_only).await.unwrap();
+    let sell_ixs = StonkFunInstructionBuilder.build_sell_instructions(&curve_only).await.unwrap();
 
     let mut business = buy_ixs;
     business.extend(sell_ixs);
@@ -331,10 +379,18 @@ async fn via_sol_simple_helpers_still_wire_dex_type() {
     }
 
     let rpc = mainnet_sim::rpc_client();
-    let graduated =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
+    let graduated = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
+            return;
+        };
+        v
+    };
     let via = StonkFunViaSolParams::graduated_with_cpmm(graduated, sol_hop);
     let buy = SimpleBuyParams::stonkfun_with_sol(
         fixtures::GRAD_MEME_KNOTS,
@@ -364,17 +420,25 @@ async fn via_sol_graduated_mainnet_sell_closes_wsol() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let graduated =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else { return; }; v };
-    let sol_hop =
-        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
+    let graduated = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else {
+            return;
+        };
+        v
+    };
+    let sol_hop = {
+        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
+            return;
+        };
+        v
+    };
     let via_buy = StonkFunViaSolParams::graduated_with_cpmm(graduated.clone(), sol_hop.clone());
     let via_sell = StonkFunViaSolParams::graduated_with_cpmm(graduated, sol_hop);
 
     let buy = mainnet_sim::swap_params(
         wallet.clone(),
         TradeType::Buy,
-        crate::constants::WSOL_TOKEN_ACCOUNT,
+        crate::constants::SOL_TOKEN_ACCOUNT,
         fixtures::GRAD_MEME_KNOTS,
         50_000,
         300,
@@ -382,11 +446,8 @@ async fn via_sol_graduated_mainnet_sell_closes_wsol() {
     );
     let buy_ixs = StonkFunInstructionBuilder.build_buy_instructions(&buy).await.unwrap();
     let meme_min_out = {
-        let swap = buy_ixs
-            .iter()
-            .rev()
-            .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
-            .unwrap();
+        let swap =
+            buy_ixs.iter().rev().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
         u64::from_le_bytes(swap.data[16..24].try_into().unwrap())
     };
 
@@ -407,8 +468,8 @@ async fn via_sol_graduated_mainnet_sell_closes_wsol() {
     let sell_ixs = StonkFunInstructionBuilder.build_sell_instructions(&sell).await.unwrap();
     assert!(
         sell_ixs.iter().any(|ix| {
-            ix.program_id == crate::constants::TOKEN_PROGRAM
-                && ix.data.first().copied() == Some(9) // CloseAccount
+            ix.program_id == crate::constants::TOKEN_PROGRAM && ix.data.first().copied() == Some(9)
+            // CloseAccount
         }),
         "ViaSol sell with close_output should unwrap WSOL"
     );
