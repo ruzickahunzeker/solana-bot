@@ -5,16 +5,11 @@
 use crate::{
     common::mainnet_sim::{self, fixtures},
     instruction::{
-        meteora_damm_v2::MeteoraDammV2InstructionBuilder,
-        pumpswap::PumpSwapInstructionBuilder,
-        raydium_clmm::RaydiumClmmInstructionBuilder,
-        whirlpool::WhirlpoolInstructionBuilder,
+        meteora_damm_v2::MeteoraDammV2InstructionBuilder, pumpswap::PumpSwapInstructionBuilder,
+        raydium_clmm::RaydiumClmmInstructionBuilder, whirlpool::WhirlpoolInstructionBuilder,
     },
     swqos::TradeType,
-    trading::core::{
-        params::DexParamEnum,
-        traits::InstructionBuilder,
-    },
+    trading::core::{params::DexParamEnum, traits::InstructionBuilder},
 };
 
 #[tokio::test]
@@ -59,15 +54,15 @@ async fn cross_dex_clmm_hop_then_whirlpool_sell() {
     let sell_ixs = WhirlpoolInstructionBuilder.build_sell_instructions(&sell).await.unwrap();
 
     assert!(
-        hop_ixs.iter().any(|ix| {
-            ix.program_id == crate::instruction::utils::raydium_clmm::PROGRAM_ID
-        }),
+        hop_ixs
+            .iter()
+            .any(|ix| { ix.program_id == crate::instruction::utils::raydium_clmm::PROGRAM_ID }),
         "CLMM hop must include CLMM program"
     );
     assert!(
-        sell_ixs.iter().any(|ix| {
-            ix.program_id == crate::instruction::utils::whirlpool::PROGRAM_ID
-        }),
+        sell_ixs
+            .iter()
+            .any(|ix| { ix.program_id == crate::instruction::utils::whirlpool::PROGRAM_ID }),
         "Whirlpool sell must include whirlpool program"
     );
 
@@ -434,13 +429,11 @@ async fn cross_dex_triangle_amm_usdc_then_whirlpool_then_clmm() {
         );
         clmm_sell.create_input_mint_ata = false;
         clmm_sell.fixed_output_amount = Some(1);
-        let clmm_ixs = RaydiumClmmInstructionBuilder
-            .build_sell_instructions(&clmm_sell)
-            .await
-            .unwrap();
-        assert!(clmm_ixs.iter().any(|ix| {
-            ix.program_id == crate::instruction::utils::raydium_clmm::PROGRAM_ID
-        }));
+        let clmm_ixs =
+            RaydiumClmmInstructionBuilder.build_sell_instructions(&clmm_sell).await.unwrap();
+        assert!(clmm_ixs
+            .iter()
+            .any(|ix| { ix.program_id == crate::instruction::utils::raydium_clmm::PROGRAM_ID }));
         println!("triangle: CLMM reverse also built (ixs={})", clmm_ixs.len());
     }
 

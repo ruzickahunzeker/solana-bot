@@ -1,3 +1,4 @@
+mod aggregator_quote;
 mod auth;
 mod blockhash_cache;
 mod config;
@@ -27,6 +28,7 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::{info, warn};
 
+use crate::aggregator_quote::QuoteStore;
 use crate::blockhash_cache::BlockhashCache;
 use crate::idempotency::IdempotencyStore;
 use crate::param_cache::ParamCache;
@@ -47,6 +49,7 @@ pub struct AppState {
     pub trades: Arc<TradeStore>,
     pub idempotency: Arc<IdempotencyStore>,
     pub persistence: Arc<TradePersistence>,
+    pub aggregator_quotes: Arc<QuoteStore>,
 }
 
 #[tokio::main]
@@ -111,6 +114,7 @@ async fn main() -> anyhow::Result<()> {
         trades: Arc::new(TradeStore::default()),
         idempotency: Arc::new(IdempotencyStore::default()),
         persistence,
+        aggregator_quotes: Arc::new(QuoteStore::default()),
     };
 
     let app: Router = http::router(state).layer(TraceLayer::new_for_http());
