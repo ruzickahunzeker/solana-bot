@@ -8,6 +8,7 @@ use std::net::SocketAddr;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::{info, warn};
 
+use crate::aggregator_quote::{self, SolBuyQuoteRequest};
 use crate::auth;
 use crate::config::WalletConfig;
 use crate::executor;
@@ -16,9 +17,10 @@ use crate::models::{
     BatchTradeItemResponse, BatchTradeRequest, BatchTradeResponse, CreateVanityJobRequest,
     CreateWalletRequest, ErrorResponse, ExportWalletResponse, HealthResponse,
     ManagedWalletResponse, ManagedWalletsResponse, QuoteBalanceResponse, ReadyResponse,
-    ResolvePoolRequest, SolTransferAmountMode, SolTransferRequest, SolTransferResponse,
-    TradeRequest, TradeResponse, TradeStatus, UpdateWalletRequest, WalletBalanceItem,
-    WalletBalancesResponse, WalletsResponse, WarmupRequest, WarmupResponse,
+    ResolvePoolRequest, ResolveSolHopRequest, ResolveSolHopResponse, SolTransferAmountMode,
+    SolTransferRequest, SolTransferResponse, TradeRequest, TradeResponse, TradeStatus,
+    UpdateWalletRequest, WalletBalanceItem, WalletBalancesResponse, WalletsResponse, WarmupRequest,
+    WarmupResponse,
 };
 use crate::persistence::DurableReserve;
 use crate::state::{cache_key, new_request_id};
@@ -39,6 +41,13 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/wallets/:wallet_id/export", post(export_wallet))
         .route("/v1/cache/warmup", post(warmup))
         .route("/v1/pools/resolve", post(resolve_pool))
+        .route("/v1/pools/sol-hop", post(resolve_sol_hop))
+        .route("/v1/quotes/sol-buy", post(sol_buy_quote))
+        .route("/v1/quotes/sol-buy/:quote_id", get(get_sol_buy_quote))
+        .route(
+            "/v1/quotes/sol-buy/:quote_id/preflight",
+            post(preflight_sol_buy_quote),
+        )
         .route("/v1/trades", post(create_trade).get(list_trades))
         .route("/v1/batch/trades", post(create_batch_trades))
         .route("/v1/trades/:request_id", get(get_trade))
@@ -706,6 +715,156 @@ async fn resolve_pool(
             (StatusCode::OK, Json(resolved)).into_response()
         }
         Err(err) => error(StatusCode::BAD_GATEWAY, err.to_string()),
+    }
+}
+
+async fn resolve_sol_hop(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(request): Json<ResolveSolHopRequest>,
+) -> Response {
+    if let Err(response) = authorize_protected(&state, &headers, peer) {
+        return response;
+    }
+    if !state.config.stonkfun_via_sol.enabled {
+        return (
+            StatusCode::OK,
+            Json(ResolveSolHopResponse {
+                available: false,
+                pool: None,
+                pool_id: None,
+                reason: Some("STONKFUN_VIA_SOL_ENABLED is false".to_string()),
+            }),
+        )
+            .into_response();
+    }
+    let quote_mint = match request.quote_mint.parse() {
+        Ok(mint) => mint,
+        Err(_) => return error(StatusCode::BAD_REQUEST, "quote_mint must be a valid pubkey"),
+    };
+    match state
+        .wallets
+        .default()
+        .resolve_stonkfun_sol_hop(&quote_mint)
+        .await
+    {
+        Ok(pool_id) => (
+            StatusCode::OK,
+            Json(ResolveSolHopResponse {
+                available: true,
+                pool: Some(crate::models::Pool::RaydiumCpmm),
+                pool_id: Some(pool_id.to_string()),
+                reason: None,
+            }),
+        )
+            .into_response(),
+        Err(err) => (
+            StatusCode::OK,
+            Json(ResolveSolHopResponse {
+                available: false,
+                pool: None,
+                pool_id: None,
+                reason: Some(crate::sanitize::redact_urls(&err.to_string())),
+            }),
+        )
+            .into_response(),
+    }
+}
+
+async fn sol_buy_quote(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(request): Json<SolBuyQuoteRequest>,
+) -> Response {
+    if let Err(response) = authorize_protected(&state, &headers, peer) {
+        return response;
+    }
+    if let Err(err) = aggregator_quote::validate_request(&request) {
+        return error(StatusCode::BAD_REQUEST, err.to_string());
+    }
+    let Some(wallet) = state.wallets.get(&request.wallet_id) else {
+        return error(StatusCode::BAD_REQUEST, "wallet_id not found");
+    };
+    match aggregator_quote::quote(&request).await {
+        Ok(quote) => {
+            match state
+                .aggregator_quotes
+                .insert(&request, wallet.wallet().to_string(), quote)
+            {
+                Ok(bound) => (StatusCode::OK, Json(bound)).into_response(),
+                Err(err) => error(StatusCode::SERVICE_UNAVAILABLE, err.to_string()),
+            }
+        }
+        Err(err) => error(
+            StatusCode::BAD_GATEWAY,
+            crate::sanitize::redact_urls(&err.to_string()),
+        ),
+    }
+}
+
+#[derive(Deserialize)]
+struct QuoteWalletQuery {
+    wallet_id: String,
+}
+
+async fn get_sol_buy_quote(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Path(quote_id): Path<String>,
+    Query(query): Query<QuoteWalletQuery>,
+) -> Response {
+    if let Err(response) = authorize_protected(&state, &headers, peer) {
+        return response;
+    }
+    let Some(wallet) = state.wallets.get(&query.wallet_id) else {
+        return error(StatusCode::BAD_REQUEST, "wallet_id not found");
+    };
+    match state
+        .aggregator_quotes
+        .get(&quote_id, &query.wallet_id, &wallet.wallet().to_string())
+    {
+        Ok(bound) => (StatusCode::OK, Json(bound)).into_response(),
+        Err(err) => error(StatusCode::GONE, err.to_string()),
+    }
+}
+
+async fn preflight_sol_buy_quote(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Path(quote_id): Path<String>,
+    Query(query): Query<QuoteWalletQuery>,
+) -> Response {
+    if let Err(response) = authorize_protected(&state, &headers, peer) {
+        return response;
+    }
+    let Some(wallet) = state.wallets.get(&query.wallet_id) else {
+        return error(StatusCode::BAD_REQUEST, "wallet_id not found");
+    };
+    let bound =
+        match state
+            .aggregator_quotes
+            .get(&quote_id, &query.wallet_id, &wallet.wallet().to_string())
+        {
+            Ok(bound) => bound,
+            Err(err) => return error(StatusCode::GONE, err.to_string()),
+        };
+    match aggregator_quote::preflight(&bound, &wallet).await {
+        Ok(result) => match state.aggregator_quotes.get(
+            &quote_id,
+            &query.wallet_id,
+            &wallet.wallet().to_string(),
+        ) {
+            Ok(_) => (StatusCode::OK, Json(result)).into_response(),
+            Err(err) => error(StatusCode::GONE, err.to_string()),
+        },
+        Err(err) => error(
+            StatusCode::BAD_GATEWAY,
+            crate::sanitize::redact_urls(&err.to_string()),
+        ),
     }
 }
 

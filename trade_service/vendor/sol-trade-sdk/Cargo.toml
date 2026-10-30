@@ -12,7 +12,7 @@
 [package]
 edition = "2021"
 name = "sol-trade-sdk"
-version = "5.0.5"
+version = "5.0.7"
 authors = [
     "William <byteblock6@gmail.com>",
     "sgxiang <sgxiang@gmail.com>",
@@ -38,6 +38,7 @@ repository = "https://github.com/0xfnzero/sol-trade-sdk"
 
 [features]
 default = []
+parser-adapter = ["dep:sol-parser-sdk"]
 perf-trace = []
 
 [lib]
@@ -45,9 +46,64 @@ name = "sol_trade_sdk"
 crate-type = ["rlib"]
 path = "src/lib.rs"
 
+[[example]]
+name = "cpmm_creator_fee_simulate"
+path = "examples/cpmm_creator_fee_simulate.rs"
+
+[[example]]
+name = "cpmm_creator_fee_stream"
+path = "examples/cpmm_creator_fee_stream.rs"
+required-features = ["parser-adapter"]
+
+[[example]]
+name = "cpmm_lp_after_collection_simulate"
+path = "examples/cpmm_lp_after_collection_simulate.rs"
+
+[[example]]
+name = "cpmm_swap_after_collection_simulate"
+path = "examples/cpmm_swap_after_collection_simulate.rs"
+
+[[example]]
+name = "simulation_replay"
+path = "examples/simulation_replay.rs"
+
+[[example]]
+name = "stonkfun_cached_prepare"
+path = "examples/stonkfun_cached_prepare.rs"
+required-features = ["parser-adapter"]
+
+[[example]]
+name = "stonkfun_grpc_simulate"
+path = "examples/stonkfun_grpc_simulate.rs"
+required-features = ["parser-adapter"]
+
+[[test]]
+name = "cpmm_creator_fee_cached"
+path = "tests/cpmm_creator_fee_cached.rs"
+
+[[test]]
+name = "cpmm_creator_fee_share"
+path = "tests/cpmm_creator_fee_share.rs"
+
+[[test]]
+name = "cpmm_creator_fee_simulation"
+path = "tests/cpmm_creator_fee_simulation.rs"
+
+[[test]]
+name = "cpmm_lp_after_collection"
+path = "tests/cpmm_lp_after_collection.rs"
+
+[[test]]
+name = "cpmm_swap_after_collection"
+path = "tests/cpmm_swap_after_collection.rs"
+
 [[test]]
 name = "devnet_v1"
 path = "tests/devnet_v1.rs"
+
+[[test]]
+name = "pumpswap_signed_official"
+path = "tests/pumpswap_signed_official.rs"
 
 [dependencies.anyhow]
 version = "1.0.90"
@@ -68,11 +124,11 @@ version = "1.3.3"
 version = "1.5.3"
 features = ["derive"]
 
-[dependencies.bs58]
-version = "0.5.1"
-
 [dependencies.bytemuck]
 version = "1.4.0"
+
+[dependencies.bs58]
+version = "0.5.1"
 
 [dependencies.bytes]
 version = "1"
@@ -125,11 +181,19 @@ version = "0.4"
 [dependencies.memmap2]
 version = "0.9"
 
+[dependencies.meteora-dlmm]
+version = "=0.2.0"
+
 [dependencies.num_cpus]
 version = "1.16"
 
 [dependencies.once_cell]
 version = "1.20.3"
+
+[dependencies.orca_whirlpools_core]
+version = "=2.1.1"
+features = ["swap"]
+default-features = false
 
 [dependencies.parking_lot]
 version = "0.12"
@@ -187,11 +251,18 @@ version = "0.10"
 [dependencies.smallvec]
 version = "1.15.1"
 
+[dependencies.sol-parser-sdk]
+version = "=0.7.8"
+optional = true
+
 [dependencies.solana-account-decoder]
 version = "4.2.2"
 
 [dependencies.solana-client]
 version = "4.2.2"
+
+[dependencies.solana-clmm-raydium]
+version = "=0.3.0"
 
 [dependencies.solana-commitment-config]
 version = "3.1.1"
@@ -256,7 +327,11 @@ version = "1.11"
 version = "=0.5.5"
 
 [dev-dependencies.sol-parser-sdk]
-version = "=0.7.6"
+version = "=0.7.8"
+
+[dev-dependencies.tracing-subscriber]
+version = "0.3"
+features = ["env-filter"]
 
 [profile.dev]
 opt-level = 1

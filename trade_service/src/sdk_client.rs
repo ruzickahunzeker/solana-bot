@@ -3,26 +3,47 @@ use sol_trade_sdk::common::{
     fast_fn::get_associated_token_address_with_program_id_fast, spl_token, spl_token_2022,
     GasFeeStrategy, GasFeeStrategyType, TradeConfig,
 };
+use sol_trade_sdk::instruction::meteora_damm_v2::MeteoraDammV2InstructionBuilder;
 use sol_trade_sdk::swqos::{
     AstralaneTransport, SwqosConfig, SwqosRegion, SwqosTransport, SwqosType, TradeType,
 };
+use sol_trade_sdk::trading::core::params::SwapParams;
 use sol_trade_sdk::trading::core::params::{
     BonkParams, DexParamEnum, MeteoraDammV2Params, MeteoraDbcParams, PumpFunParams, PumpSwapParams,
     RaydiumAmmV4Params, RaydiumCpmmParams, StonkFunParams, StonkFunViaSolParams,
 };
+use sol_trade_sdk::trading::core::traits::InstructionBuilder;
 use sol_trade_sdk::trading::factory::DexType;
 use sol_trade_sdk::{
     find_pool_by_mint, TradeBuyParams, TradeSellParams, TradeTokenType, TradingClient,
 };
-use solana_account_decoder::UiAccountData;
+use solana_account_decoder::{UiAccountData, UiAccountEncoding};
+use solana_address_lookup_table_interface::{program as lookup_program, state::AddressLookupTable};
+use solana_client::rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig};
+use solana_client::rpc_config::{
+    RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
+};
+use solana_client::rpc_filter::Memcmp;
+use solana_client::rpc_filter::RpcFilterType;
 use solana_client::rpc_request::TokenAccountsFilter;
 use solana_commitment_config::CommitmentConfig;
+use solana_program_pack::Pack;
 use solana_sdk::hash::Hash;
 use solana_sdk::message::Message;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature, Signer};
 use solana_sdk::transaction::Transaction;
+use solana_sdk::transaction::VersionedTransaction;
 use solana_system_interface::instruction as system_instruction;
+use solana_transaction_status_client_types::UiTransactionEncoding;
+use solana_transaction_status_client_types::{
+    UiInnerInstructions, UiInstruction, UiParsedInstruction,
+};
+use spl_token_2022_interface::{
+    extension::StateWithExtensions, instruction::TokenInstruction as Token2022Instruction,
+    state::Account as Token2022Account,
+};
+use spl_token_interface::{instruction::TokenInstruction, state::Account as TokenAccount};
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::time::{sleep, Duration, Instant};
@@ -80,7 +101,857 @@ pub struct SolTransferResult {
     pub balance_before_lamports: u64,
 }
 
+pub struct AggregatorSimulation {
+    pub ok: bool,
+    pub fee_lamports: Option<u64>,
+    pub units_consumed: Option<u64>,
+    pub payer_debit_lamports: Option<u64>,
+    pub inner_instruction_groups: Option<usize>,
+    pub target_token_delta_units: Option<u64>,
+    pub target_token_post_units: Option<u64>,
+    pub baseline_slot: u64,
+    pub simulation_slot: u64,
+    pub observed_same_slot_payer_debit_lamports: Option<u64>,
+    pub observed_same_slot_target_token_delta_units: Option<u64>,
+    pub inner_instruction_count: Option<usize>,
+    pub inner_programs: Option<Vec<String>>,
+    pub inner_payer_system_spend_lamports: Option<u64>,
+}
+
+pub(crate) fn check_target_token_instruction(
+    program: &Pubkey,
+    data: &[u8],
+    accounts: &[Pubkey],
+    target_ata: &Pubkey,
+) -> anyhow::Result<()> {
+    if accounts.first() != Some(target_ata) {
+        return Ok(());
+    }
+    let initialization = if *program == spl_token::ID {
+        matches!(
+            TokenInstruction::unpack(data).context("invalid SPL target ATA instruction")?,
+            TokenInstruction::InitializeAccount
+                | TokenInstruction::InitializeAccount2 { .. }
+                | TokenInstruction::InitializeAccount3 { .. }
+        )
+    } else if *program == spl_token_2022::ID {
+        matches!(
+            Token2022Instruction::unpack(data)
+                .context("invalid Token-2022 target ATA instruction")?,
+            Token2022Instruction::InitializeAccount
+                | Token2022Instruction::InitializeAccount2 { .. }
+                | Token2022Instruction::InitializeAccount3 { .. }
+        )
+    } else {
+        return Ok(());
+    };
+    if !initialization {
+        bail!("token instruction attempts to modify target ATA beyond initialization");
+    }
+    Ok(())
+}
+
+fn check_inner_target_token_instructions(
+    groups: &[UiInnerInstructions],
+    keys: &[Pubkey],
+    target_ata: &Pubkey,
+) -> anyhow::Result<()> {
+    for group in groups {
+        for instruction in &group.instructions {
+            match instruction {
+                UiInstruction::Compiled(ix) => {
+                    let program = keys
+                        .get(usize::from(ix.program_id_index))
+                        .context("invalid inner token program index")?;
+                    let accounts = ix
+                        .accounts
+                        .iter()
+                        .map(|index| {
+                            keys.get(usize::from(*index))
+                                .copied()
+                                .context("invalid inner token account index")
+                        })
+                        .collect::<anyhow::Result<Vec<_>>>()?;
+                    if *program == spl_token::ID || *program == spl_token_2022::ID {
+                        let data = bs58::decode(&ix.data)
+                            .into_vec()
+                            .context("invalid inner token instruction data")?;
+                        check_target_token_instruction(program, &data, &accounts, target_ata)?;
+                    }
+                }
+                UiInstruction::Parsed(UiParsedInstruction::PartiallyDecoded(ix)) => {
+                    let program =
+                        Pubkey::from_str(&ix.program_id).context("invalid inner token program")?;
+                    if program == spl_token::ID || program == spl_token_2022::ID {
+                        let accounts = ix
+                            .accounts
+                            .iter()
+                            .map(|address| {
+                                Pubkey::from_str(address).context("invalid inner token account")
+                            })
+                            .collect::<anyhow::Result<Vec<_>>>()?;
+                        let data = bs58::decode(&ix.data)
+                            .into_vec()
+                            .context("invalid inner token instruction data")?;
+                        check_target_token_instruction(&program, &data, &accounts, target_ata)?;
+                    }
+                }
+                UiInstruction::Parsed(UiParsedInstruction::Parsed(ix)) => {
+                    let program =
+                        Pubkey::from_str(&ix.program_id).context("invalid inner token program")?;
+                    let target = target_ata.to_string();
+                    let target_is_source_or_account =
+                        ["/info/source", "/info/account"].iter().any(|path| {
+                            ix.parsed.pointer(path).and_then(|value| value.as_str())
+                                == Some(target.as_str())
+                        });
+                    if (program == spl_token::ID || program == spl_token_2022::ID)
+                        && target_is_source_or_account
+                        && !matches!(
+                            ix.parsed.get("type").and_then(|value| value.as_str()),
+                            Some("initializeAccount" | "initializeAccount2" | "initializeAccount3")
+                        )
+                    {
+                        bail!("parsed token instruction references target ATA unexpectedly");
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn decoded_system_transfer_amount(data: &[u8], accounts: &[Pubkey], payer: &Pubkey) -> Option<u64> {
+    if data.len() != 12 || data[..4] != [2, 0, 0, 0] || accounts.len() != 2 {
+        return None;
+    }
+    if accounts[0] != *payer {
+        return Some(0);
+    }
+    Some(u64::from_le_bytes(data[4..12].try_into().ok()?))
+}
+
+fn inner_payer_system_spend(
+    groups: &[UiInnerInstructions],
+    keys: &[Pubkey],
+    payer: &Pubkey,
+) -> anyhow::Result<Option<u64>> {
+    let system_program = Pubkey::default().to_string();
+    let mut total = 0u64;
+    for group in groups {
+        for instruction in &group.instructions {
+            let amount = match instruction {
+                UiInstruction::Compiled(ix)
+                    if keys.get(usize::from(ix.program_id_index)) == Some(&Pubkey::default()) =>
+                {
+                    let accounts = ix
+                        .accounts
+                        .iter()
+                        .map(|index| {
+                            keys.get(usize::from(*index))
+                                .copied()
+                                .context("invalid inner System account")
+                        })
+                        .collect::<anyhow::Result<Vec<_>>>()?;
+                    bs58::decode(&ix.data)
+                        .into_vec()
+                        .ok()
+                        .and_then(|data| decoded_system_transfer_amount(&data, &accounts, payer))
+                }
+                UiInstruction::Parsed(UiParsedInstruction::PartiallyDecoded(ix))
+                    if ix.program_id == system_program =>
+                {
+                    let accounts = ix
+                        .accounts
+                        .iter()
+                        .map(|address| {
+                            Pubkey::from_str(address).context("invalid inner System account")
+                        })
+                        .collect::<anyhow::Result<Vec<_>>>()?;
+                    bs58::decode(&ix.data)
+                        .into_vec()
+                        .ok()
+                        .and_then(|data| decoded_system_transfer_amount(&data, &accounts, payer))
+                }
+                UiInstruction::Parsed(UiParsedInstruction::Parsed(ix))
+                    if ix.program_id == system_program =>
+                {
+                    if ix.parsed.get("type").and_then(|value| value.as_str()) != Some("transfer") {
+                        None
+                    } else {
+                        match ix
+                            .parsed
+                            .pointer("/info/source")
+                            .and_then(|value| value.as_str())
+                        {
+                            Some(source) if source == payer.to_string() => ix
+                                .parsed
+                                .pointer("/info/lamports")
+                                .and_then(|value| value.as_u64()),
+                            Some(_) => Some(0),
+                            None => None,
+                        }
+                    }
+                }
+                _ => continue,
+            };
+            let Some(amount) = amount else {
+                return Ok(None);
+            };
+            total = total
+                .checked_add(amount)
+                .context("inner System transfer total overflow")?;
+        }
+    }
+    Ok(Some(total))
+}
+
+fn audit_inner_instruction_inventory(
+    groups: &[UiInnerInstructions],
+    keys: &[Pubkey],
+    outer_count: usize,
+) -> anyhow::Result<(usize, Vec<String>)> {
+    let mut count = 0usize;
+    let mut programs = Vec::new();
+    for group in groups {
+        if usize::from(group.index) >= outer_count {
+            bail!("simulated inner instruction group has invalid outer index");
+        }
+        for instruction in &group.instructions {
+            count += 1;
+            if count > 128 {
+                bail!("simulated transaction has too many inner instructions");
+            }
+            let program = match instruction {
+                UiInstruction::Compiled(ix) => {
+                    for index in &ix.accounts {
+                        if usize::from(*index) >= keys.len() {
+                            bail!("simulated inner instruction has invalid account index");
+                        }
+                    }
+                    *keys
+                        .get(usize::from(ix.program_id_index))
+                        .context("simulated inner instruction has invalid program index")?
+                }
+                UiInstruction::Parsed(UiParsedInstruction::Parsed(ix)) => {
+                    Pubkey::from_str(&ix.program_id)
+                        .context("invalid simulated inner program ID")?
+                }
+                UiInstruction::Parsed(UiParsedInstruction::PartiallyDecoded(ix)) => {
+                    for address in &ix.accounts {
+                        let key =
+                            Pubkey::from_str(address).context("invalid simulated inner account")?;
+                        if !keys.contains(&key) {
+                            bail!("simulated inner account is not in transaction message");
+                        }
+                    }
+                    Pubkey::from_str(&ix.program_id)
+                        .context("invalid simulated inner program ID")?
+                }
+            };
+            if !keys.contains(&program) {
+                bail!("simulated inner program is not in transaction message");
+            }
+            let program = program.to_string();
+            if !programs.contains(&program) {
+                programs.push(program);
+            }
+        }
+    }
+    Ok((count, programs))
+}
+
+fn same_slot_deltas(
+    baseline_slot: u64,
+    simulation_slot: u64,
+    payer_before: u64,
+    payer_after: Option<u64>,
+    token_before: u64,
+    token_after: Option<u64>,
+) -> (Option<u64>, Option<u64>) {
+    if baseline_slot != simulation_slot {
+        return (None, None);
+    }
+    (
+        payer_after.and_then(|after| payer_before.checked_sub(after)),
+        token_after.and_then(|after| after.checked_sub(token_before)),
+    )
+}
+
+fn target_account_amount_from_data(
+    account_owner: &Pubkey,
+    data: &[u8],
+    token_program: &Pubkey,
+    mint: &Pubkey,
+    wallet: &Pubkey,
+) -> anyhow::Result<u64> {
+    if account_owner != token_program {
+        bail!("target ATA has unexpected token program");
+    }
+    let (account_mint, account_wallet, amount) = if *token_program == spl_token::ID {
+        let account = TokenAccount::unpack(data).context("invalid SPL target ATA")?;
+        (account.mint, account.owner, account.amount)
+    } else if *token_program == spl_token_2022::ID {
+        let account = StateWithExtensions::<Token2022Account>::unpack(data)
+            .context("invalid Token-2022 target ATA")?;
+        (account.base.mint, account.base.owner, account.base.amount)
+    } else {
+        bail!("unsupported target ATA token program");
+    };
+    if account_mint.as_ref() != mint.as_ref() || account_wallet.as_ref() != wallet.as_ref() {
+        bail!("target ATA has unexpected mint or wallet owner");
+    }
+    Ok(amount)
+}
+
+fn simulated_target_account_amount(
+    account: &solana_account_decoder::UiAccount,
+    token_program: &Pubkey,
+    mint: &Pubkey,
+    wallet: &Pubkey,
+) -> anyhow::Result<u64> {
+    let owner = Pubkey::from_str(&account.owner).context("invalid simulated ATA program owner")?;
+    let data = account
+        .data
+        .decode()
+        .context("simulated target ATA has no binary data")?;
+    target_account_amount_from_data(&owner, &data, token_program, mint, wallet)
+}
+
+fn target_token_amount(
+    balances: &[solana_transaction_status_client_types::UiTransactionTokenBalance],
+    account_index: u8,
+    mint: &Pubkey,
+) -> Option<u64> {
+    let mut matching = balances.iter().filter(|balance| {
+        balance.account_index == account_index && balance.mint == mint.to_string()
+    });
+    let amount = matching
+        .next()?
+        .ui_token_amount
+        .amount
+        .parse::<u64>()
+        .ok()?;
+    if matching.next().is_some() {
+        return None;
+    }
+    Some(amount)
+}
+
+#[cfg(test)]
+mod aggregator_simulation_tests {
+    use super::*;
+    use base64::Engine;
+
+    #[test]
+    fn target_ata_rejects_close_and_outgoing_token_instructions() {
+        let target = Pubkey::new_unique();
+        let other = Pubkey::new_unique();
+        let transfer = [vec![3], 1u64.to_le_bytes().to_vec()].concat();
+        for program in [spl_token::ID, spl_token_2022::ID] {
+            assert!(
+                check_target_token_instruction(&program, &[9], &[target, other], &target).is_err()
+            );
+            assert!(check_target_token_instruction(
+                &program,
+                &transfer,
+                &[target, other, other],
+                &target
+            )
+            .is_err());
+            assert!(check_target_token_instruction(
+                &program,
+                &transfer,
+                &[other, target, other],
+                &target
+            )
+            .is_ok());
+        }
+    }
+
+    #[test]
+    fn inner_system_spend_counts_payer_and_marks_unknown_instructions() {
+        let payer = Pubkey::new_unique();
+        let recipient = Pubkey::new_unique();
+        let keys = [Pubkey::default(), payer, recipient];
+        let data = [vec![2, 0, 0, 0], 123u64.to_le_bytes().to_vec()].concat();
+        let instruction = solana_transaction_status_client_types::UiCompiledInstruction {
+            program_id_index: 0,
+            accounts: vec![1, 2],
+            data: bs58::encode(data).into_string(),
+            stack_height: Some(2),
+        };
+        let group = UiInnerInstructions {
+            index: 0,
+            instructions: vec![UiInstruction::Compiled(instruction.clone())],
+        };
+        assert_eq!(
+            inner_payer_system_spend(&[group], &keys, &payer).unwrap(),
+            Some(123)
+        );
+        let unknown = UiInnerInstructions {
+            index: 0,
+            instructions: vec![UiInstruction::Compiled(
+                solana_transaction_status_client_types::UiCompiledInstruction {
+                    data: bs58::encode([0u8; 4]).into_string(),
+                    ..instruction
+                },
+            )],
+        };
+        assert_eq!(
+            inner_payer_system_spend(&[unknown], &keys, &payer).unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn inner_inventory_rejects_invalid_indices() {
+        let program = Pubkey::new_unique();
+        let account = Pubkey::new_unique();
+        let instruction = solana_transaction_status_client_types::UiCompiledInstruction {
+            program_id_index: 0,
+            accounts: vec![1],
+            data: String::new(),
+            stack_height: Some(2),
+        };
+        let group = UiInnerInstructions {
+            index: 0,
+            instructions: vec![UiInstruction::Compiled(instruction.clone())],
+        };
+        assert_eq!(
+            audit_inner_instruction_inventory(&[group.clone()], &[program, account], 1).unwrap(),
+            (1, vec![program.to_string()])
+        );
+        assert!(
+            audit_inner_instruction_inventory(&[group.clone()], &[program, account], 0).is_err()
+        );
+        let invalid = UiInnerInstructions {
+            index: 0,
+            instructions: vec![UiInstruction::Compiled(
+                solana_transaction_status_client_types::UiCompiledInstruction {
+                    accounts: vec![2],
+                    ..instruction
+                },
+            )],
+        };
+        assert!(audit_inner_instruction_inventory(&[invalid], &[program, account], 1).is_err());
+    }
+
+    #[test]
+    fn balance_deltas_require_matching_slots() {
+        assert_eq!(
+            same_slot_deltas(42, 42, 100, Some(80), 5, Some(12)),
+            (Some(20), Some(7))
+        );
+        assert_eq!(
+            same_slot_deltas(42, 43, 100, Some(80), 5, Some(12)),
+            (None, None)
+        );
+        assert_eq!(
+            same_slot_deltas(42, 42, 100, Some(120), 5, Some(12)),
+            (None, Some(7))
+        );
+    }
+
+    #[test]
+    fn simulated_target_account_requires_matching_mint_owner_and_program() {
+        let mint = Pubkey::new_unique();
+        let wallet = Pubkey::new_unique();
+        let mut data = vec![0u8; 165];
+        data[..32].copy_from_slice(mint.as_ref());
+        data[32..64].copy_from_slice(wallet.as_ref());
+        data[64..72].copy_from_slice(&42u64.to_le_bytes());
+        data[108] = 1;
+        assert_eq!(
+            target_account_amount_from_data(&spl_token::ID, &data, &spl_token::ID, &mint, &wallet)
+                .unwrap(),
+            42
+        );
+        assert_eq!(
+            target_account_amount_from_data(
+                &spl_token_2022::ID,
+                &data,
+                &spl_token_2022::ID,
+                &mint,
+                &wallet
+            )
+            .unwrap(),
+            42
+        );
+        let mut uninitialized = data.clone();
+        uninitialized[108] = 0;
+        assert!(target_account_amount_from_data(
+            &spl_token::ID,
+            &uninitialized,
+            &spl_token::ID,
+            &mint,
+            &wallet
+        )
+        .is_err());
+        assert!(target_account_amount_from_data(
+            &spl_token_2022::ID,
+            &uninitialized,
+            &spl_token_2022::ID,
+            &mint,
+            &wallet
+        )
+        .is_err());
+        let mut malformed = data.clone();
+        malformed[72] = 9;
+        assert!(target_account_amount_from_data(
+            &spl_token::ID,
+            &malformed,
+            &spl_token::ID,
+            &mint,
+            &wallet
+        )
+        .is_err());
+        assert!(target_account_amount_from_data(
+            &spl_token_2022::ID,
+            &malformed,
+            &spl_token_2022::ID,
+            &mint,
+            &wallet
+        )
+        .is_err());
+        let account: solana_account_decoder::UiAccount =
+            serde_json::from_value(serde_json::json!({
+                "lamports": 2039280,
+                "data": [base64::engine::general_purpose::STANDARD.encode(data), "base64"],
+                "owner": spl_token::ID.to_string(),
+                "executable": false,
+                "rentEpoch": 0
+            }))
+            .unwrap();
+        assert_eq!(
+            simulated_target_account_amount(&account, &spl_token::ID, &mint, &wallet).unwrap(),
+            42
+        );
+        assert!(
+            simulated_target_account_amount(&account, &spl_token_2022::ID, &mint, &wallet).is_err()
+        );
+        assert!(simulated_target_account_amount(
+            &account,
+            &spl_token::ID,
+            &Pubkey::new_unique(),
+            &wallet
+        )
+        .is_err());
+        assert!(simulated_target_account_amount(
+            &account,
+            &spl_token::ID,
+            &mint,
+            &Pubkey::new_unique()
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn target_token_amount_requires_unique_matching_index_and_mint() {
+        let mint = Pubkey::new_unique();
+        let entry = serde_json::json!({
+            "accountIndex": 3,
+            "mint": mint.to_string(),
+            "uiTokenAmount": { "amount": "123", "decimals": 6, "uiAmount": 0.000123, "uiAmountString": "0.000123" }
+        });
+        let balance: solana_transaction_status_client_types::UiTransactionTokenBalance =
+            serde_json::from_value(entry).unwrap();
+        assert_eq!(target_token_amount(&[balance.clone()], 3, &mint), Some(123));
+        assert_eq!(target_token_amount(&[balance.clone()], 2, &mint), None);
+        assert_eq!(
+            target_token_amount(&[balance.clone(), balance], 3, &mint),
+            None
+        );
+    }
+}
+
 impl SdkTradeClient {
+    pub async fn aggregator_target_ata(&self, mint: &Pubkey) -> anyhow::Result<(Pubkey, Pubkey)> {
+        let lane = self
+            .lanes
+            .iter()
+            .find(|lane| lane.swqos_type == SwqosType::Default)
+            .context("no default RPC lane available for aggregator preflight")?;
+        let account = tokio::time::timeout(
+            Duration::from_secs(5),
+            lane.client.get_rpc().get_account(mint),
+        )
+        .await
+        .context("target mint RPC lookup timed out")?
+        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
+        if account.owner != spl_token::ID && account.owner != spl_token_2022::ID {
+            bail!("aggregator target mint is not owned by a supported token program");
+        }
+        let ata =
+            get_associated_token_address_with_program_id_fast(&self.wallet(), mint, &account.owner);
+        Ok((ata, account.owner))
+    }
+
+    pub async fn resolve_aggregator_lookup_table(
+        &self,
+        address: &Pubkey,
+    ) -> anyhow::Result<Vec<Pubkey>> {
+        let lane = self
+            .lanes
+            .iter()
+            .find(|lane| lane.swqos_type == SwqosType::Default)
+            .context("no default RPC lane available for aggregator preflight")?;
+        let account = tokio::time::timeout(
+            Duration::from_secs(5),
+            lane.client.get_rpc().get_account(address),
+        )
+        .await
+        .context("aggregator lookup table RPC timed out")?
+        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
+        if account.owner != lookup_program::id() {
+            bail!("aggregator lookup table has invalid owner");
+        }
+        let table = AddressLookupTable::deserialize(&account.data)
+            .map_err(|_| anyhow!("invalid aggregator lookup table data"))?;
+        if table.meta.deactivation_slot != u64::MAX {
+            bail!("aggregator lookup table is deactivating or deactivated");
+        }
+        Ok(table.addresses.into_owned())
+    }
+
+    pub async fn simulate_unsigned_aggregator_transaction(
+        &self,
+        transaction: &VersionedTransaction,
+        target_account_index: u8,
+        target_mint: &Pubkey,
+        target_ata: &Pubkey,
+        target_token_program: &Pubkey,
+        resolved_keys: &[Pubkey],
+    ) -> anyhow::Result<AggregatorSimulation> {
+        let lane = self
+            .lanes
+            .iter()
+            .find(|lane| lane.swqos_type == SwqosType::Default)
+            .context("no default RPC lane available for aggregator preflight")?;
+        let baseline = tokio::time::timeout(
+            Duration::from_secs(5),
+            lane.client.get_rpc().get_multiple_accounts_with_commitment(
+                &[self.wallet(), *target_ata],
+                CommitmentConfig {
+                    commitment: solana_commitment_config::CommitmentLevel::Processed,
+                },
+            ),
+        )
+        .await
+        .context("aggregator balance baseline timed out")?
+        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
+        let baseline_payer = baseline
+            .value
+            .first()
+            .and_then(Option::as_ref)
+            .context("aggregator payer account is missing from baseline")?;
+        let baseline_token_amount = baseline
+            .value
+            .get(1)
+            .and_then(Option::as_ref)
+            .map(|account| {
+                target_account_amount_from_data(
+                    &account.owner,
+                    &account.data,
+                    target_token_program,
+                    target_mint,
+                    &self.wallet(),
+                )
+            })
+            .transpose()?
+            .unwrap_or(0);
+        let result = tokio::time::timeout(
+            Duration::from_secs(5),
+            lane.client.get_rpc().simulate_transaction_with_config(
+                transaction,
+                RpcSimulateTransactionConfig {
+                    sig_verify: false,
+                    replace_recent_blockhash: false,
+                    commitment: Some(CommitmentConfig {
+                        commitment: solana_commitment_config::CommitmentLevel::Processed,
+                    }),
+                    encoding: Some(UiTransactionEncoding::Base64),
+                    accounts: Some(RpcSimulateTransactionAccountsConfig {
+                        encoding: Some(UiAccountEncoding::Base64),
+                        addresses: vec![self.wallet().to_string(), target_ata.to_string()],
+                    }),
+                    min_context_slot: Some(baseline.context.slot),
+                    inner_instructions: true,
+                },
+            ),
+        )
+        .await
+        .context("local aggregator simulation timed out")?
+        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
+        let simulation_slot = result.context.slot;
+        let value = result.value;
+        let inner_inventory = value
+            .inner_instructions
+            .as_ref()
+            .map(|groups| {
+                audit_inner_instruction_inventory(
+                    groups,
+                    resolved_keys,
+                    transaction.message.instructions().len(),
+                )
+            })
+            .transpose()?;
+        if let Some(groups) = value.inner_instructions.as_ref() {
+            check_inner_target_token_instructions(groups, resolved_keys, target_ata)?;
+        }
+        let inner_payer_system_spend_lamports = value
+            .inner_instructions
+            .as_ref()
+            .map(|groups| inner_payer_system_spend(groups, resolved_keys, &self.wallet()))
+            .transpose()?
+            .flatten();
+        let payer_debit_lamports = value
+            .pre_balances
+            .as_ref()
+            .and_then(|balances| balances.first())
+            .zip(
+                value
+                    .post_balances
+                    .as_ref()
+                    .and_then(|balances| balances.first()),
+            )
+            .and_then(|(before, after)| before.checked_sub(*after));
+        let target_token_delta_units = value
+            .pre_token_balances
+            .as_ref()
+            .and_then(|balances| target_token_amount(balances, target_account_index, target_mint))
+            .zip(value.post_token_balances.as_ref().and_then(|balances| {
+                target_token_amount(balances, target_account_index, target_mint)
+            }))
+            .and_then(|(before, after)| after.checked_sub(before));
+        let payer_post_lamports = value
+            .accounts
+            .as_ref()
+            .and_then(|accounts| accounts.first())
+            .and_then(Option::as_ref)
+            .map(|account| account.lamports);
+        let target_token_post_units = value
+            .accounts
+            .as_ref()
+            .and_then(|accounts| accounts.get(1))
+            .and_then(Option::as_ref)
+            .map(|account| {
+                simulated_target_account_amount(
+                    account,
+                    target_token_program,
+                    target_mint,
+                    &self.wallet(),
+                )
+            })
+            .transpose()?;
+        let (same_slot_payer_debit, same_slot_token_delta) = same_slot_deltas(
+            baseline.context.slot,
+            simulation_slot,
+            baseline_payer.lamports,
+            payer_post_lamports,
+            baseline_token_amount,
+            target_token_post_units,
+        );
+        if let (Some(post), Some(delta)) = (target_token_post_units, target_token_delta_units) {
+            if post < delta {
+                bail!("simulated target ATA balance is inconsistent with token delta");
+            }
+        }
+        Ok(AggregatorSimulation {
+            ok: value.err.is_none(),
+            fee_lamports: value.fee,
+            units_consumed: value.units_consumed,
+            payer_debit_lamports,
+            inner_instruction_groups: value.inner_instructions.as_ref().map(Vec::len),
+            target_token_delta_units,
+            target_token_post_units,
+            baseline_slot: baseline.context.slot,
+            simulation_slot,
+            observed_same_slot_payer_debit_lamports: same_slot_payer_debit,
+            observed_same_slot_target_token_delta_units: same_slot_token_delta,
+            inner_instruction_count: inner_inventory.as_ref().map(|inventory| inventory.0),
+            inner_programs: inner_inventory.map(|inventory| inventory.1),
+            inner_payer_system_spend_lamports,
+        })
+    }
+
+    pub async fn resolve_stonkfun_sol_hop(&self, quote_mint: &Pubkey) -> anyhow::Result<Pubkey> {
+        let wsol = Pubkey::from_str(WSOL_MINT).expect("valid WSOL mint");
+        if quote_mint == &wsol {
+            bail!("quote mint is already WSOL");
+        }
+        let mut last_error = None;
+        for lane in self
+            .lanes
+            .iter()
+            .filter(|lane| lane.swqos_type == SwqosType::Default)
+        {
+            let rpc = lane.client.get_rpc();
+            let found = tokio::time::timeout(Duration::from_secs(5), async {
+                use sol_trade_sdk::instruction::utils::raydium_cpmm::{accounts, fetch_pool_state};
+                use sol_trade_sdk::instruction::utils::raydium_cpmm_types::POOL_STATE_DISCRIMINATOR;
+                for offset in [168usize, 200usize] {
+                    let config = RpcProgramAccountsConfig {
+                        filters: Some(vec![
+                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                0,
+                                &POOL_STATE_DISCRIMINATOR,
+                            )),
+                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                offset,
+                                quote_mint.as_ref(),
+                            )),
+                        ]),
+                        account_config: RpcAccountInfoConfig {
+                            encoding: Some(UiAccountEncoding::Base64),
+                            data_slice: None,
+                            commitment: None,
+                            min_context_slot: None,
+                        },
+                        with_context: None,
+                        sort_results: None,
+                    };
+                    #[allow(deprecated)]
+                    let pools = rpc
+                        .get_program_ui_accounts_with_config(&accounts::RAYDIUM_CPMM, config)
+                        .await?;
+                    for (pool_id, _) in pools {
+                        let state = fetch_pool_state(rpc, &pool_id).await?;
+                        if [state.token0_mint, state.token1_mint].contains(&wsol)
+                            && [state.token0_mint, state.token1_mint].contains(quote_mint)
+                        {
+                            let params =
+                                RaydiumCpmmParams::from_pool_address_by_rpc(rpc, &pool_id).await?;
+                            let mints = [params.base_mint, params.quote_mint];
+                            ensure_pool_contains_quote("stonkfun Via-SOL hop", quote_mint, &mints)?;
+                            ensure_pool_contains_quote("stonkfun Via-SOL hop", &wsol, &mints)?;
+                            let (base_balance, quote_balance) = tokio::try_join!(
+                                rpc.get_token_account_balance(&params.base_vault),
+                                rpc.get_token_account_balance(&params.quote_vault),
+                            )?;
+                            if base_balance.amount.parse::<u64>()? == 0
+                                || quote_balance.amount.parse::<u64>()? == 0
+                            {
+                                continue;
+                            }
+                            return Ok::<Pubkey, anyhow::Error>(pool_id);
+                        }
+                    }
+                }
+                bail!("no WSOL/Quote CPMM account found")
+            })
+            .await;
+            match found {
+                Ok(Ok(pool_id)) => return Ok(pool_id),
+                Ok(Err(error)) => last_error = Some(redact_urls(&error.to_string())),
+                Err(_) => last_error = Some("SOL hop discovery timed out".to_string()),
+            }
+        }
+        bail!(
+            "no verified WSOL/Quote Raydium CPMM pool: {}",
+            last_error.unwrap_or_else(|| "no Default RPC lane configured".to_string())
+        )
+    }
     pub async fn new(
         rpc_urls: Vec<String>,
         private_key_base58: String,
@@ -730,7 +1601,7 @@ impl SdkTradeClient {
         if balance == 0 {
             bail!("token balance is zero");
         }
-        let params = self
+        let mut params = self
             .dex_params(
                 &lane.client,
                 trade.pool,
@@ -741,6 +1612,34 @@ impl SdkTradeClient {
                 trade.sol_hop_pool_id.as_ref(),
             )
             .await?;
+        let fixed_output_token_amount = if trade.pool == Pool::MeteoraDammV2 {
+            let DexParamEnum::MeteoraDammV2(ref mut damm) = params else {
+                bail!("DAMM v2 protocol params missing");
+            };
+            // Exact-in prevents a partial-fill from satisfying a full-size quote with less input.
+            damm.swap_mode = 0;
+            let input_amount = balance
+                .checked_mul(percent)
+                .context("sell amount overflow")?
+                / 100;
+            if input_amount == 0 {
+                bail!("sell input amount rounds to zero");
+            }
+            Some(
+                self.simulate_damm_v2_sell_output(
+                    lane,
+                    damm,
+                    trade.mint,
+                    trade.quote_mint,
+                    input_amount,
+                    trade.recent_blockhash,
+                )
+                .await
+                .and_then(|quoted| minimum_output(quoted, trade.slippage_bps))?,
+            )
+        } else {
+            None
+        };
         let sell_params = TradeSellParams {
             dex_type: dex_type(trade.pool),
             output_token_type: if trade.sol_hop_pool_id.is_some() {
@@ -764,16 +1663,154 @@ impl SdkTradeClient {
             close_output_token_ata: false,
             close_mint_token_ata: percent == 100,
             durable_nonce: None,
-            fixed_output_token_amount: sell_fixed_output_token_amount(trade.pool),
-            gas_fee_strategy: default_fee_strategy(lane.swqos_type, trade.tip_sol),
+            fixed_output_token_amount,
+            gas_fee_strategy: if trade.simulate && trade.pool == Pool::MeteoraDammV2 {
+                simulation_fee_strategy()
+            } else {
+                default_fee_strategy(lane.swqos_type, trade.tip_sol)
+            },
             simulate: trade.simulate,
             grpc_recv_us: None,
         };
+        if trade.pool == Pool::MeteoraDammV2 && !trade.simulate {
+            let mut preflight = sell_params.clone();
+            preflight.simulate = true;
+            preflight.gas_fee_strategy = simulation_fee_strategy();
+            let checked = map_sdk_result(
+                lane.client
+                    .sell_by_percent(preflight, balance, percent)
+                    .await,
+            )?;
+            if !checked.success {
+                bail!(
+                    "DAMM v2 final transaction simulation failed: {}",
+                    checked.error.unwrap_or_else(|| "unknown error".to_string())
+                );
+            }
+        }
         map_sdk_result(
             lane.client
                 .sell_by_percent(sell_params, balance, percent)
                 .await,
         )
+    }
+
+    async fn simulate_damm_v2_sell_output(
+        &self,
+        lane: &SdkLane,
+        damm: &MeteoraDammV2Params,
+        mint: Pubkey,
+        quote_mint: Pubkey,
+        input_amount: u64,
+        recent_blockhash: Hash,
+    ) -> anyhow::Result<u64> {
+        let token_program = if quote_mint == damm.token_a_mint {
+            damm.token_a_program
+        } else if quote_mint == damm.token_b_mint {
+            damm.token_b_program
+        } else {
+            bail!("DAMM v2 quote mint is not in the pool");
+        };
+        let owner = lane.client.payer.pubkey();
+        let output_ata =
+            get_associated_token_address_with_program_id_fast(&owner, &quote_mint, &token_program);
+        let rpc = lane.client.get_rpc();
+        let baseline = rpc
+            .get_account_with_commitment(&output_ata, CommitmentConfig::processed())
+            .await?;
+        let before = baseline
+            .value
+            .as_ref()
+            .map(|account| {
+                target_account_amount_from_data(
+                    &account.owner,
+                    &account.data,
+                    &token_program,
+                    &quote_mint,
+                    &owner,
+                )
+            })
+            .transpose()?
+            .unwrap_or(0);
+        let params = SwapParams {
+            rpc: Some(rpc.clone()),
+            payer: lane.client.payer.clone(),
+            trade_type: TradeType::Sell,
+            input_mint: mint,
+            input_token_program: None,
+            output_mint: quote_mint,
+            output_token_program: Some(token_program),
+            input_amount: Some(input_amount),
+            slippage_basis_points: None,
+            address_lookup_table_accounts: Vec::new(),
+            recent_blockhash: Some(recent_blockhash),
+            wait_tx_confirmed: false,
+            protocol_params: DexParamEnum::MeteoraDammV2(damm.clone()),
+            open_seed_optimize: lane.client.use_seed_optimize,
+            swqos_clients: lane.client.infrastructure.swqos_clients.clone(),
+            middleware_manager: None,
+            durable_nonce: None,
+            with_tip: false,
+            create_input_mint_ata: false,
+            close_input_mint_ata: false,
+            create_output_mint_ata: true,
+            close_output_mint_ata: false,
+            fixed_output_amount: Some(1),
+            gas_fee_strategy: default_fee_strategy(lane.swqos_type, 0.0),
+            simulate: true,
+            log_enabled: false,
+            wait_for_all_submits: false,
+            use_dedicated_sender_threads: false,
+            sender_thread_cores: None,
+            max_sender_concurrency: lane.client.max_sender_concurrency,
+            effective_core_ids: lane.client.effective_core_ids.clone(),
+            check_min_tip: false,
+            transaction_version: lane.client.transaction_version,
+            grpc_recv_us: None,
+            use_exact_sol_amount: None,
+        };
+        let instructions = MeteoraDammV2InstructionBuilder
+            .build_sell_instructions(&params)
+            .await?;
+        let transaction = Transaction::new_signed_with_payer(
+            &instructions,
+            Some(&owner),
+            &[lane.client.payer.as_ref()],
+            recent_blockhash,
+        );
+        let result = rpc
+            .simulate_transaction_with_config(
+                &transaction,
+                RpcSimulateTransactionConfig {
+                    sig_verify: false,
+                    replace_recent_blockhash: false,
+                    commitment: Some(CommitmentConfig::processed()),
+                    encoding: Some(UiTransactionEncoding::Base64),
+                    accounts: Some(RpcSimulateTransactionAccountsConfig {
+                        encoding: Some(UiAccountEncoding::Base64),
+                        addresses: vec![output_ata.to_string()],
+                    }),
+                    min_context_slot: Some(baseline.context.slot),
+                    inner_instructions: false,
+                },
+            )
+            .await?;
+        if let Some(error) = result.value.err {
+            bail!("DAMM v2 quote simulation failed: {error:?}");
+        }
+        let after_account = result
+            .value
+            .accounts
+            .as_ref()
+            .and_then(|accounts| accounts.first())
+            .and_then(Option::as_ref)
+            .context("DAMM v2 simulation did not return output ATA")?;
+        let after =
+            simulated_target_account_amount(after_account, &token_program, &quote_mint, &owner)?;
+        after
+            .checked_sub(before)
+            .filter(|amount| *amount > 0)
+            .context("DAMM v2 simulation returned no positive output")
     }
 
     async fn dex_params(
@@ -1269,11 +2306,18 @@ fn provider_swqos_type(provider: MevProvider) -> Option<SwqosType> {
     }
 }
 
-fn sell_fixed_output_token_amount(pool: Pool) -> Option<u64> {
-    match pool {
-        Pool::MeteoraDammV2 => Some(0),
-        _ => None,
+fn minimum_output(quoted: u64, slippage_bps: u64) -> anyhow::Result<u64> {
+    if quoted == 0 || slippage_bps >= 10_000 {
+        bail!("invalid DAMM v2 quote or slippage");
     }
+    let minimum = (quoted as u128)
+        .checked_mul((10_000 - slippage_bps) as u128)
+        .context("DAMM v2 minimum output overflow")?
+        / 10_000;
+    u64::try_from(minimum)
+        .ok()
+        .filter(|value| *value > 0)
+        .context("DAMM v2 minimum output rounds to zero")
 }
 
 fn provider_name(provider: MevProvider) -> &'static str {
@@ -1674,6 +2718,10 @@ fn default_fee_strategy(swqos_type: SwqosType, tip_sol: f64) -> GasFeeStrategy {
     strategy
 }
 
+fn simulation_fee_strategy() -> GasFeeStrategy {
+    default_fee_strategy(SwqosType::Default, 0.0)
+}
+
 fn should_wait_lane_confirmation(swqos_type: SwqosType, wait_tx_confirmed: bool) -> bool {
     let _ = swqos_type;
     wait_tx_confirmed
@@ -1697,7 +2745,33 @@ fn map_sdk_result(
 
 #[cfg(test)]
 mod tests {
-    use super::{calculate_sol_transfer_amount, pool_resolution_failure_kind};
+    use super::{
+        calculate_sol_transfer_amount, default_fee_strategy, minimum_output,
+        pool_resolution_failure_kind, simulation_fee_strategy,
+    };
+    use sol_trade_sdk::swqos::{SwqosType, TradeType};
+
+    #[test]
+    fn damm_simulation_has_default_fee_without_changing_temporal_submit_fee() {
+        let simulation = simulation_fee_strategy().get_strategies(TradeType::Sell);
+        assert!(simulation
+            .iter()
+            .any(|(lane, _, value)| { *lane == SwqosType::Default && value.tip == 0.0 }));
+        let submit =
+            default_fee_strategy(SwqosType::Temporal, 0.0001).get_strategies(TradeType::Sell);
+        assert!(submit
+            .iter()
+            .any(|(lane, _, value)| { *lane == SwqosType::Temporal && value.tip == 0.0001 }));
+    }
+
+    #[test]
+    fn damm_v2_minimum_output_uses_raw_units_and_rejects_dust() {
+        assert_eq!(minimum_output(1_000_000, 1_500).unwrap(), 850_000);
+        assert_eq!(minimum_output(101, 100).unwrap(), 99);
+        assert!(minimum_output(1, 1_500).is_err());
+        assert!(minimum_output(0, 0).is_err());
+        assert!(minimum_output(100, 10_000).is_err());
+    }
 
     #[test]
     fn classifies_pool_resolution_failures_without_exposing_details() {

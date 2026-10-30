@@ -71,14 +71,14 @@ impl RaydiumClmmParams {
             fetch_pool, resolve_tick_arrays_for_swap, tick_array_bitmap_extension,
         };
         let state = fetch_pool(rpc, pool).await?;
-        let zero_for_one = if input_mint == &state.token_mint_0 && output_mint == &state.token_mint_1
-        {
-            true
-        } else if input_mint == &state.token_mint_1 && output_mint == &state.token_mint_0 {
-            false
-        } else {
-            anyhow::bail!("CLMM swap mints do not match pool");
-        };
+        let zero_for_one =
+            if input_mint == &state.token_mint_0 && output_mint == &state.token_mint_1 {
+                true
+            } else if input_mint == &state.token_mint_1 && output_mint == &state.token_mint_0 {
+                false
+            } else {
+                anyhow::bail!("CLMM swap mints do not match pool");
+            };
         let tick_arrays = resolve_tick_arrays_for_swap(
             rpc,
             pool,

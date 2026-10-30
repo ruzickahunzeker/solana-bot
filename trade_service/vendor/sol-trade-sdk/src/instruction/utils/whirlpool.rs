@@ -98,11 +98,7 @@ pub async fn resolve_tick_arrays_for_swap(
     tick_spacing: u16,
     a_to_b: bool,
 ) -> Result<Vec<Pubkey>> {
-    let offsets: [i32; 5] = if a_to_b {
-        [0, -1, -2, -3, -4]
-    } else {
-        [0, 1, 2, 3, 4]
-    };
+    let offsets: [i32; 5] = if a_to_b { [0, -1, -2, -3, -4] } else { [0, 1, 2, 3, 4] };
     let pdas: Vec<Pubkey> = offsets
         .iter()
         .map(|o| tick_array_pda(whirlpool, get_start_tick_index(tick_current, tick_spacing, *o)))

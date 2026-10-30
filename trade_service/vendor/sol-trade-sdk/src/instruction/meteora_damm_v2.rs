@@ -123,9 +123,8 @@ impl InstructionBuilder for MeteoraDammV2InstructionBuilder {
         // When there is no referral, Anchor/optional encoding uses the program
         // id as the None placeholder; omitting it shifts event_authority and
         // triggers ConstraintSeeds (2006).
-        let mut account_metas = Vec::with_capacity(
-            14 + usize::from(protocol_params.include_rate_limiter_sysvar),
-        );
+        let mut account_metas =
+            Vec::with_capacity(14 + usize::from(protocol_params.include_rate_limiter_sysvar));
         account_metas.extend([
             accounts::AUTHORITY_META,                      // Pool Authority (readonly)
             AccountMeta::new(protocol_params.pool, false), // Pool
@@ -251,9 +250,8 @@ impl InstructionBuilder for MeteoraDammV2InstructionBuilder {
         }
 
         // Same fixed referral slot rule as buy (see comment there).
-        let mut account_metas = Vec::with_capacity(
-            14 + usize::from(protocol_params.include_rate_limiter_sysvar),
-        );
+        let mut account_metas =
+            Vec::with_capacity(14 + usize::from(protocol_params.include_rate_limiter_sysvar));
         account_metas.extend([
             accounts::AUTHORITY_META,                      // Pool Authority (readonly)
             AccountMeta::new(protocol_params.pool, false), // Pool
