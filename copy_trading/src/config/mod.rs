@@ -60,8 +60,8 @@ impl AppConfig {
             trade_service_token: env::var("TRADE_SERVICE_TOKEN")
                 .ok()
                 .filter(|value| !value.trim().is_empty()),
-            trade_service_timeout_secs: env_u64("TRADE_SERVICE_TIMEOUT_SECS", 15)?,
-            pool_resolve_timeout_secs: env_u64("POOL_RESOLVE_TIMEOUT_SECS", 6)?,
+            trade_service_timeout_secs: env_u64("TRADE_SERVICE_TIMEOUT_SECS", 20)?,
+            pool_resolve_timeout_secs: env_u64("POOL_RESOLVE_TIMEOUT_SECS", 18)?,
             trade_submit_max_attempts: env_u32("TRADE_SUBMIT_MAX_ATTEMPTS", 2)?,
             trade_submit_retry_delay_ms: env_u64("TRADE_SUBMIT_RETRY_DELAY_MS", 250)?,
             trade_reconcile_interval_secs: env_u64("TRADE_RECONCILE_INTERVAL_SECS", 2)?,

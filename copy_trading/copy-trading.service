@@ -7,6 +7,7 @@ After=network-online.target trade-service-db.service
 Type=simple
 User=root
 WorkingDirectory=/root/http/sol-bot/copy_trading
+ExecStartPre=/usr/bin/timeout 75 /bin/sh -c 'until /usr/bin/curl -fsS --max-time 1 http://127.0.0.1:18787/health >/dev/null 2>&1; do sleep 1; done'
 ExecStart=/root/http/sol-bot/copy_trading/target/release/copy-trading
 Restart=on-failure
 RestartSec=2

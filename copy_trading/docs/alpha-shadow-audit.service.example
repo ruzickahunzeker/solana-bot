@@ -1,0 +1,11 @@
+[Unit]
+Description=Alpha shadow read-only audit gate
+After=copy-trading.service
+ConditionPathExists=/root/http/sol-bot/copy_trading/data/copy_trading.sqlite
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root/http/sol-bot/copy_trading
+ExecStart=/usr/bin/python3 /root/http/sol-bot/copy_trading/scripts/alpha_paper_report.py /root/http/sol-bot/copy_trading/data/copy_trading.sqlite --last-hours 72 --check-shadow --min-request-id-coverage 1.0 --max-unknown 0 --max-blocked 0
+UMask=0077
