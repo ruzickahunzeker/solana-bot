@@ -144,6 +144,8 @@ pub struct TradePanelSession {
     pub message_id: Option<MessageId>,
     pub mint: String,
     pub route: ResolvedPoolRoute,
+    pub sol_hop_pool_id: Option<String>,
+    pub use_sol_hop: bool,
     pub tab: PanelTab,
     pub quick: QuickPanelDraft,
     pub limit: LimitPanelDraft,
@@ -175,6 +177,8 @@ impl TradePanelSession {
             message_id: None,
             mint,
             route,
+            sol_hop_pool_id: None,
+            use_sol_hop: false,
             tab,
             quick: QuickPanelDraft {
                 side: PanelSide::Buy,
@@ -208,12 +212,19 @@ impl TradePanelSession {
     }
 
     pub fn custom_quote(&self) -> bool {
+        matches!(
+            self.route.pool.as_str(),
+            "pump-amm" | "stonkfun" | "stonkfun-swap"
+        ) && !matches!(
+            self.route.quote_mint.as_str(),
+            "So11111111111111111111111111111111111111112"
+                | "So11111111111111111111111111111111111111111"
+                | "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        )
+    }
+
+    pub fn supports_sol_hop(&self) -> bool {
         matches!(self.route.pool.as_str(), "stonkfun" | "stonkfun-swap")
-            && !matches!(
-                self.route.quote_mint.as_str(),
-                "So11111111111111111111111111111111111111112"
-                    | "So11111111111111111111111111111111111111111"
-            )
     }
 
     pub fn quote_label(&self) -> String {
@@ -313,21 +324,30 @@ impl TradePanelSession {
     fn quick_text(&self, wallet_label: &str, use_mev: bool) -> String {
         let execution = &self.quick.execution;
         let amount = match self.quick.side {
-            PanelSide::Buy if self.custom_quote() => format!(
-                "{} {}",
-                self.quick.buy_amount_quote.as_deref().unwrap_or("未设置"),
-                self.quote_label()
-            ),
             PanelSide::Buy => format!("{} SOL", trim_float(self.quick.buy_amount_sol)),
-            PanelSide::Sell if self.custom_quote() => format!(
-                "{}% (卖出后收到 {})",
-                trim_float(self.quick.sell_percent),
-                self.quote_label()
-            ),
+            PanelSide::Sell if self.custom_quote() && self.use_sol_hop => {
+                format!("{}% (卖出后收到 SOL)", trim_float(self.quick.sell_percent))
+            }
+            PanelSide::Sell if self.custom_quote() => {
+                format!("{}% (卖出后收到 SOL)", trim_float(self.quick.sell_percent))
+            }
             PanelSide::Sell => format!("{}%", trim_float(self.quick.sell_percent)),
         };
+        let hop = if self.custom_quote() && self.supports_sol_hop() && self.use_sol_hop {
+            format!(
+                "\n路径: {}\n第一跳池: <code>{}</code>",
+                if self.quick.side == PanelSide::Buy {
+                    format!("SOL → {} → Mint", self.quote_label())
+                } else {
+                    format!("Mint → {} → SOL", self.quote_label())
+                },
+                self.sol_hop_pool_id.as_deref().unwrap_or("-")
+            )
+        } else {
+            String::new()
+        };
         format!(
-            "快速交易\n\nMint: <code>{}</code>\n钱包: {}\n方向: {}\n金额: {}\n模式: {}\n执行方式: {}\n滑点: {}%\n小费: {} SOL\nMEV Provider: {}\nPool: {}{}",
+            "快速交易\n\nMint: <code>{}</code>\n钱包: {}\n方向: {}\n金额: {}\n模式: {}\n执行方式: {}\n滑点: {}%\n小费: {} SOL\nMEV Provider: {}\nPool: {}{}{}",
             self.mint,
             wallet_label,
             self.quick.side.label(),
@@ -343,13 +363,13 @@ impl TradePanelSession {
                 .as_deref()
                 .map(|pool_id| format!(" <code>{}</code>", short_text(pool_id)))
                 .unwrap_or_default(),
+            hop,
         )
     }
 
     fn limit_text(&self, wallet_label: &str, use_mev: bool) -> String {
         let execution = &self.limit.execution;
         let amount = match self.limit.side {
-            PanelSide::Buy if self.custom_quote() => "暂不支持自定义 Quote 限价买入".to_string(),
             PanelSide::Buy => format!("{} SOL", trim_float(self.limit.buy_amount_sol)),
             PanelSide::Sell => format!("{}%", trim_float(self.limit.sell_percent)),
         };
@@ -475,16 +495,7 @@ impl TradePanelSession {
             settings.sell_presets_percent
         };
         let one_click = self.tab == PanelTab::Quick && !settings.quick_trade_confirmation_enabled;
-        if self.active_side() == PanelSide::Buy && self.custom_quote() {
-            rows.push(vec![InlineKeyboardButton::callback(
-                format!(
-                    "金额: {} {}",
-                    self.quick.buy_amount_quote.as_deref().unwrap_or("设置"),
-                    self.quote_label()
-                ),
-                "panel:input:amount",
-            )]);
-        } else {
+        {
             for pair in [[0usize, 1usize], [2, 3]] {
                 rows.push(
                     pair.into_iter()
@@ -539,24 +550,25 @@ impl TradePanelSession {
                 "创建限价单",
                 "panel:create_limit",
             )]);
-        } else if settings.quick_trade_confirmation_enabled {
-            let amount = if self.custom_quote() && self.active_side() == PanelSide::Buy {
-                self.quick
-                    .buy_amount_quote
-                    .clone()
-                    .unwrap_or_else(|| "未设置".to_string())
+        } else {
+            let amount = trim_float(self.active_amount());
+            let unit = if self.active_side() == PanelSide::Buy {
+                "SOL"
             } else {
-                trim_float(self.active_amount())
-            };
-            let unit = if self.custom_quote() && self.active_side() == PanelSide::Buy {
-                self.quote_label()
-            } else if self.active_side() == PanelSide::Buy {
-                "SOL".to_string()
-            } else {
-                "%".to_string()
+                "%"
             };
             rows.push(vec![InlineKeyboardButton::callback(
-                format!("确认{} {} {}", self.active_side().label(), amount, unit),
+                format!(
+                    "{}{} {} {}",
+                    if settings.quick_trade_confirmation_enabled {
+                        "确认"
+                    } else {
+                        ""
+                    },
+                    self.active_side().label(),
+                    amount,
+                    unit,
+                ),
                 format!("panel:confirm:{}", self.active_side().as_str()),
             )]);
         }
@@ -664,7 +676,7 @@ mod tests {
             buy_presets_sol: [0.001, 0.005, 0.01, 0.2, 0.5],
             sell_presets_percent: [10.0, 25.0, 50.0, 75.0, 100.0],
         };
-        let panel = TradePanelSession::new(
+        let mut panel = TradePanelSession::new(
             "So11111111111111111111111111111111111111112".to_string(),
             None,
             &settings,
@@ -690,7 +702,44 @@ mod tests {
         let one_click_keyboard =
             serde_json::to_string(&panel.keyboard(&one_click_settings)).unwrap();
         assert!(one_click_keyboard.contains("买入 0.01 SOL"));
-        assert!(!one_click_keyboard.contains("panel:confirm"));
+        panel.route.pool = "stonkfun-swap".to_string();
+        panel.route.quote_mint = "Xsf9mB11111111111111111111111111111111111".to_string();
+        let first_screen = serde_json::to_string(&panel.keyboard(&settings)).unwrap();
+        assert!(first_screen.contains("确认买入 0.2 SOL"));
+        assert!(!first_screen.contains("Quote 直买"));
+        panel.sol_hop_pool_id = Some("verified-hop".to_string());
+        panel.use_sol_hop = true;
+        let sol_keyboard = serde_json::to_string(&panel.keyboard(&settings)).unwrap();
+        assert!(sol_keyboard.contains("确认买入 0.2 SOL"));
+        panel.use_sol_hop = false;
+        let quote_keyboard = serde_json::to_string(&panel.keyboard(&settings)).unwrap();
+        assert!(quote_keyboard.contains("确认买入 0.2 SOL"));
+        assert!(one_click_keyboard.contains("panel:confirm"));
+        assert!(one_click_keyboard.contains("买入 0.2 SOL"));
+
+        for use_sol_hop in [false, true] {
+            panel.use_sol_hop = use_sol_hop;
+            for side in [PanelSide::Buy, PanelSide::Sell] {
+                panel.quick.side = side;
+                for confirmation_enabled in [false, true] {
+                    let mut settings = settings.clone();
+                    settings.quick_trade_confirmation_enabled = confirmation_enabled;
+                    let keyboard = serde_json::to_value(panel.keyboard(&settings)).unwrap();
+                    let last_button = keyboard["inline_keyboard"]
+                        .as_array()
+                        .unwrap()
+                        .last()
+                        .unwrap()[0]
+                        .clone();
+                    let expected_callback = format!("panel:confirm:{}", side.as_str());
+                    assert_eq!(
+                        last_button["callback_data"].as_str(),
+                        Some(expected_callback.as_str())
+                    );
+                    assert!(last_button["text"].as_str().unwrap().contains(side.label()));
+                }
+            }
+        }
     }
 
     #[test]

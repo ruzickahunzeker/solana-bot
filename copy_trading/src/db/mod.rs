@@ -3,9 +3,9 @@ pub mod models;
 use crate::execution_params::{ExecutionParams, LimitAction};
 use anyhow::{Context, Result};
 use models::{
-    AppUser, LimitOrderSummary, ObservedPoolRoute, OrderDetail, OrderSummary, PositionSummary,
-    PumpApiEvent, SignalSummary, StrategyConfig, UserTradeSettings, WalletRecord, WatchMatch,
-    WatchWallet,
+    AlphaObservationEvent, AlphaPaperSignal, AlphaShadowOrder, AppUser, LimitOrderSummary,
+    ObservedPoolRoute, OrderDetail, OrderSummary, PositionSummary, PumpApiEvent, SignalSummary,
+    StrategyConfig, UserTradeSettings, WalletRecord, WatchMatch, WatchWallet,
 };
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
@@ -46,6 +46,11 @@ impl Database {
         for migration in [
             include_str!("../../migrations/001_init.sql"),
             include_str!("../../migrations/002_mint_pool_routes.sql"),
+            include_str!("../../migrations/003_mint_pool_route_candidates.sql"),
+            include_str!("../../migrations/004_alpha_observation_events.sql"),
+            include_str!("../../migrations/005_alpha_paper_signals.sql"),
+            include_str!("../../migrations/006_alpha_signal_lifecycle.sql"),
+            include_str!("../../migrations/007_alpha_shadow_orders.sql"),
         ] {
             for statement in migration.split(';') {
                 let statement = statement.trim();
@@ -68,6 +73,22 @@ impl Database {
         self.ensure_column("signals", "user_id", "INTEGER REFERENCES app_users(id)")
             .await?;
         self.ensure_column("signals", "metadata_json", "TEXT")
+            .await?;
+        self.ensure_column("alpha_paper_signals", "order_id", "TEXT")
+            .await?;
+        self.ensure_column("alpha_paper_signals", "quote_mint", "TEXT")
+            .await?;
+        self.ensure_column("alpha_paper_signals", "trade_service_request_id", "TEXT")
+            .await?;
+        self.ensure_column("alpha_paper_signals", "remote_status", "TEXT")
+            .await?;
+        self.ensure_column("alpha_paper_signals", "updated_at_ms", "INTEGER")
+            .await?;
+        self.pool
+            .execute(
+                "CREATE INDEX IF NOT EXISTS idx_alpha_paper_signals_request
+                 ON alpha_paper_signals(trade_service_request_id)",
+            )
             .await?;
         self.ensure_column("watch_wallets", "is_deleted", "INTEGER NOT NULL DEFAULT 0")
             .await?;
@@ -1333,6 +1354,282 @@ impl Database {
         })
     }
 
+    pub async fn insert_alpha_observation_event(&self, event: &PumpApiEvent) -> Result<bool> {
+        let event_id = alpha_event_id(event);
+        let route_status = if event.pool.as_deref().is_some_and(is_known_trade_pool)
+            && event.quote_mint.is_some()
+        {
+            "candidate"
+        } else if event.pool.is_some() {
+            "observable-only"
+        } else {
+            "unknown"
+        };
+        let result = sqlx::query(
+            "INSERT OR IGNORE INTO alpha_observation_events
+             (event_id, signature, mint, pool, pool_id, quote_mint, tx_type, signer,
+              event_timestamp_ms, received_unix_ms, route_status, raw_json)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(event_id)
+        .bind(&event.signature)
+        .bind(&event.mint)
+        .bind(&event.pool)
+        .bind(&event.pool_id)
+        .bind(&event.quote_mint)
+        .bind(&event.tx_type)
+        .bind(&event.signer)
+        .bind(event.event_timestamp_ms)
+        .bind(event.received_unix_ms)
+        .bind(route_status)
+        .bind(&event.raw_json)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected() == 1)
+    }
+
+    pub async fn list_alpha_observation_events(
+        &self,
+        after_received_ms: i64,
+        limit: usize,
+    ) -> Result<Vec<AlphaObservationEvent>> {
+        let limit = limit.clamp(1, 100_000) as i64;
+        let rows = sqlx::query(
+            "SELECT event_id, signature, mint, pool, pool_id, quote_mint, tx_type, signer,
+                    event_timestamp_ms, received_unix_ms, route_status, raw_json
+             FROM alpha_observation_events
+             WHERE received_unix_ms >= ?
+             ORDER BY received_unix_ms ASC, event_id ASC
+             LIMIT ?",
+        )
+        .bind(after_received_ms)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|row| AlphaObservationEvent {
+                event_id: row.get("event_id"),
+                signature: row.get("signature"),
+                mint: row.get("mint"),
+                pool: row.get("pool"),
+                pool_id: row.get("pool_id"),
+                quote_mint: row.get("quote_mint"),
+                tx_type: row.get("tx_type"),
+                signer: row.get("signer"),
+                event_timestamp_ms: row.get("event_timestamp_ms"),
+                received_unix_ms: row.get("received_unix_ms"),
+                route_status: row.get("route_status"),
+                raw_json: row.get("raw_json"),
+            })
+            .collect())
+    }
+
+    pub async fn insert_alpha_paper_signal(&self, signal: &AlphaPaperSignal) -> Result<bool> {
+        let result = sqlx::query(
+            "INSERT OR IGNORE INTO alpha_paper_signals
+             (signal_id, event_id, mint, pool, pool_id, quote_mint, side, score, status,
+             features_json, created_at_ms, updated_at_ms)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(&signal.signal_id)
+        .bind(&signal.event_id)
+        .bind(&signal.mint)
+        .bind(&signal.pool)
+        .bind(&signal.pool_id)
+        .bind(&signal.quote_mint)
+        .bind(&signal.side)
+        .bind(signal.score)
+        .bind(&signal.status)
+        .bind(&signal.features_json)
+        .bind(signal.created_at_ms)
+        .bind(signal.updated_at_ms)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected() == 1)
+    }
+
+    pub async fn list_alpha_paper_signals(&self, limit: usize) -> Result<Vec<AlphaPaperSignal>> {
+        let limit = limit.clamp(1, 100_000) as i64;
+        let rows = sqlx::query(
+            "SELECT signal_id, event_id, mint, pool, pool_id, quote_mint, side, score, status,
+                    features_json, created_at_ms, order_id,
+                    trade_service_request_id, remote_status, updated_at_ms
+             FROM alpha_paper_signals
+             ORDER BY created_at_ms DESC, signal_id DESC
+             LIMIT ?",
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|row| AlphaPaperSignal {
+                signal_id: row.get("signal_id"),
+                event_id: row.get("event_id"),
+                mint: row.get("mint"),
+                pool: row.get("pool"),
+                pool_id: row.get("pool_id"),
+                quote_mint: row.get("quote_mint"),
+                side: row.get("side"),
+                score: row.get("score"),
+                status: row.get("status"),
+                features_json: row.get("features_json"),
+                created_at_ms: row.get("created_at_ms"),
+                order_id: row.get("order_id"),
+                trade_service_request_id: row.get("trade_service_request_id"),
+                remote_status: row.get("remote_status"),
+                updated_at_ms: row.get("updated_at_ms"),
+            })
+            .collect())
+    }
+
+    pub async fn update_alpha_paper_signal_link(
+        &self,
+        signal_id: &str,
+        order_id: Option<&str>,
+        trade_service_request_id: Option<&str>,
+        remote_status: Option<&str>,
+        updated_at_ms: i64,
+    ) -> Result<bool> {
+        let result = sqlx::query(
+            "UPDATE alpha_paper_signals
+                SET order_id = COALESCE(?, order_id),
+                    trade_service_request_id = COALESCE(?, trade_service_request_id),
+                    remote_status = COALESCE(?, remote_status),
+                    updated_at_ms = ?
+              WHERE signal_id = ?",
+        )
+        .bind(order_id)
+        .bind(trade_service_request_id)
+        .bind(remote_status)
+        .bind(updated_at_ms)
+        .bind(signal_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(result.rows_affected() == 1)
+    }
+
+    pub async fn reserve_alpha_shadow_order(
+        &self,
+        signal: &AlphaPaperSignal,
+        idempotency_key: &str,
+        request_json: &str,
+        amount_sol: Option<f64>,
+        sell_percent: Option<i64>,
+        now_ms: i64,
+    ) -> Result<(String, bool)> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let pool = signal.pool.as_deref().unwrap_or("unknown");
+        let quote_mint = signal
+            .quote_mint
+            .as_deref()
+            .context("alpha signal is missing quote_mint")?;
+        let result = sqlx::query(
+            "INSERT OR IGNORE INTO alpha_shadow_orders
+             (id, signal_id, mint, side, pool, pool_id, quote_mint, amount_sol, sell_percent,
+              status, idempotency_key, request_json, created_at_ms, updated_at_ms)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'created', ?, ?, ?, ?)",
+        )
+        .bind(&id)
+        .bind(&signal.signal_id)
+        .bind(&signal.mint)
+        .bind(&signal.side)
+        .bind(pool)
+        .bind(&signal.pool_id)
+        .bind(quote_mint)
+        .bind(amount_sol)
+        .bind(sell_percent)
+        .bind(idempotency_key)
+        .bind(request_json)
+        .bind(now_ms)
+        .bind(now_ms)
+        .execute(&self.pool)
+        .await?;
+        if result.rows_affected() > 0 {
+            return Ok((id, true));
+        }
+        let row = sqlx::query(
+            "SELECT id FROM alpha_shadow_orders WHERE signal_id = ? OR idempotency_key = ?",
+        )
+        .bind(&signal.signal_id)
+        .bind(idempotency_key)
+        .fetch_one(&self.pool)
+        .await?;
+        Ok((row.get("id"), false))
+    }
+
+    pub async fn update_alpha_shadow_order(
+        &self,
+        order_id: &str,
+        status: &str,
+        request_id: Option<&str>,
+        response_json: Option<&str>,
+        error: Option<&str>,
+        now_ms: i64,
+    ) -> Result<()> {
+        sqlx::query(
+            "UPDATE alpha_shadow_orders
+                SET status = ?,
+                    trade_service_request_id = COALESCE(?, trade_service_request_id),
+                    response_json = COALESCE(?, response_json),
+                    error = ?,
+                    updated_at_ms = ?
+              WHERE id = ?",
+        )
+        .bind(status)
+        .bind(request_id)
+        .bind(response_json)
+        .bind(error)
+        .bind(now_ms)
+        .bind(order_id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn list_alpha_shadow_reconcilable(
+        &self,
+        limit: usize,
+    ) -> Result<Vec<AlphaShadowOrder>> {
+        let limit = limit.clamp(1, 100_000) as i64;
+        let rows = sqlx::query(
+            "SELECT id, signal_id, mint, side, pool, pool_id, quote_mint, amount_sol,
+                    sell_percent, status, idempotency_key, request_json, response_json,
+                    trade_service_request_id, error, created_at_ms, updated_at_ms
+               FROM alpha_shadow_orders
+              WHERE trade_service_request_id IS NOT NULL
+                AND status IN ('accepted', 'warming_params', 'building_tx', 'submitting', 'unknown')
+              ORDER BY updated_at_ms ASC
+              LIMIT ?",
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|row| AlphaShadowOrder {
+                id: row.get("id"),
+                signal_id: row.get("signal_id"),
+                mint: row.get("mint"),
+                side: row.get("side"),
+                pool: row.get("pool"),
+                pool_id: row.get("pool_id"),
+                quote_mint: row.get("quote_mint"),
+                amount_sol: row.get("amount_sol"),
+                sell_percent: row.get("sell_percent"),
+                status: row.get("status"),
+                idempotency_key: row.get("idempotency_key"),
+                request_json: row.get("request_json"),
+                response_json: row.get("response_json"),
+                trade_service_request_id: row.get("trade_service_request_id"),
+                error: row.get("error"),
+                created_at_ms: row.get("created_at_ms"),
+                updated_at_ms: row.get("updated_at_ms"),
+            })
+            .collect())
+    }
+
     pub async fn latest_observed_pool_route(
         &self,
         mint: &str,
@@ -1352,6 +1649,32 @@ impl Database {
         }))
     }
 
+    pub async fn observed_pool_route_candidates(
+        &self,
+        mint: &str,
+    ) -> Result<Vec<ObservedPoolRoute>> {
+        let rows = sqlx::query(
+            "SELECT pool,pool_id,quote_mint
+             FROM mint_pool_route_candidates
+             WHERE mint=?
+             ORDER BY updated_at DESC",
+        )
+        .bind(mint)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(rows
+            .into_iter()
+            .map(|row| ObservedPoolRoute {
+                pool: row.get("pool"),
+                pool_id: match row.get::<String, _>("pool_id").as_str() {
+                    "" => None,
+                    value => Some(value.to_string()),
+                },
+                quote_mint: row.get("quote_mint"),
+            })
+            .collect())
+    }
+
     pub async fn upsert_pool_route(
         &self,
         mint: &str,
@@ -1360,6 +1683,23 @@ impl Database {
         quote_mint: &str,
         source: &str,
     ) -> Result<()> {
+        let route_key = format!("{mint}|{pool}|{}|{quote_mint}", pool_id.unwrap_or_default());
+        sqlx::query(
+            "INSERT INTO mint_pool_route_candidates
+             (route_key,mint,pool,pool_id,quote_mint,source)
+             VALUES (?,?,?,?,?,?)
+             ON CONFLICT(route_key) DO UPDATE SET
+               source=excluded.source,
+               updated_at=CURRENT_TIMESTAMP",
+        )
+        .bind(route_key)
+        .bind(mint)
+        .bind(pool)
+        .bind(pool_id.unwrap_or_default())
+        .bind(quote_mint)
+        .bind(source)
+        .execute(&self.pool)
+        .await?;
         sqlx::query(
             "INSERT INTO mint_pool_routes (mint,pool,pool_id,quote_mint,source)
              VALUES (?,?,?,?,?)
@@ -2179,6 +2519,34 @@ impl Database {
     }
 }
 
+fn is_known_trade_pool(pool: &str) -> bool {
+    matches!(
+        pool,
+        "pump"
+            | "pump-amm"
+            | "bonk"
+            | "stonkfun"
+            | "stonkfun-swap"
+            | "meteora-damm-v2"
+            | "meteora-dbc"
+            | "raydium-amm-v4"
+            | "raydium-cpmm"
+    )
+}
+
+fn alpha_event_id(event: &PumpApiEvent) -> String {
+    let signature = event.signature.as_deref().unwrap_or("unsigned");
+    let action = event.tx_type.as_deref().unwrap_or("unknown");
+    let mint = event.mint.as_deref().unwrap_or("unknown");
+    let pool_id = event.pool_id.as_deref().unwrap_or("unknown");
+    if event.signature.is_some() {
+        return format!("{signature}:{action}:{mint}:{pool_id}");
+    }
+    use sha2::{Digest, Sha256};
+    let digest = Sha256::digest(event.raw_json.as_bytes());
+    format!("unsigned:{}", hex::encode(digest))
+}
+
 fn row_to_strategy(row: sqlx::sqlite::SqliteRow) -> StrategyConfig {
     let allowed_pools = row
         .get::<Option<String>, _>("allowed_pools")
@@ -2228,7 +2596,7 @@ fn row_to_strategy(row: sqlx::sqlite::SqliteRow) -> StrategyConfig {
 #[cfg(test)]
 mod tests {
     use super::Database;
-    use crate::db::models::{PumpApiEvent, UserTradeSettings};
+    use crate::db::models::{AlphaPaperSignal, PumpApiEvent, UserTradeSettings};
     use crate::execution_params::{ExecutionMethod, ExecutionMode, ExecutionParams, LimitAction};
     use sqlx::{Executor, Row};
 
@@ -2295,6 +2663,127 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn alpha_observation_events_are_deduplicated_by_stable_event_id() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        db.migrate().await.unwrap();
+        let event = PumpApiEvent {
+            signature: Some("sig-1".to_string()),
+            mint: Some("mint-1".to_string()),
+            pool: Some("pump-amm".to_string()),
+            pool_id: Some("pool-1".to_string()),
+            quote_mint: Some("wsol".to_string()),
+            tx_type: Some("buy".to_string()),
+            signer: Some("trader-1".to_string()),
+            sol_in_pool: Some(1.0),
+            tokens_in_pool: Some(2.0),
+            quote_in_pool: Some(1.0),
+            event_timestamp_ms: Some(100),
+            received_unix_ms: 200,
+            raw_json: r#"{"signature":"sig-1"}"#.to_string(),
+        };
+        assert!(db.insert_alpha_observation_event(&event).await.unwrap());
+        assert!(!db.insert_alpha_observation_event(&event).await.unwrap());
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM alpha_observation_events")
+            .fetch_one(&db.pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 1);
+        let events = db.list_alpha_observation_events(0, 10).await.unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].event_id, "sig-1:buy:mint-1:pool-1");
+        assert_eq!(events[0].route_status, "candidate");
+        let signal = AlphaPaperSignal {
+            signal_id: "sig-1:alpha-flow-v1".to_string(),
+            event_id: events[0].event_id.clone(),
+            mint: "mint-1".to_string(),
+            pool: Some("pump".to_string()),
+            pool_id: None,
+            quote_mint: Some("So11111111111111111111111111111111111111112".to_string()),
+            side: "buy".to_string(),
+            score: 0.8,
+            status: "paper".to_string(),
+            features_json: "{}".to_string(),
+            created_at_ms: 300,
+            order_id: None,
+            trade_service_request_id: None,
+            remote_status: None,
+            updated_at_ms: None,
+        };
+        assert!(db.insert_alpha_paper_signal(&signal).await.unwrap());
+        assert!(!db.insert_alpha_paper_signal(&signal).await.unwrap());
+        assert!(db
+            .update_alpha_paper_signal_link(
+                &signal.signal_id,
+                Some("order-1"),
+                Some("tr_sim-1"),
+                Some("simulated"),
+                400,
+            )
+            .await
+            .unwrap());
+        let signals = db.list_alpha_paper_signals(10).await.unwrap();
+        assert_eq!(signals.len(), 1);
+        assert_eq!(signals[0].order_id.as_deref(), Some("order-1"));
+        assert_eq!(
+            signals[0].trade_service_request_id.as_deref(),
+            Some("tr_sim-1")
+        );
+        assert_eq!(signals[0].remote_status.as_deref(), Some("simulated"));
+    }
+
+    #[tokio::test]
+    async fn alpha_shadow_reconciler_includes_unknown_orders_with_request_ids() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        db.migrate().await.unwrap();
+        let signal = AlphaPaperSignal {
+            signal_id: "sig-shadow-1".to_string(),
+            event_id: "event-shadow-1".to_string(),
+            mint: "mint-1".to_string(),
+            pool: Some("pump".to_string()),
+            pool_id: None,
+            quote_mint: Some("So11111111111111111111111111111111111111112".to_string()),
+            side: "buy".to_string(),
+            score: 0.99,
+            status: "paper".to_string(),
+            features_json: "{}".to_string(),
+            created_at_ms: 1,
+            order_id: None,
+            trade_service_request_id: None,
+            remote_status: None,
+            updated_at_ms: None,
+        };
+        let (order_id, created) = db
+            .reserve_alpha_shadow_order(
+                &signal,
+                "alpha-shadow:sig-shadow-1",
+                "{}",
+                Some(0.01),
+                None,
+                1,
+            )
+            .await
+            .unwrap();
+        assert!(created);
+        db.update_alpha_shadow_order(
+            &order_id,
+            "unknown",
+            Some("tr_unknown-1"),
+            Some("{\"status\":\"unknown\"}"),
+            Some("temporary remote state"),
+            2,
+        )
+        .await
+        .unwrap();
+        let orders = db.list_alpha_shadow_reconcilable(10).await.unwrap();
+        assert_eq!(orders.len(), 1);
+        assert_eq!(orders[0].status, "unknown");
+        assert_eq!(
+            orders[0].trade_service_request_id.as_deref(),
+            Some("tr_unknown-1")
+        );
+    }
+
+    #[tokio::test]
     async fn latest_observed_pool_route_uses_pumpapi_pool_id() {
         let db = Database::connect("sqlite::memory:").await.unwrap();
         db.migrate().await.unwrap();
@@ -2310,6 +2799,38 @@ mod tests {
         assert_eq!(route.pool, "pump-amm");
         assert_eq!(route.pool_id.as_deref(), Some("pool-1"));
         assert_eq!(route.quote_mint, "quote-1");
+    }
+
+    #[tokio::test]
+    async fn pool_route_candidates_preserve_multiple_pools_for_one_mint() {
+        let db = Database::connect("sqlite::memory:").await.unwrap();
+        db.migrate().await.unwrap();
+        db.upsert_pool_route(
+            "mint-1",
+            "pump-amm",
+            Some("custom-pool"),
+            "custom-quote",
+            "pumpapi",
+        )
+        .await
+        .unwrap();
+        db.upsert_pool_route(
+            "mint-1",
+            "meteora-damm-v2",
+            Some("wsol-pool"),
+            "So11111111111111111111111111111111111111112",
+            "pumpapi",
+        )
+        .await
+        .unwrap();
+
+        let routes = db.observed_pool_route_candidates("mint-1").await.unwrap();
+        assert_eq!(routes.len(), 2);
+        assert!(routes.iter().any(|route| route.pool == "pump-amm"));
+        assert!(routes.iter().any(|route| {
+            route.pool == "meteora-damm-v2"
+                && route.quote_mint == "So11111111111111111111111111111111111111112"
+        }));
     }
 
     #[tokio::test]

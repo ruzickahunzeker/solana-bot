@@ -337,6 +337,10 @@ pub fn wallet_detail_keyboard(wallet: &WalletRecord) -> InlineKeyboardMarkup {
             "转账 SOL",
             format!("wallet:transfer:{}", wallet.id),
         )]);
+        rows.push(vec![InlineKeyboardButton::callback(
+            "SOL / WSOL",
+            format!("wallet:convert:{}", wallet.id),
+        )]);
     }
     rows.push(vec![InlineKeyboardButton::callback(
         "删除钱包",
@@ -347,6 +351,48 @@ pub fn wallet_detail_keyboard(wallet: &WalletRecord) -> InlineKeyboardMarkup {
         "menu:wallet",
     )]);
     InlineKeyboardMarkup::new(rows)
+}
+
+pub fn wallet_conversion_keyboard(wallet_id: i64) -> InlineKeyboardMarkup {
+    InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton::callback(
+                "包装 0.001 SOL",
+                format!("wallet:convert_quote:{wallet_id}:wrap:1000000"),
+            ),
+            InlineKeyboardButton::callback(
+                "包装 0.01 SOL",
+                format!("wallet:convert_quote:{wallet_id}:wrap:10000000"),
+            ),
+        ],
+        vec![
+            InlineKeyboardButton::callback(
+                "解包 0.001 WSOL",
+                format!("wallet:convert_quote:{wallet_id}:unwrap:1000000"),
+            ),
+            InlineKeyboardButton::callback(
+                "全部解包",
+                format!("wallet:convert_quote:{wallet_id}:unwrap:all"),
+            ),
+        ],
+        vec![InlineKeyboardButton::callback(
+            "返回钱包",
+            format!("wallet:detail:{wallet_id}"),
+        )],
+    ])
+}
+
+pub fn wallet_conversion_quote_keyboard(wallet_id: i64) -> InlineKeyboardMarkup {
+    InlineKeyboardMarkup::new(vec![
+        vec![InlineKeyboardButton::callback(
+            "模拟本笔",
+            format!("wallet:convert_sim:{wallet_id}"),
+        )],
+        vec![InlineKeyboardButton::callback(
+            "返回兑换",
+            format!("wallet:convert:{wallet_id}"),
+        )],
+    ])
 }
 
 pub fn wallet_create_keyboard() -> InlineKeyboardMarkup {

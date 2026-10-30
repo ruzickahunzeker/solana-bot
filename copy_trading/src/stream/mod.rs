@@ -1,8 +1,10 @@
 use crate::{
+    alpha::{AlphaConfig, AlphaEngine},
     db::{models::PumpApiEvent, Database},
     limit_order::LimitOrderEngine,
     pool_route::PoolRouteCache,
     strategy::StrategyEngine,
+    trade_client::TradeServiceClient,
 };
 use anyhow::{Context, Result};
 use chrono::Utc;
@@ -26,9 +28,12 @@ pub fn spawn_zmq_consumer(
     limit_orders: LimitOrderEngine,
     pool_routes: PoolRouteCache,
     limit_queue_capacity: usize,
+    trade_client: TradeServiceClient,
 ) {
     let handle = Handle::current();
     let (limit_tx, mut limit_rx) = mpsc::channel::<PumpApiEvent>(limit_queue_capacity.max(1));
+    let (observation_tx, mut observation_rx) =
+        mpsc::channel::<PumpApiEvent>(limit_queue_capacity.max(1).saturating_mul(4).max(1));
     let limit_db = db.clone();
     let limit_strategy = strategy.clone();
     handle.spawn(async move {
@@ -37,15 +42,60 @@ pub fn spawn_zmq_consumer(
             process_limit_or_legacy_event(&limit_db, &limit_strategy, &limit_orders, event).await;
         }
     });
+    let observation_db = db.clone();
+    let shadow = crate::alpha_shadow::AlphaShadowExecutor::new(db.clone(), trade_client);
+    handle.spawn(async move {
+        let mut alpha = AlphaEngine::new(AlphaConfig::from_env());
+        while let Some(event) = observation_rx.recv().await {
+            if let Err(err) = observation_db.insert_alpha_observation_event(&event).await {
+                warn!(?err, "failed to persist alpha observation event");
+            }
+            if let Some(signal) = alpha.observe(&event) {
+                let inserted = match observation_db.insert_alpha_paper_signal(&signal).await {
+                    Ok(inserted) => inserted,
+                    Err(err) => {
+                        warn!(?err, signal_id = %signal.signal_id, "failed to persist alpha paper signal");
+                        false
+                    }
+                };
+                if inserted {
+                    let shadow = shadow.clone();
+                    tokio::spawn(async move {
+                        if let Err(err) = shadow.submit(signal).await {
+                            warn!(?err, "alpha shadow submission failed");
+                        }
+                    });
+                }
+            }
+        }
+    });
+    let normalized_endpoint = endpoint.clone();
+    let normalized_db = db.clone();
+    let normalized_strategy = strategy.clone();
+    let normalized_handle = handle.clone();
     std::thread::spawn(move || loop {
         if let Err(err) = run_blocking_consumer(
-            &endpoint,
-            db.clone(),
-            strategy.clone(),
-            handle.clone(),
+            &normalized_endpoint,
+            normalized_db.clone(),
+            normalized_strategy.clone(),
+            normalized_handle.clone(),
             limit_tx.clone(),
         ) {
-            error!(?err, "zmq consumer stopped; restarting");
+            error!(?err, "normalized zmq consumer stopped; restarting");
+        }
+        std::thread::sleep(Duration::from_secs(1));
+    });
+    let observation_endpoint = endpoint;
+    let observation_db = db;
+    let observation_handle = handle;
+    std::thread::spawn(move || loop {
+        if let Err(err) = run_blocking_observation_consumer(
+            &observation_endpoint,
+            observation_db.clone(),
+            observation_handle.clone(),
+            observation_tx.clone(),
+        ) {
+            error!(?err, "observation zmq consumer stopped; restarting");
         }
         std::thread::sleep(Duration::from_secs(1));
     });
@@ -63,6 +113,8 @@ fn run_blocking_consumer(
         .arg(script)
         .arg("--endpoint")
         .arg(endpoint)
+        .arg("--topic")
+        .arg("normalized")
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .spawn()
@@ -114,6 +166,56 @@ fn run_blocking_consumer(
 
     let status = child.wait().context("failed to wait for zmq subscriber")?;
     anyhow::bail!("python zmq subscriber exited with {status}");
+}
+
+fn run_blocking_observation_consumer(
+    endpoint: &str,
+    db: Database,
+    handle: Handle,
+    observation_tx: mpsc::Sender<PumpApiEvent>,
+) -> Result<()> {
+    let script = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/zmq_subscriber.py");
+    let mut child = Command::new("python3")
+        .arg(script)
+        .arg("--endpoint")
+        .arg(endpoint)
+        .arg("--topic")
+        .arg("observation")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .context("failed to start observation zmq subscriber")?;
+    let stdout = child
+        .stdout
+        .take()
+        .context("observation zmq subscriber stdout unavailable")?;
+    let reader = BufReader::new(stdout);
+    info!(endpoint, "started pumpapi observation zmq subscriber");
+    let mut last_heartbeat = Instant::now()
+        .checked_sub(Duration::from_secs(10))
+        .unwrap_or_else(Instant::now);
+    for line in reader.lines() {
+        let line = line?;
+        let Some(event) = parse_payload(line.as_bytes()) else {
+            continue;
+        };
+        observation_tx
+            .blocking_send(event)
+            .context("alpha observation queue closed")?;
+        if last_heartbeat.elapsed() >= Duration::from_secs(10) {
+            last_heartbeat = Instant::now();
+            let db = db.clone();
+            handle.spawn(async move {
+                if let Err(err) = db.touch_pumpapi_stream().await {
+                    warn!(?err, "failed to update PumpAPI observation heartbeat");
+                }
+            });
+        }
+    }
+    let status = child
+        .wait()
+        .context("failed to wait for observation zmq subscriber")?;
+    anyhow::bail!("observation zmq subscriber exited with {status}");
 }
 
 async fn process_limit_or_legacy_event(

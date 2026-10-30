@@ -686,6 +686,7 @@ mod tests {
         config::AppConfig,
         db::{models::PumpApiEvent, Database},
         executor::ExecutionRouter,
+        pool_route::PoolRouteCache,
         risk::RiskEngine,
         trade_client::TradeServiceClient,
     };
@@ -744,7 +745,9 @@ mod tests {
         )
         .unwrap();
         let risk = RiskEngine::new();
-        let executor = ExecutionRouter::new(db.clone(), risk.clone(), trade_client, 1, 1);
+        let pool_routes = PoolRouteCache::new(db.clone(), trade_client.clone(), 1);
+        let executor =
+            ExecutionRouter::new(db.clone(), risk.clone(), trade_client, pool_routes, 1, 1);
         let engine = StrategyEngine::new(config, db.clone(), risk, executor, None);
         let event = PumpApiEvent {
             signature: Some("replay-signature-1".to_string()),
@@ -796,7 +799,9 @@ mod tests {
         )
         .unwrap();
         let risk = RiskEngine::new();
-        let executor = ExecutionRouter::new(db.clone(), risk.clone(), trade_client, 1, 1);
+        let pool_routes = PoolRouteCache::new(db.clone(), trade_client.clone(), 1);
+        let executor =
+            ExecutionRouter::new(db.clone(), risk.clone(), trade_client, pool_routes, 1, 1);
         let engine = StrategyEngine::new(config, db.clone(), risk, executor, None);
         assert_eq!(engine.refresh_cache().await.unwrap(), 1);
         let event = PumpApiEvent {

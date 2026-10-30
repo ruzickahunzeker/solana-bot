@@ -1,3 +1,5 @@
+mod alpha;
+mod alpha_shadow;
 mod bot;
 mod config;
 mod crypto;
@@ -78,6 +80,7 @@ async fn main() -> Result<()> {
         db.clone(),
         risk.clone(),
         trade_client.clone(),
+        pool_routes.clone(),
         config.trade_submit_max_attempts,
         config.trade_submit_retry_delay_ms,
     );
@@ -88,6 +91,10 @@ async fn main() -> Result<()> {
         config.trade_submit_max_attempts,
     )
     .start();
+    alpha_shadow::start_reconciler(alpha_shadow::AlphaShadowExecutor::new(
+        db.clone(),
+        trade_client.clone(),
+    ));
     let limit_orders = LimitOrderEngine::new(
         db.clone(),
         executor.clone(),
@@ -121,6 +128,7 @@ async fn main() -> Result<()> {
             limit_orders,
             pool_routes.clone(),
             config.fast_follow_limit_queue_capacity,
+            trade_client.clone(),
         );
     }
 

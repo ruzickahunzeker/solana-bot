@@ -4,6 +4,7 @@ use crate::{
         Database,
     },
     execution_params::{ExecutionMode, ExecutionParams},
+    pool_route::PoolRouteCache,
     risk::RiskEngine,
     strategy,
     trade_client::{TradeRequest, TradeResponse, TradeServiceClient},
@@ -25,12 +26,20 @@ impl ExecutionRouter {
         db: Database,
         risk: RiskEngine,
         trade_client: TradeServiceClient,
+        pool_routes: PoolRouteCache,
         submit_max_attempts: u32,
         retry_delay_ms: u64,
     ) -> Self {
         Self {
             dry_run: DryRunExecutor::new(db.clone()),
-            live: LiveExecutor::new(db, risk, trade_client, submit_max_attempts, retry_delay_ms),
+            live: LiveExecutor::new(
+                db,
+                risk,
+                trade_client,
+                pool_routes,
+                submit_max_attempts,
+                retry_delay_ms,
+            ),
         }
     }
 
@@ -289,6 +298,7 @@ struct LiveExecutor {
     db: Database,
     risk: RiskEngine,
     trade_client: TradeServiceClient,
+    pool_routes: PoolRouteCache,
     submit_max_attempts: u32,
     retry_delay_ms: u64,
 }
@@ -299,6 +309,7 @@ impl LiveExecutor {
         db: Database,
         risk: RiskEngine,
         trade_client: TradeServiceClient,
+        pool_routes: PoolRouteCache,
         submit_max_attempts: u32,
         retry_delay_ms: u64,
     ) -> Self {
@@ -306,9 +317,27 @@ impl LiveExecutor {
             db,
             risk,
             trade_client,
+            pool_routes,
             submit_max_attempts: submit_max_attempts.max(1),
             retry_delay_ms,
         }
+    }
+
+    async fn canonical_live_event(&self, event: &PumpApiEvent, mint: &str) -> Result<PumpApiEvent> {
+        if !event
+            .pool
+            .as_deref()
+            .is_some_and(|pool| pool.eq_ignore_ascii_case("pump-amm"))
+        {
+            return Ok(event.clone());
+        }
+
+        let route = self.pool_routes.resolve_verified(mint).await?;
+        let mut canonical = event.clone();
+        canonical.pool = Some(route.pool);
+        canonical.pool_id = route.pool_id;
+        canonical.quote_mint = Some(route.quote_mint);
+        Ok(canonical)
     }
 
     async fn execute(&self, request: ExecutionRequest<'_>) -> Result<()> {
@@ -341,8 +370,17 @@ impl LiveExecutor {
             .user_mev_enabled(request.strategy.user_id)
             .await
             .unwrap_or(false);
-        let trade_request = match build_strategy_trade_request(
+        let canonical_event = match self.canonical_live_event(request.event, request.mint).await {
+            Ok(event) => event,
+            Err(err) => {
+                return self
+                    .record_strategy_blocked(request, &idempotency_key, &err.to_string())
+                    .await;
+            }
+        };
+        let trade_request = match build_strategy_trade_request_with_event(
             &request,
+            &canonical_event,
             idempotency_key.clone(),
             trade_service_wallet_id,
             allow_mev,
@@ -408,9 +446,12 @@ impl LiveExecutor {
         if !decision.allowed {
             anyhow::bail!(decision.reason);
         }
+        let canonical_event = self
+            .canonical_live_event(&request.event, &request.mint)
+            .await?;
         let trade_request = build_strategy_trade_request_parts(
             &request.strategy,
-            &request.event,
+            &canonical_event,
             &request.mint,
             &request.side,
             idempotency_key.clone(),
@@ -626,7 +667,15 @@ impl LiveExecutor {
                     .await;
             }
         };
-        let pool = match normalize_pool(request.event.pool.as_deref()) {
+        let canonical_event = match self.canonical_live_event(request.event, request.mint).await {
+            Ok(event) => event,
+            Err(err) => {
+                return self
+                    .record_limit_blocked(request, &idempotency_key, &err.to_string())
+                    .await;
+            }
+        };
+        let pool = match normalize_pool(canonical_event.pool.as_deref()) {
             Ok(pool) => pool,
             Err(err) => {
                 return self
@@ -634,7 +683,7 @@ impl LiveExecutor {
                     .await;
             }
         };
-        let pool_id = trade_service_pool_id(&pool, request.event.pool_id.as_deref());
+        let pool_id = trade_service_pool_id(&pool, canonical_event.pool_id.as_deref());
         let allow_mev = self
             .db
             .user_mev_enabled(request.user_id)
@@ -653,7 +702,7 @@ impl LiveExecutor {
             pool,
             mint: request.mint.to_string(),
             pool_id,
-            quote_mint: request.event.quote_mint.clone(),
+            quote_mint: canonical_event.quote_mint.clone(),
             amount_quote_units: None,
             settlement_asset: None,
             sol_hop_pool: None,
@@ -666,7 +715,7 @@ impl LiveExecutor {
             mev_provider,
             simulate: request.execution.mode == ExecutionMode::Simulate,
             source: Some("copy-trading-limit".to_string()),
-            source_signature: request.event.signature.clone(),
+            source_signature: canonical_event.signature.clone(),
             idempotency_key: idempotency_key.clone(),
         };
         let request_json = serde_json::json!({
@@ -847,15 +896,16 @@ impl LiveExecutor {
     }
 }
 
-fn build_strategy_trade_request(
+fn build_strategy_trade_request_with_event(
     request: &ExecutionRequest<'_>,
+    event: &PumpApiEvent,
     idempotency_key: String,
     trade_service_wallet_id: String,
     allow_mev: bool,
 ) -> Result<TradeRequest> {
     build_strategy_trade_request_parts(
         request.strategy,
-        request.event,
+        event,
         request.mint,
         request.side,
         idempotency_key,

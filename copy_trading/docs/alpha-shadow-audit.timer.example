@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Alpha shadow read-only audit gate every five minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+Unit=alpha-shadow-audit.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

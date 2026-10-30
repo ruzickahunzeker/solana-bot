@@ -4,6 +4,7 @@
 
 - 连接 `wss://stream.pumpapi.io`
 - 通过 ZMQ PUB 广播原始 PumpAPI JSON 消息
+- 广播 `observation` 事件并把观察事件追加到本地 JSONL spool，供 Alpha 回放和断线恢复
 - 可选广播归一化后的交易候选消息，方便 `trade_service` 或其它客户端消费
 
 它不调用交易 API，不读取钱包私钥，也不下单。
@@ -40,6 +41,32 @@ tcp://127.0.0.1:8939
 ```bash
 ./zmq_sub_client.py normalized
 ```
+
+订阅完整观察事件：
+
+```bash
+./zmq_sub_client.py observation
+```
+
+离线回放并生成 paper signal：
+
+```bash
+python3 alpha_replay.py \
+  data/pumpapi_observation.jsonl \
+  --min-score 0.65 \
+  --min-traders 3 \
+  --output /tmp/alpha-paper-signals.jsonl
+```
+
+回放器只读取 observation JSONL，输出窗口特征和 paper signal，不调用
+`trade_service`，不会签名或广播交易。它会按 `event_id` 去重，并忽略
+`route_status` 不是 `executable` 的事件。
+
+`observation` 会保留未知 pool、缺失 quote 或尚未可交易的事件；这类事件的
+`route_status` 为 `observable-only` 或 `unknown`，不能直接触发交易。消息新增
+`schema_version`、稳定 `event_id`、`event_time_ms`、`received_at_ms` 和 `raw_hash`。
+有交易签名时，`event_id` 使用 `signature:action:mint:pool_id`；没有签名时使用
+canonical JSON hash，并且只能用于观察和回放。
 
 可以同时启动多个订阅客户端。
 
@@ -142,6 +169,8 @@ ZMQ_SNDHWM=10000
 ZMQ_PUBLISH_NORMALIZED=true
 PUMPAPI_CAPTURE_LIMIT=0
 STONKFUN_ROUTE_FILE=/root/http/sol-bot/pumpapi_zmq_bridge/data/stonkfun_mints.txt
+PUMPAPI_OBSERVATION_SPOOL_FILE=/root/http/sol-bot/pumpapi_zmq_bridge/data/pumpapi_observation.jsonl
+PUMPAPI_OBSERVATION_SPOOL_MAX_BYTES=268435456
 
 WATCH_WALLETS=CCCCQCrL6zVjnDeucDzcxJgxAs5ahNmrhw1CDexPhqrd,nya666pQkP3PzWxi7JngU3rRMHuc7zbLK8c8wxQ4qpT
 WALLET_MATCH_WINDOW_SECONDS=3600
@@ -157,6 +186,10 @@ ZMQ_ENDPOINT=tcp://127.0.0.1:8939
 ```bash
 ZMQ_BIND=tcp://127.0.0.1:8939,ipc:///tmp/pumpapi-zmq ./pumpapi_zmq_bridge.py
 ```
+
+spool 达到 `PUMPAPI_OBSERVATION_SPOOL_MAX_BYTES` 后会滚动为同目录下的
+`*.jsonl.1`，保留一份最近的归档。Alpha Engine 启动时应先读取 spool 重建最近窗口，
+再订阅 ZMQ；spool 只用于补读和回放，不能把过期事件直接当作新开仓信号。
 
 ## 注意
 
