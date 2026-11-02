@@ -3,9 +3,9 @@ pub mod bonk;
 mod cross_dex_mainnet;
 pub mod launchlab;
 pub mod meteora_damm_v2;
+pub mod meteora_dbc;
 #[cfg(test)]
 mod meteora_damm_v2_mainnet;
-pub mod meteora_dbc;
 pub mod meteora_dlmm;
 #[cfg(test)]
 mod meteora_dlmm_mainnet;
@@ -37,3 +37,13 @@ pub mod utils;
 pub mod whirlpool;
 #[cfg(test)]
 mod whirlpool_mainnet;
+
+pub mod pump_upgrade;
+
+pub mod pump_v3_quote;
+
+pub mod pump_compact_accounts;
+
+pub mod pump_create_v2;
+
+pub mod token2022_hook;

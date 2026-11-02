@@ -53,6 +53,51 @@ class PumpApiBridgeTests(unittest.TestCase):
         }
         self.assertIsNone(bridge.normalize_for_trade_service(event))
 
+    def test_normalized_event_has_schema_and_stable_id(self):
+        event = {
+            "signature": "sig",
+            "action": "buy",
+            "pool": "pump",
+            "mint": "meme",
+            "quoteAmount": 10,
+            "tokenAmount": 20,
+        }
+        normalized = bridge.normalize_for_trade_service(event)
+        self.assertEqual(normalized["schema_version"], 1)
+        self.assertEqual(normalized["event_id"], "sig:buy:meme:unknown")
+        self.assertEqual(normalized["event_id"], bridge.event_id(event))
+
+    def test_observation_keeps_unknown_pool_as_observable_only(self):
+        event = {
+            "signature": "sig",
+            "action": "buy",
+            "pool": "unknown-pool",
+            "mint": "meme",
+        }
+        observation = bridge.normalize_observation(event, "hash", 123)
+        self.assertEqual(observation["route_status"], "observable-only")
+        self.assertIsNone(observation["trade_service_pool"])
+        self.assertEqual(observation["received_at_ms"], 123)
+
+    def test_observation_keeps_custom_pool_without_quote_observable_only(self):
+        event = {
+            "signature": "sig",
+            "action": "buy",
+            "pool": "raydium-cpmm",
+            "poolId": "pool",
+            "mint": "meme",
+        }
+        observation = bridge.normalize_observation(event, "hash", 123)
+        self.assertEqual(observation["route_status"], "observable-only")
+        self.assertIsNone(observation["quote_mint"])
+
+    def test_unsigned_event_id_uses_content_hash(self):
+        event = {"action": "buy", "pool": "pump", "mint": "meme"}
+        first = bridge.event_id(event)
+        second = bridge.event_id(dict(event))
+        self.assertTrue(first.startswith("sha256:"))
+        self.assertEqual(first, second)
+
 
 if __name__ == "__main__":
     unittest.main()

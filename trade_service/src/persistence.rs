@@ -536,6 +536,7 @@ mod tests {
         NormalizedTrade {
             mint: request.mint.parse().unwrap(),
             quote_mint: crate::models::WSOL_MINT.parse().unwrap(),
+            aggregator_sol: false,
             pool_id: None,
             settlement_asset: crate::models::SettlementAsset::Quote,
             sol_hop_pool: None,

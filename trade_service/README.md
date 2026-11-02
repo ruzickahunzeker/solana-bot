@@ -245,6 +245,26 @@ SOL 转账支持固定 lamports、50% 和 100%。固定金额和 50% 基于确�
 
 本地 HTTP API 的鉴权 token。它不是链上参数，也不是钱包私钥。
 
+`CONVERSION_DATABASE_URL`
+
+独立兑换记录数据库，默认 `sqlite://./data/conversions.sqlite`。保存 WSOL 报价、幂等请求指纹及签名交易记录；不得提交到 GitHub，备份时按交易数据单独处理。使用 WAL + `synchronous=FULL`。
+
+`CONVERSION_QUOTES_ENABLED`
+
+是否初始化独立兑换数据库并启用 WSOL 报价，默认 `false`。未开启时现有交易服务启动不依赖兑换数据库。
+
+`CONVERSION_LIVE_ENABLED`
+
+是否开放 WSOL 包装/解包的实盘提交，默认 `false`。启用前必须先开启 `CONVERSION_QUOTES_ENABLED`，完成钱包归属、模拟和小额验收；不要与现有 `ENABLE_SIMULATE` 混淆。
+
+`POST /internal/conversions/wsol/quotes`
+
+使用内部 Bearer 鉴权。请求示例：`{"wallet_id":"2TE","owner_type":"telegram","owner_id":"123","direction":"wrap","amount_lamports":1000000}`；全部解包使用 `{"direction":"unwrap","all":true}`，不同时传金额。服务校验钱包归属、读取当前 SOL/WSOL ATA 余额和网络手续费估算，返回 `quote`（绑定钱包、金额、余额基线、租金、60 秒有效期）及 `executable:false`。部分解包的临时账户租金先垫付后返还，净返还显示为 0；全部解包关闭原 ATA 的租金返还单独展示，不计入兑换数量。此报价接口不签名、不广播。
+
+`POST /internal/conversions/wsol/simulate` 接受 `{"quote_id":"cq_...","wallet_id":"2TE","owner_type":"telegram","owner_id":"123","simulate":true,"idempotency_key":"..."}`，只执行 RPC 模拟，返回 `status:"simulated"`；模拟不占用实盘幂等记录。`POST /internal/conversions/wsol/submit` 使用相同字段但 `simulate:false,"confirmed":true`，且仅在 `CONVERSION_LIVE_ENABLED=true` 时开放。调用方必须在用户确认后才设置 `confirmed:true`。相同幂等键不同请求会拒绝；交易先模拟，再把签名和交易字节写入独立数据库，最后广播。超时返回 `unknown`，不得用新交易重试。`GET /internal/conversions/wsol/submissions/:submission_id?owner_type=telegram&owner_id=123` 按原签名回查状态，不自动重发。**当前未完成链上模拟与小额实盘验收，Bot 不应展示可执行兑换按钮。**
+
+同一钱包一次只允许一笔未决兑换（`reserved`、`signed`、`submitted`、`unknown`）。遇到未决记录时，先用原 `submission_id` 查询状态；不能换幂等键再次提交。`signed` 或 `unknown` 即使暂未查到链上结果也不会自动重发。
+
 调用交易接口时必须带：
 
 ```bash
@@ -321,6 +341,8 @@ Via-SOL 单笔买入上限，单位 SOL，默认 `0.1`。该限制只收紧 Via-
 
 自定义 Quote 直接交易时，买入请求传 `amount_quote_units`（Quote 最小单位），钱包须预先持有该 Quote。受内部鉴权保护的 `GET /internal/wallets/:wallet_id/quote-balance/:mint?owner_type=copy_trading&owner_id=<用户ID>` 返回链上 Mint 精度、Quote 最小单位余额及 SOL lamports 余额；钱包必须属于该用户或为可见的 system 钱包。该接口供 Telegram 面板显示余额和精确换算金额使用。
 
+普通 SOL 买入不要求用户持有池子的 Quote。买入请求使用 `amount_sol` 且链上 Quote 不是 WSOL 时，trade_service 会自动走 SOL 聚合器：重新报价、审计、模拟，通过后再签名广播。Telegram 面板只显示 SOL 金额；`amount_quote_units` 仍保留给明确要求 Quote 直买的兼容调用方。
+
 `ENABLE_SIMULATE`
 
 是否只模拟交易。
@@ -382,7 +404,7 @@ blockhash 最大可用年龄。超过这个时间，交易请求会被拒绝，�
 
 ## MEV / SWQoS 配置
 
-当前已支持通过 `sol-trade-sdk 5.0.4` 接入以下 SWQoS lane：
+当前已支持通过 `sol-trade-sdk 6.0.2` 接入以下 SWQoS lane：
 
 - Jito：高性能 block space。
 - Temporal：时间敏感交易。
@@ -560,7 +582,7 @@ PumpAPI 第一版边界：
 
 - 不支持 `use_mev:true`，也不走 Astralane/Jito 等 SWQoS lane。
 - `simulate:false` 时通过 Default RPC 提交。
-- 买入支持 WSOL/USDC/USD1 quote，金额仍按 `quote_mint` 使用 `amount_sol`、`amount_usdc`、`amount_quote` 或 `amount_quote_units`。
+- 买入支持 WSOL/USDC/USD1 及自定义 Quote。WSOL 可直接使用 SDK；非 WSOL Quote 使用 `amount_sol` 时自动走 SOL 聚合器，明确传 `amount_quote_units` 时仍走 Quote 直买。
 - 卖出第一版只支持 `sell_percent:100`。
 - 如果 PumpAPI 返回多笔 transaction bundle，第一版会拒绝，避免半提交。
 - 不会发送私钥给 PumpAPI。
@@ -1115,8 +1137,8 @@ curl -X POST http://127.0.0.1:18787/v1/trades \
 - `execution_method` 支持 `sdk` 和 `pumpapi`，默认 `sdk`。
 - `pool` 支持 `pump`、`pump-amm`、`bonk`、`stonkfun`、`stonkfun-swap`、`meteora-damm-v2`、`meteora-dbc`、`raydium-amm-v4`、`raydium-cpmm`。
 - Meteora/Raydium 第一版必须传 `pool_id`，不自动按 mint 选池。
-- `quote_mint` 支持 WSOL/USDC；`bonk` 额外支持 USD1，不支持 USDC；StonkFun 支持任意 SPL Token，但自定义 Quote 买入必须传原始 `amount_quote_units`。
-- WSOL 买入使用 `amount_sol`、`amount_lamports` 或 `amount_quote`；USDC/USD1 买入使用 `amount_quote`、`amount_usdc` 或 `amount_quote_units`。
+- `quote_mint` 会按链上真实池记录校验；WSOL、USDC、USD1 和自定义 SPL Quote 均可通过 SOL 聚合器买入。
+- 买入统一建议使用 `amount_sol`。WSOL 直池由 SDK 执行；非 WSOL Quote 由聚合器从 SOL 兑换到目标 Mint。只有明确需要池内 Quote 直买时才传 `amount_quote_units`，此时钱包必须持有该 Quote。
 - sell 的 `sell_percent` 必须是 `1..=100`。
 - `execution_method:"pumpapi"` 第一版不支持 `use_mev:true`，卖出只支持 `sell_percent:100`。
 - `slippage_percent` 必须是 `0..=100`。旧字段 `slippage_bps` 仍兼容。
@@ -1127,7 +1149,7 @@ curl -X POST http://127.0.0.1:18787/v1/trades \
 当前使用：
 
 ```toml
-sol-trade-sdk = "5.0.4"
+sol-trade-sdk = "6.0.2"
 ```
 
 SDK 参数通过 RPC helper 补齐：

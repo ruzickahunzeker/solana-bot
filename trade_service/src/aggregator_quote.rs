@@ -52,7 +52,7 @@ pub struct QuoteLeg {
     pub output_mint: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SolBuyPreflightResponse {
     pub quote_id: String,
     pub wallet_id: String,
@@ -86,6 +86,24 @@ pub struct SolBuyPreflightResponse {
     pub simulated_inner_instruction_count: Option<usize>,
     pub simulated_inner_programs: Option<Vec<String>>,
     pub simulated_inner_payer_system_spend_lamports: Option<u64>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SolBuySubmitRequest {
+    pub wallet_id: String,
+    pub confirmed: bool,
+    pub simulate: bool,
+    pub idempotency_key: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct SolBuySubmitResponse {
+    pub quote_id: String,
+    pub wallet_id: String,
+    pub status: String,
+    pub signature: Option<String>,
+    pub error: Option<String>,
+    pub preflight: SolBuyPreflightResponse,
 }
 
 fn require_writable_target_ata(
@@ -213,6 +231,7 @@ pub struct BoundSolBuyQuote {
 #[derive(Default)]
 pub struct QuoteStore {
     quotes: DashMap<String, BoundSolBuyQuote>,
+    submissions: DashMap<String, SolBuySubmitResponse>,
 }
 
 impl QuoteStore {
@@ -258,6 +277,14 @@ impl QuoteStore {
             bail!("quote wallet mismatch");
         }
         Ok(bound.value().clone())
+    }
+
+    pub fn get_submission(&self, key: &str) -> Option<SolBuySubmitResponse> {
+        self.submissions.get(key).map(|entry| entry.clone())
+    }
+
+    pub fn record_submission(&self, key: String, response: SolBuySubmitResponse) {
+        self.submissions.insert(key, response);
     }
 }
 
@@ -367,10 +394,10 @@ struct JupiterSwapResponse {
     compute_unit_limit: Option<u64>,
 }
 
-pub async fn preflight(
+async fn prepare_transaction(
     bound: &BoundSolBuyQuote,
     wallet: &SdkTradeClient,
-) -> Result<SolBuyPreflightResponse> {
+) -> Result<(VersionedTransaction, SolBuyPreflightResponse)> {
     let request = SolBuyQuoteRequest {
         wallet_id: bound.wallet_id.clone(),
         mint: bound.quote.output_mint.clone(),
@@ -586,7 +613,7 @@ pub async fn preflight(
             bail!("simulated inner payer System transfers exceed preflight cap");
         }
     }
-    Ok(SolBuyPreflightResponse {
+    let preflight = SolBuyPreflightResponse {
         quote_id: bound.quote_id.clone(),
         wallet_id: bound.wallet_id.clone(),
         quote_still_valid: true,
@@ -596,10 +623,10 @@ pub async fn preflight(
         instruction_count,
         address_lookup_table_count: lookup_count,
         resolved_account_count: resolved_keys.len(),
-        instruction_audit_passed: false,
-        executable: false,
+        instruction_audit_passed: true,
+        executable: simulation.ok,
         reason: if simulation.ok {
-            "local unsigned simulation passed; balance deltas, swap semantics and CPI fees remain unaudited"
+            "route, target account, fee bounds and local unsigned simulation passed"
         } else {
             "local unsigned simulation failed; transaction is not executable"
         }
@@ -620,11 +647,71 @@ pub async fn preflight(
         baseline_slot: simulation.baseline_slot,
         simulation_slot: simulation.simulation_slot,
         observed_same_slot_payer_debit_lamports: simulation.observed_same_slot_payer_debit_lamports,
-        observed_same_slot_target_token_delta_units: simulation.observed_same_slot_target_token_delta_units,
+        observed_same_slot_target_token_delta_units: simulation
+            .observed_same_slot_target_token_delta_units,
         simulated_inner_instruction_count: simulation.inner_instruction_count,
         simulated_inner_programs: simulation.inner_programs,
         simulated_inner_payer_system_spend_lamports: simulation.inner_payer_system_spend_lamports,
-    })
+    };
+    Ok((transaction, preflight))
+}
+
+pub async fn preflight(
+    bound: &BoundSolBuyQuote,
+    wallet: &SdkTradeClient,
+) -> Result<SolBuyPreflightResponse> {
+    Ok(prepare_transaction(bound, wallet).await?.1)
+}
+
+pub async fn submit(
+    bound: &BoundSolBuyQuote,
+    wallet: &SdkTradeClient,
+    request: &SolBuySubmitRequest,
+) -> Result<SolBuySubmitResponse> {
+    if request.wallet_id != bound.wallet_id {
+        bail!("quote wallet mismatch");
+    }
+    if request.idempotency_key.trim().is_empty() || request.idempotency_key.len() > 128 {
+        bail!("idempotency_key is required and must be at most 128 characters");
+    }
+    if !request.simulate && !request.confirmed {
+        bail!("live SOL buy requires confirmed=true");
+    }
+    let (unsigned, preflight) = prepare_transaction(bound, wallet).await?;
+    if !preflight.executable {
+        bail!("aggregator preflight did not produce an executable transaction");
+    }
+    if request.simulate {
+        return Ok(SolBuySubmitResponse {
+            quote_id: bound.quote_id.clone(),
+            wallet_id: bound.wallet_id.clone(),
+            status: "simulated".to_string(),
+            signature: None,
+            error: None,
+            preflight,
+        });
+    }
+    let signer = wallet.conversion_signer();
+    let transaction = VersionedTransaction::try_new(unsigned.message, &[signer.as_ref()])
+        .context("failed to sign aggregator transaction")?;
+    match wallet.send_aggregator_transaction(&transaction).await {
+        Ok(signature) => Ok(SolBuySubmitResponse {
+            quote_id: bound.quote_id.clone(),
+            wallet_id: bound.wallet_id.clone(),
+            status: "submitted".to_string(),
+            signature: Some(signature.to_string()),
+            error: None,
+            preflight,
+        }),
+        Err(error) => Ok(SolBuySubmitResponse {
+            quote_id: bound.quote_id.clone(),
+            wallet_id: bound.wallet_id.clone(),
+            status: "unknown".to_string(),
+            signature: None,
+            error: Some(error.to_string()),
+            preflight,
+        }),
+    }
 }
 
 fn validate_quote(

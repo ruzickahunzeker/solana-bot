@@ -335,11 +335,14 @@ async fn cross_dex_amm_hop_then_damm_sol_usdc_sell() {
         return;
     }
 
-    // DAMM SOL/USDC reverse after an AMM hop has been Token-0x1 flaky when
-    // spending the hop min_out. Assert sell builder wires swap2; hop coverage
-    // remains in AMM v4 / DAMM direct-buy tests.
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
+    let Some((hop_ixs, usdc_min)) =
+        mainnet_sim::build_sol_to_usdc_hop(&rpc, wallet.clone(), 2_000_000).await
+    else {
+        return;
+    };
+
     let Some(pool) =
         mainnet_sim::load_meteora_damm_v2(&rpc, &fixtures::METEORA_DAMM_V2_SOL_USDC).await
     else {
@@ -352,7 +355,7 @@ async fn cross_dex_amm_hop_then_damm_sol_usdc_sell() {
         TradeType::Sell,
         fixtures::USDC_MINT,
         crate::constants::WSOL_TOKEN_ACCOUNT,
-        10_000,
+        usdc_min / 2,
         1_000,
         DexParamEnum::MeteoraDammV2(pool),
     );
@@ -365,7 +368,14 @@ async fn cross_dex_amm_hop_then_damm_sol_usdc_sell() {
         }),
         "DAMM SOL/USDC sell must include swap2"
     );
-    println!("cross DAMM SOL/USDC sell built ok ixs={}", sell_ixs.len());
+    mainnet_sim::run_business_sim(
+        &rpc,
+        &wallet,
+        mainnet_sim::concat_ixs([hop_ixs, sell_ixs]),
+        &[],
+        "cross: AMM SOL→USDC → DAMM USDC→SOL",
+    )
+    .await;
 }
 
 #[tokio::test]

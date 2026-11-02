@@ -9,7 +9,10 @@ use crate::{
         utils::raydium_clmm::{PROGRAM_ID, SWAP_V2_DISCRIMINATOR},
     },
     swqos::TradeType,
-    trading::core::{params::DexParamEnum, traits::InstructionBuilder},
+    trading::core::{
+        params::DexParamEnum,
+        traits::InstructionBuilder,
+    },
 };
 
 #[tokio::test]
@@ -44,8 +47,14 @@ async fn raydium_clmm_mainnet_simulates_sol_to_usdc_buy() {
         DexParamEnum::RaydiumClmm(pool),
     );
     params.fixed_output_amount = Some(1);
-    let business = RaydiumClmmInstructionBuilder.build_buy_instructions(&params).await.unwrap();
-    let swap = business.iter().find(|ix| ix.program_id == PROGRAM_ID).expect("clmm swap_v2");
+    let business = RaydiumClmmInstructionBuilder
+        .build_buy_instructions(&params)
+        .await
+        .unwrap();
+    let swap = business
+        .iter()
+        .find(|ix| ix.program_id == PROGRAM_ID)
+        .expect("clmm swap_v2");
     assert_eq!(&swap.data[..8], &SWAP_V2_DISCRIMINATOR);
 
     mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "clmm sol→usdc buy").await;
@@ -152,8 +161,14 @@ async fn raydium_clmm_mainnet_simulates_usdc_to_sol_after_hop() {
     let sell_ixs = RaydiumClmmInstructionBuilder.build_sell_instructions(&sell).await.unwrap();
 
     let business = mainnet_sim::concat_ixs([hop_ixs, sell_ixs]);
-    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "clmm after SOL→USDC: usdc→sol")
-        .await;
+    mainnet_sim::run_business_sim(
+        &rpc,
+        &wallet,
+        business,
+        &[],
+        "clmm after SOL→USDC: usdc→sol",
+    )
+    .await;
 }
 
 #[tokio::test]
@@ -191,7 +206,10 @@ async fn raydium_clmm_sol_usdt_mainnet_simulates_buy() {
         DexParamEnum::RaydiumClmm(pool),
     );
     params.fixed_output_amount = Some(1);
-    let business = RaydiumClmmInstructionBuilder.build_buy_instructions(&params).await.unwrap();
+    let business = RaydiumClmmInstructionBuilder
+        .build_buy_instructions(&params)
+        .await
+        .unwrap();
     mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "clmm sol→usdt buy").await;
 }
 
@@ -224,9 +242,18 @@ async fn raydium_clmm_mainnet_simulates_larger_buy_with_wide_slippage() {
         DexParamEnum::RaydiumClmm(pool),
     );
     params.fixed_output_amount = Some(1);
-    let business = RaydiumClmmInstructionBuilder.build_buy_instructions(&params).await.unwrap();
-    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "clmm sol→usdc larger+wide-slip")
-        .await;
+    let business = RaydiumClmmInstructionBuilder
+        .build_buy_instructions(&params)
+        .await
+        .unwrap();
+    mainnet_sim::run_business_sim(
+        &rpc,
+        &wallet,
+        business,
+        &[],
+        "clmm sol→usdc larger+wide-slip",
+    )
+    .await;
 }
 
 #[tokio::test]
@@ -286,5 +313,12 @@ async fn raydium_clmm_sol_usdt_mainnet_simulates_buy_and_sell_roundtrip() {
     let sell_ixs = RaydiumClmmInstructionBuilder.build_sell_instructions(&sell).await.unwrap();
 
     let business = mainnet_sim::concat_ixs([buy_ixs, sell_ixs]);
-    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "clmm sol↔usdt buy+sell").await;
+    mainnet_sim::run_business_sim(
+        &rpc,
+        &wallet,
+        business,
+        &[],
+        "clmm sol↔usdt buy+sell",
+    )
+    .await;
 }

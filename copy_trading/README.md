@@ -65,7 +65,76 @@ ENABLE_STREAM_CONSUMER=true
 ```
 
 - `PUMPAPI_ZMQ_ENDPOINT`：连接 `pumpapi_zmq_bridge` 的 ZMQ 地址。当前 bridge 默认发布到 `tcp://127.0.0.1:8939`。
-- `ENABLE_STREAM_CONSUMER`：是否启动 PumpAPI ZMQ 消费者。设为 `true` 后会接收 raw/normalized 事件；只有命中跟踪钱包或 pending 限价单的事件写入 `pumpapi_events`，避免无关数据无限膨胀。消费者每 10 秒更新一次 `pumpapi_stream_last_seen` 心跳，Python ZMQ 子进程异常退出后会自动重启。设为 `false` 时只跑 Telegram/数据库等其他模块。
+- `ENABLE_STREAM_CONSUMER`：是否启动 PumpAPI ZMQ 消费者。设为 `true` 后，跟单路径订阅 `normalized` 事件，全量 Alpha 观察路径订阅 `observation` 事件并写入 `alpha_observation_events`；`pumpapi_events` 仍只保存命中跟踪钱包或 pending 限价单的事件。消费者每 10 秒更新一次 `pumpapi_stream_last_seen` 心跳，Python ZMQ 子进程异常退出后会自动重启。设为 `false` 时只跑 Telegram/数据库等其他模块。
+
+Alpha paper signal 配置：
+
+```env
+ALPHA_PAPER_ENABLED=false
+ALPHA_PAPER_MIN_SCORE=0.80
+ALPHA_PAPER_MIN_TRADERS=5
+ALPHA_PAPER_SIGNAL_COOLDOWN_SECS=600
+```
+
+- `ALPHA_PAPER_ENABLED`：启用内存窗口特征和 `alpha_paper_signals` 写入。默认关闭；开启后仍只生成 `status=paper` 记录，不调用 Trade Service、不签名、不广播。
+- `ALPHA_PAPER_MIN_SCORE`：30 秒、2 分钟、10 分钟流量特征的最低评分，范围 `0..1`，默认 `0.80`。
+- `ALPHA_PAPER_MIN_TRADERS`：2 分钟窗口要求的最少独立交易者数量，默认 `5`。
+- `ALPHA_PAPER_SIGNAL_COOLDOWN_SECS`：同一 Mint/Pool 两次 Alpha 信号的最短间隔，默认 `600` 秒；只限制 Alpha 信号，不限制跟单和手动交易。
+
+Alpha 定时清理（默认关闭）：
+
+```env
+ALPHA_RETENTION_ENABLED=false
+ALPHA_RETENTION_INTERVAL_SECS=3600
+ALPHA_OBSERVATION_RETENTION_HOURS=72
+ALPHA_PAPER_SIGNAL_RETENTION_DAYS=7
+ALPHA_SHADOW_ORDER_RETENTION_DAYS=30
+```
+
+- `ALPHA_RETENTION_ENABLED`：是否启动 Alpha 数据定时清理；默认 `false`，上线后不会自动删除现有数据。
+- `ALPHA_RETENTION_INTERVAL_SECS`：清理检查间隔，默认每小时一次。
+- `ALPHA_OBSERVATION_RETENTION_HOURS`：保留 Alpha 原始观察事件的小时数，默认 72 小时。
+- `ALPHA_PAPER_SIGNAL_RETENTION_DAYS`：保留未关联订单且已结束 Paper signal 的天数，默认 7 天。
+- `ALPHA_SHADOW_ORDER_RETENTION_DAYS`：保留已结束 Shadow order 的天数，默认 30 天。
+
+清理事务只涉及 `alpha_observation_events`、可安全删除的 `alpha_paper_signals` 和已结束的 `alpha_shadow_orders`；钱包、私钥、策略、订单、持仓、限价单、审计日志、路由缓存和 `pumpapi_events` 不会被清理。带有订单/request ID 的 signal，以及 `created`、`submitting`、`unknown` 等未完成或需要回查的 shadow order 会保留。SQLite `auto_vacuum=0` 时删除会释放页面供后续复用，但不会立即缩小数据库文件，也不会自动执行高风险的全库 `VACUUM`。
+
+只读查看最近 paper signal：
+
+```bash
+python3 scripts/alpha_paper_report.py data/copy_trading.sqlite --last-hours 24 --limit 50
+
+# 72 小时 shadow 值班门禁：request_id 全覆盖，禁止 unknown/blocked
+python3 scripts/alpha_paper_report.py data/copy_trading.sqlite \
+  --last-hours 72 --check-shadow --min-request-id-coverage 1.0
+
+# 只读检查 Trade Service readiness，不提交交易
+python3 scripts/alpha_shadow_readiness.py --wallet-id "$ALPHA_SHADOW_WALLET_ID"
+```
+
+脚本按 observation 数量、signal 状态、Pool、最近信号以及 shadow order 状态和 `request_id` 覆盖率输出 JSON；不会写数据库，也不会提交交易。
+
+值班环境可以参考 `docs/alpha-shadow-audit.service.example` 和 `docs/alpha-shadow-audit.timer.example` 安装只读门禁。示例默认要求最近 72 小时 `request_id` 全覆盖且没有 `unknown`/`blocked`；安装前应确认 shadow 已明确开启并按环境调整阈值。示例不会调用交易提交接口。
+
+`alpha_paper_signals` 还会保留后续订单关联字段（`order_id`、`trade_service_request_id`、`remote_status`、`updated_at_ms`）。当前阶段这些字段保持空值；只有进入 shadow/simulate 并拿到 Trade Service 响应后才允许写入。
+
+### Alpha shadow/simulate
+
+```env
+ALPHA_SHADOW_ENABLED=false
+ALPHA_SHADOW_WALLET_ID=
+ALPHA_SHADOW_BUY_SOL=0.01
+ALPHA_SHADOW_SLIPPAGE_BPS=1500
+ALPHA_SHADOW_TIP_SOL=0.0001
+ALPHA_SHADOW_POLL_ATTEMPTS=5
+ALPHA_SHADOW_MAX_INFLIGHT=2
+ALPHA_SHADOW_MIN_SCORE=0.90
+ALPHA_SHADOW_MAX_PER_MINUTE=10
+ALPHA_SHADOW_ALLOWED_POOLS=
+ALPHA_SHADOW_ALLOWED_MINTS=
+```
+
+开启 shadow 前必须填写 Trade Service 中已存在的钱包 ID。每个 signal 先经过评分门槛和可选的 Pool/Mint 白名单，再经过 `/ready`（`ready`、RPC、blockhash、wallet）和 `/v1/cache/warmup`，最后以固定幂等键调用 `/v1/trades` 且强制 `simulate:true`；响应的 `request_id`、状态和错误写入 `alpha_shadow_orders` 并按原 request_id 回查。`unknown` 不会创建新幂等键。`ALPHA_SHADOW_MAX_INFLIGHT` 限制并发 shadow 请求，默认 2；`ALPHA_SHADOW_MIN_SCORE` 默认 0.90；`ALPHA_SHADOW_MAX_PER_MINUTE` 默认 10。设置 `ALPHA_SHADOW_ALLOWED_POOLS` 和 `ALPHA_SHADOW_ALLOWED_MINTS` 可把试运行限制到单一 Pool/单一 Mint；它们为空时不增加白名单限制。该开关不会打开真实广播。
 
 要求：
 
@@ -91,11 +160,12 @@ MIGRATE_LOCAL_WALLETS_TO_TRADE_SERVICE=false
 
 - `TRADE_SERVICE_URL`：现有 `trade_service` 的 HTTP 地址。新系统只调用它，不修改它。
 - `TRADE_SERVICE_TOKEN`：调用 `trade_service` 的 Bearer Token。如果 `trade_service` 开启鉴权，这里必须与其 `LOCAL_TRADE_API_TOKEN` 一致；如果本地测试未启用鉴权，可以留空。
-- `TRADE_SERVICE_TIMEOUT_SECS`：单次 HTTP 调用超时，单位秒，默认 `15`。覆盖 readiness、钱包查询、下单和订单状态查询；建议大于 `trade_service` 自身的同步等待时间。
-- `POOL_RESOLVE_TIMEOUT_SECS`：TG 输入新 Mint 时等待 Pool 解析的最大秒数，默认 `6`。路由优先从内存和 `mint_pool_routes` 读取，未命中才调用 `trade_service`；“刷新”按钮会跳过缓存并重新解析。
+- `TRADE_SERVICE_TIMEOUT_SECS`：单次 HTTP 调用超时，单位秒，默认 `20`。覆盖 readiness、钱包查询、下单和订单状态查询；应大于 `trade_service` 的串行 RPC 寻池预算。
+- `POOL_RESOLVE_TIMEOUT_SECS`：TG 输入新 Mint 时等待 Pool 解析的最大秒数，默认 `18`。路由优先从内存和 `mint_pool_route_candidates` 读取；同一 Mint 可保留多个 Pool，已验证的 WSOL/USDC 路由优先，未命中才调用 `trade_service`；“刷新”按钮会跳过已验证缓存并重新解析。
 - `TRADE_SUBMIT_MAX_ATTEMPTS`：Live 下单提交的最大尝试次数，默认 `2`。每次都使用相同幂等键，避免请求已被远端接收但本地超时时重复成交。远端明确返回交易失败时不会盲目重下链上交易。
 - `TRADE_SUBMIT_RETRY_DELAY_MS`：两次提交尝试之间的等待时间，单位毫秒，默认 `250`。设为 `0` 表示立即进行下一次有限重试。
 - `TRADE_RECONCILE_INTERVAL_SECS`：后台回查 `accepted`、`warming_params`、`building_tx`、`submitting` 订单状态的间隔，单位秒，默认 `2`。
+- 协议能力缓存：已验证路由进入交易前必须从 Trade Service 的 `/v1/capabilities` 确认协议为 `live` 且支持买卖；能力接口失败、协议为 `observe` 或未列出时直接拦截，不会回退为静态白名单放行。当前实现缓存 30 秒。
 - `FAST_FOLLOW_ENABLED`：是否启用极速跟单路径。开启后，跟踪钱包与策略从内存快照匹配，Live 信号先调用 `trade_service`，再异步补写本地事件、Signal 和订单。关闭后回退到原来的数据库串行路径。
 - `FAST_FOLLOW_MAX_INFLIGHT`：极速跟单最大并发任务数，默认 `16`。同一个执行钱包和 Mint 仍会串行，不同 Mint 可以并行。
 - `FAST_FOLLOW_CACHE_REFRESH_MS`：跟踪钱包、策略、执行钱包 ID 和用户 MEV 设置的兜底刷新间隔，单位毫秒，默认 `5000`。Telegram 修改相关设置后会立即刷新，不必等待此间隔。
@@ -103,6 +173,8 @@ MIGRATE_LOCAL_WALLETS_TO_TRADE_SERVICE=false
 - `MIGRATE_LOCAL_WALLETS_TO_TRADE_SERVICE`：一次性钱包迁移开关。仅在 `trade_service` 已启用数据库钱包模式后临时设为 `true`；启动时会在内存中解密旧 TG 钱包、通过本地鉴权 API 导入并按公钥校验，然后写入 `external_wallet_id`。迁移成功后立即改回 `false`。
 
 启动时会请求 `TRADE_SERVICE_URL/health`。Telegram 的实盘检查还会请求 `/ready` 并按公钥匹配 `/v1/wallets` 中的执行钱包。health、ready、钱包绑定或 PumpAPI 数据流新鲜度任一不满足时，都不能把策略或限价单切换到 Live；PumpAPI 心跳超过 60 秒未更新视为异常。
+
+全协议能力接口的部署顺序：先更新并重启 Trade Service，确认带 Bearer Token 请求 `/v1/capabilities` 正常，再更新并重启 Copy Trading。Copy Trading 的已验证路由会每 30 秒刷新一次能力；期间 Trade Service 能力接口不可用会保持拦截。`observe` 协议只记录或模拟，不会进入 Live 跟单。
 
 ### 交易默认值
 
@@ -263,6 +335,17 @@ Pool 不作为快速交易或限价单的界面参数。跟单和限价执行时
 - 通过策略筛选的跟单信号会自动写入 `orders.status=dry_run`，便于在 `/orders` 中复盘“如果实盘会下什么单”。
 - `orders.wallet_id` 继续保存本系统钱包 ID，`orders.trade_service_request_id` 保存远端请求 ID；后续 `trade_service` 钱包迁移到 SQL 时可以保持这层接口不变。
 ## 自定义 Quote 快速交易
+
+## Alpha shadow 只读诊断
+
+shadow 默认关闭，发生模拟异常时先用只读诊断脚本区分本地限流与 Trade Service 路由错误：
+
+```bash
+python3 scripts/alpha_shadow_diagnose.py \
+  data/copy_trading.sqlite --sample-limit 20
+```
+
+脚本只读扫描 `alpha_shadow_orders`，不会修改数据库或调用交易接口。`blocked` 的本地限流记录不计入路由失败；只有带 Trade Service `request_id` 的记录才进入远端错误聚合。
 
 StonkFun / StonkFunSwap 池若使用非 SOL 的 Quote（包括 USDC、USD1 或其他 Token），快速买入面板会显示 Quote Mint 和所选钱包的 Quote 余额。买入金额输入该 Quote 的数量，程序从 Trade Service 查询链上小数位后精确转换为 `amount_quote_units`。钱包必须预先持有 Quote，并留有 SOL 支付手续费及可能的代币账户租金。卖出仍使用百分比，所得为该 Quote，不会自动兑换为 SOL。普通 SOL 预设不会用于自定义 Quote；自定义 Quote 限价买入及 SOL 金额跟买目前仍被拦截。
 

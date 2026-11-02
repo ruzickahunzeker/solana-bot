@@ -9,7 +9,10 @@ use crate::{
         whirlpool::WhirlpoolInstructionBuilder,
     },
     swqos::TradeType,
-    trading::core::{params::DexParamEnum, traits::InstructionBuilder},
+    trading::core::{
+        params::DexParamEnum,
+        traits::InstructionBuilder,
+    },
 };
 
 #[tokio::test]
@@ -44,8 +47,14 @@ async fn whirlpool_mainnet_simulates_sol_to_usdc_buy() {
         DexParamEnum::OrcaWhirlpool(pool),
     );
     params.fixed_output_amount = Some(1);
-    let business = WhirlpoolInstructionBuilder.build_buy_instructions(&params).await.unwrap();
-    let swap = business.iter().find(|ix| ix.program_id == PROGRAM_ID).expect("whirlpool swap_v2");
+    let business = WhirlpoolInstructionBuilder
+        .build_buy_instructions(&params)
+        .await
+        .unwrap();
+    let swap = business
+        .iter()
+        .find(|ix| ix.program_id == PROGRAM_ID)
+        .expect("whirlpool swap_v2");
     assert_eq!(&swap.data[..8], &SWAP_V2_DISCRIMINATOR);
 
     mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "whirlpool sol→usdc buy").await;
@@ -158,8 +167,14 @@ async fn whirlpool_mainnet_simulates_buy_and_sell_roundtrip() {
     let sell_ixs = WhirlpoolInstructionBuilder.build_sell_instructions(&sell).await.unwrap();
 
     let business = mainnet_sim::concat_ixs([buy_ixs, sell_ixs]);
-    mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "whirlpool sol↔usdc buy+sell")
-        .await;
+    mainnet_sim::run_business_sim(
+        &rpc,
+        &wallet,
+        business,
+        &[],
+        "whirlpool sol↔usdc buy+sell",
+    )
+    .await;
 }
 
 #[tokio::test]
@@ -181,7 +196,8 @@ async fn whirlpool_sol_usdt_mainnet_simulates_buy() {
         return;
     };
     assert!(
-        (pool.mint_a == crate::constants::WSOL_TOKEN_ACCOUNT && pool.mint_b == fixtures::USDT_MINT)
+        (pool.mint_a == crate::constants::WSOL_TOKEN_ACCOUNT
+            && pool.mint_b == fixtures::USDT_MINT)
             || (pool.mint_b == crate::constants::WSOL_TOKEN_ACCOUNT
                 && pool.mint_a == fixtures::USDT_MINT)
     );
@@ -196,7 +212,10 @@ async fn whirlpool_sol_usdt_mainnet_simulates_buy() {
         DexParamEnum::OrcaWhirlpool(pool),
     );
     params.fixed_output_amount = Some(1);
-    let business = WhirlpoolInstructionBuilder.build_buy_instructions(&params).await.unwrap();
+    let business = WhirlpoolInstructionBuilder
+        .build_buy_instructions(&params)
+        .await
+        .unwrap();
     mainnet_sim::run_business_sim(&rpc, &wallet, business, &[], "whirlpool sol→usdt buy").await;
 }
 

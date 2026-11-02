@@ -308,12 +308,17 @@ async fn pumpswap_mainnet_simulates_buy_from_mint_rpc() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let Some(pool) = mainnet_sim::load_pumpswap_by_mint(&rpc, &fixtures::PUMPSWAP_BASE).await
-    else {
+    // Use a current Pump-origin mint with a canonical migrated pool; the PUMP
+    // utility-token fixture only exercises the program-account scan fallback.
+    let mint = std::env::var("PUMPSWAP_DISCOVERY_MINT")
+        .unwrap_or_else(|_| "FpbYnUAah4fHRCqsXcdTcSPyzwgq2QotgRxKEErRpump".into())
+        .parse()
+        .expect("valid discovery mint");
+    let Some(pool) = mainnet_sim::load_pumpswap_by_mint(&rpc, &mint).await else {
         return;
     };
     let pool = mainnet_sim::pin_pumpswap_fees(pool);
-    assert_eq!(pool.base_mint, fixtures::PUMPSWAP_BASE);
+    assert_eq!(pool.base_mint, mint);
     // from_mint picks the highest-liquidity pool for the mint — may be WSOL or USDC quote.
     assert!(
         pool.quote_mint == crate::constants::WSOL_TOKEN_ACCOUNT
@@ -327,7 +332,7 @@ async fn pumpswap_mainnet_simulates_buy_from_mint_rpc() {
             wallet.clone(),
             TradeType::Buy,
             crate::constants::WSOL_TOKEN_ACCOUNT,
-            fixtures::PUMPSWAP_BASE,
+            mint,
             50_000,
             300,
             DexParamEnum::PumpSwap(pool),
@@ -354,7 +359,7 @@ async fn pumpswap_mainnet_simulates_buy_from_mint_rpc() {
         wallet.clone(),
         TradeType::Buy,
         fixtures::USDC_MINT,
-        fixtures::PUMPSWAP_BASE,
+        mint,
         usdc_min,
         300,
         DexParamEnum::PumpSwap(pool),

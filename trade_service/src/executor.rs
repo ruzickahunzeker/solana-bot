@@ -1,5 +1,7 @@
+use anyhow::Context;
 use tracing::{error, info};
 
+use crate::aggregator_quote::{self, SolBuyQuoteRequest, SolBuySubmitRequest};
 use crate::models::{ExecutionMethod, Side, TradeRequest, TradeStatus};
 use crate::pumpapi_client::PumpApiTrade;
 use crate::sdk_client::{ExecuteResult, ExecuteTrade};
@@ -53,6 +55,56 @@ pub async fn execute_trade(
         }
         return;
     };
+
+    if normalized.aggregator_sol {
+        let simulate = normalized.simulate.unwrap_or(state.config.enable_simulate);
+        let result = async {
+            let amount_lamports = normalized
+                .amount_lamports
+                .context("SOL aggregator buy amount is missing")?;
+            let quote_request = SolBuyQuoteRequest {
+                wallet_id: wallet_id.clone(),
+                mint: request.mint.clone(),
+                amount_lamports,
+                slippage_bps: u16::try_from(normalized.slippage_bps)
+                    .context("aggregator slippage exceeds supported range")?,
+            };
+            aggregator_quote::validate_request(&quote_request)?;
+            let quote = aggregator_quote::quote(&quote_request).await?;
+            let bound = state.aggregator_quotes.insert(
+                &quote_request,
+                wallet.wallet().to_string(),
+                quote,
+            )?;
+            let submission = aggregator_quote::submit(
+                &bound,
+                &wallet,
+                &SolBuySubmitRequest {
+                    wallet_id: wallet_id.clone(),
+                    confirmed: !simulate,
+                    simulate,
+                    idempotency_key: idempotency_key.clone(),
+                },
+            )
+            .await?;
+            Ok::<_, anyhow::Error>(ExecuteResult {
+                success: submission.status == "submitted" || submission.status == "simulated",
+                signature: submission.signature,
+                error: submission.error,
+            })
+        }
+        .await;
+        finish_trade(
+            &state,
+            &request_id,
+            &idempotency_key,
+            &request,
+            result,
+            simulate,
+        )
+        .await;
+        return;
+    }
 
     if normalized.execution_method == ExecutionMethod::Pumpapi {
         let record = state

@@ -34,6 +34,11 @@ pub struct AppConfig {
     pub sol_usd_price_api_url: String,
     pub sol_usd_price_api_key: Option<String>,
     pub sol_usd_refresh_secs: u64,
+    pub alpha_retention_enabled: bool,
+    pub alpha_retention_interval_secs: u64,
+    pub alpha_observation_retention_hours: u64,
+    pub alpha_paper_signal_retention_days: u64,
+    pub alpha_shadow_order_retention_days: u64,
 }
 
 impl AppConfig {
@@ -60,8 +65,8 @@ impl AppConfig {
             trade_service_token: env::var("TRADE_SERVICE_TOKEN")
                 .ok()
                 .filter(|value| !value.trim().is_empty()),
-            trade_service_timeout_secs: env_u64("TRADE_SERVICE_TIMEOUT_SECS", 15)?,
-            pool_resolve_timeout_secs: env_u64("POOL_RESOLVE_TIMEOUT_SECS", 6)?,
+            trade_service_timeout_secs: env_u64("TRADE_SERVICE_TIMEOUT_SECS", 20)?,
+            pool_resolve_timeout_secs: env_u64("POOL_RESOLVE_TIMEOUT_SECS", 18)?,
             trade_submit_max_attempts: env_u32("TRADE_SUBMIT_MAX_ATTEMPTS", 2)?,
             trade_submit_retry_delay_ms: env_u64("TRADE_SUBMIT_RETRY_DELAY_MS", 250)?,
             trade_reconcile_interval_secs: env_u64("TRADE_RECONCILE_INTERVAL_SECS", 2)?,
@@ -104,6 +109,11 @@ impl AppConfig {
                 .ok()
                 .filter(|value| !value.trim().is_empty()),
             sol_usd_refresh_secs: env_u64("SOL_USD_REFRESH_SECS", 60)?,
+            alpha_retention_enabled: env_bool("ALPHA_RETENTION_ENABLED", false),
+            alpha_retention_interval_secs: env_u64("ALPHA_RETENTION_INTERVAL_SECS", 3600)?,
+            alpha_observation_retention_hours: env_u64("ALPHA_OBSERVATION_RETENTION_HOURS", 72)?,
+            alpha_paper_signal_retention_days: env_u64("ALPHA_PAPER_SIGNAL_RETENTION_DAYS", 7)?,
+            alpha_shadow_order_retention_days: env_u64("ALPHA_SHADOW_ORDER_RETENTION_DAYS", 30)?,
         };
         config.validate()?;
         Ok(config)
@@ -125,6 +135,18 @@ impl AppConfig {
         }
         if self.fast_follow_limit_queue_capacity == 0 {
             anyhow::bail!("FAST_FOLLOW_LIMIT_QUEUE_CAPACITY must be greater than 0");
+        }
+        if self.alpha_retention_interval_secs == 0 {
+            anyhow::bail!("ALPHA_RETENTION_INTERVAL_SECS must be greater than 0");
+        }
+        if self.alpha_observation_retention_hours == 0 {
+            anyhow::bail!("ALPHA_OBSERVATION_RETENTION_HOURS must be greater than 0");
+        }
+        if self.alpha_paper_signal_retention_days == 0 {
+            anyhow::bail!("ALPHA_PAPER_SIGNAL_RETENTION_DAYS must be greater than 0");
+        }
+        if self.alpha_shadow_order_retention_days == 0 {
+            anyhow::bail!("ALPHA_SHADOW_ORDER_RETENTION_DAYS must be greater than 0");
         }
         if self
             .quick_buy_presets_sol

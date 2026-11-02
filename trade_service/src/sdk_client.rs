@@ -1,4 +1,5 @@
 use anyhow::{anyhow, bail, Context};
+use ring::rand::{SecureRandom, SystemRandom};
 use sol_trade_sdk::common::{
     fast_fn::get_associated_token_address_with_program_id_fast, spl_token, spl_token_2022,
     GasFeeStrategy, GasFeeStrategyType, TradeConfig,
@@ -44,8 +45,10 @@ use spl_token_2022_interface::{
     state::Account as Token2022Account,
 };
 use spl_token_interface::{instruction::TokenInstruction, state::Account as TokenAccount};
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::{info, warn};
 
@@ -56,6 +59,7 @@ use crate::sanitize::redact_urls;
 
 pub struct SdkTradeClient {
     lanes: Vec<SdkLane>,
+    sol_hop_cache: Mutex<HashMap<Pubkey, (Pubkey, Instant)>>,
     swqos_lanes: Vec<String>,
     mev_protection: bool,
     require_mev_submit: bool,
@@ -64,7 +68,35 @@ pub struct SdkTradeClient {
 
 struct SdkLane {
     swqos_type: SwqosType,
+    is_helius: bool,
     client: TradingClient,
+}
+
+fn is_helius_rpc(url: &str) -> bool {
+    reqwest::Url::parse(url)
+        .ok()
+        .and_then(|url| {
+            url.host_str()
+                .map(|host| host == "helius-rpc.com" || host.ends_with(".helius-rpc.com"))
+        })
+        .unwrap_or(false)
+}
+
+fn pool_resolution_lane_order(helius_lanes: &[bool], swap_helius: bool) -> Vec<usize> {
+    let mut order = (0..helius_lanes.len()).collect::<Vec<_>>();
+    let helius = helius_lanes
+        .iter()
+        .enumerate()
+        .filter_map(|(index, is_helius)| is_helius.then_some(index))
+        .take(2)
+        .collect::<Vec<_>>();
+    if helius.len() == 2 {
+        order.retain(|index| !helius.contains(index));
+        let first = usize::from(swap_helius);
+        order.insert(0, helius[1 - first]);
+        order.insert(0, helius[first]);
+    }
+    order
 }
 
 #[derive(Clone)]
@@ -133,6 +165,7 @@ pub(crate) fn check_target_token_instruction(
             TokenInstruction::InitializeAccount
                 | TokenInstruction::InitializeAccount2 { .. }
                 | TokenInstruction::InitializeAccount3 { .. }
+                | TokenInstruction::InitializeImmutableOwner
         )
     } else if *program == spl_token_2022::ID {
         matches!(
@@ -141,6 +174,7 @@ pub(crate) fn check_target_token_instruction(
             Token2022Instruction::InitializeAccount
                 | Token2022Instruction::InitializeAccount2 { .. }
                 | Token2022Instruction::InitializeAccount3 { .. }
+                | Token2022Instruction::InitializeImmutableOwner
         )
     } else {
         return Ok(());
@@ -209,7 +243,12 @@ fn check_inner_target_token_instructions(
                         && target_is_source_or_account
                         && !matches!(
                             ix.parsed.get("type").and_then(|value| value.as_str()),
-                            Some("initializeAccount" | "initializeAccount2" | "initializeAccount3")
+                            Some(
+                                "initializeAccount"
+                                    | "initializeAccount2"
+                                    | "initializeAccount3"
+                                    | "initializeImmutableOwner"
+                            )
                         )
                     {
                         bail!("parsed token instruction references target ATA unexpectedly");
@@ -466,6 +505,7 @@ mod aggregator_simulation_tests {
                 &target
             )
             .is_ok());
+            assert!(check_target_token_instruction(&program, &[22], &[target], &target).is_ok());
         }
     }
 
@@ -666,6 +706,43 @@ mod aggregator_simulation_tests {
 }
 
 impl SdkTradeClient {
+    pub fn conversion_signer(&self) -> Arc<Keypair> {
+        self.lanes[0].client.payer.clone()
+    }
+
+    pub async fn send_aggregator_transaction(
+        &self,
+        transaction: &VersionedTransaction,
+    ) -> anyhow::Result<Signature> {
+        let payer = self.conversion_signer();
+        let expected_payer = transaction
+            .message
+            .static_account_keys()
+            .first()
+            .context("aggregator transaction has no payer")?;
+        if *expected_payer != payer.pubkey() {
+            bail!("aggregator transaction payer does not match wallet");
+        }
+        if transaction.message.header().num_required_signatures != 1
+            || transaction.signatures.len() != 1
+            || transaction.signatures[0] == Signature::default()
+        {
+            bail!("aggregator transaction must contain exactly one wallet signature");
+        }
+        let lane = self
+            .lanes
+            .iter()
+            .find(|lane| lane.swqos_type == SwqosType::Default)
+            .context("no default RPC lane available for aggregator submission")?;
+        tokio::time::timeout(
+            Duration::from_secs(12),
+            lane.client.get_rpc().send_transaction(transaction),
+        )
+        .await
+        .context("aggregator transaction submission timed out")?
+        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))
+    }
+
     pub async fn aggregator_target_ata(&self, mint: &Pubkey) -> anyhow::Result<(Pubkey, Pubkey)> {
         let lane = self
             .lanes
@@ -876,21 +953,30 @@ impl SdkTradeClient {
     }
 
     pub async fn resolve_stonkfun_sol_hop(&self, quote_mint: &Pubkey) -> anyhow::Result<Pubkey> {
+        // Serialize discovery so repeated panel opens do not multiply expensive GPA calls.
+        let mut cache = self.sol_hop_cache.lock().await;
+        if let Some((pool_id, expires_at)) = cache.get(quote_mint) {
+            if *expires_at > Instant::now() {
+                return Ok(*pool_id);
+            }
+        }
         let wsol = Pubkey::from_str(WSOL_MINT).expect("valid WSOL mint");
         if quote_mint == &wsol {
             bail!("quote mint is already WSOL");
         }
         let mut last_error = None;
+        let mut complete_empty_scans = 0;
         for lane in self
             .lanes
             .iter()
             .filter(|lane| lane.swqos_type == SwqosType::Default)
         {
+            let started = Instant::now();
             let rpc = lane.client.get_rpc();
             let found = tokio::time::timeout(Duration::from_secs(5), async {
                 use sol_trade_sdk::instruction::utils::raydium_cpmm::{accounts, fetch_pool_state};
                 use sol_trade_sdk::instruction::utils::raydium_cpmm_types::POOL_STATE_DISCRIMINATOR;
-                for offset in [168usize, 200usize] {
+                for (quote_offset, wsol_offset) in [(168usize, 200usize), (200, 168)] {
                     let config = RpcProgramAccountsConfig {
                         filters: Some(vec![
                             RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
@@ -898,8 +984,12 @@ impl SdkTradeClient {
                                 &POOL_STATE_DISCRIMINATOR,
                             )),
                             RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
-                                offset,
+                                quote_offset,
                                 quote_mint.as_ref(),
+                            )),
+                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                wsol_offset,
+                                wsol.as_ref(),
                             )),
                         ]),
                         account_config: RpcAccountInfoConfig {
@@ -934,17 +1024,45 @@ impl SdkTradeClient {
                             {
                                 continue;
                             }
-                            return Ok::<Pubkey, anyhow::Error>(pool_id);
+                            return Ok::<Option<Pubkey>, anyhow::Error>(Some(pool_id));
                         }
                     }
                 }
-                bail!("no WSOL/Quote CPMM account found")
+                Ok::<Option<Pubkey>, anyhow::Error>(None)
             })
             .await;
             match found {
-                Ok(Ok(pool_id)) => return Ok(pool_id),
-                Ok(Err(error)) => last_error = Some(redact_urls(&error.to_string())),
-                Err(_) => last_error = Some("SOL hop discovery timed out".to_string()),
+                Ok(Ok(Some(pool_id))) => {
+                    cache.insert(
+                        *quote_mint,
+                        (pool_id, Instant::now() + Duration::from_secs(30)),
+                    );
+                    return Ok(pool_id);
+                }
+                Ok(Ok(None)) => {
+                    complete_empty_scans += 1;
+                    info!(
+                        elapsed_ms = started.elapsed().as_millis(),
+                        "SOL hop RPC scan found no CPMM pool"
+                    );
+                    if complete_empty_scans >= 2 {
+                        bail!("no WSOL/Quote Raydium CPMM pool found on two RPC lanes");
+                    }
+                }
+                Ok(Err(error)) => {
+                    last_error = Some(redact_urls(&error.to_string()));
+                    warn!(
+                        elapsed_ms = started.elapsed().as_millis(),
+                        "SOL hop RPC lane failed"
+                    );
+                }
+                Err(_) => {
+                    last_error = Some("SOL hop discovery timed out".to_string());
+                    warn!(
+                        elapsed_ms = started.elapsed().as_millis(),
+                        "SOL hop RPC lane timed out"
+                    );
+                }
             }
         }
         bail!(
@@ -978,6 +1096,7 @@ impl SdkTradeClient {
             .collect::<Vec<_>>();
         swqos_lanes.push("Default".to_string());
         for (rpc_index, rpc_url) in rpc_urls.into_iter().enumerate() {
+            let is_helius = is_helius_rpc(&rpc_url);
             let use_mev_on_rpc = rpc_index == 0 || mev.use_backup_rpcs;
             if use_mev_on_rpc {
                 for swqos_config in &swqos_configs {
@@ -993,7 +1112,11 @@ impl SdkTradeClient {
                     .mev_protection(mev.enable_mev_protection)
                     .build();
                     let client = TradingClient::new(payer.clone(), trade_config).await;
-                    lanes.push(SdkLane { swqos_type, client });
+                    lanes.push(SdkLane {
+                        swqos_type,
+                        is_helius,
+                        client,
+                    });
                 }
             }
 
@@ -1010,6 +1133,7 @@ impl SdkTradeClient {
             let client = TradingClient::new(payer.clone(), trade_config).await;
             lanes.push(SdkLane {
                 swqos_type: SwqosType::Default,
+                is_helius,
                 client,
             });
         }
@@ -1024,6 +1148,7 @@ impl SdkTradeClient {
 
         Ok(Self {
             lanes,
+            sol_hop_cache: Mutex::new(HashMap::new()),
             swqos_lanes,
             mev_protection: mev.enable_mev_protection,
             require_mev_submit: mev.require_mev_submit,
@@ -1487,8 +1612,10 @@ impl SdkTradeClient {
             trade_token_type_for_buy(trade.pool, &trade.quote_mint)?
         };
         let amount = trade.amount_lamports.context("amount_lamports missing")?;
-        if matches!(trade.pool, Pool::StonkFun | Pool::StonkFunSwap)
-            && !is_wsol_quote(&trade.quote_mint)
+        if matches!(
+            trade.pool,
+            Pool::PumpAmm | Pool::StonkFun | Pool::StonkFunSwap | Pool::RaydiumCpmm
+        ) && !is_wsol_quote(&trade.quote_mint)
             && trade.sol_hop_pool_id.is_none()
         {
             let balance = self.token_balance(&lane.client, &trade.quote_mint).await?;
@@ -2118,10 +2245,23 @@ impl SdkTradeClient {
             bail!("no Default RPC lane configured for pool resolution");
         }
 
+        let helius_lanes = default_lanes
+            .iter()
+            .map(|lane| lane.is_helius)
+            .collect::<Vec<_>>();
+        let mut random_byte = [0u8; 1];
+        if helius_lanes.iter().filter(|&&is_helius| is_helius).count() >= 2 {
+            SystemRandom::new()
+                .fill(&mut random_byte)
+                .map_err(|_| anyhow!("could not choose Helius RPC lane"))?;
+        }
+        let lane_order = pool_resolution_lane_order(&helius_lanes, random_byte[0] & 1 != 0);
         let mut failures = Vec::with_capacity(default_lanes.len());
-        for (lane_index, lane) in default_lanes.iter().enumerate() {
+        for lane_index in lane_order {
+            let lane = default_lanes[lane_index];
             let rpc = lane.client.get_rpc();
-            let lane_result = tokio::time::timeout(Duration::from_secs(5), async {
+            // Keep the total resolver budget usable for the remaining serial fallback lanes.
+            let lane_result = tokio::time::timeout(Duration::from_secs(3), async {
                 let (pump_result, dbc_result) = tokio::join!(
                     PumpFunParams::from_mint_by_rpc(rpc, mint),
                     MeteoraDbcParams::from_base_mint_by_rpc(rpc, mint),
@@ -2438,7 +2578,10 @@ fn trade_token_type_for_buy(pool: Pool, quote_mint: &Pubkey) -> anyhow::Result<T
             | Pool::RaydiumCpmm => TradeTokenType::WSOL,
         });
     }
-    if matches!(pool, Pool::StonkFun | Pool::StonkFunSwap) {
+    if matches!(
+        pool,
+        Pool::PumpAmm | Pool::StonkFun | Pool::StonkFunSwap | Pool::RaydiumCpmm
+    ) {
         return Ok(TradeTokenType::Token(*quote_mint));
     }
     bail!("unsupported quote_mint {quote_mint}")
@@ -2460,7 +2603,10 @@ fn trade_token_type_for_sell(pool: Pool, quote_mint: &Pubkey) -> anyhow::Result<
     if is_wsol_quote(quote_mint) {
         return Ok(TradeTokenType::SOL);
     }
-    if matches!(pool, Pool::StonkFun | Pool::StonkFunSwap) {
+    if matches!(
+        pool,
+        Pool::PumpAmm | Pool::StonkFun | Pool::StonkFunSwap | Pool::RaydiumCpmm
+    ) {
         return Ok(TradeTokenType::Token(*quote_mint));
     }
     bail!("unsupported quote_mint {quote_mint}")
@@ -2557,13 +2703,13 @@ fn build_swqos_configs(mev: &MevConfig) -> anyhow::Result<Vec<SwqosConfig>> {
         &mut configs,
         "TEMPORAL",
         &mev.temporal,
-        |token, region, url| SwqosConfig::Temporal(token, region, url),
+        |token, region, url| SwqosConfig::Temporal(token, region, url, None),
     )?;
     push_provider(
         &mut configs,
         "FLASHBLOCK",
         &mev.flashblock,
-        |token, region, url| SwqosConfig::FlashBlock(token, region, url),
+        |token, region, url| SwqosConfig::FlashBlock(token, region, url, None),
     )?;
 
     if mev.blockrazor.provider.enabled {
@@ -2573,6 +2719,7 @@ fn build_swqos_configs(mev: &MevConfig) -> anyhow::Result<Vec<SwqosConfig>> {
             parse_region(&mev.blockrazor.provider.region)?,
             mev.blockrazor.provider.custom_url.clone(),
             Some(parse_swqos_transport(&mev.blockrazor.transport)?),
+            None,
         ));
     }
 
@@ -2583,6 +2730,7 @@ fn build_swqos_configs(mev: &MevConfig) -> anyhow::Result<Vec<SwqosConfig>> {
             parse_region(&mev.astralane.provider.region)?,
             mev.astralane.provider.custom_url.clone(),
             Some(parse_astralane_transport(&mev.astralane.transport)?),
+            None,
         ));
     }
 
@@ -2590,7 +2738,7 @@ fn build_swqos_configs(mev: &MevConfig) -> anyhow::Result<Vec<SwqosConfig>> {
         &mut configs,
         "SPEEDLANDING",
         &mev.speedlanding,
-        |token, region, url| SwqosConfig::Speedlanding(token, region, url),
+        |token, region, url| SwqosConfig::Speedlanding(token, region, url, None),
     )?;
 
     Ok(configs)
@@ -2607,6 +2755,7 @@ fn push_jito_provider(
         provider.auth_token.clone().unwrap_or_default(),
         parse_region(&provider.region)?,
         provider.custom_url.clone(),
+        None,
     ));
     Ok(())
 }
@@ -2694,27 +2843,31 @@ fn dex_type(pool: Pool) -> DexType {
 
 fn default_fee_strategy(swqos_type: SwqosType, tip_sol: f64) -> GasFeeStrategy {
     let strategy = GasFeeStrategy::new();
-    let tip = if swqos_type == SwqosType::Default {
-        0.0
-    } else {
-        tip_sol
+    let set_strategy = |strategy: &GasFeeStrategy, lane: SwqosType, tip: f64| {
+        strategy.set(
+            lane,
+            TradeType::Buy,
+            GasFeeStrategyType::Normal,
+            300_000,
+            1_000,
+            tip,
+        );
+        strategy.set(
+            lane,
+            TradeType::Sell,
+            GasFeeStrategyType::Normal,
+            300_000,
+            1_000,
+            tip,
+        );
     };
-    strategy.set(
-        swqos_type,
-        TradeType::Buy,
-        GasFeeStrategyType::Normal,
-        300_000,
-        1_000,
-        tip,
-    );
-    strategy.set(
-        swqos_type,
-        TradeType::Sell,
-        GasFeeStrategyType::Normal,
-        300_000,
-        1_000,
-        tip,
-    );
+
+    // SDK 6.x always reads the Default strategy while simulating, even when
+    // the transaction is being prepared for a specific SWQoS lane.
+    set_strategy(&strategy, SwqosType::Default, 0.0);
+    if swqos_type != SwqosType::Default {
+        set_strategy(&strategy, swqos_type, tip_sol);
+    }
     strategy
 }
 
@@ -2746,10 +2899,45 @@ fn map_sdk_result(
 #[cfg(test)]
 mod tests {
     use super::{
-        calculate_sol_transfer_amount, default_fee_strategy, minimum_output,
-        pool_resolution_failure_kind, simulation_fee_strategy,
+        calculate_sol_transfer_amount, default_fee_strategy, is_helius_rpc, minimum_output,
+        pool_resolution_failure_kind, pool_resolution_lane_order, simulation_fee_strategy,
+        trade_token_type_for_buy, trade_token_type_for_sell,
     };
+    use crate::models::Pool;
     use sol_trade_sdk::swqos::{SwqosType, TradeType};
+    use sol_trade_sdk::TradeTokenType;
+    use solana_sdk::pubkey::Pubkey;
+
+    #[test]
+    fn recognizes_only_helius_rpc_hosts() {
+        assert!(is_helius_rpc(
+            "https://mainnet.helius-rpc.com/?api-key=secret"
+        ));
+        assert!(!is_helius_rpc("https://helius-rpc.com.example.org/"));
+        assert!(!is_helius_rpc("https://mainnet.example.org/helius-rpc.com"));
+    }
+
+    #[test]
+    fn pool_resolution_tries_one_random_helius_then_the_other() {
+        let lanes = [true, false, true, false];
+        assert_eq!(pool_resolution_lane_order(&lanes, false), [0, 2, 1, 3]);
+        assert_eq!(pool_resolution_lane_order(&lanes, true), [2, 0, 1, 3]);
+        assert_eq!(pool_resolution_lane_order(&[true, false], true), [0, 1]);
+        assert_eq!(pool_resolution_lane_order(&[false, false], true), [0, 1]);
+    }
+
+    #[test]
+    fn cpmm_custom_quote_uses_token_input_and_output() {
+        let quote = Pubkey::new_unique();
+        assert_eq!(
+            trade_token_type_for_buy(Pool::RaydiumCpmm, &quote).unwrap(),
+            TradeTokenType::Token(quote)
+        );
+        assert_eq!(
+            trade_token_type_for_sell(Pool::RaydiumCpmm, &quote).unwrap(),
+            TradeTokenType::Token(quote)
+        );
+    }
 
     #[test]
     fn damm_simulation_has_default_fee_without_changing_temporal_submit_fee() {

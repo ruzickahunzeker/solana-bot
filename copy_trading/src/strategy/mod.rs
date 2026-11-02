@@ -686,6 +686,7 @@ mod tests {
         config::AppConfig,
         db::{models::PumpApiEvent, Database},
         executor::ExecutionRouter,
+        pool_route::PoolRouteCache,
         risk::RiskEngine,
         trade_client::TradeServiceClient,
     };
@@ -724,6 +725,11 @@ mod tests {
             sol_usd_price_api_url: "http://127.0.0.1:1".to_string(),
             sol_usd_price_api_key: None,
             sol_usd_refresh_secs: 0,
+            alpha_retention_enabled: false,
+            alpha_retention_interval_secs: 3600,
+            alpha_observation_retention_hours: 72,
+            alpha_paper_signal_retention_days: 7,
+            alpha_shadow_order_retention_days: 30,
         }
     }
 
@@ -744,7 +750,9 @@ mod tests {
         )
         .unwrap();
         let risk = RiskEngine::new();
-        let executor = ExecutionRouter::new(db.clone(), risk.clone(), trade_client, 1, 1);
+        let pool_routes = PoolRouteCache::new(db.clone(), trade_client.clone(), 1);
+        let executor =
+            ExecutionRouter::new(db.clone(), risk.clone(), trade_client, pool_routes, 1, 1);
         let engine = StrategyEngine::new(config, db.clone(), risk, executor, None);
         let event = PumpApiEvent {
             signature: Some("replay-signature-1".to_string()),
@@ -796,7 +804,9 @@ mod tests {
         )
         .unwrap();
         let risk = RiskEngine::new();
-        let executor = ExecutionRouter::new(db.clone(), risk.clone(), trade_client, 1, 1);
+        let pool_routes = PoolRouteCache::new(db.clone(), trade_client.clone(), 1);
+        let executor =
+            ExecutionRouter::new(db.clone(), risk.clone(), trade_client, pool_routes, 1, 1);
         let engine = StrategyEngine::new(config, db.clone(), risk, executor, None);
         assert_eq!(engine.refresh_cache().await.unwrap(), 1);
         let event = PumpApiEvent {

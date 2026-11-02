@@ -21,7 +21,6 @@ use crate::trading::core::params::MeteoraDammV2Params;
 use crate::trading::core::params::MeteoraDbcParams;
 use crate::trading::core::params::MeteoraDlmmParams;
 use crate::trading::core::params::PumpFunParams;
-use crate::trading::core::params::PumpSwapParams;
 use crate::trading::core::params::RaydiumAmmV4Params;
 use crate::trading::core::params::RaydiumClmmParams;
 use crate::trading::core::params::RaydiumCpmmParams;
@@ -46,7 +45,9 @@ use tracing::{debug, error, info, warn};
 fn validate_protocol_params(dex_type: DexType, params: &DexParamEnum) -> bool {
     match dex_type {
         DexType::PumpFun => params.as_any().downcast_ref::<PumpFunParams>().is_some(),
-        DexType::PumpSwap => params.as_any().downcast_ref::<PumpSwapParams>().is_some(),
+        DexType::PumpSwap => {
+            matches!(params, DexParamEnum::PumpSwap(_) | DexParamEnum::PumpSwapQuoteRoute(_))
+        }
         DexType::LaunchLab => matches!(params, DexParamEnum::LaunchLab(_)),
         DexType::Bonk => matches!(params, DexParamEnum::Bonk(_)),
         DexType::StonkFun => {
@@ -1051,7 +1052,9 @@ fn buy_account_flags_for(policy: AccountPolicy, extension: &DexParamEnum) -> (bo
     if matches!(policy, AccountPolicy::Auto)
         && matches!(
             extension,
-            DexParamEnum::StonkFunViaSol(_) | DexParamEnum::StonkFunQuoteRoute(_)
+            DexParamEnum::StonkFunViaSol(_)
+                | DexParamEnum::StonkFunQuoteRoute(_)
+                | DexParamEnum::PumpSwapQuoteRoute(_)
         )
     {
         return (true, true, false);
@@ -1079,7 +1082,9 @@ fn sell_account_flags_for(
     if matches!(policy, AccountPolicy::Auto)
         && matches!(
             extension,
-            DexParamEnum::StonkFunViaSol(_) | DexParamEnum::StonkFunQuoteRoute(_)
+            DexParamEnum::StonkFunViaSol(_)
+                | DexParamEnum::StonkFunQuoteRoute(_)
+                | DexParamEnum::PumpSwapQuoteRoute(_)
         )
         && matches!(receive_as, TradeTokenType::SOL | TradeTokenType::WSOL)
     {
@@ -1199,7 +1204,7 @@ impl TradingClient {
             sender_thread_cores: None,
             max_sender_concurrency,
             effective_core_ids,
-            log_enabled: true,
+            log_enabled: false,
             check_min_tip: false,
             transaction_version: TradeTransactionVersion::V0,
         }
@@ -1247,7 +1252,7 @@ impl TradingClient {
             sender_thread_cores: None,
             max_sender_concurrency,
             effective_core_ids,
-            log_enabled: true,
+            log_enabled: false,
             check_min_tip: false,
             transaction_version: TradeTransactionVersion::V0,
         }
@@ -2061,6 +2066,22 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
 
+    #[test]
+    fn pumpswap_route_uses_the_pumpswap_executor_and_creates_bridge_accounts() {
+        let route = DexParamEnum::PumpSwapQuoteRoute(Default::default());
+        assert!(validate_protocol_params(DexType::PumpSwap, &route));
+        assert!(!validate_protocol_params(DexType::PumpFun, &route));
+        assert_eq!(buy_account_flags_for(AccountPolicy::Auto, &route), (true, true, false));
+        assert_eq!(
+            sell_account_flags_for(AccountPolicy::Auto, &TradeTokenType::SOL, &route),
+            (true, true, false),
+        );
+        assert_eq!(
+            buy_account_flags_for(AccountPolicy::AssumePrepared, &route),
+            (false, false, false),
+        );
+    }
+
     fn dummy_pumpfun_params() -> DexParamEnum {
         DexParamEnum::PumpFun(PumpFunParams {
             bonding_curve: Arc::new(Default::default()),
@@ -2091,7 +2112,7 @@ mod tests {
 
     #[test]
     fn normalize_swqos_configs_adds_default_rpc_route() {
-        let configs = vec![SwqosConfig::Jito("uuid".to_string(), SwqosRegion::Frankfurt, None)];
+        let configs = vec![SwqosConfig::Jito("uuid".to_string(), SwqosRegion::Frankfurt, None, None)];
         let normalized = normalize_swqos_configs("https://rpc.example", &configs);
 
         assert_eq!(normalized.len(), 2);

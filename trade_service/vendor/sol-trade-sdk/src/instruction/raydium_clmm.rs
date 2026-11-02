@@ -55,7 +55,9 @@ pub fn swap_v2(
 ) -> Result<Instruction> {
     let bitmap_pda = tick_array_bitmap_extension(&accounts.pool_state);
     // Align with on-chain remaining-account scan: bitmap may be mixed into tick list.
-    let mut bitmap = accounts.tick_array_bitmap_extension.filter(|b| *b == bitmap_pda);
+    let mut bitmap = accounts
+        .tick_array_bitmap_extension
+        .filter(|b| *b == bitmap_pda);
     let mut tick_arrays = Vec::with_capacity(accounts.tick_arrays.len());
     for &key in &accounts.tick_arrays {
         if key == bitmap_pda {

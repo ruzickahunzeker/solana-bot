@@ -216,9 +216,7 @@ async fn meteora_damm_v2_sol_usdc_mainnet_simulates_buy_and_sell_roundtrip() {
         return;
     }
 
-    // Hard buy is covered by `..._direct_buy`. Selling dust USDC back often hits
-    // ExceededSlippage (6002) when min_out is floored at 1 lamport. Assert the
-    // sell builder wires swap2 for the reverse direction.
+    // Buy enough USDC to fund a non-dust reverse leg in the same simulation.
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
     let Some(pool) =
@@ -233,7 +231,7 @@ async fn meteora_damm_v2_sol_usdc_mainnet_simulates_buy_and_sell_roundtrip() {
         TradeType::Buy,
         crate::constants::WSOL_TOKEN_ACCOUNT,
         fixtures::USDC_MINT,
-        200_000,
+        2_000_000,
         800,
         DexParamEnum::MeteoraDammV2(pool.clone()),
     );
@@ -253,9 +251,12 @@ async fn meteora_damm_v2_sol_usdc_mainnet_simulates_buy_and_sell_roundtrip() {
     sell.fixed_output_amount = Some(1);
     let sell_ixs = MeteoraDammV2InstructionBuilder.build_sell_instructions(&sell).await.unwrap();
     assert!(sell_ixs.iter().any(|ix| ix.data.len() >= 8 && &ix.data[..8] == SWAP2_DISCRIMINATOR));
-    println!(
-        "meteora damm v2 SOL/USDC buy+sell builders ok buy_ixs={} sell_ixs={}",
-        buy_ixs.len(),
-        sell_ixs.len()
-    );
+    mainnet_sim::run_business_sim(
+        &rpc,
+        &wallet,
+        mainnet_sim::concat_ixs([buy_ixs, sell_ixs]),
+        &[],
+        "meteora damm v2 SOL/USDC buy+sell roundtrip",
+    )
+    .await;
 }

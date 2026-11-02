@@ -2,12 +2,14 @@ mod aggregator_quote;
 mod auth;
 mod blockhash_cache;
 mod config;
+mod conversion;
 mod executor;
 mod http;
 mod idempotency;
 mod models;
 mod param_cache;
 mod persistence;
+mod protocol_capabilities;
 mod pumpapi_client;
 mod sanitize;
 mod sdk_client;
@@ -30,6 +32,7 @@ use tracing::{info, warn};
 
 use crate::aggregator_quote::QuoteStore;
 use crate::blockhash_cache::BlockhashCache;
+use crate::conversion::ConversionStore;
 use crate::idempotency::IdempotencyStore;
 use crate::param_cache::ParamCache;
 use crate::persistence::TradePersistence;
@@ -50,6 +53,7 @@ pub struct AppState {
     pub idempotency: Arc<IdempotencyStore>,
     pub persistence: Arc<TradePersistence>,
     pub aggregator_quotes: Arc<QuoteStore>,
+    pub conversions: Option<Arc<ConversionStore>>,
 }
 
 #[tokio::main]
@@ -104,6 +108,15 @@ async fn main() -> anyhow::Result<()> {
             .await
             .context("initialize wallet operations")?,
     );
+    let conversions = if config.conversion_quotes_enabled {
+        Some(Arc::new(
+            ConversionStore::new(&config.conversion_database_url)
+                .await
+                .context("initialize conversion database")?,
+        ))
+    } else {
+        None
+    };
     let state = AppState {
         config: config.clone(),
         wallets: wallets.clone(),
@@ -115,6 +128,7 @@ async fn main() -> anyhow::Result<()> {
         idempotency: Arc::new(IdempotencyStore::default()),
         persistence,
         aggregator_quotes: Arc::new(QuoteStore::default()),
+        conversions,
     };
 
     let app: Router = http::router(state).layer(TraceLayer::new_for_http());

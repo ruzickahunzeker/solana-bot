@@ -1,3 +1,5 @@
+mod alpha;
+mod alpha_shadow;
 mod bot;
 mod config;
 mod crypto;
@@ -9,6 +11,7 @@ mod order;
 mod pool_route;
 mod preflight;
 mod price_oracle;
+mod retention;
 mod risk;
 mod strategy;
 mod stream;
@@ -45,6 +48,24 @@ async fn main() -> Result<()> {
     let config = AppConfig::from_env()?;
     let db = Database::connect(&config.database_url).await?;
     db.migrate().await?;
+    if config.alpha_retention_enabled {
+        retention::start_alpha_retention(
+            db.clone(),
+            retention::AlphaRetentionConfig {
+                interval_secs: config.alpha_retention_interval_secs,
+                observation_retention_hours: config.alpha_observation_retention_hours,
+                paper_signal_retention_days: config.alpha_paper_signal_retention_days,
+                shadow_order_retention_days: config.alpha_shadow_order_retention_days,
+            },
+        );
+        info!(
+            interval_secs = config.alpha_retention_interval_secs,
+            observation_retention_hours = config.alpha_observation_retention_hours,
+            paper_signal_retention_days = config.alpha_paper_signal_retention_days,
+            shadow_order_retention_days = config.alpha_shadow_order_retention_days,
+            "alpha retention enabled"
+        );
+    }
 
     let secret_box = SecretBox::from_hex(&config.master_key_hex)?;
     let trade_client = TradeServiceClient::new(
@@ -78,6 +99,7 @@ async fn main() -> Result<()> {
         db.clone(),
         risk.clone(),
         trade_client.clone(),
+        pool_routes.clone(),
         config.trade_submit_max_attempts,
         config.trade_submit_retry_delay_ms,
     );
@@ -88,6 +110,10 @@ async fn main() -> Result<()> {
         config.trade_submit_max_attempts,
     )
     .start();
+    alpha_shadow::start_reconciler(alpha_shadow::AlphaShadowExecutor::new(
+        db.clone(),
+        trade_client.clone(),
+    ));
     let limit_orders = LimitOrderEngine::new(
         db.clone(),
         executor.clone(),
@@ -121,6 +147,7 @@ async fn main() -> Result<()> {
             limit_orders,
             pool_routes.clone(),
             config.fast_follow_limit_queue_capacity,
+            trade_client.clone(),
         );
     }
 

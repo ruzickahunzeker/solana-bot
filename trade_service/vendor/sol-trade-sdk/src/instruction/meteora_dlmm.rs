@@ -98,17 +98,17 @@ async fn build_dlmm_swap(params: &SwapParams) -> Result<Vec<Instruction>> {
         return Err(anyhow!("Meteora DLMM requires bin arrays"));
     }
 
-    let (input_program, output_program) = if params.input_mint == protocol.token_x_mint
-        && params.output_mint == protocol.token_y_mint
-    {
-        (protocol.token_x_program, protocol.token_y_program)
-    } else if params.input_mint == protocol.token_y_mint
-        && params.output_mint == protocol.token_x_mint
-    {
-        (protocol.token_y_program, protocol.token_x_program)
-    } else {
-        return Err(anyhow!("Meteora DLMM swap pair does not match pool mints"));
-    };
+    let (input_program, output_program) =
+        if params.input_mint == protocol.token_x_mint && params.output_mint == protocol.token_y_mint
+        {
+            (protocol.token_x_program, protocol.token_y_program)
+        } else if params.input_mint == protocol.token_y_mint
+            && params.output_mint == protocol.token_x_mint
+        {
+            (protocol.token_y_program, protocol.token_x_program)
+        } else {
+            return Err(anyhow!("Meteora DLMM swap pair does not match pool mints"));
+        };
 
     let payer = params.payer.pubkey();
     let user_in = get_associated_token_address_with_program_id_fast_use_seed(

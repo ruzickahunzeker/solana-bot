@@ -284,6 +284,62 @@ pub struct PumpApiEvent {
     pub raw_json: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AlphaObservationEvent {
+    pub event_id: String,
+    pub signature: Option<String>,
+    pub mint: Option<String>,
+    pub pool: Option<String>,
+    pub pool_id: Option<String>,
+    pub quote_mint: Option<String>,
+    pub tx_type: Option<String>,
+    pub signer: Option<String>,
+    pub event_timestamp_ms: Option<i64>,
+    pub received_unix_ms: i64,
+    pub route_status: String,
+    pub raw_json: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AlphaPaperSignal {
+    pub signal_id: String,
+    pub event_id: String,
+    pub mint: String,
+    pub pool: Option<String>,
+    pub pool_id: Option<String>,
+    pub quote_mint: Option<String>,
+    pub side: String,
+    pub score: f64,
+    pub status: String,
+    pub features_json: String,
+    pub created_at_ms: i64,
+    pub order_id: Option<String>,
+    pub trade_service_request_id: Option<String>,
+    pub remote_status: Option<String>,
+    pub updated_at_ms: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AlphaShadowOrder {
+    pub id: String,
+    pub signal_id: String,
+    pub mint: String,
+    pub side: String,
+    pub pool: String,
+    pub pool_id: Option<String>,
+    pub quote_mint: String,
+    pub amount_sol: Option<f64>,
+    pub sell_percent: Option<i64>,
+    pub status: String,
+    pub idempotency_key: String,
+    pub request_json: String,
+    pub response_json: Option<String>,
+    pub trade_service_request_id: Option<String>,
+    pub error: Option<String>,
+    pub created_at_ms: i64,
+    pub updated_at_ms: i64,
+}
+
 #[derive(Debug, Clone)]
 pub struct ObservedPoolRoute {
     pub pool: String,

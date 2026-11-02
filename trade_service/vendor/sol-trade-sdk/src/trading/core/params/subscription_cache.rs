@@ -36,14 +36,15 @@ impl PoolTradeHint {
         ensure!(
             matches!(
                 leg.protocol,
-                sol_parser_sdk::transaction_route::SwapProtocol::LaunchLab
+                sol_parser_sdk::transaction_route::SwapProtocol::PumpSwap
+                    | sol_parser_sdk::transaction_route::SwapProtocol::LaunchLab
                     | sol_parser_sdk::transaction_route::SwapProtocol::RaydiumCpmm
                     | sol_parser_sdk::transaction_route::SwapProtocol::RaydiumClmm
                     | sol_parser_sdk::transaction_route::SwapProtocol::OrcaWhirlpool
                     | sol_parser_sdk::transaction_route::SwapProtocol::MeteoraDlmm
                     | sol_parser_sdk::transaction_route::SwapProtocol::RaydiumAmmV4
             ),
-            "Cache adapter supports LaunchLab, CPMM, CLMM, Whirlpool and DLMM legs"
+            "Cache adapter supports PumpSwap, LaunchLab, CPMM, AMM v4, CLMM, Whirlpool and DLMM legs"
         );
         Ok(Self {
             pool: leg.pool,
@@ -396,8 +397,7 @@ impl SubscriptionAccountCache {
                 .map_err(|error| anyhow!("Invalid cached vault layout: {error}"))?;
             ensure!(
                 account.base.mint.to_bytes() == mint.to_bytes()
-                    && account.base.owner.to_bytes()
-                        == raydium_cpmm::accounts::AUTHORITY.to_bytes()
+                    && account.base.owner.to_bytes() == raydium_cpmm::accounts::AUTHORITY.to_bytes()
                     && account.base.state == AccountState::Initialized,
                 "Invalid cached vault"
             );
@@ -610,6 +610,46 @@ pub(super) mod tests {
         assert_eq!(cache.mint(key, Some(classic), ctx()).unwrap().1.basis_points, 0);
     }
     #[test]
+    fn cached_mint_tlv_matches_official_fixture() {
+        use base64::{engine::general_purpose::STANDARD, Engine};
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../tests/fixtures/cached_mint_tlv_20261009.json"
+        ))
+        .unwrap();
+        let key = Pubkey::new_unique();
+        let token = Pubkey::new_from_array(spl_token_2022_interface::ID.to_bytes());
+        for case in fixture["cases"].as_array().unwrap() {
+            let mut cache = SubscriptionAccountCache::default();
+            put(
+                &mut cache,
+                key,
+                token,
+                STANDARD.decode(case["mint_data"].as_str().unwrap()).unwrap(),
+            );
+            let mut context = ctx();
+            context.epoch = case["epoch"].as_u64().unwrap();
+            let result = cache.mint(key, Some(token), context);
+            assert_eq!(
+                result.is_ok(),
+                case["eligible"].as_bool().unwrap(),
+                "{} {result:?}",
+                case["name"]
+            );
+            if let Ok((_, fee)) = result {
+                assert_eq!(
+                    fee.basis_points as u64,
+                    case["basis_points"].as_u64().unwrap(),
+                    "{}", case["name"]
+                );
+                assert_eq!(
+                    fee.maximum_fee,
+                    case["maximum_fee"].as_u64().unwrap(),
+                    "{}", case["name"]
+                );
+            }
+        }
+    }
+    #[test]
     fn mint_fee_schedule_changes_with_supplied_epoch() {
         let mut c = SubscriptionAccountCache::default();
         let k = Pubkey::new_unique();
@@ -783,8 +823,8 @@ pub(super) mod tests {
             let data = &mut trial.accounts.get_mut(&vault).unwrap().data;
             match case {
                 0 => data[32..64].fill(0),
-                1 => data[108] = 2,                                     // frozen
-                2 => data[108] = 0,                                     // uninitialized
+                1 => data[108] = 2, // frozen
+                2 => data[108] = 0, // uninitialized
                 3 => data[72..76].copy_from_slice(&2u32.to_le_bytes()), // invalid delegate COption
                 4 => {
                     data.pop();
@@ -882,3 +922,7 @@ pub(super) mod tests {
         assert!(c.update(v, a).unwrap());
     }
 }
+
+#[cfg(test)]
+#[path = "subscription_cache_hook_bank_test.rs"]
+mod hook_bank_tests;

@@ -1,0 +1,1 @@
+-- Lifecycle columns are added idempotently by Database::migrate after 005.

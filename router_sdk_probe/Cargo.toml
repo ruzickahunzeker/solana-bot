@@ -1,0 +1,9 @@
+[package]
+name = "router-sdk-probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+sol-trade-router-sdk = { git = "https://github.com/0xfnzero/sol-trade-router-sdk.git", rev = "de21397aae7836d11124b08b047e390cba3fd46e" }
+solana-sdk = "4.0.1"

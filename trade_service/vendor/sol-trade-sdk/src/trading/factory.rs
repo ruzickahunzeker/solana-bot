@@ -2,10 +2,11 @@ use std::sync::Arc;
 
 use crate::instruction::{
     bonk::BonkInstructionBuilder, meteora_damm_v2::MeteoraDammV2InstructionBuilder,
-    meteora_dbc::MeteoraDbcInstructionBuilder, meteora_dlmm::MeteoraDlmmInstructionBuilder,
-    pumpfun::PumpFunInstructionBuilder, pumpswap::PumpSwapInstructionBuilder,
-    raydium_amm_v4::RaydiumAmmV4InstructionBuilder, raydium_clmm::RaydiumClmmInstructionBuilder,
-    raydium_cpmm::RaydiumCpmmInstructionBuilder, whirlpool::WhirlpoolInstructionBuilder,
+    meteora_dbc::MeteoraDbcInstructionBuilder,
+    meteora_dlmm::MeteoraDlmmInstructionBuilder, pumpfun::PumpFunInstructionBuilder,
+    pumpswap::PumpSwapInstructionBuilder, raydium_amm_v4::RaydiumAmmV4InstructionBuilder,
+    raydium_clmm::RaydiumClmmInstructionBuilder, raydium_cpmm::RaydiumCpmmInstructionBuilder,
+    whirlpool::WhirlpoolInstructionBuilder,
 };
 
 use super::core::{executor::GenericTradeExecutor, traits::TradeExecutor};
@@ -131,6 +132,16 @@ impl TradeFactory {
     }
 
     #[inline]
+    fn meteora_dbc_executor() -> Arc<dyn TradeExecutor> {
+        static INSTANCE: std::sync::LazyLock<Arc<dyn TradeExecutor>> =
+            std::sync::LazyLock::new(|| {
+                let instruction_builder = Arc::new(MeteoraDbcInstructionBuilder);
+                Arc::new(GenericTradeExecutor::new(instruction_builder, "MeteoraDbc"))
+            });
+        INSTANCE.clone()
+    }
+
+    #[inline]
     fn raydium_clmm_executor() -> Arc<dyn TradeExecutor> {
         static INSTANCE: std::sync::LazyLock<Arc<dyn TradeExecutor>> =
             std::sync::LazyLock::new(|| {
@@ -156,16 +167,6 @@ impl TradeFactory {
             std::sync::LazyLock::new(|| {
                 let instruction_builder = Arc::new(MeteoraDlmmInstructionBuilder);
                 Arc::new(GenericTradeExecutor::new(instruction_builder, "MeteoraDlmm"))
-            });
-        INSTANCE.clone()
-    }
-
-    #[inline]
-    fn meteora_dbc_executor() -> Arc<dyn TradeExecutor> {
-        static INSTANCE: std::sync::LazyLock<Arc<dyn TradeExecutor>> =
-            std::sync::LazyLock::new(|| {
-                let instruction_builder = Arc::new(MeteoraDbcInstructionBuilder);
-                Arc::new(GenericTradeExecutor::new(instruction_builder, "MeteoraDbc"))
             });
         INSTANCE.clone()
     }

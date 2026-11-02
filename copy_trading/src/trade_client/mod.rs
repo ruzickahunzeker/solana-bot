@@ -65,9 +65,53 @@ pub struct ResolvedPoolRoute {
     pub quote_mint: String,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct ProtocolCapability {
+    pub protocol_id: String,
+    #[serde(default)]
+    pub status: String,
+    #[serde(default)]
+    pub supports_buy: bool,
+    #[serde(default)]
+    pub supports_sell: bool,
+    #[serde(default)]
+    pub supports_direct_quote: bool,
+    #[serde(default)]
+    pub supports_sol_route: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ProtocolCapabilitiesResponse {
+    pub schema_version: u32,
+    #[serde(default)]
+    pub generated_at_ms: u128,
+    pub protocols: Vec<ProtocolCapability>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SolHopRoute {
+    pub available: bool,
+    pub pool: Option<String>,
+    pub pool_id: Option<String>,
+    pub reason: Option<String>,
+}
+
+#[derive(Serialize)]
+struct SolHopRequest<'a> {
+    quote_mint: &'a str,
+}
+
 #[derive(Debug, Serialize)]
 struct ResolvePoolRequest<'a> {
     mint: &'a str,
+}
+
+#[derive(Debug, Serialize)]
+struct WarmupRouteRequest<'a> {
+    pool: &'a str,
+    mint: &'a str,
+    pool_id: Option<&'a str>,
+    quote_mint: Option<&'a str>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,6 +174,104 @@ pub struct QuoteBalanceResponse {
     pub decimals: u8,
     pub balance_units: u64,
     pub balance_lamports: u64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct WsolConversionQuote {
+    pub quote_id: String,
+    pub direction: String,
+    pub amount_lamports: u64,
+    pub source_balance_lamports: u64,
+    pub estimated_network_fee_lamports: u64,
+    pub temporary_rent_lamports: u64,
+    pub rent_refund_lamports: u64,
+    pub expires_at_ms: u64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct WsolConversionPreview {
+    pub quote: WsolConversionQuote,
+    pub executable: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct WsolConversionSimulation {
+    pub status: String,
+    pub quote_id: String,
+    pub network_fee_lamports: Option<u64>,
+    pub units_consumed: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolBuyQuoteResponse {
+    pub quote_id: String,
+    pub wallet_id: String,
+    pub amount_lamports: u64,
+    pub expected_output_units: u64,
+    pub minimum_output_units: u64,
+    pub expires_at_ms: u64,
+    pub route: Vec<SolBuyQuoteLeg>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolBuyQuoteLeg {
+    pub label: String,
+    pub input_mint: String,
+    pub output_mint: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolBuyPreflightResponse {
+    pub quote_id: String,
+    pub executable: bool,
+    pub local_simulation_ok: bool,
+    pub reason: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolBuySubmitResponse {
+    pub quote_id: String,
+    pub wallet_id: String,
+    pub status: String,
+    pub signature: Option<String>,
+    pub error: Option<String>,
+    pub preflight: SolBuyPreflightResponse,
+}
+
+#[derive(Debug, Serialize)]
+struct SolBuyQuoteRequest<'a> {
+    wallet_id: &'a str,
+    mint: &'a str,
+    amount_lamports: u64,
+    slippage_bps: u16,
+}
+
+#[derive(Debug, Serialize)]
+struct SolBuySubmitRequest<'a> {
+    wallet_id: &'a str,
+    confirmed: bool,
+    simulate: bool,
+    idempotency_key: &'a str,
+}
+
+#[derive(Serialize)]
+struct WsolConversionQuoteRequest<'a> {
+    wallet_id: &'a str,
+    owner_type: &'a str,
+    owner_id: &'a str,
+    direction: &'a str,
+    amount_lamports: Option<u64>,
+    all: bool,
+}
+
+#[derive(Serialize)]
+struct WsolConversionSimulationRequest<'a> {
+    quote_id: &'a str,
+    wallet_id: &'a str,
+    owner_type: &'a str,
+    owner_id: &'a str,
+    simulate: bool,
+    idempotency_key: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -240,6 +382,74 @@ impl TradeServiceClient {
         self.decode_response(response, "submit trade").await
     }
 
+    pub async fn sol_buy_quote(
+        &self,
+        wallet_id: &str,
+        mint: &str,
+        amount_lamports: u64,
+        slippage_bps: u16,
+    ) -> Result<SolBuyQuoteResponse> {
+        let response = self
+            .authorized(
+                self.client
+                    .post(format!("{}/v1/quotes/sol-buy", self.base_url)),
+            )
+            .json(&SolBuyQuoteRequest {
+                wallet_id,
+                mint,
+                amount_lamports,
+                slippage_bps,
+            })
+            .send()
+            .await
+            .context("failed to request SOL buy quote")?;
+        self.decode_response(response, "request SOL buy quote")
+            .await
+    }
+
+    pub async fn sol_buy_preflight(
+        &self,
+        quote_id: &str,
+        wallet_id: &str,
+    ) -> Result<SolBuyPreflightResponse> {
+        let response = self
+            .authorized(self.client.post(format!(
+                "{}/v1/quotes/sol-buy/{quote_id}/preflight",
+                self.base_url
+            )))
+            .query(&[("wallet_id", wallet_id)])
+            .send()
+            .await
+            .context("failed to preflight SOL buy quote")?;
+        self.decode_response(response, "preflight SOL buy quote")
+            .await
+    }
+
+    pub async fn submit_sol_buy(
+        &self,
+        quote_id: &str,
+        wallet_id: &str,
+        confirmed: bool,
+        simulate: bool,
+        idempotency_key: &str,
+    ) -> Result<SolBuySubmitResponse> {
+        let response = self
+            .authorized(self.client.post(format!(
+                "{}/v1/quotes/sol-buy/{quote_id}/submit",
+                self.base_url
+            )))
+            .json(&SolBuySubmitRequest {
+                wallet_id,
+                confirmed,
+                simulate,
+                idempotency_key,
+            })
+            .send()
+            .await
+            .context("failed to submit SOL buy")?;
+        self.decode_response(response, "submit SOL buy").await
+    }
+
     pub async fn resolve_pool(&self, mint: &str) -> Result<ResolvedPoolRoute> {
         let response = self
             .authorized(
@@ -251,6 +461,38 @@ impl TradeServiceClient {
             .await
             .context("failed to resolve mint pool")?;
         self.decode_response(response, "resolve mint pool").await
+    }
+
+    pub async fn warmup_route(&self, route: &ResolvedPoolRoute) -> Result<()> {
+        let response = self
+            .authorized(
+                self.client
+                    .post(format!("{}/v1/cache/warmup", self.base_url)),
+            )
+            .json(&WarmupRouteRequest {
+                pool: &route.pool,
+                mint: &route.mint,
+                pool_id: route.pool_id.as_deref(),
+                quote_mint: Some(&route.quote_mint),
+            })
+            .send()
+            .await
+            .context("failed to verify pool route")?;
+        let _: serde_json::Value = self.decode_response(response, "verify pool route").await?;
+        Ok(())
+    }
+
+    pub async fn resolve_sol_hop(&self, quote_mint: &str) -> Result<SolHopRoute> {
+        let response = self
+            .authorized(
+                self.client
+                    .post(format!("{}/v1/pools/sol-hop", self.base_url)),
+            )
+            .json(&SolHopRequest { quote_mint })
+            .send()
+            .await
+            .context("failed to resolve SOL hop")?;
+        self.decode_response(response, "resolve SOL hop").await
     }
 
     pub async fn get_trade(&self, request_id: &str) -> Result<TradeResponse> {
@@ -283,6 +525,19 @@ impl TradeServiceClient {
         self.decode_response(response, "query readiness").await
     }
 
+    pub async fn capabilities(&self) -> Result<ProtocolCapabilitiesResponse> {
+        let response = self
+            .authorized(
+                self.client
+                    .get(format!("{}/v1/capabilities", self.base_url)),
+            )
+            .send()
+            .await
+            .context("failed to query trade_service capabilities")?;
+        self.decode_response(response, "query trade_service capabilities")
+            .await
+    }
+
     pub async fn wallet_id_for_pubkey(&self, pubkey: &str) -> Result<Option<String>> {
         Ok(self
             .wallets()
@@ -310,6 +565,64 @@ impl TradeServiceClient {
             .decode_response(response, "query managed wallets")
             .await?;
         Ok(response.wallets)
+    }
+
+    pub async fn wsol_conversion_quote(
+        &self,
+        wallet_id: &str,
+        owner_type: &str,
+        owner_id: &str,
+        direction: &str,
+        amount_lamports: Option<u64>,
+        all: bool,
+    ) -> Result<WsolConversionPreview> {
+        let request = WsolConversionQuoteRequest {
+            wallet_id,
+            owner_type,
+            owner_id,
+            direction,
+            amount_lamports,
+            all,
+        };
+        let response = self
+            .authorized(self.client.post(format!(
+                "{}/internal/conversions/wsol/quotes",
+                self.base_url
+            )))
+            .json(&request)
+            .send()
+            .await
+            .context("failed to request WSOL conversion quote")?;
+        self.decode_response(response, "request WSOL conversion quote")
+            .await
+    }
+
+    pub async fn simulate_wsol_conversion(
+        &self,
+        quote_id: &str,
+        wallet_id: &str,
+        owner_type: &str,
+        owner_id: &str,
+    ) -> Result<WsolConversionSimulation> {
+        let request = WsolConversionSimulationRequest {
+            quote_id,
+            wallet_id,
+            owner_type,
+            owner_id,
+            simulate: true,
+            idempotency_key: format!("tg-wsol-sim-{}", uuid::Uuid::new_v4()),
+        };
+        let response = self
+            .authorized(self.client.post(format!(
+                "{}/internal/conversions/wsol/simulate",
+                self.base_url
+            )))
+            .json(&request)
+            .send()
+            .await
+            .context("failed to simulate WSOL conversion")?;
+        self.decode_response(response, "simulate WSOL conversion")
+            .await
     }
 
     pub async fn wallet_balances(&self, user_id: i64) -> Result<WalletBalancesResponse> {

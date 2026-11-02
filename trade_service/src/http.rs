@@ -8,9 +8,10 @@ use std::net::SocketAddr;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::{info, warn};
 
-use crate::aggregator_quote::{self, SolBuyQuoteRequest};
+use crate::aggregator_quote::{self, SolBuyQuoteRequest, SolBuySubmitRequest};
 use crate::auth;
 use crate::config::WalletConfig;
+use crate::conversion::{self, WsolQuoteRequest, WsolSubmission};
 use crate::executor;
 use crate::idempotency::ReserveResult;
 use crate::models::{
@@ -32,6 +33,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/ready", get(ready))
+        .route("/v1/capabilities", get(capabilities))
         .route("/v1/wallets", get(wallets).post(create_wallet))
         .route("/v1/wallets/manage", get(managed_wallets))
         .route(
@@ -43,10 +45,21 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/pools/resolve", post(resolve_pool))
         .route("/v1/pools/sol-hop", post(resolve_sol_hop))
         .route("/v1/quotes/sol-buy", post(sol_buy_quote))
+        .route("/internal/conversions/wsol/quotes", post(wsol_quote))
+        .route("/internal/conversions/wsol/simulate", post(wsol_simulate))
+        .route("/internal/conversions/wsol/submit", post(wsol_submit))
+        .route(
+            "/internal/conversions/wsol/submissions/:submission_id",
+            get(wsol_status),
+        )
         .route("/v1/quotes/sol-buy/:quote_id", get(get_sol_buy_quote))
         .route(
             "/v1/quotes/sol-buy/:quote_id/preflight",
             post(preflight_sol_buy_quote),
+        )
+        .route(
+            "/v1/quotes/sol-buy/:quote_id/submit",
+            post(submit_sol_buy_quote),
         )
         .route("/v1/trades", post(create_trade).get(list_trades))
         .route("/v1/batch/trades", post(create_batch_trades))
@@ -66,6 +79,95 @@ pub fn router(state: AppState) -> Router {
             post(transfer_sol),
         )
         .with_state(state)
+}
+
+async fn capabilities(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+) -> Response {
+    if let Err(response) = authorize_protected(&state, &headers, peer) {
+        return response;
+    }
+    Json(crate::protocol_capabilities::current(
+        state.config.stonkfun_via_sol.enabled,
+    ))
+    .into_response()
+}
+
+async fn wsol_quote(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(request): Json<WsolQuoteRequest>,
+) -> Response {
+    if let Err(response) = authorize_internal(&state, &headers, peer) {
+        return response;
+    }
+    match conversion::quote_wsol(&state, request).await {
+        Ok(quote) => Json(quote).into_response(),
+        Err(err) => error(
+            StatusCode::BAD_REQUEST,
+            crate::sanitize::redact_urls(&err.to_string()),
+        ),
+    }
+}
+
+async fn wsol_simulate(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(request): Json<WsolSubmission>,
+) -> Response {
+    if let Err(response) = authorize_internal(&state, &headers, peer) {
+        return response;
+    }
+    match conversion::simulate_wsol(&state, request).await {
+        Ok(result) => Json(result).into_response(),
+        Err(err) => error(
+            StatusCode::BAD_REQUEST,
+            crate::sanitize::redact_urls(&err.to_string()),
+        ),
+    }
+}
+
+async fn wsol_submit(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Json(request): Json<WsolSubmission>,
+) -> Response {
+    if let Err(response) = authorize_internal(&state, &headers, peer) {
+        return response;
+    }
+    match conversion::submit_wsol(&state, request).await {
+        Ok(result) => Json(result).into_response(),
+        Err(err) => error(
+            StatusCode::BAD_REQUEST,
+            crate::sanitize::redact_urls(&err.to_string()),
+        ),
+    }
+}
+
+async fn wsol_status(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Path(submission_id): Path<String>,
+    Query(owner): Query<OwnerQuery>,
+) -> Response {
+    if let Err(response) = authorize_internal(&state, &headers, peer) {
+        return response;
+    }
+    match conversion::get_wsol_status(&state, &submission_id, &owner.owner_type, &owner.owner_id)
+        .await
+    {
+        Ok(result) => Json(result).into_response(),
+        Err(err) => error(
+            StatusCode::BAD_REQUEST,
+            crate::sanitize::redact_urls(&err.to_string()),
+        ),
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -861,6 +963,51 @@ async fn preflight_sol_buy_quote(
             Ok(_) => (StatusCode::OK, Json(result)).into_response(),
             Err(err) => error(StatusCode::GONE, err.to_string()),
         },
+        Err(err) => error(
+            StatusCode::BAD_GATEWAY,
+            crate::sanitize::redact_urls(&err.to_string()),
+        ),
+    }
+}
+
+async fn submit_sol_buy_quote(
+    State(state): State<AppState>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Path(quote_id): Path<String>,
+    Json(request): Json<SolBuySubmitRequest>,
+) -> Response {
+    if let Err(response) = authorize_protected(&state, &headers, peer) {
+        return response;
+    }
+    let Some(wallet) = state.wallets.get(&request.wallet_id) else {
+        return error(StatusCode::BAD_REQUEST, "wallet_id not found");
+    };
+    let bound = match state.aggregator_quotes.get(
+        &quote_id,
+        &request.wallet_id,
+        &wallet.wallet().to_string(),
+    ) {
+        Ok(bound) => bound,
+        Err(err) => return error(StatusCode::GONE, err.to_string()),
+    };
+    let key = format!("{}:{}", request.wallet_id, request.idempotency_key);
+    if let Some(existing) = state.aggregator_quotes.get_submission(&key) {
+        if existing.quote_id != quote_id {
+            return error(
+                StatusCode::CONFLICT,
+                "idempotency key was used for another quote",
+            );
+        }
+        return (StatusCode::OK, Json(existing)).into_response();
+    }
+    match aggregator_quote::submit(&bound, &wallet, &request).await {
+        Ok(response) => {
+            state
+                .aggregator_quotes
+                .record_submission(key, response.clone());
+            (StatusCode::OK, Json(response)).into_response()
+        }
         Err(err) => error(
             StatusCode::BAD_GATEWAY,
             crate::sanitize::redact_urls(&err.to_string()),

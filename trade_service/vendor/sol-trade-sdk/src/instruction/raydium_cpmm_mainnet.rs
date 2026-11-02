@@ -11,7 +11,10 @@ use crate::{
         },
     },
     swqos::TradeType,
-    trading::core::{params::DexParamEnum, traits::InstructionBuilder},
+    trading::core::{
+        params::DexParamEnum,
+        traits::InstructionBuilder,
+    },
 };
 
 #[tokio::test]
@@ -22,12 +25,8 @@ async fn raydium_cpmm_wsol_stonk_mainnet_simulates_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let pool = {
-        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
-            return;
-        };
-        v
-    };
+    let pool =
+        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
     assert!(pool.base_reserve > 0 && pool.quote_reserve > 0);
 
     let params = mainnet_sim::swap_params(
@@ -59,12 +58,8 @@ async fn raydium_cpmm_wsol_stonk_mainnet_simulates_buy_and_sell() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let pool = {
-        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
-            return;
-        };
-        v
-    };
+    let pool =
+        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
 
     let buy = mainnet_sim::swap_params(
         wallet.clone(),
@@ -77,7 +72,10 @@ async fn raydium_cpmm_wsol_stonk_mainnet_simulates_buy_and_sell() {
     );
     let buy_ixs = RaydiumCpmmInstructionBuilder.build_buy_instructions(&buy).await.unwrap();
     let stonk_min_out = {
-        let swap = buy_ixs.iter().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
+        let swap = buy_ixs
+            .iter()
+            .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
+            .unwrap();
         u64::from_le_bytes(swap.data[16..24].try_into().unwrap())
     };
     let sell_amount = (stonk_min_out / 2).max(1);
@@ -112,12 +110,8 @@ async fn raydium_cpmm_wsol_cards_mainnet_simulates_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let pool = {
-        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else {
-            return;
-        };
-        v
-    };
+    let pool =
+        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else { return; }; v };
 
     let params = mainnet_sim::swap_params(
         wallet.clone(),
@@ -143,12 +137,8 @@ async fn raydium_cpmm_wsol_cards_mainnet_simulates_buy_and_sell() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let pool = {
-        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else {
-            return;
-        };
-        v
-    };
+    let pool =
+        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_CARDS_CPMM).await else { return; }; v };
 
     let buy = mainnet_sim::swap_params(
         wallet.clone(),
@@ -161,7 +151,10 @@ async fn raydium_cpmm_wsol_cards_mainnet_simulates_buy_and_sell() {
     );
     let buy_ixs = RaydiumCpmmInstructionBuilder.build_buy_instructions(&buy).await.unwrap();
     let cards_min_out = {
-        let swap = buy_ixs.iter().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
+        let swap = buy_ixs
+            .iter()
+            .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
+            .unwrap();
         u64::from_le_bytes(swap.data[16..24].try_into().unwrap())
     };
     let sell_amount = (cards_min_out / 2).max(1);
@@ -196,18 +189,10 @@ async fn raydium_cpmm_graduated_knots_stonk_mainnet_simulates_both_directions_af
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let graduated = {
-        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else {
-            return;
-        };
-        v
-    };
-    let sol_hop = {
-        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
-            return;
-        };
-        v
-    };
+    let graduated =
+        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::GRAD_POOL).await else { return; }; v };
+    let sol_hop =
+        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
 
     // Acquire STONK, then swap STONK ↔ KNOTS both ways on the graduated pool
     // using the plain RaydiumCpmm builder (not StonkFunSwap wrapper).
@@ -222,7 +207,10 @@ async fn raydium_cpmm_graduated_knots_stonk_mainnet_simulates_both_directions_af
     );
     let hop_ixs = RaydiumCpmmInstructionBuilder.build_buy_instructions(&hop).await.unwrap();
     let stonk_min_out = {
-        let swap = hop_ixs.iter().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
+        let swap = hop_ixs
+            .iter()
+            .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
+            .unwrap();
         u64::from_le_bytes(swap.data[16..24].try_into().unwrap())
     };
 
@@ -236,10 +224,14 @@ async fn raydium_cpmm_graduated_knots_stonk_mainnet_simulates_both_directions_af
         DexParamEnum::RaydiumCpmm(graduated.clone()),
     );
     buy_meme.create_input_mint_ata = false;
-    let buy_ixs = RaydiumCpmmInstructionBuilder.build_buy_instructions(&buy_meme).await.unwrap();
+    let buy_ixs =
+        RaydiumCpmmInstructionBuilder.build_buy_instructions(&buy_meme).await.unwrap();
     let meme_min_out = {
-        let swap =
-            buy_ixs.iter().rev().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
+        let swap = buy_ixs
+            .iter()
+            .rev()
+            .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
+            .unwrap();
         u64::from_le_bytes(swap.data[16..24].try_into().unwrap())
     };
 
@@ -256,7 +248,8 @@ async fn raydium_cpmm_graduated_knots_stonk_mainnet_simulates_both_directions_af
     sell_meme.close_input_mint_ata = false;
     sell_meme.create_output_mint_ata = false;
     sell_meme.close_output_mint_ata = false;
-    let sell_ixs = RaydiumCpmmInstructionBuilder.build_sell_instructions(&sell_meme).await.unwrap();
+    let sell_ixs =
+        RaydiumCpmmInstructionBuilder.build_sell_instructions(&sell_meme).await.unwrap();
 
     let mut business = hop_ixs;
     business.extend(buy_ixs);
@@ -280,12 +273,8 @@ async fn raydium_cpmm_wsol_stonk_mainnet_simulates_exact_out_buy() {
 
     let rpc = mainnet_sim::rpc_client();
     let wallet = mainnet_sim::create_wallet();
-    let pool = {
-        let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else {
-            return;
-        };
-        v
-    };
+    let pool =
+        { let Some(v) = mainnet_sim::load_cpmm(&rpc, &fixtures::WSOL_STONK_CPMM).await else { return; }; v };
 
     let probe = mainnet_sim::swap_params(
         wallet.clone(),
@@ -298,8 +287,10 @@ async fn raydium_cpmm_wsol_stonk_mainnet_simulates_exact_out_buy() {
     );
     let probe_ixs = RaydiumCpmmInstructionBuilder.build_buy_instructions(&probe).await.unwrap();
     let min_out = {
-        let swap =
-            probe_ixs.iter().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
+        let swap = probe_ixs
+            .iter()
+            .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
+            .unwrap();
         u64::from_le_bytes(swap.data[16..24].try_into().unwrap())
     };
     let exact_out = (min_out / 2).max(1);
@@ -315,7 +306,10 @@ async fn raydium_cpmm_wsol_stonk_mainnet_simulates_exact_out_buy() {
     );
     params.fixed_output_amount = Some(exact_out);
     let business = RaydiumCpmmInstructionBuilder.build_buy_instructions(&params).await.unwrap();
-    let swap = business.iter().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
+    let swap = business
+        .iter()
+        .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
+        .unwrap();
     assert_eq!(&swap.data[..8], SWAP_BASE_OUT_DISCRIMINATOR);
 
     let alt = mainnet_sim::load_alt(&rpc, &fixtures::WSOL_STONK_LUT).await;
@@ -359,7 +353,10 @@ async fn raydium_cpmm_wsol_cards_mainnet_simulates_exact_out_buy() {
     );
     params.fixed_output_amount = Some(exact_out);
     let business = RaydiumCpmmInstructionBuilder.build_buy_instructions(&params).await.unwrap();
-    let swap = business.iter().find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM).unwrap();
+    let swap = business
+        .iter()
+        .find(|ix| ix.program_id == cpmm_accounts::RAYDIUM_CPMM)
+        .unwrap();
     assert_eq!(&swap.data[..8], SWAP_BASE_OUT_DISCRIMINATOR);
 
     let alt = mainnet_sim::load_alt(&rpc, &fixtures::WSOL_CARDS_LUT).await;

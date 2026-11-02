@@ -152,6 +152,7 @@ Content-Type: application/json
 |---|---|---|---|
 | `GET` | `/health` | 无 | 进程存活检查 |
 | `GET` | `/ready` | IP + Bearer | 交易就绪检查 |
+| `GET` | `/v1/capabilities` | IP + Bearer | 查询协议能力；仅 `status=live` 且对应能力为 `true` 的协议允许进入交易流程 |
 | `GET` | `/v1/wallets` | IP + Bearer | 查询可用于交易的钱包 |
 | `POST` | `/v1/pools/resolve` | IP + Bearer | 按 Mint 自动解析 Pump、PumpSwap 或 Meteora DBC Pool |
 | `POST` | `/v1/cache/warmup` | IP + Bearer | 预热指定 Pool 的交易参数 |
@@ -184,7 +185,67 @@ curl -sS "$TRADE_API_BASE_URL/health"
 
 这个接口只表示 HTTP 进程存活，不表示可以交易。
 
-### 5.2 Ready 检查
+### 5.2 协议能力
+
+```http
+GET /v1/capabilities
+Authorization: Bearer <token>
+```
+
+请求：
+
+```bash
+curl -sS "$TRADE_API_BASE_URL/v1/capabilities" \
+  -H "Authorization: Bearer $TRADE_API_TOKEN"
+```
+
+响应示例（字段可能随 SDK 和配置变化）：
+
+```json
+{
+  "schema_version": 1,
+  "generated_at_ms": 1760000000000,
+  "protocols": [
+    {
+      "protocol_id": "raydium-cpmm",
+      "aliases": ["raydium-cp"],
+      "status": "live",
+      "execution_backend": "sdk",
+      "pool_id_required": true,
+      "supports_buy": true,
+      "supports_sell": true,
+      "supports_direct_quote": true,
+      "supports_sol_route": false,
+      "sdk_builder_available": true,
+      "token_programs": ["spl-token"]
+    },
+    {
+      "protocol_id": "raydium-clmm",
+      "aliases": [],
+      "status": "observe",
+      "execution_backend": "sdk-adapter-pending",
+      "pool_id_required": true,
+      "supports_buy": false,
+      "supports_sell": false,
+      "supports_direct_quote": false,
+      "supports_sol_route": false,
+      "sdk_builder_available": true,
+      "token_programs": ["spl-token"]
+    }
+  ]
+}
+```
+
+客户端处理规则：
+
+- `status=live` 只表示该协议已进入交易能力注册表；仍必须先通过 Pool 解析、账户归属、Quote、余额和模拟校验。
+- `status=observe` 只能展示、记录或进入研究/模拟流程，服务端必须拦截签名和广播。
+- `supports_buy`、`supports_sell`、`supports_direct_quote` 和 `supports_sol_route` 是能力开关，不是对某个具体 Mint 的可交易保证。
+- `pool_id_required=true` 时，请求必须使用经过验证的池地址，不能只根据 PumpAPI 的协议字符串选择指令。
+- `supports_sol_route=false` 时，不得把 SOL 数量直接当作该协议的 Quote 数量发送；应使用协议原生 Quote，或等待已验证的两跳路由。
+- 接口与交易接口使用相同的 IP 白名单和 Bearer Token；只有 `/health` 不需要鉴权。
+
+### 5.3 Ready 检查
 
 ```http
 GET /ready
@@ -505,9 +566,11 @@ amount_quote_units
 
 ### 只读 SOL 买入路线预览
 
-`POST /v1/quotes/sol-buy` 使用现有 Trade API 鉴权，接受 `{"wallet_id":"2TE","mint":"目标 mint","amount_lamports":1000000,"slippage_bps":1500}`。请求仅支持 0.0001–0.1 SOL、1–3000 bps；返回 `quote_id`、绑定钱包、15 秒有效期、`expected_output_units`、`minimum_output_units`、`price_impact_percent` 和路线各跳。`GET /v1/quotes/sol-buy/:quote_id?wallet_id=2TE` 只检查内存报价是否存在、未过期且与钱包 ID/公钥匹配，不重新查询价格。服务重启会使全部报价失效。当前使用公开 Jupiter Lite Quote API，固定只读地址；`executable` **恒为 `false`**。这两个接口不签名、不提交交易，也不表示该路线已通过本地钱包模拟。不要把返回值直接用于 Live 按钮或当成成交承诺；交易执行、费用校验和幂等接入仍需单独实现。
+`POST /v1/quotes/sol-buy` 使用现有 Trade API 鉴权，接受 `{"wallet_id":"2TE","mint":"目标 mint","amount_lamports":1000000,"slippage_bps":1500}`。请求仅支持 0.0001–0.1 SOL、1–3000 bps；返回绑定钱包、15 秒有效期、`expected_output_units`、`minimum_output_units`、`price_impact_percent` 和路线各跳。服务重启会使内存报价失效。
 
-`POST /v1/quotes/sol-buy/:quote_id/preflight?wallet_id=2TE` 会重新取价，要求路线不变且最低到手不降低，再请求构建未签名交易。它验证交易的 Solana 消息结构、付款公钥和空签名槽，从默认 RPC 解析地址查找表并校验所有账户索引；核实目标 Mint 属于 SPL Token 或 Token-2022，且绑定钱包的目标 ATA 出现在交易中并可写。Compute Budget 指令限制 CU 为 140 万以内、计算优先费为 100,000 lamports 以内，聚合器提供费用元数据时才交叉核对，缺失值不当作零。显式 System 指令只允许付款钱包发起的标准转账，总额不得超过买入金额加 0.02 SOL，且可写账户数不得超过 64。随后独立模拟未签名交易（`sig_verify:false`）；返回 `local_simulation_ok`、`target_ata`、`top_level_programs`、账户及指令数量、`explicit_system_spend_lamports`，以及 RPC 提供时的模拟手续费、计算消耗、付款钱包扣款、内部指令组数、`simulated_target_token_delta_units` 和 `simulated_target_token_post_units`。目标代币增量仅在目标 ATA/Mint 的前后余额记录都存在且唯一时计算；若小于报价最低到手量则拒绝，缺失时为 `null`，不能视为已验证。结束余额来自 RPC 模拟返回的目标 ATA 账户，校验 token program、Mint、钱包 owner 和初始化状态；仅有结束余额不代表买入增量。已返回的手续费与付款钱包扣款若超限也会拒绝。**不返回交易字节，不签名，不广播**。顶层程序清单只是审计信息，内部费用和全部可写目的地仍未审完，因此 `instruction_audit_passed:false`、`executable:false` 恒定。不得把预检成功当成下单授权。
+`POST /v1/quotes/sol-buy/:quote_id/preflight?wallet_id=2TE` 会重新取价并执行交易审计与本地模拟；路线变化、最低到手降低、目标 ATA 不可写、费用超限或模拟失败都会拒绝。成功时 `instruction_audit_passed:true`、`executable:true`。它仍不签名、不广播。
+
+`POST /v1/quotes/sol-buy/:quote_id/submit` 接受 `{"wallet_id":"2TE","confirmed":true,"simulate":false,"idempotency_key":"唯一键"}`。服务会再次取价、重新审计和模拟，通过后由 Trade Service 钱包签名并广播；`simulate:true` 只返回 `simulated`，不会广播。提交异常返回 `unknown`，调用方不得自动创建新幂等键重试，应按链上签名或 Trade Service 记录核查。该接口只支持 SOL Exact-In 买入。
 
 Jupiter 优先费声明与交易指令计算值允许最多 1 lamport 的舍入差；CU limit 必须完全一致。真正的费用上限始终按交易指令计算值校验。
 
@@ -556,7 +619,7 @@ StonkFun Via-SOL 示例（功能开关默认关闭）：
 | `meteora-damm-v2` | 必填 | WSOL、USDC | 必须传真实池地址 |
 | `meteora-dbc` | 必填 | WSOL、USDC | 未迁移的 Dynamic Bonding Curve 池；使用 `swap2` ExactIn |
 | `raydium-amm-v4` | 必填 | WSOL、USDC | 必须传真实池地址 |
-| `raydium-cpmm` | 必填 | WSOL、USDC | 必须传真实池地址 |
+| `raydium-cpmm` | 必填 | WSOL、USDC、任意 SPL Token | 自定义 Quote 直买必须传 `amount_quote_units`，不是 SOL 金额；服务校验池的两个 Mint 和买入 Quote 余额。此路径仍需逐池模拟验收，不代表支持 SOL 跨池交易 |
 
 已知 Quote Mint：
 

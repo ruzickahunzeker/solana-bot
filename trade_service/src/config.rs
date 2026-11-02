@@ -30,6 +30,9 @@ pub struct Config {
     pub pumpapi: PumpApiConfig,
     pub stonkfun_via_sol: StonkFunViaSolConfig,
     pub trade_persistence: TradePersistenceConfig,
+    pub conversion_database_url: String,
+    pub conversion_quotes_enabled: bool,
+    pub conversion_live_enabled: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -150,6 +153,10 @@ impl Config {
 
         Ok(Self {
             rpc_urls,
+            conversion_database_url: env::var("CONVERSION_DATABASE_URL")
+                .unwrap_or_else(|_| "sqlite://./data/conversions.sqlite".to_string()),
+            conversion_quotes_enabled: parse_bool("CONVERSION_QUOTES_ENABLED", false)?,
+            conversion_live_enabled: parse_bool("CONVERSION_LIVE_ENABLED", false)?,
             wallets,
             default_wallet_id,
             wallet_storage,

@@ -23,6 +23,7 @@ pub struct NormalizedTrade {
     pub use_mev: Option<bool>,
     pub mev_provider: Option<MevProvider>,
     pub simulate: Option<bool>,
+    pub aggregator_sol: bool,
 }
 
 pub struct NormalizedWarmup {
@@ -52,7 +53,15 @@ pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result
     let mint = parse_pubkey("mint", &request.mint)?;
     let pool_id = parse_optional_pubkey("pool_id", request.pool_id.as_deref())?;
     let quote_mint = normalize_quote_mint(request.quote_mint.as_deref())?;
-    validate_quote_mint_for_pool(request.pool, &quote_mint)?;
+    let aggregator_sol = request.side == Side::Buy
+        && request.amount_sol.is_some()
+        && request.amount_quote.is_none()
+        && request.amount_usdc.is_none()
+        && request.amount_quote_units.is_none()
+        && !is_wsol_quote(&quote_mint);
+    if !aggregator_sol {
+        validate_quote_mint_for_pool(request.pool, &quote_mint)?;
+    }
     let execution_method = request.execution_method.unwrap_or(ExecutionMethod::Sdk);
     let slippage_bps = normalize_slippage_bps(request, config)?;
     if slippage_bps > 10_000 {
@@ -111,6 +120,7 @@ pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result
         use_mev,
         mev_provider,
         simulate: request.simulate,
+        aggregator_sol,
     })
 }
 
@@ -241,7 +251,10 @@ fn normalize_amount_units(
         if let Some(amount_quote) = request.amount_quote {
             return token_to_units("amount_quote", amount_quote, 6);
         }
-        if request.amount_sol.is_some() || request.amount_lamports.is_some() {
+        if let Some(amount_sol) = request.amount_sol {
+            return token_to_units("amount_sol", amount_sol, 9);
+        }
+        if request.amount_lamports.is_some() {
             bail!("USDC quote requires amount_quote, amount_usdc, or amount_quote_units");
         }
         bail!("USDC quote requires amount_quote or amount_usdc");
@@ -254,13 +267,19 @@ fn normalize_amount_units(
         if let Some(amount_quote) = request.amount_quote {
             return token_to_units("amount_quote", amount_quote, 6);
         }
-        if request.amount_sol.is_some() || request.amount_lamports.is_some() {
+        if let Some(amount_sol) = request.amount_sol {
+            return token_to_units("amount_sol", amount_sol, 9);
+        }
+        if request.amount_lamports.is_some() {
             bail!("USD1 quote requires amount_quote or amount_quote_units");
         }
         bail!("USD1 quote requires amount_quote");
     }
 
     if !is_wsol_quote(quote_mint) {
+        if let Some(amount_sol) = request.amount_sol {
+            return token_to_units("amount_sol", amount_sol, 9);
+        }
         bail!("custom quote token requires amount_quote_units");
     }
 
@@ -379,15 +398,15 @@ fn validate_quote_mint_for_pool(pool: Pool, quote_mint: &Pubkey) -> anyhow::Resu
                 bail!("bonk quote_mint must be WSOL or USD1");
             }
         }
-        Pool::StonkFun | Pool::StonkFunSwap => {}
-        Pool::Pump
-        | Pool::PumpAmm
-        | Pool::MeteoraDammV2
-        | Pool::MeteoraDbc
-        | Pool::RaydiumAmmV4
-        | Pool::RaydiumCpmm => {
+        Pool::StonkFun | Pool::StonkFunSwap | Pool::RaydiumCpmm => {}
+        Pool::PumpAmm => {}
+        Pool::Pump | Pool::MeteoraDammV2 | Pool::MeteoraDbc | Pool::RaydiumAmmV4 => {
             if !is_wsol_quote(quote_mint) && !is_usdc_quote(quote_mint) {
-                bail!("{:?} quote_mint must be WSOL or USDC", pool);
+                bail!(
+                    "{:?} quote_mint must be WSOL or USDC; received {}",
+                    pool,
+                    quote_mint
+                );
             }
         }
     }
