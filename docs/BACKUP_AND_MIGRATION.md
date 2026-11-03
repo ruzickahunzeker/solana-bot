@@ -21,6 +21,22 @@
 
 17GB 的 `copy_trading/data/copy_trading.sqlite` 按当前迁移约定不保留；如未来需要审计，应单独归档到加密存储，不放入代码仓库。
 
+### 2026-11-02 归档说明
+
+历史归档 `sol-bot-sensitive-20261102.tar.enc` 使用创建时本机
+`copy_trading/.env` 中的 `MASTER_KEY_HEX` 作为 OpenSSL 加密口令；它不是
+`trade_service/.env` 的配置项，也没有另存一份独立归档密码。解密时使用：
+
+```bash
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \
+  -pass file:/secure/copy-trading-master-key \
+  -in sol-bot-sensitive-20261102.tar.enc | tar -xvf -
+```
+
+其中 `/secure/copy-trading-master-key` 必须由管理员从原始
+`copy_trading/.env` 安全提取，不能提交 GitHub 或与归档放在同一目录。
+迁移完成后应轮换 `MASTER_KEY_HEX`，并按新的密钥重新加密钱包数据库和备份。
+
 ## 新服务器恢复顺序
 
 1. 拉取 GitHub 仓库，确认工作区没有 `.env`、数据库或私钥文件。
