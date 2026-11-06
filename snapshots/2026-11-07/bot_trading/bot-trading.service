@@ -1,0 +1,23 @@
+[Unit]
+Description=Telegram bot trading service
+Wants=network-online.target pumpapi-zmq-bridge.service
+Requires=trade-service-tunnel.service
+After=network-online.target pumpapi-zmq-bridge.service trade-service-tunnel.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/solana/bot_trading
+Environment=PATH=/root/solana/pumpapi_zmq_bridge/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStartPre=/usr/bin/python3 /root/solana/bot_trading/scripts/trade_tunnel_check.py --attempts 5
+ExecStartPre=/usr/bin/python3 /root/solana/bot_trading/scripts/verify_simulate_only_config.py
+ExecStart=/root/solana/bot_trading/target/release/bot-trading
+Restart=on-failure
+RestartSec=2
+TimeoutStartSec=60
+TimeoutStopSec=30
+UMask=0077
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

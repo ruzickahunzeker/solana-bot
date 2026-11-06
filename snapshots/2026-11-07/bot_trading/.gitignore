@@ -1,0 +1,27 @@
+# Runtime secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Runtime data and local backups
+/data/
+/backups/
+/logs/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.log
+
+# Rust build output
+/target/
+__pycache__/
+*.pyc
+
+# Local editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp

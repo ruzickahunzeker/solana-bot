@@ -1,0 +1,2 @@
+-- The startup helper adds route_length only when absent and records schema
+-- version 6. SQLite does not support portable ADD COLUMN IF NOT EXISTS.

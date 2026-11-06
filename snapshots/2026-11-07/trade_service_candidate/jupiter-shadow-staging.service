@@ -1,0 +1,25 @@
+[Unit]
+Description=Candidate Jupiter read-only Shadow sampler
+After=network-online.target trade-service-candidate-staging.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/solana/trade_service/candidate
+EnvironmentFile=-/root/solana/trade_service/candidate/.env
+Environment=JUPITER_SHADOW_BASE=http://127.0.0.1:18887
+Environment=JUPITER_SHADOW_INTERVAL_SECONDS=60
+Environment=JUPITER_SHADOW_DURATION_SECONDS=86400
+Environment=JUPITER_SHADOW_READY_TIMEOUT_SECONDS=300
+Environment=JUPITER_SHADOW_LOG_DIR=/tmp/jupiter-shadow-runs
+Environment=TRADE_SERVICE_SIMULATE_ONLY=true
+ExecStart=/root/solana/trade_service/candidate/scripts/jupiter_shadow_sample.sh
+UMask=0077
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=0
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

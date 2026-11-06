@@ -1,0 +1,16 @@
+[Unit]
+Description=PumpAPI first two buy wallet recorder (no trade submissions)
+After=network-online.target pumpapi-zmq-bridge.service
+Wants=network-online.target pumpapi-zmq-bridge.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/solana/bot_trading
+ExecStart=/root/solana/pumpapi_zmq_bridge/.venv/bin/python3 /root/solana/bot_trading/scripts/first_two_wallet_copy.py --log-file /root/solana/bot_trading/data/first_two_wallet_copy.log
+Restart=on-failure
+RestartSec=2
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

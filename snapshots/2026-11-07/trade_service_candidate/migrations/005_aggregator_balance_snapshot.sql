@@ -1,0 +1,2 @@
+-- The startup helper adds balance_snapshot_json only when absent, then records
+-- schema version 5. SQLite does not support portable ADD COLUMN IF NOT EXISTS.

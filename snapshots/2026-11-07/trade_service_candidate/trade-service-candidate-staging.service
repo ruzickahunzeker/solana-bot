@@ -1,0 +1,31 @@
+[Unit]
+Description=Candidate Pump Trade Service staging (simulate-only, 18887)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/solana/trade_service/candidate
+EnvironmentFile=-/root/solana/trade_service/candidate/.env
+# EnvironmentFile is retained for secrets and wallet configuration. The
+# staging values are passed through env(1) so they override duplicate keys in
+# the base .env file (which intentionally still points at 18787/current data).
+ExecStart=/usr/bin/env \
+  TRADE_HTTP_ADDR=127.0.0.1:18887 \
+  TRADE_DATABASE_URL=sqlite:///tmp/candidate-staging-data/trades.sqlite \
+  WALLET_DATABASE_URL=sqlite:///tmp/candidate-staging-data/wallets.sqlite \
+  CONVERSION_DATABASE_URL=sqlite:///tmp/candidate-staging-data/conversions.sqlite \
+  TRADE_SERVICE_SIMULATE_ONLY=true \
+  SDK_TWO_HOP_LIVE_ENABLED=false \
+  ENABLE_SIMULATE=true \
+  CONVERSION_LIVE_ENABLED=false \
+  /root/solana/trade_service/candidate/target/release/pump-trade-service
+Restart=always
+RestartSec=2
+TimeoutStopSec=30
+UMask=0077
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

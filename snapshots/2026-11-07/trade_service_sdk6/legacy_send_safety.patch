@@ -1,0 +1,208 @@
+--- a/src/sdk_client.rs
++++ b/src/sdk_client.rs
+@@ -1528,7 +1528,12 @@
+         let mut last_submitted = None;
+         let mut fallback_notes = Vec::new();
+         let lanes = self.trade_execution_lanes(&trade)?;
+-        for lane in lanes {
++        // A live SDK call can fail after sending without returning a visible
++        // signature. Never rebuild the same order on another lane.
++        for lane in lanes
++            .into_iter()
++            .take(if trade.simulate { usize::MAX } else { 1 })
++        {
+             match self.buy_on_lane(lane, trade.clone()).await {
+                 Ok(mut result) if result.success => {
+                     info!(
+@@ -1660,7 +1665,12 @@
+         let mut last_submitted = None;
+         let mut fallback_notes = Vec::new();
+         let lanes = self.trade_execution_lanes(&trade)?;
+-        for lane in lanes {
++        // A live SDK call can fail after sending without returning a visible
++        // signature. Never rebuild the same order on another lane.
++        for lane in lanes
++            .into_iter()
++            .take(if trade.simulate { usize::MAX } else { 1 })
++        {
+             match self.sell_on_lane(lane, trade.clone()).await {
+                 Ok(mut result) if result.success => {
+                     info!(
+@@ -2187,17 +2197,35 @@
+         let Some(signature_text) = result.signature.as_deref() else {
+             return Ok(None);
+         };
+-        let signature =
+-            Signature::from_str(signature_text).context("parse submitted transaction signature")?;
++        let signature = match Signature::from_str(signature_text) {
++            Ok(signature) => signature,
++            Err(_) => {
++                result.success = false;
++                result.error =
++                    Some("submitted signature is invalid; reconcile order status".into());
++                return Ok(Some(false));
++            }
++        };
+         let deadline = Instant::now() + Duration::from_millis(trade.mev_submit_verify_ms);
+ 
+         loop {
+-            let statuses = lane
++            let statuses = match lane
+                 .client
+                 .get_rpc()
+                 .get_signature_statuses_with_history(&[signature])
+                 .await
+-                .map_err(|error| anyhow!("{}", redact_urls(&error.to_string())))?;
++            {
++                Ok(statuses) => statuses,
++                Err(error) => {
++                    result.success = false;
++                    result.error = Some(format!(
++                        "{} signature status unavailable: {}; reconcile order status",
++                        lane.swqos_type.as_str(),
++                        redact_urls(&error.to_string())
++                    ));
++                    return Ok(Some(false));
++                }
++            };
+             if let Some(status) = statuses.value.into_iter().next().flatten() {
+                 if let Some(error) = status.err {
+                     result.success = false;
+@@ -2218,7 +2246,7 @@
+             if Instant::now() >= deadline {
+                 result.success = false;
+                 result.error = Some(format!(
+-                    "{} submit signature not visible after {}ms; trying fallback lane",
++                    "{} submit signature not visible after {}ms; reconcile order status",
+                     lane.swqos_type.as_str(),
+                     trade.mev_submit_verify_ms
+                 ));
+@@ -2226,7 +2254,7 @@
+                     swqos_lane = lane.swqos_type.as_str(),
+                     signature = %signature,
+                     verify_ms = trade.mev_submit_verify_ms,
+-                    "lane signature not visible, trying fallback"
++                    "lane signature not visible; awaiting order reconciliation"
+                 );
+                 return Ok(Some(false));
+             }
+--- a/src/executor.rs
++++ b/src/executor.rs
+@@ -276,7 +276,9 @@
+     match result {
+         Ok(result) if result.success => {
+             if simulate {
+-                return (TradeStatus::Simulated, result.signature, result.error);
++                // The SDK may report a locally signed simulation fingerprint.
++                // It is not a submitted transaction signature.
++                return (TradeStatus::Simulated, None, result.error);
+             }
+             if result.signature.is_some() {
+                 (TradeStatus::Submitted, result.signature, result.error)
+@@ -285,23 +287,94 @@
+             }
+         }
+         Ok(result) => {
+-            let known_failed_submission = result.error.as_deref().is_some_and(|error| {
+-                error.contains("landed with transaction error")
+-                    || error.contains("submit signature not visible")
+-                    || error.contains("sendTransaction failed")
+-            });
++            if simulate {
++                return (TradeStatus::Failed, None, result.error);
++            }
++            let known_failed_submission = result
++                .error
++                .as_deref()
++                .is_some_and(|error| error.contains("landed with transaction error"));
+             let status = if known_failed_submission {
+                 TradeStatus::Failed
+-            } else if result.signature.is_some() {
++            } else {
++                // A failed SDK send without a returned signature may already
++                // have reached the lane; keep the order pending review.
+                 TradeStatus::Unknown
+-            } else {
+-                TradeStatus::Failed
+             };
+             (status, result.signature, result.error)
+         }
+         Err(error) => {
+             error!(error = %error, "trade execution call failed");
+-            (TradeStatus::Failed, None, Some(error.to_string()))
+-        }
+-    }
+-}
++            // A live transport failure may occur after the lane accepted the
++            // transaction; without a signature the result still needs review.
++            (
++                if simulate {
++                    TradeStatus::Failed
++                } else {
++                    TradeStatus::Unknown
++                },
++                None,
++                Some(error.to_string()),
++            )
++        }
++    }
++}
++
++#[cfg(test)]
++mod status_tests {
++    use super::map_status;
++    use crate::models::TradeStatus;
++    use crate::sdk_client::ExecuteResult;
++
++    #[test]
++    fn invisible_live_signature_is_unknown_and_preserved() {
++        let result = ExecuteResult {
++            success: false,
++            signature: Some("submitted-signature".into()),
++            error: Some("submit signature not visible; reconcile order status".into()),
++        };
++        let (status, signature, _) = map_status(Ok(result), false);
++        assert_eq!(status, TradeStatus::Unknown);
++        assert_eq!(signature.as_deref(), Some("submitted-signature"));
++    }
++
++    #[test]
++    fn live_transport_error_without_signature_is_unknown() {
++        let (status, signature, _) = map_status(Err(anyhow::anyhow!("timeout")), false);
++        assert_eq!(status, TradeStatus::Unknown);
++        assert!(signature.is_none());
++    }
++
++    #[test]
++    fn failed_live_send_without_signature_is_unknown() {
++        let result = ExecuteResult {
++            success: false,
++            signature: None,
++            error: Some("sendTransaction failed after timeout".into()),
++        };
++        let (status, signature, _) = map_status(Ok(result), false);
++        assert_eq!(status, TradeStatus::Unknown);
++        assert!(signature.is_none());
++    }
++
++    #[test]
++    fn simulation_signature_is_not_exposed() {
++        for success in [true, false] {
++            let result = ExecuteResult {
++                success,
++                signature: Some("locally-signed-simulation".into()),
++                error: None,
++            };
++            let (status, signature, _) = map_status(Ok(result), true);
++            assert_eq!(
++                status,
++                if success {
++                    TradeStatus::Simulated
++                } else {
++                    TradeStatus::Failed
++                }
++            );
++            assert!(signature.is_none());
++        }
++    }
++}

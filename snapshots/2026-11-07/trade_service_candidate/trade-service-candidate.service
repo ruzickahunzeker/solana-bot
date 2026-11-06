@@ -1,0 +1,20 @@
+[Unit]
+Description=Candidate Pump Trade Service (simulate-only)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/solana/trade_service/candidate
+EnvironmentFile=-/root/solana/trade_service/candidate/.env
+Environment=TRADE_SERVICE_SIMULATE_ONLY=true
+ExecStart=/root/solana/trade_service/candidate/target/release/pump-trade-service
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=30
+UMask=0077
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

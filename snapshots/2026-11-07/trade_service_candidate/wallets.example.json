@@ -1,0 +1,12 @@
+{
+  "wallets": [
+    {
+      "wallet_id": "main",
+      "private_key_base58": "replace-with-main-wallet-base58-keypair-secret"
+    },
+    {
+      "wallet_id": "wallet_2",
+      "private_key_base58": "replace-with-second-wallet-base58-keypair-secret"
+    }
+  ]
+}

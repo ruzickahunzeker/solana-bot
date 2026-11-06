@@ -1,0 +1,17 @@
+[Unit]
+Description=PumpAPI WebSocket to ZeroMQ bridge
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/solana/pumpapi_zmq_bridge
+ExecStart=/root/solana/pumpapi_zmq_bridge/.venv/bin/python /root/solana/pumpapi_zmq_bridge/pumpapi_zmq_bridge.py
+Restart=always
+RestartSec=2
+UMask=0077
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+{
+  "inputMint": "So11111111111111111111111111111111111111112",
+  "outputMint": "2GieYk6QjWsAqmiY68EMbRqdKda7oRRjLBPbmbnW7LpL",
+  "inAmount": "1000000",
+  "outAmount": "100000",
+  "otherAmountThreshold": "99000",
+  "swapMode": "ExactIn",
+  "slippageBps": 100,
+  "priceImpactPct": "0.01",
+  "routePlan": [
+    {
+      "swapInfo": {
+        "label": "Raydium CP",
+        "inputMint": "So11111111111111111111111111111111111111112",
+        "outputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+      }
+    },
+    {
+      "swapInfo": {
+        "label": "Orca Whirlpool",
+        "inputMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "outputMint": "2GieYk6QjWsAqmiY68EMbRqdKda7oRRjLBPbmbnW7LpL"
+      }
+    }
+  ]
+}

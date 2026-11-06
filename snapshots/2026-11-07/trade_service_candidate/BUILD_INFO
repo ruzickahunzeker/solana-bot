@@ -1,0 +1,10 @@
+role=candidate
+base_backend=sdk11
+sdk_version=11.0.1
+status=isolated-gates-passed
+live_enabled=false
+toolchain=cargo-1.99.0,rustc-1.99.0
+source_manifest_sha256=979c3cac8f19c89a5e0415f0ff256adc3ae674ef6e455b646a573d117ce1ff53
+cargo_toml_sha256=657c682a5966cd312d1bf0dc3757b5bf295177285a5d8fed0396f1591cc7d06e
+cargo_lock_sha256=a57ef0a9b856e05427789db5579479d9a94f5d9b5f1c0990b6c1fd3a80d785c1
+sha256=405494b7de8759977e0118d36e96732cb82e777786c1eee27798f27dfe80ea7a
