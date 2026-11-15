@@ -2,6 +2,13 @@ use std::{future::Future, pin::Pin};
 
 use crate::{application::ports::readiness::ReadinessSource, domain::readiness::ReadinessReport};
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct ReadinessSettings {
+    pub blockhash_max_age_ms: u64,
+    pub broadcast: crate::domain::execution_policy::BroadcastPolicy,
+    pub pumpapi_enabled: bool,
+}
+
 // One boxed future at the HTTP composition boundary permits safe source injection.
 pub trait ReadinessQuery: Send + Sync {
     fn inspect(&self) -> Pin<Box<dyn Future<Output = ReadinessReport> + Send + '_>>;

@@ -11,6 +11,15 @@ pub struct ReadinessWalletMetadata {
 }
 
 #[derive(Debug, Clone)]
+pub(crate) struct WalletReadinessObservation {
+    pub default_wallet_id: String,
+    pub wallet_count: usize,
+    pub wallets: Vec<WalletDescriptor>,
+    pub wallet_metadata: ReadinessWalletMetadata,
+    pub rpc_ok: bool,
+}
+
+#[derive(Debug, Clone)]
 pub struct ReadinessSnapshot {
     pub default_wallet_id: String,
     pub wallet_count: usize,

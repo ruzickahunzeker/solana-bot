@@ -1,6 +1,8 @@
 # NP-03 启动组装与资源交接边界
 
-日期：2026-11-15。源码及受限类型检查通过，四项新增 Rust 合同尚未执行；未部署。
+日期：2026-11-15。970d835 源码及完整离线 CI 通过，未部署。Actions `43695116074` /
+artifact `14154666415` 下载核对，bootstrap-assembly 四项通过；完整并发 1452
+（143.42 秒）/串行 1452（253.37 秒）零失败/忽略/过滤。
 
 ## 实际提取
 
@@ -11,7 +13,7 @@
   不加载钱包、监听或启动 observation worker。所有 API/application 仍使用原 Arcs。
 - Bootstrapped 返回 AppState、原钱包/仓储日志句柄、原 BlockhashRefresher owner 与
   原 ObservationPlan；main 保留 Router/TraceLayer、监听、日志、worker start 和 shutdown。
-- 两段原初始化/服务组装语句在提取前后逐字节比较完全一致；仅新增资源包/函数交接，
+- 两段原初始化/服务组装语句在 970d835 提取时逐字节比较完全一致；仅新增资源包/函数交接，
   原错误 context/顺序不变。main 现在 233 行，bootstrap 277 行，不以行数当完成度。
 - 临时 runtime_wallets 配置 Vec 现在在 initialize 返回时释放，而非保留到 main 退出；
   SDK/Config 所持原身份/密钥不变，不声称 Drop 会清零秘密或已完成 signer 资源隔离。
@@ -38,12 +40,15 @@ provider/TLS、数据库所有迁移、进程崩溃/刷盘或生产关停均已�
   RSS 1,551,888 KiB，exit=0，无新增测试警告。
 - 受限 bin check：`target/dev-checks/20261115T082256Z-159553`，约 4 秒，
   RSS 658,692 KiB，exit=0，前批七组生产警告保持，不抑制/假调用。
-- CI 新增 `bootstrap-assembly` 四项专项并保留原全部专项/并发/串行；
-  前序 `cb94bdd` / Actions `43693519994` 虽完整并发/串行各 1448 通过，但不包含
-  本批，不能冒用其结果。
+- 本批 `43695116074` 的 bootstrap-assembly 四项、HTTP 201、参数 3 与全部 steps
+  exit=0，manifest/lock/vendor 身份匹配；完整两套回归已执行。前序 cb94bdd 的 1448
+  不包含本批；后续 readiness 六项不在本已验收快照，不能混用。
 - SDK/依赖/vendor/release、运行配置与生产数据不变，不部署/重启或实际广播。
 
 ## 继续
+
+后续 readiness 边界只改变该服务构造器接线，见 `READINESS_RESOURCE_BOUNDARY.md`，
+不将前序提取的字节比较冒充新接线也字节不变，两个批次验收分开。
 
 AppState 仍有 Config/接受/index/journal/blockhash 等具体依赖，SDK 其他方向/协议/模式、
 全局 RPC/cache/backend 边界与升级/协议演练仍须完成；PumpAPI 新交易对接保持暂停。

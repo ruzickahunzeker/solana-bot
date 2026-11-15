@@ -129,6 +129,14 @@ pub struct StonkFunViaSolConfig {
 }
 
 impl Config {
+    pub(crate) fn readiness_settings(&self) -> crate::application::readiness::ReadinessSettings {
+        crate::application::readiness::ReadinessSettings {
+            blockhash_max_age_ms: self.blockhash_max_age_ms,
+            broadcast: self.security.broadcast,
+            pumpapi_enabled: self.pumpapi.enabled,
+        }
+    }
+
     pub(crate) fn trade_validation_settings(
         &self,
     ) -> crate::application::trade_settings::TradeValidationSettings {

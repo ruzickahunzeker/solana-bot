@@ -6,11 +6,16 @@
 
 ## 统计口径
 
-- 最新完整验收 `cb94bdd` / Actions `43693519994` 已终态 success，artifact `14153732230`
+- 最新完整验收 bootstrap `970d835` / Actions `43695116074` 已终态 success，artifact
+  `14154666415` 核对：完整并发 1452（143.42 秒）/串行 1452（253.37 秒）零失败/忽略/过滤，
+  bootstrap 4、HTTP 201、参数 3 及全部步骤通过，不重跑旧任务。
+- 下一批 readiness 三值设置/项目钱包诊断 port 已接源码，六项新合同仅受限 test/bin
+  check，尚未发布，不套用当前 bootstrap CI，见 `READINESS_RESOURCE_BOUNDARY.md`。
+- 前序完整验收 `cb94bdd` / Actions `43693519994` 已终态 success，artifact `14153732230`
   核对：完整并发 1448（142.77 秒）/串行 1448（251.64 秒）零失败/忽略/过滤，
   api-access-policy 4、validation-settings 4、HTTP 201、参数 3 与全部步骤通过，旧任务不重跑。
-- 接续 bootstrap 原语句提取/资源交接已有源码，四项新合同仅受限 test/bin check，
-  尚未发布；不加载真实 SDK/钱包或部署，见 `BOOTSTRAP_ASSEMBLY_BOUNDARY.md`。
+- bootstrap 原语句提取/资源交接四项及完整回归已在 970d835 验收；不加载真实 SDK/钱包
+  或部署，见 `BOOTSTRAP_ASSEMBLY_BOUNDARY.md`。后继 readiness 接线不冒用该字节对照/运行结果。
 - 前序完整验收 NP-03 `449731c` / Actions `43691952757` 已终态 success，artifact
   `14153850007` 核对：完整并发 1443（133.72 秒）/串行 1443（236.47 秒）零失败/忽略/过滤。
   command-defaults 4、param-cache-port 2 及全部步骤通过，不冒用父批或重跑旧 CI。

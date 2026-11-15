@@ -14,9 +14,9 @@ use crate::{
             ordinary_sol_buy::SdkOrdinarySolBuyBackend, pool_queries::SdkPoolReadBackend,
             quote_preflight::SdkQuotePreflightBackend,
             quote_reconciliation::SdkQuoteReconciliationRuntime,
-            quote_submit::SdkQuoteSubmissionRuntime, sol_transfer::SdkSolTransferRuntime,
-            wallet_balances::SdkWalletBalanceRuntime, wallet_identity::SdkWalletIdentityDirectory,
-            wallet_management::SdkWalletManagement,
+            quote_submit::SdkQuoteSubmissionRuntime, readiness::SdkReadinessWalletObserver,
+            sol_transfer::SdkSolTransferRuntime, wallet_balances::SdkWalletBalanceRuntime,
+            wallet_identity::SdkWalletIdentityDirectory, wallet_management::SdkWalletManagement,
         },
     },
     aggregator_quote::QuoteStore,
@@ -150,11 +150,10 @@ fn complete(
         conversions,
     } = resources;
     let readiness = Arc::new(ReadinessService::new(RuntimeReadinessSource::new(
-        config.clone(),
-        wallets.clone(),
+        config.readiness_settings(),
+        SdkReadinessWalletObserver::new(wallets.clone(), read_rpc.clone()),
         blockhash_cache.clone(),
         persistence.clone(),
-        read_rpc.clone(),
     )));
     let params = Arc::new(ParamCache::default());
     let pool_queries = Arc::new(PoolQueryService::new(

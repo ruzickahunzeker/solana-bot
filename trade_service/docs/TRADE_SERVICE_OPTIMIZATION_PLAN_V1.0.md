@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 目标 active，PumpAPI 开发暂停。C3d2/C3e、NP-03 默认值/缓存及鉴权/普通校验配置均已离线验收；最新 `cb94bdd` / Actions `43693519994` / artifact `14153732230` 核对，完整并发/串行各 1448 通过。接续 bootstrap 原语句提取/资源交接四项仅类型检查，尚未在上述快照。SDK 固定 6.0.2，不部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[SDK 扫描](optimization/SDK_PENDING_OBSERVATION_SCAN.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 目标 active，PumpAPI 开发暂停。C3d2/C3e、NP-03 默认值/缓存/鉴权/普通校验与 bootstrap 资源组装均已离线验收；最新 `970d835` / Actions `43695116074` / artifact `14154666415` 核对，完整并发/串行各 1452 通过。接续 readiness 三值设置/钱包诊断 port 六项仅类型检查，尚未在上述快照。SDK 固定 6.0.2，不部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[SDK 扫描](optimization/SDK_PENDING_OBSERVATION_SCAN.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -16,9 +16,13 @@ NP-03 API 鉴权/普通校验配置边界及五项新增合同已在 cb94bdd/436
 31 个 Handler 鉴权位置与普通校验/执行政策的顺序保持，详见 `optimization/API_CONFIG_BOUNDARIES.md`。
 
 再接续 bootstrap 组装入口：main 仅保留监听/日志/任务启动与停机协调，原两段资源加载/
-服务组装移到 bootstrap.rs，原语句字节一致、原句柄/顺序不变。四项新合同仅受限 test/bin
-check，不在当前 cb94bdd CI，详见 `optimization/BOOTSTRAP_ASSEMBLY_BOUNDARY.md`；不把
+服务组装移到 bootstrap.rs，原语句字节一致、原句柄/顺序不变。四项新合同与完整两套
+回归已在 970d835 验收，详见 `optimization/BOOTSTRAP_ASSEMBLY_BOUNDARY.md`；不把
 提取组装当作所有资源隔离或真实 SDK/生产初始化验收。
+
+NP-03 接续 readiness：汇总层只接三值设置/项目钱包诊断 observer，原 SDK probe/Registry/
+共享 runtime 留在 SDK adapter，原 observe_health 与 V1 ready 规则不变。六项新增仅类型
+检查，不在 970d835 的 bootstrap CI，详见 `optimization/READINESS_RESOURCE_BOUNDARY.md`。
 
 ## 1. 范围与目标
 
@@ -56,7 +60,7 @@ check，不在当前 cb94bdd CI，详见 `optimization/BOOTSTRAP_ASSEMBLY_BOUNDA
 | --- | --- | --- |
 | NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
-| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取接同一 runtime/共享冷却。默认值/参数缓存原 writer、API 鉴权/普通校验窄配置已在各专项及 cb94bdd 完整回归（各 1448）验收。bootstrap 原两段语句提取/资源交接四项仅类型检查，见 BOOTSTRAP_ASSEMBLY_BOUNDARY.md。原 SDK reader oracle/必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、Config/接受/index/journal/cache/依赖及全部生命周期仍待续 |
+| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取接同一 runtime/共享冷却。默认值/参数缓存/鉴权/普通校验与 bootstrap 已离线验收，970d835 完整回归各 1452 通过。后续 readiness 汇总只接三值设置/项目 observer，SDK 查询留在 adapter，六项仅类型检查，见 READINESS_RESOURCE_BOUNDARY.md。原 SDK reader oracle/必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、Config/接受/index/journal/cache/依赖及全部生命周期仍待续 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 

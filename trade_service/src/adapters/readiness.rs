@@ -1,79 +1,59 @@
 use std::{future::Future, sync::Arc};
 
 use crate::{
-    adapters::rpc::read_runtime::SharedReadRuntime,
-    application::ports::readiness::ReadinessSource,
+    application::{
+        ports::readiness::{ReadinessSource, ReadinessWalletObserver},
+        readiness::ReadinessSettings,
+    },
     blockhash_cache::BlockhashCache,
-    config::Config,
     domain::{execution_policy::BroadcastPolicy, readiness::ReadinessSnapshot},
     persistence::TradePersistence,
-    wallets::WalletRegistry,
 };
 
-pub(crate) struct RuntimeReadinessSource {
-    config: Arc<Config>,
-    wallets: Arc<WalletRegistry>,
+pub(crate) struct RuntimeReadinessSource<W> {
+    settings: ReadinessSettings,
+    wallets: W,
     blockhash_cache: Arc<BlockhashCache>,
     persistence: Arc<TradePersistence>,
-    read_rpc: Arc<SharedReadRuntime>,
 }
 
-impl RuntimeReadinessSource {
+impl<W> RuntimeReadinessSource<W> {
     pub fn new(
-        config: Arc<Config>,
-        wallets: Arc<WalletRegistry>,
+        settings: ReadinessSettings,
+        wallets: W,
         blockhash_cache: Arc<BlockhashCache>,
         persistence: Arc<TradePersistence>,
-        read_rpc: Arc<SharedReadRuntime>,
     ) -> Self {
         Self {
-            config,
+            settings,
             wallets,
             blockhash_cache,
             persistence,
-            read_rpc,
         }
     }
 }
 
-impl ReadinessSource for RuntimeReadinessSource {
+impl<W: ReadinessWalletObserver> ReadinessSource for RuntimeReadinessSource<W> {
     async fn read(&self) -> ReadinessSnapshot {
-        let probe = self.wallets.default().readiness_probe();
-        let (
-            has_blockhash,
-            blockhash_age_ms,
-            (rpc_ok, default_wallet_id, wallet_count, wallets, wallet_metadata),
-            trade_database_healthy,
-        ) = observe_health(
-            &self.blockhash_cache,
-            self.config.blockhash_max_age_ms,
-            async {
-                let rpc_ok = probe.ping(&self.read_rpc).await;
-                let default_wallet_id = self.wallets.default_wallet_id().to_string();
-                let wallet_count = self.wallets.wallet_count();
-                let wallets = self.wallets.public_infos();
-                (
-                    rpc_ok,
-                    default_wallet_id,
-                    wallet_count,
-                    wallets,
-                    probe.into_metadata(),
-                )
-            },
-            self.persistence.healthy(),
-        )
-        .await;
-        let paused = self.config.security.broadcast == BroadcastPolicy::Disabled;
-        let pumpapi_executor = self.config.pumpapi.enabled;
+        let (has_blockhash, blockhash_age_ms, wallet_observation, trade_database_healthy) =
+            observe_health(
+                &self.blockhash_cache,
+                self.settings.blockhash_max_age_ms,
+                self.wallets.observe_wallets(),
+                self.persistence.healthy(),
+            )
+            .await;
+        let paused = self.settings.broadcast == BroadcastPolicy::Disabled;
+        let pumpapi_executor = self.settings.pumpapi_enabled;
         let trade_persistence_mode = format!("{:?}", self.persistence.mode()).to_ascii_lowercase();
         ReadinessSnapshot {
-            default_wallet_id,
-            wallet_count,
-            wallets,
-            wallet_metadata,
+            default_wallet_id: wallet_observation.default_wallet_id,
+            wallet_count: wallet_observation.wallet_count,
+            wallets: wallet_observation.wallets,
+            wallet_metadata: wallet_observation.wallet_metadata,
             has_blockhash,
             blockhash_age_ms,
-            rpc_ok,
+            rpc_ok: wallet_observation.rpc_ok,
             paused,
             pumpapi_executor,
             trade_persistence_mode,
@@ -100,5 +80,7 @@ async fn observe_health<R>(
     )
 }
 
+#[cfg(test)]
+mod settings_tests;
 #[cfg(test)]
 mod tests;

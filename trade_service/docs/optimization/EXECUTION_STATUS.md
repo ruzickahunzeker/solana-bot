@@ -4,15 +4,29 @@
 
 ## 当前续作检查点（覆盖下方历史状态）
 
-最新完整验收：`cb94bdd1d5b54ffd6566e722d92529e06d2f3718` / Actions `43693519994`
+最新完整验收：bootstrap `970d8350a6508bbebcf2ebbbbae7b09bebfa7b8c` /
+Actions `43695116074` 已终态 success，artifact `14154666415` 下载核对。完整并发 1452
+（143.42 秒）/串行 1452（253.37 秒）零失败/忽略/过滤；bootstrap-assembly 4/HTTP 201/
+参数 3 及全部步骤 exit=0，manifest/lock/vendor 指纹匹配，原七组生产警告。
+999 文件/12,438,464 字节审计通过，真实 main/索引未变；旧终态任务不重跑。
+
+下一批 readiness 窄资源边界已有源码：三值 Settings 与项目钱包诊断 port，SDK 查询留在
+SdkReadinessWalletObserver，原 Registry/runtime/cache/persistence Arcs 复用；observe_health
+helper 字节不变，V1 ready/诊断/采样顺序不改。六项新合同仅类型检查，未纳入 970d835。
+test check `20261115T084206Z-166970` 33 秒/RSS 2,130,684 KiB、bin check
+`20261115T084403Z-167501` 13 秒/RSS 978,984 KiB 均 exit=0；原七组生产警告。
+policy 七项通过，后批 readiness-settings 专项及完整回归验收；原 bootstrap 构造器仅该
+接线有意变化，不冒用前序 byte-identical 结论。见 `READINESS_RESOURCE_BOUNDARY.md`。
+
+前序完整验收：`cb94bdd1d5b54ffd6566e722d92529e06d2f3718` / Actions `43693519994`
 已终态 success，artifact `14153732230` 下载核对。完整并发 1448（142.77 秒）/串行 1448
 （251.64 秒）零失败/忽略/过滤，api-access-policy 4/validation-settings 4/HTTP 201/参数 3
 与全部步骤 exit=0，manifest/lock/vendor 身份匹配。996 文件/12,421,585 字节审计通过，
 真实 main/索引未变；原七组生产警告保持。五项新增已实际执行，不重跑旧终态任务。
 
-下一批 bootstrap 已有源码：原初始化/服务组装两段字节相同地移入 bootstrap.rs，main 保留
+本批 bootstrap 已发布源码：原初始化/服务组装两段字节相同地移入 bootstrap.rs，main 保留
 监听/日志/任务 start/停机协调。Resources/Bootstrapped 交接原 Arcs 和 refresher owner；
-四项新合同仅受限 test/bin check，尚未纳入 cb94bdd/43693519994，不抢先触发重复 CI。
+四项新合同现已在 970d835/43695116074 实际验收，不冒用更旧 cb94bdd，也不重复触发。
 test check `20261115T082114Z-159090` 约 14 秒/RSS 1,551,888 KiB、bin check
 `20261115T082256Z-159553` 约 4 秒/RSS 658,692 KiB 均 exit=0；原七组生产警告。
 policy 七项通过，后批保留 bootstrap-assembly 专项及全部回归。临时 runtime_wallets Vec
