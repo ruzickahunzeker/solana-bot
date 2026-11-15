@@ -30,6 +30,14 @@
 
 ## 已验收运行
 
+首轮类型/别名边界 `8bd77968dce15ac2985808a88614d6b78780949c` /
+[Actions 43710108477](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43710108477)
+已终态 failure，artifact `14159823162` 下载核对：全部前置/服务类型检查及工具三项
+通过。Clippy 子命令未收到全局 --config，离线 zap 来源解析失败，未到真实类型检查，
+81 负例和完整回归未执行。现只修参数转发及其零依赖真实 Cargo 回归，待新快照；
+保留离线、源替换、lock/vendor 和全部原断言，不重跑旧失败任务。原审计绑定 1017 文件/
+12,568,938 字节，真实 main/索引不变，不套用父批。
+
 最新完整验收普通执行编排 `26445c597c75d273bf7a8a7264da9cc33192fb16` /
 [Actions 43707853050](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43707853050)
 已终态 success，artifact `14159283766` 下载核对：完整并发 1473（112.34 秒）/串行

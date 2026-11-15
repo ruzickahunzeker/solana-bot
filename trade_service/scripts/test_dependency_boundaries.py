@@ -145,6 +145,21 @@ class DependencyBoundaryTests(unittest.TestCase):
                     observed.update(span["line_start"] for span in error["spans"] if span.get("is_primary"))
             self.assertTrue(fields <= observed, result.stderr)
 
+    def test_cargo_clippy_forwards_the_locked_configuration_to_its_cargo_check_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "src").mkdir()
+            (root / "ci").mkdir()
+            (root / "Cargo.toml").write_text('[package]\nname="pump-trade-service"\nversion="0.0.0"\nedition="2021"\n')
+            (root / "src/main.rs").write_text("fn main() {}\n")
+            (root / "ci/locked-git-sources.toml").write_text('[build]\ntarget="boundary-invalid-target"\n')
+            subprocess.run(["cargo", "generate-lockfile", "--offline"], cwd=root, check=True, capture_output=True, timeout=30)
+            command = boundaries.cargo_clippy_command(root)
+            self.assertLess(command.index("clippy"), command.index("--config"))
+            result = subprocess.run(command, cwd=root, text=True, capture_output=True, timeout=30)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("boundary-invalid-target", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -147,7 +147,7 @@ The workflow installs Clippy for the already pinned Rust 1.95.0, never upgrades
 the SDK. The helper has its own manifest/lock and no runtime SDK dependency;
 the service manifest/lock/vendor stay unchanged.
 
-Local evidence: nine Python policy/restoration/metadata-only alias regressions
+Local evidence: ten Python policy/restoration/metadata-only alias regressions
 and seven workflow tests passed. The helper's isolated 512 MiB `cargo check`
 passed in 5.66 seconds/RSS 232,864 KiB; no service test binary was linked.
 The helper's three Rust tests and the real production/81-field checks still
@@ -155,3 +155,14 @@ require this batch's cloud run. Prior 26445c5 acceptance covers 1,473 service
 tests, not this new guard. Macro-generated interfaces, opaque capability/value
 flows, API-specific rules and remaining dependency directions retain their
 original review/acceptance requirements; this is not TS-09 completion.
+
+First cloud run 8bd7796 / Actions 43710108477 failed before the production
+boundary check: cargo-clippy did not forward the global `cargo --config ...`
+argument to its cargo-check child, which then could not resolve the locked zap
+Git source offline. All preceding checks and the helper's three Rust tests
+passed; the 81 negatives and complete service suites did not run. The command
+now passes `--config` after `clippy`. A dependency-free temporary Cargo fixture
+proves the child receives that configuration by requiring its sentinel invalid
+target error. This is metadata-only, has no SDK or runtime inputs, and does not
+relax offline mode, the lockfile, source provenance or negative assertions.
+Corrected production/negative/restoration acceptance still needs a new run.

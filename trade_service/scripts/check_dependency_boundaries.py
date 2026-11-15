@@ -142,12 +142,17 @@ def require_isolated_ci(root):
         raise RuntimeError("Only loopback networking is allowed")
 
 
+def cargo_clippy_command(root):
+    # cargo-clippy must receive this option itself before forwarding to cargo check.
+    return ["cargo", "clippy", "--config", str(root / "ci/locked-git-sources.toml"), "--locked", "--offline",
+            "--bin", "pump-trade-service", "--message-format=json", "--", "-A", "clippy::all"]
+
+
 def compiler_check(root, config, label):
     logs = root / "target/ci-validation/logs"
     logs.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, CLIPPY_CONF_DIR=str(config))
-    command = ["cargo", "--config", str(root / "ci/locked-git-sources.toml"), "clippy", "--locked", "--offline",
-               "--bin", "pump-trade-service", "--message-format=json", "--", "-A", "clippy::all"]
+    command = cargo_clippy_command(root)
     with subprocess.Popen(command, cwd=root, env=env, text=True, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE, start_new_session=True) as process:
         try:

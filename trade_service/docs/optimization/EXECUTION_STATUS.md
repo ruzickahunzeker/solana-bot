@@ -8,15 +8,21 @@
 计划 3.3 的五项设计补充不新增 TS/NP 编号，RouterLeg 不引入实现或依赖。
 PumpAPI 开发暂停，SDK 升级及生产边界保持不变。
 
+首轮类型门禁 `8bd7796` / Actions `43710108477` 已终态 failure，artifact
+`14159823162` 下载核对：此前所有步骤/服务类型检查通过，AST 工具三项通过；原源码
+Clippy 检查因子命令未接全局 --config 而无法离线解析原 zap 来源，负例/完整回归未运行。
+仅将参数传到 clippy 后，并补零依赖 Cargo fixture 的真实转发负例，十项 Python/七项
+policy 回归通过；不改 SDK/服务依赖、源替换、网络隔离或断言。修正待新快照，不重跑旧失败。
+
 最新完整验收普通执行编排 `26445c597c75d273bf7a8a7264da9cc33192fb16` /
 Actions `43707853050` 已终态 success，artifact `14159283766` 下载核对：完整并发
 1473（112.34 秒）/串行 1473（209.87 秒），零失败/忽略/过滤；ordinary-runtime 七项、
 ordinary-intake 八项与所有步骤 exit=0，源码身份/manifest/lock/vendor 匹配。不重跑旧任务。
 
 后继 NP-03/TS-09 类型门禁已接源码及 CI：三个生产层 forbid、26 类明确类型和外层别名
-解析、原源码/81 个预期负例/恢复源码检查；尚未运行本批完整验收。九项 Python 回归和
+解析、原源码/81 个预期负例/恢复源码检查；尚未运行本批完整验收。十项 Python 回归和
 七项 workflow 回归通过，含仅 metadata 的真实别名编译负例；开发用 syn 工具 512 MiB
-类型检查通过（5.66 秒/RSS 232,864 KiB），三项工具 Rust 测试仍待 CI。
+类型检查通过（5.66 秒/RSS 232,864 KiB），三项工具 Rust 测试已在首轮 CI 通过。
 服务依赖/SDK/交易路径不改，门禁不在小 VM 运行，详见 `DEVELOPMENT_CHECKS.md`。
 
 前序完整验收普通接受流程 `26be71781406be7f912d53bd26e04fb549dce363` /
