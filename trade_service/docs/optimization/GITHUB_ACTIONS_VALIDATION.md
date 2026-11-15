@@ -30,6 +30,19 @@
 
 ## 已验收运行
 
+最新已验收 C3d1 `87f86775c533ab18306abed634c1827eb02e98ec` /
+[Actions 43686886493](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43686886493)
+已终态 success，artifact `14150979478` 下载核对，identity/manifest 指纹匹配，所有步骤 exit=0。
+完整并发 1416 / 129.44 秒、串行 1416 / 229.33 秒，零失败/忽略/过滤；恢复 16、controller 12、
+sender 14、HTTP 200、参数 3 通过，原 18 项新增已实际执行。当前 C3d2 的 16 项新用例
+仅类型检查，独立 DDL 六项已通过，完整 Rust 验收待新源码快照，不混用 1416。
+下方 C3d1 in_progress 是发布时历史，不再等待或重跑这个终态任务。
+
+当前待验收 C3d1 `87f86775c533ab18306abed634c1827eb02e98ec` /
+[Actions 43686886493](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43686886493)
+已推送并确认 in_progress，新增 sdk-recovery 专项并保留原全部专项/完整两线程和串行套件。
+只跟踪此新句柄；当前 18 项新增用例无运行结果，不借用下方父提交的 1398。
+
 最新已验收 C3c2 `fd1c7cb8869d670cffbd3c5485744b7e8666f773` /
 [Actions 43685088919](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43685088919)
 已终态 success，artifact `14150028402` 下载核对，manifest/SDK 身份匹配，全部步骤 exit=0。

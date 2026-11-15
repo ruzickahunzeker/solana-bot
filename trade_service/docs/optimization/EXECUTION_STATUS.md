@@ -2,6 +2,24 @@
 
 更新日期：2026-11-15。主计划：`../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md`。
 
+当前 C3d2 源码已接 010 专有 partial index/严格初始化 guard、原聚合与 SDK 两索引同只读快照
+有界分页归并、同一 scanner/worker/共享 RPC 预算与默认关闭开关。16 项新增 Rust（含回环子进程
+入口）仅类型检查（最终约 8 秒/RSS 1,188,120 KiB），bin check 约 5 秒/RSS 710,956 KiB、
+原五组生产警告保持；独立 SQLite DDL 六项、policy 七项通过，完整运行待 CI。
+实际 factory→共享 runtime→仅回环原签名 RPC、四阶段 SDK、文件重开和两类真实原订单共享游标
+已有测试源码，不把它们当已运行或生产恢复。010 不重建表/改旧行或 007，异常标记/索引拒绝、
+marker 失败回滚；未修改线上配置或启用 worker，详见 `SDK_PENDING_OBSERVATION_SCAN.md`。
+最近完整验收为 C3d1 `87f8677` / Actions `43686886493` / artifact `14150979478`
+下载核对，完整并发 1416（129.44 秒）/串行 1416（229.33 秒），恢复 16、controller 12、
+sender 14、HTTP 200、参数 3、全部步骤通过，不覆盖当前新增 16 项。下方旧运行中记录为历史，
+不重跑已终态 CI；目标 active，不升级 SDK/部署/操作生产数据/发送交易，PumpAPI 暂停保持。
+
+最新运行句柄：C3d1 `87f86775c533ab18306abed634c1827eb02e98ec` / Actions `43686886493`
+已推送独立源码分支并确认 in_progress；本批 18 项与全部完整套件待其终态结果。
+978 文件/12,295,075 字节经路径白名单/常见敏感字面量/diff 审计，真实 main/索引未改，
+不包含其他服务改动、运行配置、钱包、数据库、日志或二进制。不重新等待已成功的 C3c2。
+主线继续 C3d2 索引/有界扫描/worker，保留本批 CI 失败时优先修复的门槛，不把类型检查当运行通过。
+
 当前 C3d1 已在源码接普通 SDK 原签名的显式只读 context/历史 replay/原库 finality/CAS/读回，
 typed operation 与原请求/hash/候选/签名绑定，不恢复 owner、不取 signer、不重新发送。
 只允许 signed/broadcasting/submitted/unknown，只有合法 finalized 证据可推进 confirmed/failed；

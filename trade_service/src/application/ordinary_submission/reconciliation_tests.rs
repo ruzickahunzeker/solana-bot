@@ -3,6 +3,8 @@ use super::*;
 mod recovery_context_tests;
 #[path = "scan_recovery_tests.rs"]
 mod scan_recovery_tests;
+#[path = "sdk_mixed_scan_tests.rs"]
+mod sdk_mixed_scan_tests;
 use crate::{
     application::{
         ordinary_claims::test_support::admit,

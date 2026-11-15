@@ -134,9 +134,9 @@ durable 模式下，相同钱包、相同幂等键、相同规范化交易参数
 
 独立 `/v1/quotes/sol-buy/:quote_id/submit` 在 durable 模式下使用同一 SQLite 文件中的独立 `quote_submissions` 表，签名及原始交易字节落盘后才广播；重复请求先读取账本，不依赖仍有内存报价。模拟请求不进入实盘账本。新增 `GET /v1/quotes/sol-buy/:quote_id/submission?wallet_id=...&idempotency_key=...` 进行原签名的只读对账，不创建订单或重发；不会启用后台定时任务。源码与离线测试已实现，未部署。详见 [提交验收](docs/optimization/QUOTE_SUBMISSION_JOURNAL.md) 和 [对账验收](docs/optimization/SUBMISSION_RECONCILIATION.md)。
 
-### 普通聚合原签名观测（源码阶段，默认关闭）
+### 普通交易原签名观测（源码阶段，默认关闭）
 
-Durable 普通 SOL 聚合买入已有完整原签名账本时，可显式开启后台观测。它只查询已有签名并保存明确 finalized 的结果，不恢复执行权、不重新报价/签名/广播；不处理没有完整签名证据的中断，也不覆盖普通 opaque SDK、Memory/Shadow 或 PumpAPI 路径。普通 GET/列表/重复 POST 仍只读原记录。
+Durable 普通 SOL 聚合买入已有完整原签名账本时，可显式开启后台观测。C3d2 源码另将新 SDK 直接 DAMM v2 卖出的四种已签阶段接同一个有界任务；本扫描批次待完整 CI，未部署/启用。它只查询已有签名并保存明确 finalized 的结果，不恢复执行权、不重新报价/签名/广播；不处理没有完整签名证据的中断，其他 opaque SDK、Memory/Shadow 或 PumpAPI 不因此获得相同保证。普通 GET/列表/重复 POST 仍只读原记录。
 
 | 参数 | 默认值 | 范围与说明 |
 | --- | --- | --- |
@@ -146,7 +146,7 @@ Durable 普通 SOL 聚合买入已有完整原签名账本时，可显式开启�
 | `ORDINARY_OBSERVATION_MIN_AGE_MS` | `30000` | `1000..3600000`，claim 与父行更新时间至少达到该年龄 |
 | `ORDINARY_OBSERVATION_REQUEST_INTERVAL_MS` | `1000` | `1000..60000`，前后台观测共享的请求最小间隔；不是全服务 RPC 限额 |
 
-每批最多 20 秒、单次 HTTP 最多 2 秒、响应体最多 64 KiB；使用前两个不同的已配置 RPC，串行选择，429 冷却对应节点，全部冷却或配额忙时保留原未决状态。进程重开后扫描仍未决的已有签名，不重放交易。关闭任务会取消在途查询，但不证明 SDK 自建 worker 停止。即使开关关闭，部署此源码的 durable 初始化仍新增 007 部分索引，需要生产迁移/回滚验收。当前未部署，见 [有界扫描、恢复与关闭证据](docs/optimization/ORDINARY_PENDING_OBSERVATION_WORKER.md)。
+每批最多 20 秒、单次 HTTP 最多 2 秒、响应体最多 64 KiB；使用前两个不同的已配置 RPC，串行选择，429 冷却对应节点，全部冷却或配额忙时保留原未决状态。进程重开后扫描仍未决的已有签名，不重放交易。关闭任务会取消在途查询，但不证明未迁移的 SDK 自建 worker 停止。SDK 与聚合两索引同快照各取最多 limit+1 个游标，合并后仍共用原每批 limit 和 RPC 预算。即使开关关闭，部署此源码的初始化仍增加/核对 007/010 部分索引；010 的标记或结构异常会拒绝而不自动修复，需要独立生产迁移/回滚验收。当前未部署，见 [原聚合扫描证据](docs/optimization/ORDINARY_PENDING_OBSERVATION_WORKER.md) 与 [SDK 扫描](docs/optimization/SDK_PENDING_OBSERVATION_SCAN.md)。
 
 ### 共享只读 RPC（源码阶段，未部署）
 
@@ -172,9 +172,9 @@ A3c 已将该 read port 接第六类共享 HTTP profile，不再持 SDK RpcClien
 
 详见 [准备共享预算与真实 HTTP 验收](docs/optimization/PREPARATION_SHARED_RPC_RUNTIME.md)；[SDK 输入绑定](docs/optimization/PREPARATION_SDK_INPUT_BINDING.md)、[原始余额证据](docs/optimization/PREPARATION_RAW_ACCOUNT_EVIDENCE.md)和 [A3a 入口检查](docs/optimization/PREPARATION_BALANCE_ENTRY_GUARD.md)保留历史证据。不应将这批未部署源码直接视为生产验收通过。
 
-普通 SDK 的最终无 signer 构建仍在实施。[B4b 候选 guard](docs/optimization/DAMM_FINAL_CANDIDATE_GUARD.md) 后，B4c1 已把完整不可变零签名交易接实际 DAMM 卖出的 `simulate=true` 与 Live preview，仅调用原 lane 的只读 RPC、不进入 SDK signer；模拟成功仍为 `simulated`，`signature:null`。预检失败/取消/过期不继续正式提交，原参数/hash/生命周期与 SDK 方法准入保持，未部署。正式 Live 仍 opaque SDK/原私有 guard，完整证据授权及原 owner 的签名账本/原字节发送未完成；其他方向/协议不因此无签名。详见 [不可变产物、模拟与账本接续](docs/optimization/DAMM_UNSIGNED_CANDIDATE_AND_SIMULATION.md)。
+普通 SDK 的全方向无 signer 构建仍在实施。[B4b 候选 guard](docs/optimization/DAMM_FINAL_CANDIDATE_GUARD.md) 后，B4c1 把完整不可变零签名交易接实际 DAMM 卖出的 `simulate=true` 与 Live preview，仅调用原 lane 的只读 RPC、不进入 SDK signer；模拟成功仍为 `simulated`，`signature:null`。预检失败/取消/过期不继续正式提交，原参数/hash/生命周期与 SDK 方法准入保持，未部署。B4c1 当时的 opaque Live 子路径已由下方 C3c1/C3c2 接原 owner 的受控签名/原字节发送；其他方向/协议不因此获得同样保证。详见 [不可变产物、模拟与账本接续](docs/optimization/DAMM_UNSIGNED_CANDIDATE_AND_SIMULATION.md)。
 
-原账本接续的 C3a-C3c2 已在源码接入 Durable Live 直接 DAMM v2 卖出的原 owner、prepared/签名账本、受控签名和落盘原字节发送，旧聚合 Quote journal 不接受该操作。完整离线 CI 并发/串行各 1398 通过，含四项 signer/账本/RpcClient 串联。C3d1 新增显式只读恢复/历史 replay/finality 核心，18 项新用例仅类型检查；SDK 自动扫描/索引/worker、其他方向/协议/模式及真实 SDK/供应商/迁移/发布仍未完成，无生产部署或迁移。详见 [实际 SDK 子路径](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md) 与 [SDK 恢复](docs/optimization/SDK_ORIGINAL_SIGNATURE_RECOVERY.md)。
+原账本接续的 C3a-C3d1 已接 Durable Live 直接 DAMM v2 卖出的原 owner、prepared/签名账本、受控签名、原字节发送和显式只读恢复/finality，旧聚合 Quote journal 不接受该操作；完整离线 CI 并发/串行各 1416 通过。C3d2 自动扫描/索引/worker 源码已接，16 项新用例仅类型检查，未部署/启用；其他方向/协议/模式及真实 SDK/供应商/生产迁移/发布仍待完成。详见 [实际 SDK 子路径](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)、[SDK 恢复](docs/optimization/SDK_ORIGINAL_SIGNATURE_RECOVERY.md) 和 [有界扫描](docs/optimization/SDK_PENDING_OBSERVATION_SCAN.md)。
 
 推荐切换顺序：
 

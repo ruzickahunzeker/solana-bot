@@ -19,6 +19,7 @@ use crate::{
 
 const MIGRATION: &str = include_str!("../../../migrations/004_ordinary_execution_claims.sql");
 mod operation_upgrade;
+mod sdk_observation_index;
 
 pub(crate) struct RuntimeExecutionClaims {
     journal: Arc<TradePersistence>,
@@ -104,6 +105,10 @@ impl SqliteOrdinaryExecutionClaims {
                 "009_ordinary_sdk_prepared_candidate",
                 include_str!("../../../migrations/009_ordinary_sdk_prepared_candidate.sql"),
             ),
+            (
+                "010_ordinary_sdk_observation_scan",
+                include_str!("../../../migrations/010_ordinary_sdk_observation_scan.sql"),
+            ),
         ] {
             let migrated: i64 = sqlx::query_scalar(
                 "SELECT COUNT(*) FROM ordinary_submission_migrations WHERE name=?",
@@ -111,10 +116,13 @@ impl SqliteOrdinaryExecutionClaims {
             .bind(name)
             .fetch_one(&mut *transaction)
             .await?;
+            if name == "010_ordinary_sdk_observation_scan" {
+                sdk_observation_index::ensure_index(&mut transaction, migrated != 0, sql).await?;
+            }
             if migrated == 0 {
                 if name == "008_ordinary_claim_operations" {
                     operation_upgrade::apply(&mut transaction, sql).await?;
-                } else {
+                } else if name != "010_ordinary_sdk_observation_scan" {
                     sqlx::raw_sql(sql).execute(&mut *transaction).await?;
                 }
                 sqlx::query("INSERT INTO ordinary_submission_migrations(name) VALUES(?)")

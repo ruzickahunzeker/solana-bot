@@ -22,6 +22,7 @@ fn response(id: u64) -> Value {
 #[derive(Clone)]
 pub(crate) enum Reply {
     Success,
+    ObservedSignature(String),
     AtLimit,
     Chunked(usize),
     DeclaredOversize,
@@ -287,7 +288,11 @@ async fn serve(
             json!({"jsonrpc":"2.0","id":id,"method":method,"params":[address,{"commitment":"processed"}]})
         );
     } else {
-        assert_eq!(payload, request(id, &signature()));
+        let expected = match &reply {
+            Reply::ObservedSignature(value) => value.clone(),
+            _ => signature(),
+        };
+        assert_eq!(payload, request(id, &expected));
     }
     let balances = if is_balances {
         let mut values = payload["params"][0].as_array().unwrap().iter().map(|wallet| {

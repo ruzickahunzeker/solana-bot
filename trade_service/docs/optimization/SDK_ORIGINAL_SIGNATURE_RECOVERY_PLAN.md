@@ -10,6 +10,11 @@ PumpAPI 暂停，不升级 SDK、不改公开 API、不部署、不读取生产�
 完整并发/串行各 1398 通过；不覆盖本批恢复核心。下方缺口是制定本清单时的核查，
 其中 context/validator 核心已由 C3d1 源码接续，扫描索引/有界归并/worker 及生产验收仍待完成。
 
+后续权威进展：C3d1 `87f8677` / Actions `43686886493` / artifact `14150979478`
+完整并发/串行各 1416 通过，18 项新增已运行。C3d2 另有 010 严格索引迁移、两类同快照
+有界扫描与 SDK worker/回环接线源码，16 项仅类型检查、六项独立 DDL 通过，实际 Rust
+运行待 CI，见 `SDK_PENDING_OBSERVATION_SCAN.md`。不把下方历史缺口重复执行或当作生产已启用。
+
 ## 已核对的缺口
 
 - `ordinary_observation_scan.rs::PAGE_SQL` 及 007 partial index 仅覆盖 ordinary-sol-buy，

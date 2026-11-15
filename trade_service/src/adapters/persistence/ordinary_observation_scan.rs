@@ -9,6 +9,8 @@ use sqlx::Row;
 
 const PAGE_SQL: &str = "SELECT c.created_at_ms,c.request_id FROM ordinary_execution_claims AS c INDEXED BY idx_ordinary_signed_observation_scan JOIN trades AS t ON t.request_id=c.request_id WHERE c.schema_version=1 AND c.operation='ordinary-sol-buy' AND c.owner_nonce IS NOT NULL AND c.signed_signature IS NOT NULL AND c.signed_transaction IS NOT NULL AND c.final_observation_json IS NULL AND c.submission_stage IN ('signed','submitted','unknown') AND typeof(c.created_at_ms)='integer' AND typeof(c.request_id)='text' AND c.created_at_ms>=0 AND c.created_at_ms<=? AND t.updated_at_ms<=? AND t.status IN ('submitting','submitted','unknown') AND t.signature=c.signed_signature AND length(c.request_id) BETWEEN 1 AND 128 AND c.request_id NOT GLOB '*[^A-Za-z0-9_-]*' AND (c.created_at_ms,c.request_id)>(?,?) ORDER BY c.created_at_ms,c.request_id LIMIT ?";
 
+const SDK_PAGE_SQL: &str = "SELECT c.created_at_ms,c.request_id FROM ordinary_execution_claims AS c INDEXED BY idx_ordinary_sdk_observation_scan JOIN trades AS t ON t.request_id=c.request_id WHERE c.schema_version=1 AND c.operation='ordinary-sdk-trade' AND c.owner_nonce IS NOT NULL AND c.sdk_prepared_json IS NOT NULL AND c.unsigned_message IS NOT NULL AND c.unsigned_sha256 IS NOT NULL AND c.signed_signature IS NOT NULL AND c.signed_transaction IS NOT NULL AND c.signed_sha256 IS NOT NULL AND c.final_observation_json IS NULL AND c.submission_stage IN ('signed','broadcasting','submitted','unknown') AND typeof(c.created_at_ms)='integer' AND typeof(c.request_id)='text' AND c.created_at_ms>=0 AND c.created_at_ms<=? AND t.updated_at_ms<=? AND t.side='sell' AND t.pool='meteora-damm-v2' AND t.execution_method='sdk' AND t.status IN ('submitting','submitted','unknown') AND t.signature=c.signed_signature AND length(c.request_id) BETWEEN 1 AND 128 AND c.request_id NOT GLOB '*[^A-Za-z0-9_-]*' AND (c.created_at_ms,c.request_id)>(?,?) ORDER BY c.created_at_ms,c.request_id LIMIT ?";
+
 impl PendingOrdinaryObservations for SqliteOrdinaryExecutionClaims {
     async fn pending_observations(
         &self,
@@ -20,22 +22,33 @@ impl PendingOrdinaryObservations for SqliteOrdinaryExecutionClaims {
             cutoff_ms >= 0 && (1..=64).contains(&limit),
             "invalid observation page bounds"
         );
-        let rows = sqlx::query(PAGE_SQL)
-            .bind(cutoff_ms)
-            .bind(cutoff_ms)
-            .bind(after.map_or(-1, ObservationCursor::created_at_ms))
-            .bind(after.map_or("", ObservationCursor::request_id))
-            .bind(i64::try_from(limit + 1)?)
-            .fetch_all(&self.pool)
-            .await?;
-        let has_more = rows.len() > limit;
-        let entries = rows
-            .into_iter()
-            .take(limit)
-            .map(|row| {
-                ObservationCursor::new(row.try_get("created_at_ms")?, row.try_get("request_id")?)
-            })
-            .collect::<Result<Vec<_>>>()?;
+        let mut tx = self.pool.begin().await?;
+        let mut entries = Vec::with_capacity(2 * (limit + 1));
+        // Two disjoint indexed pages share one snapshot and one global cursor/batch budget.
+        for query in [PAGE_SQL, SDK_PAGE_SQL] {
+            let rows = sqlx::query(query)
+                .bind(cutoff_ms)
+                .bind(cutoff_ms)
+                .bind(after.map_or(-1, ObservationCursor::created_at_ms))
+                .bind(after.map_or("", ObservationCursor::request_id))
+                .bind(i64::try_from(limit + 1)?)
+                .fetch_all(&mut *tx)
+                .await?;
+            for row in rows {
+                entries.push(ObservationCursor::new(
+                    row.try_get("created_at_ms")?,
+                    row.try_get("request_id")?,
+                )?);
+            }
+        }
+        tx.commit().await?;
+        entries.sort_unstable();
+        ensure!(
+            entries.windows(2).all(|pair| pair[0] < pair[1]),
+            "ordinary observation operations overlap"
+        );
+        let has_more = entries.len() > limit;
+        entries.truncate(limit);
         Ok(ObservationPage { entries, has_more })
     }
 }
@@ -48,6 +61,8 @@ mod tests {
         config::{TradePersistenceConfig, TradePersistenceMode},
         persistence::TradePersistence,
     };
+
+    mod sdk;
 
     async fn setup() -> (SqliteOrdinaryExecutionClaims, sqlx::SqlitePool) {
         let store = TradePersistence::new(&TradePersistenceConfig {

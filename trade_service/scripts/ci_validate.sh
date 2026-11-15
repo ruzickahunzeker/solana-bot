@@ -75,11 +75,13 @@ PY
         step namespace-probe python3 tests/fixtures/ci/namespace_probe.py
         step shell-runner bash scripts/test_dev_check.sh
         step sqlite-ddl python3 scripts/test_sdk_candidate_migration.py
+        step sqlite-sdk-scan python3 scripts/test_sdk_observation_index.py
         step type-check cargo check --locked --offline --all-targets
         step compile-tests cargo test --locked --offline --no-run
         step sdk-candidate cargo test --locked --offline sdk_candidate -- --test-threads=2
         step sdk-preparation cargo test --locked --offline ordinary_sdk_preparation -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
+        step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2
         step sdk-submission-controller cargo test --locked --offline sdk_application_submission -- --test-threads=2
         step sdk-controlled-signing cargo test --locked --offline sdk_controlled_signing -- --test-threads=2

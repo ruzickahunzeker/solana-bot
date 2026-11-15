@@ -6,6 +6,17 @@
 
 ## 统计口径
 
+- 当前 C3d2 源码已接 010 严格 SDK 索引/同快照有界归并与原 worker，16 项新增 Rust
+  仅类型检查，独立 DDL 六项通过，完整运行待 CI；没有部署或启用线上扫描。见
+  `SDK_PENDING_OBSERVATION_SCAN.md`，其他方向/协议/模式、全局边界及发布仍未完成。
+- 最近已验收 C3d1 `87f8677` / Actions `43686886493` / artifact `14150979478` 下载核对，
+  完整并发 1416（129.44 秒）/串行 1416（229.33 秒）零失败/忽略/过滤，恢复 16、controller 12、
+  sender 14、HTTP 200、参数 3 与全部步骤通过，不能套给新扫描批次。
+
+下方 C3d1 待验、扫描尚未接线为当时历史，不覆盖以上当前源码/验收或授权重复执行。
+
+- 本批 C3d1 源码快照 `87f8677` / Actions `43686886493` 已推送，确认运行中；18 项新增
+  恢复用例和完整回归待终态日志，不按父提交 1398 提前宣称通过。后续续作 C3d2，旧 CI 不重跑。
 - 当前 C3d1 SDK 显式原签名恢复/context/replay/finality 与迟到 receipt 保护已有源码，18 项
   新测试仅受限 check，完整运行待 CI。SDK 自动扫描、索引迁移和 worker 恢复尚未接入，
   不是自动恢复完成；其他方向/协议/模式和真实发布仍待续，见 `SDK_ORIGINAL_SIGNATURE_RECOVERY.md`。
@@ -89,7 +100,7 @@
 
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
-| 普通 SDK 完整授权 | C3c1 新 Durable Live DAMM 卖出原 owner、真实授权 signer/原字节账本/固定 sender 已通过源码/完整离线 CI；其他模式和协议仍 legacy，后续四项串联测试待运行 | 真实 SDK 初始化/完整准备 RPC 集成、真实环境验收，SDK 持续只读观测/恢复、其他方向/协议/backend/mode 及所有资金安全门槛 |
+| 普通 SDK 完整授权 | C3c1/C3c2 原受控执行与 C3d1 显式只读恢复/finality 已离线验收；C3d2 后台扫描/严格索引源码已接、16 项待 CI；其他方向/协议/模式仍 legacy | 本批扫描完整 CI、真实 SDK 初始化/完整准备 RPC、真实环境/生产恢复/发布及其他方向/协议/backend/mode 的全部门槛 |
 | 完整架构隔离 | Handler 已归位，余额/管理/vanity 控制已接项目服务和 port；直接 worker 及四个冗余资源字段不再存在于生产 AppState | full Config、普通接受/index/journal、cache、原始 RPC/SDK 资源及 bootstrap 等继续收口；局部分层不等于全量资源隔离、实际生成验收或原子生命周期 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
@@ -97,7 +108,7 @@
 ## 必须继续完成的大项
 
 1. DAMM 本笔输出的源码/离线子项已完成；仍需真实节点格式/能力验收及其他方向/协议扩展，不能把只读模拟当作最终交易授权。
-2. 普通 SDK 的全量不可变构建与签名前授权：C3c1 已在新 Durable Live DAMM 卖出源码接原 owner 的签名账本/真实 signer/固定原字节 sender，先验收本批 CI，再接 SDK 原签名持续观测/恢复，并推广到买入、其他协议和模式。池/资产/Token Program、金额/min_out/费用、权限与最终消息政策仍须按范围验证；不能伪造 Quote/新 owner，也不以单一路径替代全量授权。
+2. 普通 SDK 的全量不可变构建与签名前授权：C3c1/C3c2 已验收新 Durable Live DAMM 卖出的原 owner/签名账本/真实 signer/固定 sender，C3d1 显式只读恢复已验收；先验收当前 C3d2 后台扫描/010/混合分页，再推广到买入、其他协议和模式。池/资产/Token Program、金额/min_out/费用、权限与最终消息政策仍须按范围验证；不能伪造 Quote/新 owner，也不以单一路径替代全量授权。
 3. 普通交易唯一广播前 signed journal：C1/C2a/C2b、D1A/D1B1/D1B2 已有该 Durable 子路径的原 owner/签名字节/读回、可选跨重开只读扫描与局部预算源码/离线证据；全部 backend/mode、真实节点/生产恢复和 RPC 全局预算仍待续，不能宣称全普通交易完成。
 4. 受控发送与恢复：只使用已授权并持久化的原字节，保留所有签名证据，不确定状态不换路线/新 key 重签；处理 SDK worker 的后台副作用。
 5. 普通 SOL 聚合 legacy 路径迁移：C2b 仅迁移 Durable Live，Memory/Shadow 仍走原 legacy；独立 quote 账本不替代普通原 authority，最终订单写入不冒充广播前账本。
