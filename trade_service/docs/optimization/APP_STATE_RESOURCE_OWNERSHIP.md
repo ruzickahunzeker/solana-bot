@@ -56,10 +56,11 @@ git diff --check                                             # passed
 | SharedReadRuntime | initialize 创建，刷新/只读观测/readiness/余额与准备 reader 复用 | 六类 profile 的局部预算/冷却/取消合同，资源随原持有者释放 | 寻池/参数/ATA/模拟等剩余读路径及全服务配额 |
 | BlockhashCache/Refresher | 原缓存由 refresher、readiness、AppState 持有，main 接原 refresher owner | 后继普通任务生命周期将原资源保留到 drain 完成/超时后才停止和 await；c6f2745 独立专项与完整各 1498 验收，不借用旧生命周期证据 | 链上有效期/真实节点、异常进程退出与 SDK 内部等其他任务 |
 | ParamCache | complete 创建一次，PoolQueryService 与 executor writer 共享 | 同实例写入/保留键、最后服务释放后回收，见 PARAM_CACHE_RESOURCE_BOUNDARY.md | 缓存版本/全局一致性与 SDK 内部参数缓存 |
-| TradeStore/IdempotencyStore/TradePersistence | initialize 打开原持久化，complete 创建原内存资源；接受/查询/claims/执行共享 | 接受与普通执行服务借用原实例/项目 ports；26be717、26445c5 已验收，原 reservation/hash/JSON 和文件恢复合同继续适用 | 根资源所有权/交易任务生命周期、全部 backend/mode 的 signed journal 及生产刷盘 |
+| TradeStore/IdempotencyStore/TradePersistence | initialize 打开原持久化，complete 创建原内存资源；接受/查询/claims/执行共享 | 接受与普通执行服务借用原实例/项目 ports；26be717、26445c5 已验收，原 reservation/hash/JSON 和文件恢复合同继续适用；普通任务与 Shadow 生命周期见下两行 | 根具体资源隔离、全部 backend/mode 的 signed journal 及生产刷盘 |
 | QuoteStore/ConversionStore | complete 创建原报价缓存，initialize 按配置打开可选 conversion store | 原服务持有和 bootstrap Some/None/Arc 交接合同 | 不合并独立操作账本；真实节点/恢复与发布仍独立验收 |
 | ObservationPlan/Worker | complete 只 prepare，main 成功 bind 后按原开关 start | 普通 drain 之后 request/await 原 worker；另一资源报错也完成 join；c6f2745 四项 helper 合同和全套已通过 | 真实部署调度、断电与全系统 RPC 预算 |
-| 普通交易后台任务 | bootstrap 创建一个共享 TradeTasks；原 Handler 接受 await 前登记，Created 移交原 executor | 线性 ticket 只记录生命周期；17 项新合同与完整各 1498 在 c6f2745 验收，原 ledger/owner 不变 | SDK opaque worker、Shadow writer、其他独立操作/靓号任务与真实进程退出尚未覆盖 |
+| 普通交易后台任务 | bootstrap 创建一个共享 TradeTasks；原 Handler 接受 await 前登记，Created 移交原 executor | 线性 ticket 只记录生命周期；17 项新合同与完整各 1498 在 c6f2745 验收，原 ledger/owner 不变 | SDK opaque worker、其他独立操作/靓号任务与真实进程退出尚未覆盖 |
+| 原 Shadow writer | 原 TradePersistence 创建单个 1024 项 FIFO，私有组件持有原 pool/handle；main 留原 persistence Arc | 普通 drain 和原 refresher/observer join 后关闭/等待原队列；796ba50 的专项 13/4、完整各 1515 验收，超时/取消保留同一 handle，无重放 | 仅原 SQL 返回及 FIFO 完成证据，不是 fsync/断电、全部生产者停机或新增 durable authority；不重复实施 |
 
 最初核对时仅有 `axum::serve(...).with_graceful_shutdown`，不能证明脱离 HTTP 的任务完成。
 后继本批源码接入原 NP-03 的普通任务登记/有界等待，但不把它当全服务/SDK worker supervisor，

@@ -79,6 +79,7 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("step sdk-scan", script)
         self.assertIn("step sqlite-sdk-scan python3 scripts/test_sdk_observation_index.py", script)
         self.assertIn("step damm-output-evidence", script)
+        self.assertIn("step damm-buy-probe cargo test --locked --offline damm_buy_ -- --test-threads=2", script)
         self.assertIn("step damm-preview-context", script)
         self.assertIn("step damm-compiled-binding", script)
         self.assertNotIn("--ignored", script)

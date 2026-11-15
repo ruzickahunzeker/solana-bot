@@ -6,9 +6,14 @@
 
 ## 统计口径
 
-- 原 NP-03 Shadow writer 关闭/排空本批已接原 FIFO/pool、保留 handle 和历史失败诊断，
-  新增 17 项仅受限类型检查；实际执行待新 CI，不借用父批 1498。退出预算独立，
-  Shadow 的弱持久化和原 SQL/health 语义保留，见 `SHADOW_WRITER_LIFECYCLE.md`。
+- 原 NP-01 DAMM 买入 ABI/funding 七项合同与独立 `cfg(test)` 原型已通过受限类型检查，
+  实际执行待本批源码 CI。它固定 native SOL 包装与 USDC 单位/SDK min_out 编码边界，
+  不接生产、不证明余额/租金/净输出报价或完整授权；原普通买入 Some(1) 仍待修复，
+  不把父批 1515 当作本批验证，具体续作复用主计划 3.3。
+- 原 NP-03 Shadow writer 关闭/排空已在 796ba50 / Actions 43722582055 验收，artifact
+  14165837512 下载核对：专项 13/4、完整并发/串行各 1515（147.21/258.54 秒），
+  原始测试名增量恰为 17，87 字段拒绝及全部 50 步骤通过。原 FIFO/pool/SQL/health
+  与 Shadow 弱持久化语义保持；不重复实施，见 `SHADOW_WRITER_LIFECYCLE.md`。
 - 原 NP-03 普通后台交易生命周期已在 c6f2745 / Actions 43718342603 验收，artifact
   14163942665 下载核对：专项 12/4/1 共 17、完整并发/串行各 1498（134.03/244.95 秒）、
   87 字段拒绝与全部 48 步骤通过。父批 1481 名称集合保留，新增恰为 17；不重复实施。
@@ -168,13 +173,13 @@
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
 | 普通 SDK 完整授权 | C3c1/C3c2 受控执行、C3d1 原签名恢复、C3d2 扫描及 C3e 准备串联已离线验收；后继 26445c5 完整各 1473 通过，但原 scope 之外仍 legacy | 真实 provider/节点、生产恢复/发布及其他方向/协议/backend/mode 的全部门槛 |
-| 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；普通后台任务登记/关闸/排空/原资源退出顺序在 c6f2745 验收；旧冗余资源字段不在生产 AppState | 根具体 index/journal/cache/Config、Shadow writer、SDK 内部/独立操作任务及全局 RPC/依赖与真实退出仍待续。已验收接受/执行/Bootstrap/普通任务不重新立项；局部通过不等于全服务生命周期或原子激活 |
+| 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；普通后台任务生命周期在 c6f2745、Shadow writer 关闭/排空在 796ba50 验收；旧冗余资源字段不在生产 AppState | 根具体 index/journal/cache/Config、SDK 内部/独立操作任务及全局 RPC/依赖与真实退出仍待续。已验收接受/执行/Bootstrap/普通任务/Shadow 生命周期不重新立项；局部通过不等于额外 fsync、全服务生命周期或原子激活 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
 
 ## 必须继续完成的大项
 
-1. DAMM 本笔输出的源码/离线子项已完成；仍需真实节点格式/能力验收及其他方向/协议扩展，不能把只读模拟当作最终交易授权。
+1. DAMM 直接卖出本笔输出的源码/离线子项已完成，不代表买入完成。当前普通 DAMM 买入仍固定 `Some(1)`，SDK exact-in 直接作为 min_out；可信买入报价、净输出/滑点及最终不可变消息绑定是原 NP-01 的优先续作，详见主计划 3.3。还需真实节点格式/能力验收及其他协议扩展，不能把只读模拟当作最终交易授权。
 2. 普通 SDK 的全量不可变构建与签名前授权：新 Durable Live DAMM 卖出的原 owner/签名账本/真实 signer/固定 sender、C3d1 原签名恢复、C3d2 扫描/010/混合分页及 C3e Default 完整准备离线链已验收；继续推广到买入、其他协议和模式。池/资产/Token Program、金额/min_out/费用、权限与最终消息政策仍须按范围验证；不能伪造 Quote/新 owner，也不以单一路径替代全量授权。
 3. 普通交易唯一广播前 signed journal：C1/C2a/C2b、D1A/D1B1/D1B2 已有该 Durable 子路径的原 owner/签名字节/读回、可选跨重开只读扫描与局部预算源码/离线证据；全部 backend/mode、真实节点/生产恢复和 RPC 全局预算仍待续，不能宣称全普通交易完成。
 4. 受控发送与恢复：只使用已授权并持久化的原字节，保留所有签名证据，不确定状态不换路线/新 key 重签；处理 SDK worker 的后台副作用。

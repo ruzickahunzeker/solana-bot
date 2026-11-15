@@ -1,7 +1,18 @@
 # NP-03 原 Shadow Writer 生命周期
 
 日期：2026-11-15。沿用原 NP-03 / TS-09，不新增队列、数据库、迁移或幂等权威。
-源码与受限 test check 已完成；新增 17 项 Rust 测试尚待本批独立源码 CI 实际运行。
+源码与本批独立源码 CI 已验收；未部署，不代表真实进程退出或断电验收。
+
+## 验收身份
+
+提交 `796ba5037149db4c3511aff7c3c7ae80f83cbc67`，
+[Actions 43722582055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43722582055)
+终态 success，artifact `14165837512` 下载独立核对：50 步骤 exit=0；专项 drain 13/
+shutdown 4；完整并发 1515（147.21 秒）/串行 1515（258.54 秒）零失败/忽略/过滤。
+两套原始测试名集合相同，父批 1498 全保留，增量恰为这 17 项。原源码/恢复 Clippy
+成功，原始 JSON spans 的 87 个不同字段拒绝独立匹配；identity、manifest/lock/vendor
+manifest 均与本地匹配。SQL helper/recovery、连接参数与其他原源码字节的发布审计
+继续绑定本提交，不重跑旧任务。验收记录更新不单独发布第二次 CI。
 
 ## 实际收口
 

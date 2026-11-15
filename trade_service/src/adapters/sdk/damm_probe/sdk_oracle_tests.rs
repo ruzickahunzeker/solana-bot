@@ -20,7 +20,7 @@ pub(super) struct OracleCase {
     pub amount: u64,
     pub blockhash: Hash,
     pub instructions: Vec<Instruction>,
-    request: SwapParams,
+    pub(super) request: SwapParams,
 }
 
 fn key(n: u8) -> Pubkey {

@@ -30,6 +30,18 @@
 
 ## 已验收运行
 
+最新 NP-03 原 Shadow writer 生命周期 `796ba5037149db4c3511aff7c3c7ae80f83cbc67` /
+[Actions 43722582055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43722582055)
+终态 success，artifact `14165837512` 下载核对：专项 13/4 共 17，完整并发
+1515（147.21 秒）/串行 1515（258.54 秒）零失败/忽略/过滤，50 步骤 exit=0。
+两套原始测试名集合相同，父批 1498 保留，增量恰为 17 项专项；原源码/恢复 Clippy
+成功，原始 JSON spans 独立确认 87 个不同字段拒绝，三层各 29，包含 outside_alias。
+identity/manifest/lock/vendor manifest 匹配；发布审计绑定 1032 文件/12,691,338 字节、
+17 变更路径，SQL helper/recovery 与原持久化连接设置未改。真实 main/索引不变；
+未部署、未改线上配置，不将 FIFO SQL 完成等同 fsync/断电/完整服务退出验收。
+后续只更新文档，不重跑本任务或因验收记录另触发一次 CI。平台的 Node 20→24
+action 运行时提示与父批相同，任务成功；不因此顺带改 SDK 或依赖。
+
 最新 NP-03 普通任务生命周期 `c6f2745e2fee315d454b0c7327d1469f6c1fb441` /
 [Actions 43718342603](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43718342603)
 终态 success，artifact `14163942665` 下载核对：专项 12/4/1 共 17；完整并发

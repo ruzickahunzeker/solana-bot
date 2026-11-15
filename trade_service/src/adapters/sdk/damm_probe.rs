@@ -11,6 +11,8 @@ use solana_sdk::{
 };
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
+#[cfg(test)]
+mod buy_plan;
 mod evidence;
 mod output;
 mod plan;

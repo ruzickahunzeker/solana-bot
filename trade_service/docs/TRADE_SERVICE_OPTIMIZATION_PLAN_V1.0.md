@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新 NP-03 普通任务生命周期 `c6f2745` / Actions `43718342603` / artifact `14163942665` 已验收，专项 17、完整并发/串行各 1498、87 字段拒绝与全部 48 步骤通过。下一源码续原 NP-03 Shadow writer 退出/刷新边界，其他 NP-01/03/04/05 门槛保留；普通任务排空不等于全服务/SDK worker/Shadow 落盘验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新 NP-03 Shadow writer 生命周期 `796ba50` / Actions `43722582055` / artifact `14165837512` 已验收，专项 13/4、完整并发/串行各 1515、87 字段拒绝与全部 50 步骤通过。普通任务与 Shadow 生命周期不再排队，下一优先续原 NP-01 DAMM 买入可信输出及 min_out（3.3）；其他 NP-01/03/04/05 门槛保留，不以 FIFO SQL 完成冒充额外刷盘/断电或全服务退出。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -61,7 +61,7 @@ c220ba8 的专项及完整回归通过，不在前序 970d835 的 bootstrap CI�
 | --- | --- | --- |
 | NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；后继普通接受 26be717 和执行 26445c5 已验收，不重新排队。剩余资源/生命周期归原 NP-03，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
-| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取共享 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受已验收。普通执行编排七项在 26445c5 验收，三层门禁在 e3be442 起验收；后继普通任务登记/关闸/排空与原资源退出顺序在 c6f2745 验收，新增 17、完整各 1498、87 字段拒绝通过，见 ORDINARY_TRADE_TASK_LIFECYCLE.md 与 DEVELOPMENT_CHECKS.md。根具体资源、Shadow writer/SDK 内部/独立操作任务、寻池/参数/ATA/独立 quote/WSOL/模拟读取、全局预算与真实退出门槛继续，不重做已验收子项 |
+| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取共享 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受已验收。普通执行编排在 26445c5、三层门禁在 e3be442 起、普通任务生命周期在 c6f2745 验收；后继原 Shadow writer 关闭/排空在 796ba50 验收，新增 17、完整各 1515、87 字段拒绝通过，见 optimization/SHADOW_WRITER_LIFECYCLE.md。根具体资源、SDK 内部/独立操作任务、寻池/参数/ATA/独立 quote/WSOL/模拟读取、全局预算与真实退出/刷盘门槛继续，不重做已验收子项 |
 | NP-04 | 通用 Backend 契约验收 | Record/Tape 独立构建/候选八项合同接现有普通 SOL Quote 控制器与原 SQLite authority，验证金额、能力拒绝、取消、未知和签后不换后端；91b3d94 / Actions 43714527309 已验收，专项 8、完整各 1481，见 optimization/BACKEND_CONSTRUCTION_CONTRACT.md。其他业务路径适用性仍待验，不新增 Router SDK 依赖、生产候选 profile 或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 
@@ -251,13 +251,52 @@ Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节�
 | --- | --- | --- |
 | Parser | `src/adapters/sdk/protocol_params/mod.rs` 仍直接接 `RpcClient`，集中加载、协议检查及 SDK 参数转换；`checks.rs`、`quote_tokens.rs` 已拆出纯检查 | NP-01/03 内按实际读取路径分离已有账户快照的解码/检查与 RPC；仍不可将参数 loader 称为独立纯 Parser，不复制 vendor 解码或新增第二套发现缓存 |
 | SDK 门面 | `src/sdk_client.rs` 已委托 `adapters/sdk/` 多个实现；`application/ordinary_runtime.rs` 经项目 ports 执行，26445c5 已验收 | 兼容门面尚未收完：根 Client 仍有 SDK 初始化、寻池及聚合模拟实现。按调用迁移并保留旧 oracle，不另造 Client；三层选定类型门禁不证明所有 SDK 能力均已隔离 |
-| 资源所有权 | `src/bootstrap.rs` 交接原资源；`optimization/APP_STATE_RESOURCE_OWNERSHIP.md` 已列创建/共享/退出责任；接受与执行使用原权威 | NP-03 继续根具体资源、脱离 HTTP 的交易任务追踪与退出、剩余 RPC/cache 治理。不重复建立 runtime、连接池、cache、reservation 或 journal，不重做已验收的接受/执行提取 |
+| 资源所有权 | `src/bootstrap.rs` 交接原资源；`optimization/APP_STATE_RESOURCE_OWNERSHIP.md` 已列创建/共享/退出责任；接受与执行使用原权威；普通后台任务生命周期已在 c6f2745 验收 | 原任务追踪/关闸/drain 不再排队；Shadow writer 生命周期本批见 `optimization/EXECUTION_STATUS.md`。NP-03 继续根具体资源、SDK 内部/独立操作任务与剩余 RPC/cache 治理，不重复建立 runtime、连接池、cache、reservation 或 journal |
 | 能力证据 | `src/protocol/registry.rs` 是唯一身份/旧政策表；`protocol_capabilities.rs` 只投影旧 V1；`domain/sdk_candidate.rs` 仅有 `DammV2SellV1` nominal profile | NP-01/04/05 按 backend/版本/方向/Quote/Token/模式/路线绑定证据。DAMM Durable Live 直接卖出局部验收不覆盖其他协议；Parser/Builder/V1 live 声明不新增实盘许可 |
 | 通用后端 / RouterLeg | `application/ports/ordinary_sdk_submission.rs` 已有后端私有 Candidate/Signed 类型与原 journal；其原 First/Second 测试仍共用 Engine。后继普通 SOL Quote 控制器的 Record/Tape 独立构建/候选八项合同已在 91b3d94 验收 | 本批共同合同不重做；其他业务路径的适用性和真实 Router/SDK 仍须独立证据，不用原两包装测试冒充独立构建。不为测试泛化扩大生产 profile；RouterLeg 仅保留本节与 4.3 的设计方向 |
 
 推进时沿用 NP-04 当前续作点及 NP-01/03/05 原队列；本轮仅核对和校准记录，
 不把相同缺口分别计入“新设计项目”和“旧优化任务”。完整当前状态只看
 `optimization/EXECUTION_STATUS.md`，历史终态通过/失败不重新等待、执行或计数。
+
+#### 原 NP-01 下一资金安全续作：DAMM 买入输出
+
+本项是原“其他方向”缺口的源码核实，不新增任务、协议或执行许可。当前
+`adapters/sdk/ordinary_params.rs::ordinary_buy_params` 对 DAMM 固定给出
+`fixed_output_token_amount=Some(1)`；固定 SDK 的 exact-in/partial-fill 分支直接将其
+编码为 `minimum_amount_out`，不能据此宣称买入已具有完整滑点保护。现有可信输出证据、
+候选 profile 和原 owner 受控签名链主要覆盖直接卖出，不自动覆盖买入；未核对线上二进制。
+
+后继按下列顺序复用原 NP-01 的准备、报价和签名边界，不先改常量或扩大 profile：
+
+1. 用公开夹具固定当前 SDK 买入 ABI、两侧 Mint/方向与整数单位；将只读报价探针的
+   `min_out=1` 与正式交易最小输出明确区分，不能因 probe 成功就授权正式消息。
+2. 可信买入报价须绑定原钱包、池/程序/布局、输入输出资产、精确输入量、Token Program、
+   费用、blockhash、slot 与期限；SOL 输入须覆盖包装/账户准备和费用预留，不能仅反转
+   卖出 Mint 或假定钱包已有 WSOL。沿用已有 reader/证据流程，失败、过期或不支持则拒绝。
+3. 用已验证的本笔净输出和整数滑点计算正式 min_out，绑定最终不可变候选及原 owner 的
+   签名字节账本/固定 sender；仅有报价数值不构成签名许可，不降低其他方向既有门槛。
+4. 不广播测试覆盖 WSOL/USDC、两侧方向、精度/舍入/零输出/溢出、Token 扩展/费用、
+   账户/余额不足、超时/取消及上下文变化；完整回归仅用获准源码 CI。真实节点、上线与
+   资金验收独立授权，公开 API/hash/JSON 和 SDK/vendor 不变。
+
+此优先级先于继续纯目录整理；Parser 职责、SDK 门面与能力证据在实际买入链路中逐步吸收，
+不为设计对称另造 Parser 框架、Client、registry 或资金权威。
+
+本批先落实上述第 1 步：`adapters/sdk/damm_probe/buy_plan.rs` 为 `cfg(test)` 的
+独立名义类型报价原型，无 RPC、签名或发送入口，不接生产准备。七项合同已受限类型
+检查通过（11 秒/RSS 1,274,444 KiB），实际运行待本批源码 CI，不能套用父批 1515。
+72 组对照拟覆盖两侧方向、WSOL/USDC 及 SOL 别名、目标 Token/Token-2022、sysvar 和
+三个原始整数输入（含 u64::MAX）；使用现有未充值测试身份只调用真实 SDK 指令构建器。
+其余合同检查精确充值/sync_native/不关闭原 WSOL、USDC 单位、拒绝边界、上下文绑定、
+与原预持币 probe 的区别，以及 SDK 的滑点字段不会代替 fixed_output 编码。
+
+这是 ABI 与能力边界证据，不是余额、租金、完整费用、池状态/扩展验证或可信报价完成。
+原型本身的 floor=1 仅用于未来无签名发现；正式普通买入仍为旧实现，未改 Some(1)，
+不能宣称已修复买入滑点。下一实际接线须在同一 NP-01 内补 SOL/WSOL funding 的同 bank
+账户取证、动态顶层指令分组/CPI 净输出与可选同次 pre/post balances，再绑定正式 min_out
+和最终消息/原 owner；不以现有卖出八账户、两顶层指令假设直接接入买入。当前不推广
+新的 production profile、Quote 授权、API 或 SDK/vendor 改动。
 
 ## 4. 稳定类型和后端边界
 
