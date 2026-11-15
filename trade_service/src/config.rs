@@ -129,6 +129,17 @@ pub struct StonkFunViaSolConfig {
 }
 
 impl Config {
+    pub(crate) fn ordinary_execution_settings(
+        &self,
+    ) -> crate::application::trade_settings::OrdinaryExecutionSettings {
+        crate::application::trade_settings::OrdinaryExecutionSettings {
+            broadcast: self.security.broadcast,
+            blockhash_max_age_ms: self.blockhash_max_age_ms,
+            wait_tx_confirmed: self.wait_tx_confirmed,
+            mev_submit_verify_ms: self.mev_submit_verify_ms,
+        }
+    }
+
     pub(crate) fn trade_intake_settings(
         &self,
     ) -> crate::application::trade_intake::TradeIntakeSettings {

@@ -10,6 +10,14 @@ use crate::{
     persistence::TradePersistence,
 };
 
+impl crate::application::ports::ordinary_runtime::OrdinaryExecutionStorage for TradePersistence {
+    type SdkJournal = crate::adapters::persistence::ordinary_claims::SqliteOrdinaryExecutionClaims;
+
+    fn sdk_journal(&self) -> Option<Self::SdkJournal> {
+        self.ordinary_execution_claims()
+    }
+}
+
 impl OrdinaryTradeJournal for TradePersistence {
     fn ensure_snapshot_storage(&self, write: SnapshotWrite) -> anyhow::Result<()> {
         self.require_storage(match write {

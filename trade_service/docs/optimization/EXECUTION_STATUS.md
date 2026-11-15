@@ -4,17 +4,30 @@
 
 ## 当前续作检查点（覆盖下方历史状态）
 
-用户已恢复持续目标，当前继续原 TS-02/08、NP-02/03 的普通接受流程收口；
+用户已恢复持续目标，当前继续原 TS-04/08/09、NP-02/03 的普通执行编排与资源隔离；
 计划 3.3 的五项设计补充不新增 TS/NP 编号，RouterLeg 不引入实现或依赖。
 PumpAPI 开发暂停，SDK 升级及生产边界保持不变。
+
+最新完整验收普通接受流程 `26be71781406be7f912d53bd26e04fb549dce363` /
+Actions `43706312318` 已终态 success，artifact `14159195795` 下载核对：完整并发
+1466（129.94 秒）/串行 1466（238.29 秒），零失败/忽略/过滤；ordinary-intake 八项、
+HTTP 202 与全部步骤 exit=0，manifest/lock/vendor 身份匹配。只推独立 CI 分支，main/
+真实索引未变；旧终态任务不重跑，不冒充已部署。
+
+后继源码 `application/ordinary_runtime.rs` 已接普通 executor 的全部编排，根入口借用
+原资源，新增状态更新/原 SDK journal 投影/cache 读 port 及四值设置，七项新合同仅受限
+类型检查；不在上述 1466。test check `20261115T110647Z-210265` 35 秒/RSS 2,195,968 KiB，
+bin check `20261115T110752Z-210600` 14 秒/RSS 980,732 KiB，exit=0，原七组生产警告；
+格式/policy 七项通过。ordinary-runtime 专项已接 runner，待新快照完整验收。
+见 `ORDINARY_EXECUTION_PORT.md`；任务启动/取消和发送语义、原 hash/JSON/数据库/SDK 不变。
 
 首轮普通接受快照 `c58eb8c` / Actions `43705256866` / artifact `14158646075`
 已终态失败并下载核对：所有前置/原专项及 HTTP 202 通过，新专项 5/3，完整两套未执行。
 三处新测试输入/观测时机已修正，保留旧 fixture/全部断言；生产实现未因此改变。
 最终受限 test check `20261115T105239Z-204758` 9 秒/RSS 1,272,116 KiB，格式通过；
-待后继源码快照验收，不重复触发旧失败任务。资源所有权核对另补原文档，未改运行生命周期。
+修正已在上述 26be717 完整验收，不重复触发旧失败任务。资源所有权核对另补原文档，未改运行生命周期。
 
-最新完整验收：readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
+前序完整验收：readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
 Actions `43696813225` / artifact `14154584905` 已下载核对，所有步骤 exit=0；
 完整并发 1458（143.31 秒）/串行 1458（252.76 秒），零失败/忽略/过滤，readiness-settings
 六项通过。此前路径/敏感字面量审计只绑定该快照，不覆盖后续未发布改动；不重跑旧 CI。
@@ -25,7 +38,8 @@ hash/JSON/保留顺序不改。test check `20261115T103713Z-198978` 9 秒/RSS 1,
 bin check `20261115T103808Z-199318` 4 秒/RSS 575,448 KiB，均 exit=0，原七组警告。
 新增七项 Application 与一项 HTTP 用例已发布到上述 c58eb8c；未计入已验收的 1458。
 ordinary-intake 专项已接 CI runner，policy 七项/格式通过，保留所有原专项/完整回归。
-见 `ORDINARY_TRADE_API_HANDLERS.md`；不宣称运行验收、合并 main 或部署完成。
+上述接受流程八项及完整回归现已由 26be717 验收，见 `ORDINARY_TRADE_API_HANDLERS.md`；
+不宣称合并 main 或部署完成。
 
 下方 readiness 的“仅类型检查/待验”和 active 描述保留为历史，不覆盖本检查点，
 不覆盖本次用户恢复的非 PumpAPI 队列，也不授权重复发布旧任务。

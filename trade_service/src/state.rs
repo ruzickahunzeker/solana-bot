@@ -1,7 +1,7 @@
 use crate::application::trade_record::TradeRecordV1 as TradeRecord;
 #[cfg(test)]
 use crate::domain::trade::ExecutionMethod;
-use crate::domain::trade::{Pool, Side, TradeStatus};
+use crate::domain::trade::{Pool, TradeStatus};
 #[cfg(test)]
 use crate::models::TradeRequest;
 use dashmap::DashMap;
@@ -137,16 +137,5 @@ pub fn cache_key(pool: Pool, mint: &str, pool_id: Option<&str>) -> String {
         Pool::MeteoraDbc => format!("meteora-dbc:{}", pool_id.unwrap_or(mint)),
         Pool::RaydiumAmmV4 => format!("raydium-amm-v4:{}", pool_id.unwrap_or(mint)),
         Pool::RaydiumCpmm => format!("raydium-cpmm:{}", pool_id.unwrap_or(mint)),
-    }
-}
-
-pub fn describe_trade(
-    side: Side,
-    amount_lamports: Option<u64>,
-    sell_percent: Option<u64>,
-) -> String {
-    match side {
-        Side::Buy => format!("amount_units={}", amount_lamports.unwrap_or_default()),
-        Side::Sell => format!("sell_percent={}", sell_percent.unwrap_or_default()),
     }
 }

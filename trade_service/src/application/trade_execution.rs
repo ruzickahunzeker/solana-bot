@@ -4,6 +4,21 @@ use crate::{
     domain::{execution_policy::BroadcastPolicy, trade::ExecutionMethod},
 };
 
+pub(crate) fn describe_trade(
+    side: crate::domain::trade::Side,
+    amount_lamports: Option<u64>,
+    sell_percent: Option<u64>,
+) -> String {
+    match side {
+        crate::domain::trade::Side::Buy => {
+            format!("amount_units={}", amount_lamports.unwrap_or_default())
+        }
+        crate::domain::trade::Side::Sell => {
+            format!("sell_percent={}", sell_percent.unwrap_or_default())
+        }
+    }
+}
+
 pub(crate) fn ensure_execution_allowed(
     trade: &ValidatedTrade,
     default_simulate: bool,

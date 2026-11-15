@@ -1,5 +1,6 @@
 use crate::{
     application::{
+        ports::ordinary_runtime::TradeExecutionIndex,
         ports::trade_admission::{MemoryReservation, MemoryTradeReservations, TradeRecordIndex},
         trade_record::TradeRecordV1,
     },
@@ -17,6 +18,18 @@ impl MemoryTradeReservations for IdempotencyStore {
         aggregator_sol: bool,
     ) -> MemoryReservation {
         self.reserve(wallet_id, key, request_id, hash, aggregator_sol)
+    }
+}
+
+impl TradeExecutionIndex for TradeStore {
+    fn update_status(
+        &self,
+        request_id: &str,
+        status: crate::domain::trade::TradeStatus,
+        signature: Option<String>,
+        error: Option<String>,
+    ) -> Option<TradeRecordV1> {
+        self.update(request_id, status, signature, error)
     }
 }
 

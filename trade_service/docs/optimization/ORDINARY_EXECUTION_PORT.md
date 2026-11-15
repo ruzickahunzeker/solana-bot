@@ -78,3 +78,34 @@ git diff --check
 - 后续继续把普通接受、持久化和执行编排从 AppState/DTO 依赖分离；本 port 不代替这些职责。
 - 普通 SDK/PumpAPI/legacy 聚合仍缺完整发送前签名 journal。执行结束后写库失败的测试明确暴露该缺口，不把内存签名当作恢复保证；必须继续独立处理，不能自动重发。
 - PumpAPI 模拟的内部签名、不同资金路径故障注入、完整 VerifiedRoute/协议报价/SDK provenance 与真实链上验收保持独立门槛。
+
+## 2026-11-15 原执行编排与资源隔离
+
+本批继续原 TS-04/08/09、NP-02/03，不另立项。源码及七项新合同已类型检查，
+运行待本批独立 CI，不套用前序接受流程或 E1 的运行结果。
+
+- `application/ordinary_runtime.rs::OrdinaryExecutionService` 承担原 executor 编排，
+  仅借用项目 ports 和四值 Settings；不依赖 AppState、Config、具体存储/缓存、SDK/RPC
+  或 signer。根 `executor.rs` 保留原入口和 claims 组装，测试也经过同一生产服务。
+- `OrdinaryExecutionStorage` 仅投影原 `ordinary_execution_claims()`，仍使用原 pool 的
+  journal；`TradeExecutionIndex` 仅委托原 `TradeStore::update`，不新建任何状态或权威。
+- `CachedBlockhashRead` 仅委托原 `get_fresh`，不刷新、不新增 RPC 或延长有效期。
+  Config 只复制 broadcast、blockhash_max_age_ms、wait_tx_confirmed、mev_submit_verify_ms，
+  不新增值验证、配置或热更新。原不可变 Config 的四个值不会在执行期间改变。
+- 原 claim/禁播/聚合优先级、building/submitting 写入、SDK journal 拒绝、结果分类及
+  cache 时点保持；日志保留 `executor` target/字段，纯 detail 格式化移至 Application。
+  原 98 组指纹和全部旧断言保留。既有 PumpAPI port 分支只搬迁，不修改实现或恢复开发。
+
+新增六项 Application 合同：无 AppState 的 SDK 顺序/context/原缓存、聚合与 journal
+parent 不重复镜像、禁播/写失败/缺 hash/缺钱包、Unknown 不换后端重试、取消不伪造结果、
+四值投影；另有一项 cache 空/过期/时钟回退对照。资源为 fake journal/index/backend/cache，
+SDK journal 关联类型从未实例化、访问即 panic；配置投影用原内存 fixture，不加载生产数据。
+
+本机 test check `20261115T110647Z-210265` 35 秒/RSS 2,195,968 KiB、bin check
+`20261115T110752Z-210600` 14 秒/RSS 980,732 KiB 均 exit=0；格式/policy 七项通过，
+原七组生产警告保留。首次缺失的测试作用域导入已修复，未修改旧期待值。
+CI 增加 `ordinary-runtime` 专项，保留原全部专项/完整并发/串行，本机不链接测试。
+
+根入口仍持原 AppState/claims 生命周期；不宣称全部后台任务已追踪/排空、SDK worker
+可取消或 Memory/Shadow 具有 durable 保证。新 fake ports 测试不是双假构建后端准入、
+全协议授权、真实节点或生产部署验收。SDK/vendor/依赖、API/持久化合同及运行配置不改。

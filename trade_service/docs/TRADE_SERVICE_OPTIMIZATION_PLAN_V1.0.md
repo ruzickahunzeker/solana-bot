@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 用户已恢复持续目标，仅续非 PumpAPI 源码/离线队列。最新已验收快照 `c220ba8` / Actions `43696813225` / artifact `14154584905`，完整并发/串行各 1458、readiness 专项 6 项通过；后续普通交易接受流程及八项新合同已类型检查，待独立 CI，不套用前序结果。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[普通接受边界](optimization/ORDINARY_TRADE_API_HANDLERS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新已验收普通接受快照 `26be717` / Actions `43706312318` / artifact `14159195795`，完整并发/串行各 1466、ordinary-intake 八项通过。后续普通执行编排已隔离 AppState/具体资源，七项新合同仅类型检查，待独立 CI。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[执行边界](optimization/ORDINARY_EXECUTION_PORT.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -61,7 +61,7 @@ c220ba8 的专项及完整回归通过，不在前序 970d835 的 bootstrap CI�
 | --- | --- | --- |
 | NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
-| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取接同一 runtime/共享冷却。默认值/参数缓存/鉴权/普通校验、bootstrap 与 readiness 已离线验收，c220ba8 完整回归各 1458、readiness 六项通过。SDK 查询留在 adapter，见 READINESS_RESOURCE_BOUNDARY.md。原 SDK reader oracle/必要 Arc 注入不改钱包初始化或发送 client。本地后续接受流程仅类型检查；寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、Config/index/journal/cache/依赖及全部生命周期仍待续 |
+| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取共享 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受流程已离线验收，26be717 完整回归各 1466。后继普通执行编排接项目 ports/四值设置，七项仅类型检查，见 ORDINARY_EXECUTION_PORT.md。根入口仍持原资源及任务生命周期；寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、全局资源/依赖与退出门槛仍待续 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 

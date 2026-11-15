@@ -30,15 +30,22 @@
 
 ## 已验收运行
 
+最新完整验收普通接受快照 `26be71781406be7f912d53bd26e04fb549dce363` /
+[Actions 43706312318](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43706312318)
+已终态 success，artifact `14159195795` 下载核对：完整并发 1466（129.94 秒）/串行
+1466（238.29 秒），零失败/忽略/过滤，ordinary-intake 八项、HTTP 202 与全部步骤 exit=0；
+identity/manifest/lock/vendor 匹配。1006 文件/12,503,715 字节审计只绑定本快照。
+后继 ordinary-runtime 七项及完整编排源码仅本地类型检查，尚无运行证据，不套用 1466。
+
 首轮普通接受流程 `c58eb8cfdc68e72bb1b9a67bb34e90cae69f6c3e` /
 [Actions 43705256866](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43705256866)
 已终态 failure，artifact `14158646075` 下载核对：所有前置/原专项及 HTTP 202 通过，
 ordinary-intake 五项通过/三项失败，完整并发/串行未运行。失败为新增夹具误读 Shadow
 异步镜像、旧 command oracle 固定错误钱包；现仅修正测试输入和有界读取，原 fixture 与
-字段/字节断言保留，不改生产实现。修正已类型检查，待后继源码快照，不重跑此旧任务。
+字段/字节断言保留，不改生产实现。修正已在后继 26be717 验收，不重跑此旧任务。
 原 1006 文件/12,497,881 字节审计只绑定 c58eb8c，真实 main/索引未变。
 
-最新完整验收 readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
+前序完整验收 readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
 [Actions 43696813225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43696813225)
 已终态 success，artifact `14154584905` 下载核对：完整并发 1458（143.31 秒）/串行
 1458（252.76 秒）零失败/忽略/过滤，readiness-settings 六项和全部步骤 exit=0。
