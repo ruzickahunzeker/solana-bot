@@ -44,6 +44,17 @@ class LockedGitSourcesTests(unittest.TestCase):
         self.assertEqual(lock.count(f"zap-program?rev={REVISION}#{REVISION}"), 3)
         self.assertFalse((ROOT / ".cargo/config.toml").exists())
 
+    def test_anchor_external_idl_matches_the_same_locked_checkout(self):
+        directory = ROOT / "ci/idls"
+        self.assertEqual({p.name for p in directory.iterdir()}, {"jupiter.json"})
+        idl = directory / "jupiter.json"
+        self.assertFalse(idl.is_symlink())
+        self.assertEqual(hashlib.sha256(idl.read_bytes()).hexdigest(),
+                         "d1dc2e8726886dbdcde16b52bc5dd239779ec4a56f164b9444ac347677267a3e")
+        package = ROOT / "ci/locked-git-sources/jupiter-0.1.0"
+        resolved = next(p / "idls" for p in package.parents if (p / "idls").exists())
+        self.assertEqual(resolved, directory)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

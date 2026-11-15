@@ -30,6 +30,9 @@
 
 ## 当前证据
 
+- 第三轮 `452dce7` / [Actions 43666935608](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43666935608)
+  进入 Rust 类型检查，发现 Cargo vendor 未包含 Anchor 宏读取的 workspace 级 Jupiter IDL。
+  补同一原 Git 提交的单份 IDL 并固定 Git blob/SHA-256，未修改 SDK 或协议指令。
 - 第二轮 `ad4ea9e` / [Actions 43666705603](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43666705603)
   锁定依赖获取、格式、policy 五项、依赖源码三项及仅回环 probe 通过；shell runner 因 runner
   未安装 rg 而失败，仍未进入 Rust 测试。后续显式安装 ripgrep/time，并增加一项安装策略检查。
