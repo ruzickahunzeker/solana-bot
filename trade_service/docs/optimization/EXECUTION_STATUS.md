@@ -2,9 +2,20 @@
 
 更新日期：2026-11-15。主计划：`../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md`。
 
+2026-11-15 C3c1 `dd946aaa961f821a000db492fd8c74381180695f` / Actions `43683583741` 已终态成功，artifact `14149574413` 核对，完整并发/串行各 1394 通过，详见下方权威验收。快照 970 文件/12,211,016 字节，白名单、敏感字面量与 diff 审计通过，真实 main/索引及原 manifest/lock/vendor/release 指纹保持。之后 C3c2 新增四项 `sdk_original_sender_journal_integration_*`，真实受控 signer、原 SQLite 账本与实际 RpcClient/sender 串联，底层内存 RPC 在 egress 核对 broadcasting 原字节；成功、错回执、receipt 写失败和取消的测试源码已通过受限 check（约 9 秒，RSS 1,315,280 KiB），尚未推送/运行，不借 C3c1 结果声称验收。先前测试侧 unwrap_err 需要 Debug 的编译错误只改测试匹配，不扩大生产类型 Debug 暴露。SDK 原签名恢复的实际缺口及实施门槛已记录于 `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md`；没有恢复 owner 或放宽旧聚合 scope。目标 active，PumpAPI 暂停及所有生产边界保持。
+
 仅实施 Trade Service；其他服务既有改动保留，不纳入本队列。已按用户要求创建对话内持续执行任务，本文件记录可续作检查点；不代表额外安装了 systemd/cron 或可脱离运行环境永久执行的守护进程。
 
 ## 最新范围与执行指令
+
+当前权威验收：C3c1 `dd946aa` / Actions `43683583741` 已终态 success（14 分 32 秒），
+artifact `14149574413` 下载核对，身份和全部 steps exit=0；完整并发 1394（124.26 秒）/
+串行 1394（225.17 秒），零失败/忽略/过滤。prepared 22、签名账本 11、controller 10、
+受控签名 5、sender 10、executor 8、observer 2、HTTP 200、参数 3、候选 54、probe 59
+均通过。当前新增 C3c2 四项串联测试仅受限 check，尚未实际运行；保持源码、离线、生产验收分离。
+下一任务按 `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md` 继续，不能把此次全绿当 SDK 恢复或全协议完成。
+
+以下逐条保留发布及开发当时的历史状态；旧 in_progress/待验数字不覆盖上方已验收结果。
 
 2026-11-15 当前 C3c1 已在源码接通 Durable Live 直接 DAMM SDK 卖出的原 owner→实际后端→受控 signer→原库字节→固定 sender，原 executor 不再对该子路径调用 opaque SDK/补写最终父行；原钱包 getter/唯一 sender 真实接线，其他模式/协议不改。Default typed 回执必须匹配，provider trait Ok 不能冒充回执，只查询原签名/选定注册 RPC；缺少成功证据为 unknown，不换 lane/重签/重播。缺钱包/准备失败及旧 rejected 状态由原 owner 的无签名前事务保存，无新 DDL/配置/API。新增 20 项仅类型检查，完整回归待 CI；最终 test/bin check 约 8/6 秒、RSS 1,242,528/779,480 KiB，生产原五组警告、fmt/diff/policy/来源检查保持。另核对锁定 solana-rpc-client 4.2.2 的 send_transaction_with_config，仅调用 SendTransaction，没有隐含节点版本查询；内存发送器保留单次原字节及配置断言。详见 `SDK_ORIGINAL_DAMM_RUNTIME.md`。这是源码接线，不是部署或全协议/生产恢复完成；SDK 持续只读观测/恢复仍待接，全部生产边界/PumpAPI 暂停保持，目标 active。
 

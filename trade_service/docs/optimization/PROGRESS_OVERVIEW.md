@@ -6,8 +6,8 @@
 
 ## 统计口径
 
-- 当前 C3c1 在源码接通 Durable Live 直接 DAMM 卖出的原 owner、真实钱包 getter/受控签名、落盘原字节与固定 sender；该子路径不再走旧 SDK worker，其他模式/协议保持。新增 20 项仅受限类型检查，原五组生产警告保持，无部署/实网验收；SDK 持续观测/恢复、其他方向/协议、资源及发布门槛继续。C3b7 CI 的账本 11/控制器 10 已通过，受控签名 4/5 失败于过期夹具构造，cfg(test) 注入已修复，完整套件未执行。见 `SDK_ORIGINAL_DAMM_RUNTIME.md`。
-- 最新已验收为 C3b4：`b1fbc86` / Actions `43675181497` / artifact `14145658342` 已下载核对，完整并发 1348（114.52 秒）/串行 1348（213.36 秒）零失败/忽略/过滤，compiled-binding 4、候选 54、prepared 11、HTTP 200、probe 59、参数 3 通过。不包含当前 C3b5 的 11 项，不据此宣称正式 SDK 账本/签名发送已接入。
+- 最新已验收 C3c1：`dd946aa` / Actions `43683583741` / artifact `14149574413` 已下载核对，完整并发 1394（124.26 秒）/串行 1394（225.17 秒）零失败/忽略/过滤，所有步骤 exit=0。SDK prepared 22、签名账本 11、controller 10、受控签名 5、固定 sender 10、真实 executor 分流 8、选定 observer 2、HTTP 200、参数 3 均通过。前轮过期夹具问题已验证修复，不再等待旧失败任务。
+- C3c1 对新 Durable Live 直接 DAMM 卖出已接原 owner、真实 getter/受控签名、原字节账本/固定 sender，子路径不再走旧 SDK worker；其他模式/协议不改。C3c2 后续四项真实签名/SQLite/实际 RpcClient/sender 串联测试仅受限 check 通过，尚未执行，不借用上述 1394。原五组生产警告保持，无部署/实网验收；SDK 持续只读观测/恢复及其他大项继续，实施门槛见 `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md`。
 
 ### 历史检查点
 
@@ -76,7 +76,7 @@
 
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
-| 普通 SDK 完整授权 | C3c1 在源码对新 Durable Live DAMM 卖出接原 owner、真实授权 signer/原字节账本/固定 sender；其他模式和协议仍 legacy，新增用例待运行 | 该新子路径的完整 CI/真实环境验收，SDK 持续只读观测/恢复、其他方向/协议/backend/mode 及所有资金安全门槛 |
+| 普通 SDK 完整授权 | C3c1 新 Durable Live DAMM 卖出原 owner、真实授权 signer/原字节账本/固定 sender 已通过源码/完整离线 CI；其他模式和协议仍 legacy，后续四项串联测试待运行 | 真实 SDK 初始化/完整准备 RPC 集成、真实环境验收，SDK 持续只读观测/恢复、其他方向/协议/backend/mode 及所有资金安全门槛 |
 | 完整架构隔离 | Handler 已归位，余额/管理/vanity 控制已接项目服务和 port；直接 worker 及四个冗余资源字段不再存在于生产 AppState | full Config、普通接受/index/journal、cache、原始 RPC/SDK 资源及 bootstrap 等继续收口；局部分层不等于全量资源隔离、实际生成验收或原子生命周期 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |

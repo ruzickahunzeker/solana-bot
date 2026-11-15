@@ -30,6 +30,19 @@
 
 ## 已验收运行
 
+- C3c1 `dd946aaa961f821a000db492fd8c74381180695f` /
+  [Actions 43683583741](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43683583741)
+  全部步骤成功（14 分 32 秒），artifact `14149574413` 已下载核对：身份/manifest 指纹匹配，
+  results.tsv 所有步骤 exit=0；完整并发 1394 / 124.26 秒、串行 1394 / 225.17 秒，
+  零失败/忽略/过滤。prepared 22、签名账本 11、controller 10、受控签名 5、sender 10、
+  executor 分流 8、选定 observer 2、HTTP 200、参数 3、候选 54、probe 59 均通过。
+  先前过期 fixture 已执行验证修复，无测试删除或跳过；production 五组原警告保留。
+  后续 C3c2 四项 journal integration 仅类型检查，尚未由该提交验收；不部署/升级或访问生产数据。
+  固定官方 Actions 的 Node20→24 弃用提示已记录，非测试失败；后续单独核对可信官方新 pin，
+  不为消除此提示移动依赖/权限边界或使用浮动 actions 标签。
+
+以下为历史运行记录，不覆盖上方最新已验收结果，也不授权重跑旧终态任务。
+
 - 当前 C3c1 真实 SDK 原 owner 执行接线及 20 项新用例已通过受限类型检查，完整验收待新 CI。
   C3b7 `83036a4` / Actions `43680602908` 已失败，artifact `14147664555` 已核对：
   candidate 15、prepared 22、signed journal 11、controller 10 通过，受控签名 4/5，完整套件未执行。

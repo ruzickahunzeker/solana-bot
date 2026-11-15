@@ -2,10 +2,10 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 目标 active，PumpAPI 开发暂停。C3c1 已在源码接通 Durable Live 直接 DAMM SDK 卖出的原 owner、真实 getter/受控签名、原字节账本和固定 sender；20 项新用例及完整回归待 CI，未部署/实网验收。C3b7 的账本 11/控制器 10 已通过，受控签名 4/5 失败于过期夹具，测试注入已修复。最新完整全绿仍 C3b4 1348，不套给当前源码。其他方向/协议、SDK 观测恢复、资源/升级/发布门槛继续。SDK 固定 6.0.2，不操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[实际接线](optimization/SDK_ORIGINAL_DAMM_RUNTIME.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 目标 active，PumpAPI 开发暂停。C3c1 已接通 Durable Live 直接 DAMM SDK 卖出的原 owner、真实 getter/受控签名、原字节账本和固定 sender；`dd946aa` / Actions `43683583741` / artifact `14149574413` 下载核对，完整并发 1394（124.26 秒）/串行 1394（225.17 秒）全部通过，前轮过期夹具问题已验证修复。C3c2 四项后续串联测试仅受限 check，未部署/实网验收。SDK 原签名恢复、其他方向/协议、资源/升级/发布门槛继续。SDK 固定 6.0.2，不操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[实际接线](optimization/SDK_ORIGINAL_DAMM_RUNTIME.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
-当前开发为 C3c1：原 executor 已对该 Durable DAMM 卖出子路径调用 journaled SDK 后端，原准备/无签名预览、签名前不可恢复许可、真实 signer、原库 CAS/读回与唯一 sender 已有源码调用链，不再把这些列作未接线。20 项新用例仅通过受限类型检查；RPC 回执/原签名证据、取消与错误处理完整回归待 CI。其他 SDK/模式仍 legacy，持续观测/恢复与真实发布未完成。保持原参数/hash/JSON，不升级/部署或接触生产数据。
+当前 C3c1 源码与完整离线 CI 已验收：原 executor 对该 Durable DAMM 卖出子路径调用 journaled SDK 后端，准备/无签名预览、签名前不可恢复许可、真实 signer、原库 CAS/读回与唯一 sender 已接线，不再列为待接。后续 C3c2 四项真实签名/账本/实际 RpcClient 串联用例仅类型检查；SDK 原签名持续只读观测/恢复按 `optimization/SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md` 继续。其他 SDK/模式仍 legacy，真实准备 RPC/供应商/发布未验收。保持原参数/hash/JSON，不升级/部署或接触生产数据。
 
 ## 1. 范围与目标
 
@@ -41,7 +41,7 @@
 
 | 顺序 | 任务 | 交付与边界 |
 | --- | --- | --- |
-| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1 源码已接新 Durable Live DAMM SDK 卖出的原 owner/实际准备/受控 signer/原字节账本/固定 sender，新增 20 项和完整 CI 待运行；前序账本 11、controller 10 已执行通过，过期注入夹具修复不放松时效。其余 SDK/模式仍 legacy，SDK 原签名持续观测/恢复、全方向/协议/backend/mode/发布门槛继续，不恢复 owner、不伪造 Quote，不把类型检查当运行或实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
+| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1 新 Durable Live DAMM SDK 卖出原 owner/受控 signer/原字节账本/固定 sender 已经源码/离线 CI 验收，完整并发/串行各 1394；前序账本 11、controller 10、受控签名 5 与本轮 sender 10/executor 8/observer 2 均通过。后续 C3c2 四项串联测试仅受限 check。其余 SDK/模式仍 legacy，原签名持续只读观测/恢复、全方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
 | NP-03 | 基础设施与依赖方向收口 | TS-09-A 四个冗余生产字段仅测试保留；RPC-01A 配置去重，B1/B2/C1/C2/A3c 的刷新/观测/readiness/两个查询余额/准备余额共六类接 main 同一 runtime、独立容量/间隔与共享冷却。准备 reader 只持公开地址/当前 URL/runtime，raw 固定三地址，真实 HTTP 无 SDK 内部重试，流式 cap/最小 slot/时效/取消有测试。原 SDK reader/17 项用例仅 oracle，必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取仍未全覆盖，资源/接受/index/journal/cache 与依赖检查继续，不新增平行框架 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |

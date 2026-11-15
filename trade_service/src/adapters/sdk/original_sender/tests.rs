@@ -23,6 +23,8 @@ use std::{
     },
 };
 
+mod journal_integration;
+
 #[derive(Default)]
 struct Trace {
     rpc: Mutex<Vec<(RpcRequest, Value)>>,

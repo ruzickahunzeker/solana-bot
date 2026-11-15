@@ -1,6 +1,6 @@
 # C3c1 原 SDK owner 的实际 DAMM 执行接线
 
-日期：2026-11-15。源码和受限类型检查通过，20 项新增用例与完整回归待 CI。
+日期：2026-11-15。C3c1 源码及完整离线 CI 已通过；后续 C3c2 四项串联测试仅类型检查，待 CI。
 没有部署/重启、SDK 升级、生产钱包/数据库操作或实盘广播；不是发布完成声明。
 
 ## 源码中的实际调用链
@@ -78,7 +78,20 @@ candidate 15、prepared 22、signing journal 11、controller 10 通过，真实�
 现仅 cfg(test) 复制原字段后 backdate，保留原 raw 身份/slot，不修改生产构造器或时效门槛。
 新批次必须重新运行五项/所有原专项/完整两线程与串行套件，不借用旧 1348 全绿。
 
+该要求现由 `dd946aa` / Actions `43683583741` 完成：artifact `14149574413` 已下载核对，
+所有步骤 exit=0，完整并发 1394（124.26 秒）/串行 1394（225.17 秒）零失败/忽略/过滤。
+prepared 22、签名账本 11、controller 10、受控签名 5、sender 10、executor 8、observer 2、
+HTTP 200、参数 3、候选 54 与 probe 59 均通过。旧 C3b7 失败为历史，不再当作当前阻塞。
+
 ## 后续
+
+源码专用验证提交 `dd946aa` / Actions `43683583741` 已完成，结果见上方。
+之后新增四项 `sdk_original_sender_journal_integration_*`，将真实受控 signer、原 SQLite
+账本与本 sender/RpcClient 串联，内存传输在 egress 逐字节核对 broadcasting 已落盘的原 packet。
+覆盖成功、错回执、receipt 写失败及发送中取消；仅受限 test check 通过（约 9 秒，
+RSS 1,315,280 KiB），尚未运行，不冒用先前 CI 结果；不改生产代码/SDK/API。
+完整准备 RPC→原 signer→provider 与原签名恢复仍未验收。
 
 先完成本批 CI，再接 SDK 原签名的只读观测/恢复与端到端故障注入，覆盖其他方向/协议/backend/mode，
 并完成剩余资源边界、升级/新协议演练及发布前备份/迁移/回滚验证。实际生产动作另需明确授权。
+只读恢复的源码缺口、实施顺序和验收门槛见 `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md`。
