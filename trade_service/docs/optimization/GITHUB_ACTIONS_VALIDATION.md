@@ -30,6 +30,11 @@
 
 ## 已验收运行
 
+- 当前 C3b7 的五项真实受控签名用例、原控制器及完整回归待新 CI。
+  C3b6 `bd39f04` / Actions `43678564856` 已失败，artifact `14147911636` 下载核对：
+  类型/测试构建、candidate 15 通过，prepared 21/1；controller 与完整套件未执行。
+  失败夹具的约束拒绝保留与隔离 reader 注入修复见 `SDK_CONTROLLED_SIGNING.md`，不削弱生产约束。
+
 - 当前 C3b6 源码已有应用编排/SQLite port、十项新用例和 C3b5 修复，受限类型检查通过，
   运行结果待新的源码快照 CI。C3b5 `3bd979b` / Actions `43676492857` 终态 failure，
   artifact `14146766179` 已核对：类型/测试构建通过，candidate 14/1；后续专项与全套未执行。

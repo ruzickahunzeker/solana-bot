@@ -6,6 +6,14 @@
 
 ## 最新范围与执行指令
 
+C3b7 补充收口：新增五项（含十组规范化 MEV/provider 与两项原 wire 冲突拒绝），签名核心只复用原 provider 映射的 crate 可见函数，不改原选择器/校验；新临时钱包 Default 夹具声明 use_mev=false，旧 nominal/384/576 oracle 不改。最终受限 test check 约 10 秒、RSS 1,216,508 KiB，生产 bin check 通过，21 组警告保留；新门槛/前序未跑的 controller 与完整回归待 CI。正式 executor/真实 getter/sender 和全方向仍未接完，不能把真实核心的离线验证当作发布完成。
+
+2026-11-15 当前 C3b7 新增一次性 SdkSigningPermit（仅原 signing CAS 后构造）及真实 DammSellCandidate 受控签名/私有签后 artifact；原 controller 第一测试后端源码改为调用实际签名核心，尚待 CI 执行。原 owner/metadata/message、raw/报价期限、固定完整消息及公钥先检查再取 key，签后保留原候选和 request ID/hash；编码/核验不确定保留 typed 已知签名。新增五项 key 获取/替换/跨订单/过期/MEV 负例类型检查通过，正式 executor/真实 getter/sender 未切换，供应商回执/原签名观测与完整政策验收继续。见 `SDK_CONTROLLED_SIGNING.md`。
+
+C3b6 `bd39f04` / Actions `43678564856` 已终态 failure，artifact `14147911636` 核对：candidate 15 通过，prepared 21/1，后续 controller/全套未运行。失败为故障夹具非法 Quote UPDATE 被原 CHECK 提前拒绝；本轮先断言约束拒绝，再仅在隔离连接临时忽略 CHECK 注入坏行测试 reader 并恢复 OFF，生产约束/负例不放松。C3b5 prepared-only 修复已执行通过，不重复实施。下方旧“运行中”保留历史，不再轮询或重启旧提交；当前新四项和前序未运行门槛待新 CI，最新全绿仍 C3b4 1348。用户恢复后目标 active，所有生产边界不变。
+
+2026-11-15 C3b6 已推送独立验证提交 `bd39f0487f8578aefa9fecda43db8cc120358c43` / Actions `43678564856`，确认 in_progress；只轮询这个句柄，不再等待已失败的 `43676492857` 或重跑原源码。新快照 963 文件/12,116,998 字节，路径白名单、常见敏感字面量及 diff 检查通过；真实 main/索引、manifest/lock/vendor/release 身份未改。当前十项新控制器测试与 C3b5 的 11 项均待这次实际验收，不把受限类型检查当运行通过。正式 executor/真实授权 signer/sender 仍待接，任务 active，无生产动作。
+
 2026-11-15 当前 C3b6 完成原 SDK Application 编排/项目 ports 与原 SQLite 方法接线，十项新增离线用例及 C3b5 修复待 CI；受限 test/bin check 约 9/5 秒、RSS 1,178,828/677,464 KiB，fmt/diff/policy 七项/来源检查通过，15 组生产警告保留。原 owner/Candidate 被消费，prepared 与签名两次独立读回、CAS await 后 live 授权重查、原字节一次领取、回执只认原签名、取消无重试；共有 JournaledTradeOutcome 仅替代原聚合内部结果结构定义/兼容 re-export，不改 API。新增 pre-sign failed 仅可在 claimed/prepared，signing 后不降级；正式 executor/真实 signer/sender 未切换，完整政策仍待。见 `SDK_SUBMISSION_APPLICATION.md`。
 
 C3b5 `3bd979b` / Actions `43676492857` 已终态 failure，artifact `14146766179` 核对：类型/测试构建通过，candidate 14/1，后续专项/全套未执行。失败定位为 prepared reader 对 signing 阶段未拒绝；本轮 reader 加精确阶段门槛，原 signing 读取拒绝断言保留，合法 signing 的 claim 要求 AlreadyHeld，其他损坏字段拒绝不放松。下方旧“运行中”是历史，不再等待或重新触发同一提交。最新全绿仍 C3b4 1348，不套给 C3b5/C3b6；中断后用户已恢复 active，全部生产边界/PumpAPI 暂停保持。

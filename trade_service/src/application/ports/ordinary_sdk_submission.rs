@@ -80,7 +80,11 @@ pub(crate) trait OrdinarySdkCandidateBackend: Sync {
         execution: &AdmittedTrade,
         candidate: &Self::Candidate,
     ) -> anyhow::Result<()>;
-    fn sign(&self, candidate: Self::Candidate) -> anyhow::Result<Self::Signed>;
+    fn sign(
+        &self,
+        candidate: Self::Candidate,
+        permit: crate::application::ordinary_sdk_submission::SdkSigningPermit<'_>,
+    ) -> anyhow::Result<Self::Signed>;
     fn signed_submission<'a>(&self, signed: &'a Self::Signed) -> &'a SignedSubmission;
     fn verify_signed(
         &self,

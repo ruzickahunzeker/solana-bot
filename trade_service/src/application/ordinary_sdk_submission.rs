@@ -14,6 +14,9 @@ use crate::{
 };
 use anyhow::{ensure, Result};
 
+mod signing_permit;
+pub(crate) use signing_permit::SdkSigningPermit;
+
 /// Consumes the original owner and candidate. There is no retry, restored owner, or Quote.
 pub(crate) async fn execute<J: OrdinarySdkSubmissionJournal, B: OrdinarySdkCandidateBackend>(
     journal: &J,
@@ -51,9 +54,10 @@ pub(crate) async fn execute<J: OrdinarySdkSubmissionJournal, B: OrdinarySdkCandi
         journal
             .begin_signing(execution, &owner, &metadata, &message)
             .await?;
+        let permit = SdkSigningPermit::new(execution, &owner, &metadata, &message)?;
         backend.ensure_live_allowed()?;
         backend.authorize(execution, &candidate)?;
-        let signed_artifact = backend.sign(candidate)?;
+        let signed_artifact = backend.sign(candidate, permit)?;
         let signed = backend.signed_submission(&signed_artifact);
         // Preserve a reported signature diagnostically even when subsequent evidence rejects it.
         if !signed.signature.is_empty() && signed.signature.len() <= 128 {
@@ -101,9 +105,19 @@ pub(crate) async fn execute<J: OrdinarySdkSubmissionJournal, B: OrdinarySdkCandi
         Ok(())
     }
     .await;
-    let mut error = result
-        .err()
-        .map(|e| crate::sanitize::redact_urls(&e.to_string()));
+    let failure = result.err();
+    if signature.is_none() && signing_attempted {
+        if let Some(known) = failure.as_ref().and_then(|error| {
+            error.downcast_ref::<crate::application::trade_execution::UncertainSdkSubmission>()
+        }) {
+            signature = known
+                .signatures()
+                .first()
+                .filter(|s| !s.is_empty() && s.len() <= 128)
+                .cloned();
+        }
+    }
+    let mut error = failure.map(|e| crate::sanitize::redact_urls(&e.to_string()));
     if !signing_attempted {
         if let Some(reason) = error.as_deref() {
             if let Err(storage_error) = journal.fail_before_sign(execution, &owner, reason).await {

@@ -1,6 +1,6 @@
 # C3b6 原 SDK 提交的 Application 编排
 
-日期：2026-11-15。源码/受限类型检查完成，新增十项 Rust 用例待云端运行。
+日期：2026-11-15。源码/受限类型检查完成，新增十项 Rust 用例仍待云端实际运行。
 正式 executor 和真实 SDK signer/sender 未切换，不声明完整业务授权或真实节点验收完成。
 
 ## 上轮失败与修复
@@ -57,6 +57,12 @@ C3b5 提交 `3bd979b` / Actions `43676492857` 终态 failure，artifact `1414676
 最终受限 test check 约 9 秒、RSS 1,178,828 KiB，bin check 约 5 秒、RSS 677,464 KiB；
 fmt/diff、policy 七项、SDK 来源检查通过。生产目标 15 组警告，包含尚未接正式入口的代码，
 不压制警告或以假调用掩盖。完整 Rust 测试只在 source/public-fixture CI 执行，不在本机大链接。
+
+已推送独立验证提交 `bd39f0487f8578aefa9fecda43db8cc120358c43`，
+[Actions 43678564856](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43678564856)
+已终态 failure，artifact `14147911636` 核对：candidate 15、prepared 21/1，
+失败是故障夹具先被原 CHECK 拒绝，尚未执行控制器与全套。修复及新增真实签名核心
+见 [C3b7](SDK_CONTROLLED_SIGNING.md)；不再轮询或重启旧失败任务，不把类型检查当运行通过。
 
 ## 后续
 

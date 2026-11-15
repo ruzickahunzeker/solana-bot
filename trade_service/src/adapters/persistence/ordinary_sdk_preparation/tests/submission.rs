@@ -501,9 +501,23 @@ async fn sdk_submission_journal_detects_signed_corruption_even_when_digest_was_r
                     .bind(&c.f.record.request_id).execute(&mut *tx).await.unwrap();
             }
             "quote" => {
+                assert!(sqlx::query(
+                    "UPDATE ordinary_execution_claims SET bound_quote_json='{}' WHERE request_id=?"
+                )
+                .persistent(false)
+                .bind(&c.f.record.request_id)
+                .execute(&mut *tx)
+                .await
+                .is_err());
+                // Separately inject a damaged legacy/external row to exercise the reader.
+                sqlx::query("PRAGMA ignore_check_constraints=ON")
+                    .execute(&mut *tx)
+                    .await
+                    .unwrap();
                 sqlx::query(
                     "UPDATE ordinary_execution_claims SET bound_quote_json='{}' WHERE request_id=?",
                 )
+                .persistent(false)
                 .bind(&c.f.record.request_id)
                 .execute(&mut *tx)
                 .await
@@ -518,6 +532,10 @@ async fn sdk_submission_journal_detects_signed_corruption_even_when_digest_was_r
             .unwrap();
         assert!(validate_sdk_row(&row).is_err(), "{change}");
         tx.rollback().await.unwrap();
+        sqlx::query("PRAGMA ignore_check_constraints=OFF")
+            .execute(&c.store.pool)
+            .await
+            .unwrap();
     }
     assert_eq!(
         c.store

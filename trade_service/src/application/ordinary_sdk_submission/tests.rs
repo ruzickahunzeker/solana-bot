@@ -3,7 +3,8 @@ use crate::{
     adapters::{
         persistence::ordinary_claims::SqliteOrdinaryExecutionClaims,
         sdk::damm_sell_message::{
-            candidate_fixture_for_wallet, validate_signed_candidate, DammSellCandidate,
+            candidate_fixture_for_wallet, candidate_fixture_for_wallet_with_mev,
+            validate_signed_candidate, DammSellCandidate, DammSellContext, DammSignedCandidate,
         },
     },
     application::{
@@ -38,6 +39,7 @@ struct Control {
     authorize: AtomicUsize,
     broadcast_authorize: AtomicUsize,
     signs: AtomicUsize,
+    keys: AtomicUsize,
     sends: AtomicUsize,
     response: AtomicUsize,
 }
@@ -171,10 +173,12 @@ impl OrdinarySdkSubmissionJournal for Journal {
 }
 
 struct Engine {
-    signer: Keypair,
+    signer: Arc<Keypair>,
     control: Arc<Control>,
     pool: SqlitePool,
     request_id: String,
+    execution: Arc<AdmittedTrade>,
+    alternate_execution: Option<Arc<AdmittedTrade>>,
 }
 impl Engine {
     fn live(&self) -> Result<()> {
@@ -189,6 +193,8 @@ impl Engine {
     fn sign(&self, message: &[u8]) -> Result<SignedSubmission> {
         self.control.signs.fetch_add(1, Ordering::SeqCst);
         self.control.event("sign")?;
+        self.control.event("acquire-signer")?;
+        self.control.keys.fetch_add(1, Ordering::SeqCst);
         let signature = self.signer.sign_message(message);
         let transaction = VersionedTransaction {
             signatures: vec![signature],
@@ -234,13 +240,19 @@ impl Engine {
     }
 }
 struct First(Engine);
-struct FirstSigned {
-    candidate: DammSellCandidate,
-    signed: SignedSubmission,
+impl First {
+    fn context(&self) -> DammSellContext {
+        DammSellContext {
+            wallet: self.0.signer.pubkey(),
+            provider: sol_trade_sdk::swqos::SwqosType::Default,
+            version: sol_trade_sdk::common::TradeTransactionVersion::V0,
+            seed_optimized: false,
+        }
+    }
 }
 impl OrdinarySdkCandidateBackend for First {
     type Candidate = DammSellCandidate;
-    type Signed = FirstSigned;
+    type Signed = DammSignedCandidate;
     fn ensure_live_allowed(&self) -> Result<()> {
         self.0.live()
     }
@@ -252,32 +264,69 @@ impl OrdinarySdkCandidateBackend for First {
         Ok(c.message_bytes())
     }
     fn authorize(&self, e: &AdmittedTrade, c: &DammSellCandidate) -> Result<()> {
-        self.0.authorize(e, c.metadata(), &c.message_bytes())
+        self.0.authorize(e, c.metadata(), &c.message_bytes())?;
+        c.authorize_live(e, self.context())
     }
-    fn sign(&self, c: DammSellCandidate) -> Result<FirstSigned> {
-        let signed = self.0.sign(&c.message_bytes())?;
-        Ok(FirstSigned {
-            candidate: c,
-            signed,
-        })
+    fn sign(
+        &self,
+        c: DammSellCandidate,
+        permit: SdkSigningPermit<'_>,
+    ) -> Result<DammSignedCandidate> {
+        self.0.control.signs.fetch_add(1, Ordering::SeqCst);
+        self.0.control.event("sign")?;
+        let mut c = if self.0.control.changed("sign-candidate") {
+            candidate_fixture_for_wallet(Keypair::new().pubkey())
+        } else {
+            c
+        };
+        if self.0.control.changed("expire-before-sign") {
+            c.expire_holding_for_test();
+        }
+        let mut context = self.context();
+        if self.0.control.changed("sign-context") {
+            context.seed_optimized = true;
+        }
+        let mut signed = c.sign_original(permit, context, || {
+            self.0.control.event("acquire-signer")?;
+            self.0.control.keys.fetch_add(1, Ordering::SeqCst);
+            if self.0.control.changed("sign-key") {
+                return Ok(Arc::new(Keypair::new()));
+            }
+            Ok(self.0.signer.clone())
+        })?;
+        if self.0.control.changed("expire-after-sign") {
+            signed.expire_holding_for_test();
+        }
+        if self.0.control.changed("sign-error-with-signature") {
+            return Err(
+                crate::application::trade_execution::UncertainSdkSubmission::new(
+                    vec![signed.submission().signature.clone()],
+                    "synthetic post-sign artifact failure".into(),
+                )
+                .into(),
+            );
+        }
+        Ok(signed)
     }
-    fn signed_submission<'a>(&self, s: &'a FirstSigned) -> &'a SignedSubmission {
-        &s.signed
+    fn signed_submission<'a>(&self, s: &'a DammSignedCandidate) -> &'a SignedSubmission {
+        s.submission()
     }
     fn verify_signed(
         &self,
-        s: &FirstSigned,
+        s: &DammSignedCandidate,
         m: &SdkCandidateMetadata,
         message: &[u8],
     ) -> Result<()> {
-        self.0.verify(&s.signed, m, message)
+        self.0.verify(s.submission(), m, message)
     }
-    fn authorize_broadcast(&self, s: &FirstSigned) -> Result<()> {
+    fn authorize_broadcast(&self, s: &DammSignedCandidate) -> Result<()> {
         self.0.authorize_broadcast()?;
-        validate_signed_candidate(
-            s.candidate.metadata(),
-            &s.candidate.message_bytes(),
-            &s.signed,
+        s.recheck(
+            self.0
+                .alternate_execution
+                .as_deref()
+                .unwrap_or(self.0.execution.as_ref()),
+            self.context(),
         )
     }
     async fn broadcast(&self, s: &SignedSubmission) -> Result<String> {
@@ -311,7 +360,8 @@ impl OrdinarySdkCandidateBackend for Second {
     fn authorize(&self, e: &AdmittedTrade, c: &PlainCandidate) -> Result<()> {
         self.0.authorize(e, &c.metadata, &c.message)
     }
-    fn sign(&self, c: PlainCandidate) -> Result<SecondSigned> {
+    fn sign(&self, c: PlainCandidate, permit: SdkSigningPermit<'_>) -> Result<SecondSigned> {
+        permit.validate(&c.metadata, &c.message)?;
         let signed = self.0.sign(&c.message)?;
         Ok(SecondSigned {
             candidate: c,
@@ -371,8 +421,58 @@ impl Harness {
     }
 }
 async fn setup() -> Harness {
+    setup_mev(Some(false), None).await
+}
+
+#[tokio::test]
+async fn sdk_controlled_signing_enforces_requested_provider_with_existing_mode_precedence() {
+    use crate::domain::trade::MevProvider::{Auto, BlockRazor, Default, Jito, Temporal};
+    for (use_mev, requested, allowed) in [
+        (Some(false), None, true),
+        (Some(false), Some(Default), true),
+        (Some(false), Some(Auto), true),
+        (None, Some(Auto), true),
+        (None, None, true),
+        (Some(true), Some(BlockRazor), false),
+        (Some(true), None, false),
+        (Some(true), Some(Jito), false),
+        (Some(true), Some(Temporal), false),
+        (Some(true), Some(Auto), false),
+    ] {
+        let r = setup_mev(use_mev, requested).await.run().await;
+        assert_eq!(
+            r.control.keys.load(Ordering::SeqCst),
+            usize::from(allowed),
+            "{use_mev:?}/{requested:?}"
+        );
+        assert_eq!(r.control.sends.load(Ordering::SeqCst), usize::from(allowed));
+        assert_eq!(
+            stage(&r.journal, &r.execution).await,
+            if allowed { "submitted" } else { "failed" }
+        );
+        if !allowed {
+            assert!(r.outcome.error.unwrap().contains("MEV policy"));
+        }
+    }
+    let state = crate::http_contract_tests::state().await;
+    for (use_mev, requested) in [(false, Jito), (true, Default)] {
+        let request: crate::models::TradeRequest = serde_json::from_value(serde_json::json!({
+            "wallet_id":"fixture-wallet", "side":"sell", "pool":"meteora-damm-v2",
+            "mint":Address::from_bytes([2;32]).to_string(), "quote_mint":crate::domain::trade::WSOL_MINT,
+            "pool_id":Address::from_bytes([3;32]).to_string(), "sell_percent":100,
+            "simulate":false, "execution_method":"sdk", "idempotency_key":"invalid-mode",
+            "use_mev":use_mev, "mev_provider":requested,
+        })).unwrap();
+        assert!(crate::validation::validate_trade(&request, &state.config).is_err());
+    }
+}
+
+async fn setup_mev(
+    use_mev: Option<bool>,
+    requested: Option<crate::domain::trade::MevProvider>,
+) -> Harness {
     let signer = Keypair::new();
-    let candidate = candidate_fixture_for_wallet(signer.pubkey());
+    let candidate = candidate_fixture_for_wallet_with_mev(signer.pubkey(), use_mev, requested);
     let d = candidate.metadata().details();
     let state = fixture(TradePersistenceMode::Durable).await.state;
     let request = serde_json::from_value(serde_json::json!({
@@ -396,7 +496,7 @@ async fn setup() -> Harness {
     let pool = f.state.persistence.pool_for_tests();
     let control = Arc::new(Control::default());
     Harness {
-        execution: f.execution,
+        execution: f.execution.clone(),
         owner,
         candidate,
         journal: Journal {
@@ -405,10 +505,12 @@ async fn setup() -> Harness {
             control: control.clone(),
         },
         backend: First(Engine {
-            signer,
+            signer: Arc::new(signer),
             control,
             pool,
             request_id: record.request_id,
+            execution: f.execution,
+            alternate_execution: None,
         }),
     }
 }
@@ -477,6 +579,7 @@ async fn sdk_application_submission_two_candidate_backends_obey_the_same_origina
             "live-3",
             "authorize-3",
             "sign",
+            "acquire-signer",
             "verify-signed",
             "record-signed",
             "record-signed-after",
@@ -761,31 +864,25 @@ async fn sdk_application_submission_journal_cannot_downgrade_any_postsigning_sta
             .begin_sdk_signing(&h.execution, &h.owner, h.candidate.metadata(), &message)
             .await
             .unwrap();
-        let artifact = h.backend.sign(h.candidate).unwrap();
+        let signed = h.backend.0.sign(&message).unwrap();
         if target != "signing" {
             h.journal
                 .store
-                .record_sdk_signed(&h.execution, &h.owner, &artifact.signed)
+                .record_sdk_signed(&h.execution, &h.owner, &signed)
                 .await
                 .unwrap();
         }
         if ["broadcasting", "submitted", "unknown"].contains(&target) {
             h.journal
                 .store
-                .take_sdk_broadcast(&h.execution, &h.owner, &artifact.signed)
+                .take_sdk_broadcast(&h.execution, &h.owner, &signed)
                 .await
                 .unwrap();
         }
         if ["submitted", "unknown"].contains(&target) {
             h.journal
                 .store
-                .record_sdk_broadcast(
-                    &h.execution,
-                    &h.owner,
-                    &artifact.signed,
-                    target == "submitted",
-                    None,
-                )
+                .record_sdk_broadcast(&h.execution, &h.owner, &signed, target == "submitted", None)
                 .await
                 .unwrap();
         }
@@ -824,5 +921,92 @@ async fn sdk_application_submission_journal_cannot_downgrade_any_postsigning_sta
             .read_sdk_candidate(&h.execution, &h.owner)
             .await
             .is_err());
+    }
+}
+
+#[tokio::test]
+async fn sdk_controlled_signing_rejects_changed_candidate_context_and_key_before_releasing_bytes() {
+    for point in ["sign-candidate", "sign-context", "sign-key"] {
+        let h = setup().await;
+        *h.backend.0.control.tamper.lock().unwrap() = Some(point);
+        let r = h.run().await;
+        assert!(r.outcome.record.is_none(), "{point}");
+        assert!(r.outcome.signature.is_none(), "{point}");
+        assert_eq!(r.control.signs.load(Ordering::SeqCst), 1);
+        assert_eq!(
+            r.control.keys.load(Ordering::SeqCst),
+            usize::from(point == "sign-key")
+        );
+        assert_eq!(r.control.sends.load(Ordering::SeqCst), 0);
+        assert_eq!(stage(&r.journal, &r.execution).await, "signing");
+    }
+}
+
+#[tokio::test]
+async fn sdk_controlled_signing_preserves_real_signature_when_artifact_release_reports_an_error() {
+    let h = setup().await;
+    *h.backend.0.control.tamper.lock().unwrap() = Some("sign-error-with-signature");
+    let r = h.run().await;
+    assert!(r.outcome.signature.is_some());
+    assert!(r.outcome.record.is_none());
+    assert!(r
+        .outcome
+        .error
+        .unwrap()
+        .contains("post-sign artifact failure"));
+    assert_eq!(r.control.keys.load(Ordering::SeqCst), 1);
+    assert_eq!(r.control.sends.load(Ordering::SeqCst), 0);
+    assert_eq!(stage(&r.journal, &r.execution).await, "signing");
+}
+
+#[tokio::test]
+async fn sdk_controlled_signing_signed_artifact_cannot_be_rebound_to_another_original_order() {
+    let mut h = setup().await;
+    h.backend.0.alternate_execution = Some(setup().await.execution);
+    let r = h.run().await;
+    assert!(r.outcome.record.is_none());
+    assert!(r.outcome.signature.is_some());
+    assert!(r
+        .outcome
+        .error
+        .unwrap()
+        .contains("different original order"));
+    assert_eq!(r.control.keys.load(Ordering::SeqCst), 1);
+    assert_eq!(r.control.sends.load(Ordering::SeqCst), 0);
+    assert_eq!(stage(&r.journal, &r.execution).await, "signed");
+}
+
+#[tokio::test]
+async fn sdk_controlled_signing_original_evidence_expiration_is_not_renewed_by_signing_or_storage()
+{
+    for point in ["initial", "expire-before-sign", "expire-after-sign"] {
+        let mut h = setup().await;
+        if point == "initial" {
+            h.candidate.expire_holding_for_test();
+        } else {
+            *h.backend.0.control.tamper.lock().unwrap() = Some(point);
+        }
+        let r = h.run().await;
+        assert_eq!(
+            r.control.keys.load(Ordering::SeqCst),
+            usize::from(point == "expire-after-sign"),
+            "{point}"
+        );
+        assert_eq!(r.control.sends.load(Ordering::SeqCst), 0, "{point}");
+        assert_eq!(
+            r.outcome.signature.is_some(),
+            point == "expire-after-sign",
+            "{point}"
+        );
+        assert!(r.outcome.error.unwrap().contains("expired"), "{point}");
+        assert_eq!(
+            stage(&r.journal, &r.execution).await,
+            match point {
+                "initial" => "failed",
+                "expire-before-sign" => "signing",
+                "expire-after-sign" => "signed",
+                _ => unreachable!(),
+            }
+        );
     }
 }

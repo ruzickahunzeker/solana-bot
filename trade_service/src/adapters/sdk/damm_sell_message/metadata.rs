@@ -204,7 +204,16 @@ pub(crate) fn candidate_fixture(
 
 #[cfg(test)]
 pub(crate) fn candidate_fixture_for_wallet(wallet: Pubkey) -> DammSellCandidate {
-    let f = super::tests::case_for_wallet(
+    candidate_fixture_for_wallet_with_mev(wallet, Some(false), None)
+}
+
+#[cfg(test)]
+pub(crate) fn candidate_fixture_for_wallet_with_mev(
+    wallet: Pubkey,
+    use_mev: Option<bool>,
+    requested: Option<crate::domain::trade::MevProvider>,
+) -> DammSellCandidate {
+    let mut f = super::tests::case_for_wallet(
         SwqosType::Default,
         false,
         100,
@@ -213,6 +222,8 @@ pub(crate) fn candidate_fixture_for_wallet(wallet: Pubkey) -> DammSellCandidate 
         spl_token_interface::ID,
         wallet,
     );
+    f.intent.use_mev = use_mev;
+    f.intent.mev_provider = requested;
     DammSellCandidate::build(f.profile().unwrap(), None).unwrap()
 }
 

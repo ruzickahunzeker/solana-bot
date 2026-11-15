@@ -30,8 +30,11 @@ use guard::Invocation;
 pub(crate) use metadata::candidate_fixture;
 #[cfg(test)]
 pub(crate) use metadata::candidate_fixture_for_wallet;
+#[cfg(test)]
+pub(crate) use metadata::candidate_fixture_for_wallet_with_mev;
 pub(crate) use metadata::validate_candidate;
 pub(crate) use signed::validate_signed_candidate;
+pub(crate) use signed::DammSignedCandidate;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct DammSellContext {

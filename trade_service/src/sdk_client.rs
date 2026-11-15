@@ -1577,7 +1577,7 @@ impl SdkTradeClient {
     }
 }
 
-fn provider_swqos_type(provider: MevProvider) -> Option<SwqosType> {
+pub(crate) fn provider_swqos_type(provider: MevProvider) -> Option<SwqosType> {
     match provider {
         MevProvider::Auto | MevProvider::Default => None,
         MevProvider::Jito => Some(SwqosType::Jito),
