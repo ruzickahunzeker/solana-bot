@@ -19,6 +19,7 @@ use anyhow::{ensure, Context, Result};
 use sha2::{Digest, Sha256};
 use sqlx::{sqlite::SqliteRow, Row, Sqlite, Transaction, ValueRef};
 
+mod journal;
 mod submission;
 
 fn sha(message: &[u8]) -> String {
@@ -53,9 +54,9 @@ pub(super) fn validate_sdk_row(row: &SqliteRow) -> Result<Option<StoredSdkCandid
     let message: Option<Vec<u8>> = row.try_get("unsigned_message")?;
     let digest: Option<&str> = row.try_get("unsigned_sha256")?;
     let stored = match (stage, json, message, digest) {
-        ("claimed", None, None, None) => None,
+        ("claimed" | "failed", None, None, None) => None,
         (
-            "prepared" | "signing" | "signed" | "broadcasting" | "submitted" | "unknown",
+            "prepared" | "signing" | "signed" | "broadcasting" | "submitted" | "unknown" | "failed",
             Some(json),
             Some(message),
             Some(digest),
@@ -175,12 +176,13 @@ impl SqliteOrdinaryExecutionClaims {
         owner: &ExecutionOwner,
     ) -> Result<StoredSdkCandidate> {
         let mut tx = self.pool.begin().await?;
-        let (_, parent, stored) = checked(&mut tx, execution, owner).await?;
+        let (row, parent, stored) = checked(&mut tx, execution, owner).await?;
         ensure!(
-            matches!(
-                parent.status,
-                TradeStatus::BuildingTx | TradeStatus::Unknown
-            ),
+            row.try_get::<&str, _>("submission_stage")? == "prepared"
+                && matches!(
+                    parent.status,
+                    TradeStatus::BuildingTx | TradeStatus::Unknown
+                ),
             "SDK prepared parent status is invalid"
         );
         let stored = stored.context("SDK prepared candidate is missing")?;

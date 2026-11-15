@@ -3,6 +3,7 @@ pub(crate) mod ordinary_claims;
 pub(crate) mod ordinary_observation_context;
 pub(crate) mod ordinary_observation_scan;
 pub(crate) mod ordinary_reconciliation;
+pub(crate) mod ordinary_sdk_submission;
 pub(crate) mod ordinary_sol_buy;
 pub(crate) mod ordinary_submission;
 pub(crate) mod pool_queries;

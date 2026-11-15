@@ -6,6 +6,12 @@
 
 ## 最新范围与执行指令
 
+2026-11-15 当前 C3b6 完成原 SDK Application 编排/项目 ports 与原 SQLite 方法接线，十项新增离线用例及 C3b5 修复待 CI；受限 test/bin check 约 9/5 秒、RSS 1,178,828/677,464 KiB，fmt/diff/policy 七项/来源检查通过，15 组生产警告保留。原 owner/Candidate 被消费，prepared 与签名两次独立读回、CAS await 后 live 授权重查、原字节一次领取、回执只认原签名、取消无重试；共有 JournaledTradeOutcome 仅替代原聚合内部结果结构定义/兼容 re-export，不改 API。新增 pre-sign failed 仅可在 claimed/prepared，signing 后不降级；正式 executor/真实 signer/sender 未切换，完整政策仍待。见 `SDK_SUBMISSION_APPLICATION.md`。
+
+C3b5 `3bd979b` / Actions `43676492857` 已终态 failure，artifact `14146766179` 核对：类型/测试构建通过，candidate 14/1，后续专项/全套未执行。失败定位为 prepared reader 对 signing 阶段未拒绝；本轮 reader 加精确阶段门槛，原 signing 读取拒绝断言保留，合法 signing 的 claim 要求 AlreadyHeld，其他损坏字段拒绝不放松。下方旧“运行中”是历史，不再等待或重新触发同一提交。最新全绿仍 C3b4 1348，不套给 C3b5/C3b6；中断后用户已恢复 active，全部生产边界/PumpAPI 暂停保持。
+
+2026-11-15 C3b5 已推送独立源码快照 `3bd979bca10aaced601b4544db35252e80384862` / Actions `43676492857`，确认 in_progress；后续只轮询此句柄，不在小 VM 大链接、不重复触发。快照 958 个文件/12,066,027 字节，白名单/常见敏感字面量/差异检查通过，不含运行配置、钱包、数据库、日志或产物；main 仍 `00c9b7a`、真实索引为空。当前 11 项 Rust 用例及完整回归仍待此运行验收，不套前序 1348；下一核心为原 owner 的实际 Application 编排/完整业务政策/受控 signer/固定 sender 与只读恢复，不能从 nominal metadata 恢复授权或调用旧 opaque worker 补单。目标 active，全部生产边界与 PumpAPI 暂停保持。
+
 2026-11-15 C3b4 已云端验收：`b1fbc86` / Actions `43675181497` / artifact `14145658342` 下载核对，所有步骤 exit=0；完整并发 1348（114.52 秒）/串行 1348（213.36 秒）零失败/忽略/过滤，compiled-binding 4、候选 54、prepared 11、HTTP 200、probe 59、参数 3 通过。下方 C3b4“运行中”保留为历史，不能重启或混为当前 C3b5 通过；当前 11 项 SDK 原 owner 签名字节账本用例待独立 CI。目标 active，正式路径未切换，无生产操作。
 
 2026-11-15 当前推进 C3b5 原 SDK owner 签名字节账本：复用原 005/008/009 authority/列，新增 signing/signed/broadcasting/receipt CAS、严格原消息/签名核验、独立读回及一次性原字节领取；11 项离线用例待云端运行，受限类型检查及双 pool 增补复检通过（test 约 9 秒/RSS 1,189,688 KiB，bin 约 5 秒/RSS 652,524 KiB），fmt/policy 七项/来源检查通过。正式 executor/签名/发送未切换，完整业务政策及实际编排仍是主线，不把存储阶段当授权。生产目标当前 12 组警告（原七组 + 未接正式路径五组）保留，不抑制；无 SDK/依赖/迁移/配置/生产操作。详见 `SDK_ORIGINAL_SIGNED_JOURNAL.md`。前序 C3b4 已推送 `b1fbc86` / Actions `43675181497`，确认运行中，不能把前序 1344 套给新代码；目标 active，PumpAPI 暂停。

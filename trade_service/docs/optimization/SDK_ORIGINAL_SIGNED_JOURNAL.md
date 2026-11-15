@@ -1,6 +1,6 @@
 # C3b5 原 SDK owner 的签名字节账本
 
-日期：2026-11-15。源码及受限类型检查阶段；新增 Rust 用例尚待 GitHub Actions 运行。
+日期：2026-11-15。源码及受限类型检查阶段；C3b5 首轮 CI 失败，修复与新增 Application 见下。
 这是原 `ordinary_execution_claims` 的 SDK 子路径，不是新的订单、Quote 或幂等权威。
 正式 executor 尚未切换，不表示已经提供完整业务授权或可上线。
 
@@ -44,6 +44,13 @@
 生产目标为 12 组警告：原七组和本模块尚未接正式路径的五组，没有新增抑制或假调用。
 manifest/lock/vendor/原 release 身份保持；不改其他服务、不升级、不部署、不操作生产库。
 PumpAPI 开发仍暂停。
+
+已推送独立验证分支提交 `3bd979bca10aaced601b4544db35252e80384862`，
+[Actions 43676492857](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43676492857)
+已终态 failure，artifact `14146766179` 核对：candidate 14/1，失败为原 prepared-only reader
+仍接受 signing，后续 11 项账本专项/完整回归未执行。本轮补精确 prepared 阶段检查，
+合法 signing 的 claim 必须 AlreadyHeld，其他损坏数据拒绝不放松；修复与新增十项应用层合同
+见 [C3b6](SDK_SUBMISSION_APPLICATION.md)。不重复等待旧运行，不将前序 1348 当本轮验收。
 
 ## 接续主线
 

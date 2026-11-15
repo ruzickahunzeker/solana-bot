@@ -6,7 +6,7 @@
 
 ## 统计口径
 
-- 当前 C3b5 已写 SDK 原 owner 的 signing/signed/broadcasting/receipt CAS、原签名字节核验/独立读回和一次性领取，11 项离线测试待 CI，受限类型检查及增补复检通过；仍未接正式 executor/受控 signer/sender，完整业务授权/其他方向和发布门槛保留。当前生产类型检查 12 组警告（原七组 + 未接线五组），不抑制，见 `SDK_ORIGINAL_SIGNED_JOURNAL.md`。
+- 当前 C3b6 已接原 SDK Application/项目 ports 与 SQLite 方法，消费原 owner/Candidate 并固定保存/授权/签名/读回/领取/回执顺序，十项新用例及 C3b5 修复待云端验收；受限 test/bin check、fmt/diff/policy/来源通过，15 组生产警告不抑制。C3b5 `3bd979b` / Actions `43676492857` 终态 failure（candidate 14/1，其余未运行），prepared-only reader 阶段合同已修复，合法 signing 不重发 owner，其他损坏拒绝保留。正式 executor/真实 signer/sender 和完整政策仍未完成，见 `SDK_SUBMISSION_APPLICATION.md`。
 - 最新已验收为 C3b4：`b1fbc86` / Actions `43675181497` / artifact `14145658342` 已下载核对，完整并发 1348（114.52 秒）/串行 1348（213.36 秒）零失败/忽略/过滤，compiled-binding 4、候选 54、prepared 11、HTTP 200、probe 59、参数 3 通过。不包含当前 C3b5 的 11 项，不据此宣称正式 SDK 账本/签名发送已接入。
 
 ### 历史检查点

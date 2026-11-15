@@ -30,6 +30,11 @@
 
 ## 已验收运行
 
+- 当前 C3b6 源码已有应用编排/SQLite port、十项新用例和 C3b5 修复，受限类型检查通过，
+  运行结果待新的源码快照 CI。C3b5 `3bd979b` / Actions `43676492857` 终态 failure，
+  artifact `14146766179` 已核对：类型/测试构建通过，candidate 14/1；后续专项与全套未执行。
+  阶段读取合同的生产修复和原断言保留见 `SDK_SUBMISSION_APPLICATION.md`；不把失败隐藏或跳过。
+
 - C3b4 编译绑定快照 `b1fbc8693d9e3da6589c15b855666703f2c9e35d` /
   [Actions 43675181497](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43675181497)
   成功，artifact `14145658342` 下载核对：全部步骤 exit=0；完整并发 1348 / 114.52 秒、

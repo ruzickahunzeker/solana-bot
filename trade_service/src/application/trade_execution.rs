@@ -22,6 +22,13 @@ pub struct TradeExecutionResult {
     pub error: Option<String>,
 }
 
+/// A durable original-order journal owns its parent row; callers must not overwrite it.
+pub(crate) struct JournaledTradeOutcome {
+    pub record: Option<crate::application::trade_record::TradeRecordV1>,
+    pub signature: Option<String>,
+    pub error: Option<String>,
+}
+
 /// SDK entry may have signed/submitted even when no receipt reached this process.
 #[derive(Debug)]
 pub(crate) struct UncertainSdkSubmission {

@@ -266,7 +266,8 @@ async fn sdk_candidate_write_failure_or_after_write_corruption_rolls_back_stage_
 }
 
 #[tokio::test]
-async fn sdk_candidate_readback_rejects_corrupted_or_partial_metadata_and_never_reissues_owner() {
+async fn sdk_candidate_readback_rejects_partial_metadata_or_post_prepared_stage_and_never_reissues_owner(
+) {
     for (column, value) in [
         ("sdk_prepared_json", "{}"),
         ("unsigned_message", "wrong-message"),
@@ -299,10 +300,18 @@ async fn sdk_candidate_readback_rejects_corrupted_or_partial_metadata_and_never_
                 .is_err(),
             "{column}"
         );
-        assert!(
-            c.f.claims().claim(&c.f.execution).await.is_err(),
-            "{column}"
-        );
+        if column == "submission_stage" {
+            // Signing is now a legitimate single-assignment stage, never a new owner.
+            assert_eq!(
+                c.f.claims().claim(&c.f.execution).await.unwrap(),
+                ExecutionClaim::AlreadyHeld
+            );
+        } else {
+            assert!(
+                c.f.claims().claim(&c.f.execution).await.is_err(),
+                "{column}"
+            );
+        }
         assert_eq!(snapshot(&c).await, before);
     }
 }

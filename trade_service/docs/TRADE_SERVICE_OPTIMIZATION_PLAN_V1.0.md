@@ -2,10 +2,10 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，PumpAPI 交易开发仍暂停。C3b1 至 C3b4 的 SDK metadata/prepared、DAMM 输出/预览上下文/编译消息绑定子项已完成源码及离线验收；最新 `b1fbc86` / Actions `43675181497` 完整两线程/串行各 1348、HTTP 200、参数和专项通过，artifact `14145658342` 已下载核对。当前 C3b5 签名字节账本新增 11 项待 CI，正式 SDK 仍 opaque，原 owner 的正式编排、完整独立授权/受控签名及原字节发送尚未完成，不代表可上线。NP-05-A 固定 SDK 6.0.2 来源和既有 DBC 补丁重放已验收，未升级；实际升级/协议/backend/mode/资源及发布演练仍需继续。最新见 [执行状态](optimization/EXECUTION_STATUS.md)、[编译绑定](optimization/DAMM_COMPILED_MESSAGE_BINDING.md)、[原 SDK 账本](optimization/SDK_ORIGINAL_SIGNED_JOURNAL.md)、[来源账本](optimization/SDK_PROVENANCE.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 持续目标 active，PumpAPI 交易开发仍暂停。最新已验收为 C3b4 `b1fbc86` / Actions `43675181497`，完整两线程/串行各 1348、HTTP 200、参数和专项通过，artifact `14145658342` 已下载核对。C3b5 首轮失败已定位并修复，当前 C3b6 Application/原账本接线、十项新用例及 C3b5 的 11 项仍待新 CI。正式 SDK 仍 opaque，完整业务授权/真实 signer/sender 及原 executor 接线尚未完成，不代表可上线。NP-05-A 固定 SDK 6.0.2 来源和既有 DBC 补丁重放已验收，未升级；其余协议/backend/mode/资源及发布演练继续。最新见 [执行状态](optimization/EXECUTION_STATUS.md)、[SDK Application](optimization/SDK_SUBMISSION_APPLICATION.md)、[来源账本](optimization/SDK_PROVENANCE.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
-当前开发为 C3b5：原 SDK owner 的 signing/signed/broadcasting/receipt CAS、严格签名字节核验/独立读回与一次性领取已写，11 项离线用例待 CI；受限类型检查及双 pool 增补复检通过。正式 executor/受控 signer/sender 仍未切换，完整政策及实际编排继续。C3b4 已验收 1348，不套给新代码。详见 [原 SDK 账本](optimization/SDK_ORIGINAL_SIGNED_JOURNAL.md)。原 384 ABI 比较、新增 128 拒绝断言及 C3b2/C3b3 均已在前序通过，不重复实施。
+当前开发为 C3b6：原 SDK Application 编排/项目 ports/原 SQLite 方法已接，十项新用例、C3b5 的 prepared-only reader 修复及完整回归待 CI；受限类型检查通过。C3b5 `3bd979b` / Actions `43676492857` 已失败于阶段读取合同，后续专项/全套未执行，不能宣称 11 项账本用例通过。正式 executor/真实 signer/sender 未切换，完整政策继续；C3b4 已验收 1348，不套给新代码。详见 [SDK Application](optimization/SDK_SUBMISSION_APPLICATION.md)。原参数/hash/JSON 保持；未升级、部署或操作生产数据。
 
 ## 1. 范围与目标
 

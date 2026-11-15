@@ -4,7 +4,6 @@ use crate::{
         quote_submission_types::{QuoteSubmissionCommand, QuoteSubmissionResult},
         trade_admission::AdmittedTrade,
         trade_execution::TradeExecutionResult,
-        trade_record::TradeRecordV1,
     },
     domain::{
         quote::{BoundQuote, QuoteEstimate},
@@ -13,11 +12,7 @@ use crate::{
 };
 use std::{future::Future, pin::Pin};
 
-pub(crate) struct JournaledSolBuyOutcome {
-    pub record: Option<TradeRecordV1>,
-    pub signature: Option<String>,
-    pub error: Option<String>,
-}
+pub(crate) use crate::application::trade_execution::JournaledTradeOutcome as JournaledSolBuyOutcome;
 
 pub(crate) enum SolBuyExecutionOutcome {
     Legacy(TradeExecutionResult),

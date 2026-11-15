@@ -55,6 +55,7 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("step full-serial cargo test --locked --offline -- --test-threads=1", script)
         self.assertIn("step sdk-preparation", script)
         self.assertIn("step sdk-signing-journal", script)
+        self.assertIn("step sdk-submission-controller", script)
         self.assertIn("step damm-output-evidence", script)
         self.assertIn("step damm-preview-context", script)
         self.assertIn("step damm-compiled-binding", script)
