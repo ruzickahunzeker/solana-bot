@@ -204,6 +204,7 @@ fn complete(
     ));
     let wallet_management = SdkWalletManagement::new(wallet_repository.clone(), wallets.clone());
     let state = AppState {
+        trade_tasks: Default::default(),
         vanity_tasks: Arc::new(VanityService::new(wallet_ops)),
         wallet_management: Arc::new(WalletManagementService::new(
             wallet_management.clone(),

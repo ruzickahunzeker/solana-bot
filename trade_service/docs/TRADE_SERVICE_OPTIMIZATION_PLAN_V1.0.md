@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新已验收类型/别名门禁 `e3be442` / Actions `43711006653` / artifact `14161032189`，81 个字段拒绝、原源码/恢复检查、完整并发/串行各 1473 通过，44 步骤 exit=0。接续原 NP-04 双假构建后端合同，其余 NP-01/03/05 门槛保留。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新 NP-04 双假构建合同 `91b3d94` / Actions `43714527309` / artifact `14162686991` 已验收，专项 8、完整并发/串行各 1481、81 字段拒绝与全部 45 步骤通过。下一源码续原 NP-03 普通后台交易任务生命周期，其他 NP-01/03/04/05 门槛保留。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -62,7 +62,7 @@ c220ba8 的专项及完整回归通过，不在前序 970d835 的 bootstrap CI�
 | NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；后继普通接受 26be717 和执行 26445c5 已验收，不重新排队。剩余资源/生命周期归原 NP-03，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
 | NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取共享 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受流程已离线验收，26be717 完整回归各 1466。普通执行编排接项目 ports/四值设置，七项及完整回归已由 26445c5 验收；后继 e3be442 完整各 1473、三层 81 字段类型/别名拒绝通过，见 ORDINARY_EXECUTION_PORT.md 和 DEVELOPMENT_CHECKS.md。根入口仍持原资源及任务生命周期；寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、全局资源/依赖与退出门槛仍待续 |
-| NP-04 | 通用 Backend 契约验收 | 本批 Record/Tape 独立构建/候选八项合同接现有普通 SOL Quote 控制器与原 SQLite authority，验证金额、能力拒绝、取消、未知和签后不换后端；运行待新 CI，见 optimization/BACKEND_CONSTRUCTION_CONTRACT.md。其他业务路径适用性仍待验，不新增 Router SDK 依赖、生产候选 profile 或 PumpAPI 接入 |
+| NP-04 | 通用 Backend 契约验收 | Record/Tape 独立构建/候选八项合同接现有普通 SOL Quote 控制器与原 SQLite authority，验证金额、能力拒绝、取消、未知和签后不换后端；91b3d94 / Actions 43714527309 已验收，专项 8、完整各 1481，见 optimization/BACKEND_CONSTRUCTION_CONTRACT.md。其他业务路径适用性仍待验，不新增 Router SDK 依赖、生产候选 profile 或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 
 PumpAPI 缺口仍计入完整优化与 Live 准入门槛；完成上述非 PumpAPI 队列不等于整体完成。后续实施仍限定 Trade Service，不触碰生产钱包/数据库，不签名广播、不重启服务。默认不提交推送；2026-11-15 用户另外授权仅源码/公开测试数据的 GitHub Actions 与设备登录，允许独立 `ci/trade-service-validation-*` 验证分支，不合并、改写或强推远端 main，不发布凭据/运行数据或部署，见 `optimization/GITHUB_ACTIONS_VALIDATION.md`。
@@ -253,7 +253,7 @@ Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节�
 | SDK 门面 | `src/sdk_client.rs` 已委托 `adapters/sdk/` 多个实现；`application/ordinary_runtime.rs` 经项目 ports 执行，26445c5 已验收 | 兼容门面尚未收完：根 Client 仍有 SDK 初始化、寻池及聚合模拟实现。按调用迁移并保留旧 oracle，不另造 Client；三层选定类型门禁不证明所有 SDK 能力均已隔离 |
 | 资源所有权 | `src/bootstrap.rs` 交接原资源；`optimization/APP_STATE_RESOURCE_OWNERSHIP.md` 已列创建/共享/退出责任；接受与执行使用原权威 | NP-03 继续根具体资源、脱离 HTTP 的交易任务追踪与退出、剩余 RPC/cache 治理。不重复建立 runtime、连接池、cache、reservation 或 journal，不重做已验收的接受/执行提取 |
 | 能力证据 | `src/protocol/registry.rs` 是唯一身份/旧政策表；`protocol_capabilities.rs` 只投影旧 V1；`domain/sdk_candidate.rs` 仅有 `DammV2SellV1` nominal profile | NP-01/04/05 按 backend/版本/方向/Quote/Token/模式/路线绑定证据。DAMM Durable Live 直接卖出局部验收不覆盖其他协议；Parser/Builder/V1 live 声明不新增实盘许可 |
-| 通用后端 / RouterLeg | `application/ports/ordinary_sdk_submission.rs` 已有后端私有 Candidate/Signed 类型与原 journal；现有 `ordinary_sdk_submission/tests.rs` 的 First/Second 仍共用 Engine，Second 转换 First 的候选 | 原 NP-04 仍需两个独立构建来源及候选表示运行同一金额/能力拒绝/取消/未知结果合同。不得用现有两包装测试宣称完成，不为测试泛化而扩大生产 profile；RouterLeg 仅保留本节与 4.3 的设计方向 |
+| 通用后端 / RouterLeg | `application/ports/ordinary_sdk_submission.rs` 已有后端私有 Candidate/Signed 类型与原 journal；其原 First/Second 测试仍共用 Engine。后继普通 SOL Quote 控制器的 Record/Tape 独立构建/候选八项合同已在 91b3d94 验收 | 本批共同合同不重做；其他业务路径的适用性和真实 Router/SDK 仍须独立证据，不用原两包装测试冒充独立构建。不为测试泛化扩大生产 profile；RouterLeg 仅保留本节与 4.3 的设计方向 |
 
 推进时沿用 NP-04 当前续作点及 NP-01/03/05 原队列；本轮仅核对和校准记录，
 不把相同缺口分别计入“新设计项目”和“旧优化任务”。完整当前状态只看

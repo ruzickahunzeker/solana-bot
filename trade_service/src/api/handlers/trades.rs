@@ -44,6 +44,12 @@ async fn accept_trade_for_wallet(
     mut request: TradeRequest,
     forced_wallet_id: Option<String>,
 ) -> Result<AcceptTradeOutcome, (StatusCode, String)> {
+    let task_ticket = state.trade_tasks.register().ok_or_else(|| {
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "trade service is shutting down".into(),
+        )
+    })?;
     let outcome = state
         .trade_intake()
         .accept(&mut request, forced_wallet_id)
@@ -81,7 +87,7 @@ async fn accept_trade_for_wallet(
     };
 
     let state_for_task = state.clone();
-    tokio::spawn(async move {
+    task_ticket.spawn(record.request_id.clone(), async move {
         executor::execute_admitted_trade(state_for_task, execution).await;
     });
 

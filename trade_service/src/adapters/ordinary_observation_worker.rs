@@ -65,6 +65,11 @@ impl ObservationPlan {
 #[derive(Clone)]
 pub(crate) struct ObservationStop(watch::Sender<bool>);
 impl ObservationStop {
+    #[cfg(test)]
+    pub(crate) fn requested_for_tests(&self) -> bool {
+        *self.0.borrow()
+    }
+
     pub(crate) fn request(&self) {
         let _ = self.0.send(true);
     }

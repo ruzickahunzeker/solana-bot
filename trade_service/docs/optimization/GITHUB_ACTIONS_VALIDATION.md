@@ -30,6 +30,17 @@
 
 ## 已验收运行
 
+最新 NP-04 双假构建合同 `91b3d94037a1d557ce2b255f4eb491bc308e01ac` /
+[Actions 43714527309](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43714527309)
+已终态 success，artifact `14162686991` 下载核对：新增专项八项、完整并发
+1481（129.52 秒）/串行 1481（236.54 秒），45 步骤全部 exit=0。两套原始测试名
+集合相同且包含全部八项新增；原源码/恢复成功，原始 JSON 独立核对 81 字段拒绝。
+身份/service manifest/lock/vendor manifest 匹配，发布审计绑定 1022 文件/
+12,615,602 字节，真实 main/索引不变。本批仅测试/runner/文档，生产源码未改；
+不等同真实 Router/SDK、其他业务路径或部署验收。旧任务不重跑，后续验收记录不单独触发 CI。
+本次平台提示固定 checkout/upload-artifact 的 Node 20 运行时已被 runner 强制到 Node 24；
+任务实际成功。该 action 维护提示不涉及 SDK/vendor 升级，本批不顺带更新依赖。
+
 最新已验收类型/别名门禁 `e3be4420fe68049f5f5ce399405682620d44ee17` /
 [Actions 43711006653](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43711006653)
 已终态 success，artifact `14161032189` 下载核对：44 步骤全部 exit=0，完整并发

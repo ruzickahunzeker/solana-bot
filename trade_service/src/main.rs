@@ -15,6 +15,7 @@ mod http;
 #[cfg(test)]
 mod http_contract_tests;
 mod idempotency;
+mod infrastructure;
 mod models;
 mod param_cache;
 mod persistence;
@@ -78,6 +79,7 @@ use crate::wallets::WalletRegistry;
 
 #[derive(Clone)]
 pub struct AppState {
+    pub(crate) trade_tasks: crate::infrastructure::trade_tasks::TradeTasks,
     pub config: Arc<Config>,
     // Fixture handles only; production services own their original runtime resources.
     #[cfg(test)]
@@ -162,6 +164,8 @@ async fn main() -> anyhow::Result<()> {
         observation_plan,
     } = bootstrap::initialize(config.clone()).await?;
 
+    let trade_tasks = state.trade_tasks.clone();
+    let intake_stop = trade_tasks.clone();
     let app: Router = http::router(state).layer(TraceLayer::new_for_http());
     let listener = TcpListener::bind(config.trade_http_addr)
         .await
@@ -182,27 +186,24 @@ async fn main() -> anyhow::Result<()> {
         "trade service listening"
     );
     let observation_worker = observation_plan.map(|plan| plan.start());
-    let observation_stop = observation_worker
-        .as_ref()
-        .map(|worker| worker.stop_signal());
-    let blockhash_stop = blockhash_refresher.abort_handle();
     let result = axum::serve(
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
     )
     .with_graceful_shutdown(async move {
         shutdown_signal().await;
-        blockhash_stop.abort();
-        if let Some(stop) = observation_stop {
-            stop.request();
-        }
+        intake_stop.close();
     })
     .await;
-    if let Some(worker) = observation_worker {
-        worker.shutdown().await?;
-    }
-    blockhash_refresher.shutdown().await?;
+    let cleanup = crate::infrastructure::service_shutdown::finish(
+        &trade_tasks,
+        std::time::Duration::from_millis(config.shutdown.trade_task_drain_timeout_ms),
+        blockhash_refresher,
+        observation_worker,
+    )
+    .await;
     result?;
+    cleanup?;
     Ok(())
 }
 

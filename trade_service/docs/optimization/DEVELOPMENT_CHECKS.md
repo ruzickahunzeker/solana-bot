@@ -114,6 +114,11 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The current NP-03 task-lifecycle source batch adds TradeTasks and DispatchTicket
+to the selected concrete-runtime denial policy (28 selected types; 87 scoped
+fields including the outside-alias probe). These new rejection cases need their
+own CI evidence; earlier 81-field runs remain historical, not evidence for 87.
+
 The next source-only CI batch adds development checks, not runtime behavior or a
 new task. Application, Domain and Protocol production modules forbid
 `clippy::disallowed_types`. The versioned JSON fixture lists 26 selected SDK,

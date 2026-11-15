@@ -58,6 +58,7 @@ WALLET_ADMIN_API_TOKEN=
 WAIT_TX_CONFIRMED=false
 ENABLE_SDK_LOG=false
 TRADE_RESPONSE_WAIT_MS=3000
+TRADE_TASK_DRAIN_TIMEOUT_MS=30000
 MEV_SUBMIT_VERIFY_MS=1200
 
 ENABLE_PUMPAPI_EXECUTOR=false
@@ -454,6 +455,14 @@ ENABLE_SIMULATE=true
 `TRADE_RESPONSE_WAIT_MS`
 
 创建交易接口等待后台执行结果的时间，单位毫秒。默认 `3000`。在这个窗口内如果交易执行已返回模拟成功、提交成功、失败或 unknown，`POST /v1/trades` 会直接带着 `signature/error/status` 返回；超时才返回 `accepted`，再用查询接口查看后续状态。
+
+`TRADE_TASK_DRAIN_TIMEOUT_MS`
+
+普通后台交易任务的优雅退出等待预算，单位毫秒，默认 `30000`，范围 `1` 到 `300000`。
+收到退出信号后停止登记新的普通交易工作；已登记请求仍可派发，交易任务等待结束前保留原 blockhash 刷新和观测资源。
+预算从 HTTP graceful shutdown 返回后开始，不是整个进程或 SDK 后台 worker 的总截止时间。
+超时、任务 panic 或异常丢弃会记录未完成情况并使退出失败，不代表交易未发送，不释放或重建原幂等/签名权威，也不自动重签补单。
+停止接单期间普通交易 POST 返回既有 `503` 错误形状；GET 查询不受该登记闸门影响。正常运行的请求字段、校验与响应等待规则不变。
 
 `MEV_SUBMIT_VERIFY_MS`
 

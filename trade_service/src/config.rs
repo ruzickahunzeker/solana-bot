@@ -8,10 +8,12 @@ use crate::wallet_crypto;
 pub(crate) mod ordinary_observation;
 mod rpc;
 pub(crate) mod security;
+pub(crate) mod shutdown;
 pub(crate) use security::SecurityConfig;
 
 #[derive(Debug, Clone)]
 pub struct Config {
+    pub(crate) shutdown: shutdown::ShutdownSettings,
     pub(crate) ordinary_observation: ordinary_observation::OrdinaryObservationConfig,
     pub rpc_urls: Vec<String>,
     pub wallets: Vec<WalletConfig>,
@@ -209,6 +211,7 @@ impl Config {
         }
 
         Ok(Self {
+            shutdown: shutdown::ShutdownSettings::from_env()?,
             ordinary_observation: ordinary_observation::OrdinaryObservationConfig::from_env()?,
             rpc_urls,
             conversion_database_url: env::var("CONVERSION_DATABASE_URL")

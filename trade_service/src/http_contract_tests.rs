@@ -99,6 +99,7 @@ pub(crate) async fn state() -> AppState {
         custom_url: None,
     };
     let config = Arc::new(Config {
+        shutdown: Default::default(),
         ordinary_observation: Default::default(),
         rpc_urls: vec![],
         wallets: vec![],
@@ -236,6 +237,7 @@ pub(crate) async fn state() -> AppState {
     );
     let params = Arc::new(crate::param_cache::ParamCache::default());
     AppState {
+        trade_tasks: Default::default(),
         vanity_tasks: Arc::new(crate::application::vanity::VanityService::new(wallet_ops)),
         wallet_management: Arc::new(
             crate::application::wallet_management::WalletManagementService::new(
