@@ -173,6 +173,26 @@ impl SingleShotStatusReader {
             },
         )
     }
+
+    pub(crate) fn with_selected_runtime(
+        runtime: Arc<SharedReadRuntime>,
+        selected: &str,
+    ) -> Result<Self> {
+        let selected_url = Url::parse(selected)
+            .map_err(|_| anyhow::anyhow!("invalid selected observation RPC"))?;
+        ensure!(
+            runtime
+                .urls()
+                .iter()
+                .any(|url| Url::parse(url).ok().as_ref() == Some(&selected_url)),
+            "selected observation RPC is not registered"
+        );
+        Self::with_transport(
+            &[selected.to_owned()],
+            Duration::from_secs(1),
+            ReqwestStatusTransport { runtime },
+        )
+    }
 }
 impl<T: StatusTransport> SingleShotStatusReader<T> {
     fn with_transport(urls: &[String], interval: Duration, transport: T) -> Result<Self> {

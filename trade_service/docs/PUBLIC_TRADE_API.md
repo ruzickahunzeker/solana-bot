@@ -954,6 +954,8 @@ Durable Live 普通 SOL 聚合新增源码阶段签名账本（未部署）：�
 
 推荐轮询策略：前 2 秒每 100 到 200 毫秒一次，之后每 1 秒一次；得到 `submitted`、`simulated`、`failed`、`rejected` 或 `unknown` 后停止查询本服务。不要持续轮询等待 `finalized`。
 
+C3c1 源码增量（未部署、完整 CI 待验）：新 Durable Live 直接 DAMM v2 SDK 卖出已接原 owner、受控签名和广播前原签名字节账本，不调用 SDK 高层后台 worker；只发送独立读回并单次领取的原字节。Default 回执必须匹配原签名；MEV 的 SDK trait Ok 不冒充远端签名，按原签名只读观测，缺少成功证据保留 `unknown`。`MEV_SUBMIT_VERIFY_MS=0` 不授权把无可核验回执当成功，`WAIT_TX_CONFIRMED=true` 等待原签名的 confirmed/finalized。父行 `rejected/failed` 的无签名前处理与字段/hash/JSON/单位兼容，不增加 owner 或字节返回字段；同键重复/GET/列表仍不发起签名、广播或 RPC。该子路径的持续确认/跨重启只读恢复、其他方向/协议/backend/mode 和生产验收尚未完成，不能把此源码增量当全普通 SDK 已安全迁移。详见 [原 SDK 实际接线](optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)。
+
 源码阶段的普通 SDK DAMM 卖出 probe 增加固定账户快照门槛，核对 pool/mint/vault/用户 ATA 身份和 Token 扩展，用户 ATA 的 delegate/close-authority 及未审计 referral 暂时保守拒绝，输入 ATA 必须持有本笔需要的数量。这是新增操作级安全限制，尚未部署，需发布前验证调用方兼容；不是新增请求字段，也没有将该保护自动扩展到买入/其他协议。账户 snapshot 与模拟的 slot 下限绑定不等于跨 bank 的完整可信报价，仍不得把模拟失败或 `unknown` 当作换 key 重试许可。见 [DAMM 证据与剩余门槛](optimization/DAMM_PROBE_ACCOUNT_EVIDENCE.md)。
 
 补充源码阶段进展：DAMM 卖出 probe 已用本笔 CPI token 转账及同次模拟 Mint/Clock/账户状态计算净输出，不再用较早 RPC 的余额与模拟后余额相减。模拟需要 innerInstructions 和固定八账户结果；节点不提供完整证据时会拒绝报价，不自动退回旧算法。节点若返回同次模拟 pre/postTokenBalances，还会严格交叉核对。公开请求/响应字段、原始单位和滑点政策不变，未部署、未实网验收；这也不是最终 SDK 交易的完整签名前授权。见 [本笔模拟输出验收](optimization/DAMM_SIMULATED_SWAP_OUTPUT.md)。

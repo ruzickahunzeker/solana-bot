@@ -85,7 +85,7 @@ pub(crate) async fn execute<J: OrdinarySdkSubmissionJournal, B: OrdinarySdkCandi
         );
         backend.ensure_live_allowed()?;
         backend.authorize_broadcast(&signed_artifact)?;
-        let (submitted, error) = match backend.broadcast(&taken).await {
+        let (submitted, error) = match backend.broadcast(&signed_artifact, &taken).await {
             Ok(receipt) if receipt == taken.signature => (true, None),
             Ok(_) => (
                 false,
@@ -117,15 +117,89 @@ pub(crate) async fn execute<J: OrdinarySdkSubmissionJournal, B: OrdinarySdkCandi
                 .cloned();
         }
     }
-    let mut error = failure.map(|e| crate::sanitize::redact_urls(&e.to_string()));
+    let error = failure.map(|e| crate::sanitize::redact_urls(&e.to_string()));
+    finish(
+        journal,
+        execution,
+        &owner,
+        signing_attempted,
+        signature,
+        error,
+    )
+    .await
+}
+
+pub(crate) async fn reject_preparation<J: OrdinarySdkSubmissionJournal>(
+    journal: &J,
+    execution: &AdmittedTrade,
+    owner: ExecutionOwner,
+    error: anyhow::Error,
+) -> JournaledTradeOutcome {
+    finish(
+        journal,
+        execution,
+        &owner,
+        false,
+        None,
+        Some(crate::sanitize::redact_urls(&error.to_string())),
+    )
+    .await
+}
+
+pub(crate) async fn reject_context<J: OrdinarySdkSubmissionJournal>(
+    journal: &J,
+    execution: &AdmittedTrade,
+    owner: ExecutionOwner,
+    error: &str,
+) -> JournaledTradeOutcome {
+    let error = crate::sanitize::redact_urls(error);
+    let result = async {
+        owner.ensure_binding(execution)?;
+        journal
+            .reject_before_sign(execution, &owner, &error)
+            .await?;
+        let record = journal.observe(execution, &owner).await?;
+        crate::application::ordinary_claims::ensure_parent(execution, &record)?;
+        ensure!(
+            record.status == TradeStatus::Rejected && record.signature.is_none(),
+            "SDK pre-sign rejection readback mismatch"
+        );
+        Ok::<_, anyhow::Error>(record)
+    }
+    .await;
+    match result {
+        Ok(record) => JournaledTradeOutcome {
+            record: Some(record),
+            signature: None,
+            error: Some(error),
+        },
+        Err(storage_error) => JournaledTradeOutcome {
+            record: None,
+            signature: None,
+            error: Some(format!(
+                "{error}; original SDK rejection unavailable: {}",
+                crate::sanitize::redact_urls(&storage_error.to_string())
+            )),
+        },
+    }
+}
+
+async fn finish<J: OrdinarySdkSubmissionJournal>(
+    journal: &J,
+    execution: &AdmittedTrade,
+    owner: &ExecutionOwner,
+    signing_attempted: bool,
+    mut signature: Option<String>,
+    mut error: Option<String>,
+) -> JournaledTradeOutcome {
     if !signing_attempted {
         if let Some(reason) = error.as_deref() {
-            if let Err(storage_error) = journal.fail_before_sign(execution, &owner, reason).await {
+            if let Err(storage_error) = journal.fail_before_sign(execution, owner, reason).await {
                 tracing::error!(error = %crate::sanitize::redact_urls(&storage_error.to_string()), "SDK pre-sign failure could not be journaled; do not resubmit");
             }
         }
     }
-    let record = match journal.observe(execution, &owner).await {
+    let record = match journal.observe(execution, owner).await {
         Ok(record)
             if crate::application::ordinary_claims::ensure_parent(execution, &record).is_ok() =>
         {

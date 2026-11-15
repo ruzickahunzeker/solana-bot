@@ -6,6 +6,12 @@
 
 ## 最新范围与执行指令
 
+2026-11-15 当前 C3c1 已在源码接通 Durable Live 直接 DAMM SDK 卖出的原 owner→实际后端→受控 signer→原库字节→固定 sender，原 executor 不再对该子路径调用 opaque SDK/补写最终父行；原钱包 getter/唯一 sender 真实接线，其他模式/协议不改。Default typed 回执必须匹配，provider trait Ok 不能冒充回执，只查询原签名/选定注册 RPC；缺少成功证据为 unknown，不换 lane/重签/重播。缺钱包/准备失败及旧 rejected 状态由原 owner 的无签名前事务保存，无新 DDL/配置/API。新增 20 项仅类型检查，完整回归待 CI；最终 test/bin check 约 8/6 秒、RSS 1,242,528/779,480 KiB，生产原五组警告、fmt/diff/policy/来源检查保持。另核对锁定 solana-rpc-client 4.2.2 的 send_transaction_with_config，仅调用 SendTransaction，没有隐含节点版本查询；内存发送器保留单次原字节及配置断言。详见 `SDK_ORIGINAL_DAMM_RUNTIME.md`。这是源码接线，不是部署或全协议/生产恢复完成；SDK 持续只读观测/恢复仍待接，全部生产边界/PumpAPI 暂停保持，目标 active。
+
+C3b7 `83036a4` / Actions `43680602908` 已终态 failure，artifact `14147664555` 核对：candidate 15、prepared 22、signed journal 11、controller 10 通过，受控签名 4/5，完整套件未跑。过期夹具先被生产构造器拒绝；本轮仅 cfg(test) 保留原字段 backdate 注入，不放松生产时效或原测试。下方“运行中”均为历史，不再轮询旧终态任务；最新完整全绿仍 C3b4 1348，不套给当前源码。
+
+2026-11-15 C3b7 已推送独立验证提交 `83036a4ca03a6b66d8ad3623a2e8afa450a0f63e` / Actions `43680602908`，确认 in_progress；只轮询这个新句柄，旧 C3b6 `43678564856` 已终态失败且 artifact 已核对。快照 965 文件/12,143,363 字节，路径白名单/常见敏感字面量/diff 审计通过，不含配置、钱包、数据库、日志或二进制。最终受限 test/bin check 约 10/4 秒，RSS 1,216,508/616,236 KiB，21 组生产警告保留；新五项、前序 controller 与完整套件仍待该运行结果。真实 SDK 签名核心已有源码，真实钱包 getter/唯一 sender/原 executor 仍未接，不能用受限 check 或 fake sender 宣称正式链路完成。主线继续发送证据/原签名观测与实际接线，不升级/部署/触碰生产数据/广播，PumpAPI 暂停、目标 active。
+
 C3b7 补充收口：新增五项（含十组规范化 MEV/provider 与两项原 wire 冲突拒绝），签名核心只复用原 provider 映射的 crate 可见函数，不改原选择器/校验；新临时钱包 Default 夹具声明 use_mev=false，旧 nominal/384/576 oracle 不改。最终受限 test check 约 10 秒、RSS 1,216,508 KiB，生产 bin check 通过，21 组警告保留；新门槛/前序未跑的 controller 与完整回归待 CI。正式 executor/真实 getter/sender 和全方向仍未接完，不能把真实核心的离线验证当作发布完成。
 
 2026-11-15 当前 C3b7 新增一次性 SdkSigningPermit（仅原 signing CAS 后构造）及真实 DammSellCandidate 受控签名/私有签后 artifact；原 controller 第一测试后端源码改为调用实际签名核心，尚待 CI 执行。原 owner/metadata/message、raw/报价期限、固定完整消息及公钥先检查再取 key，签后保留原候选和 request ID/hash；编码/核验不确定保留 typed 已知签名。新增五项 key 获取/替换/跨订单/过期/MEV 负例类型检查通过，正式 executor/真实 getter/sender 未切换，供应商回执/原签名观测与完整政策验收继续。见 `SDK_CONTROLLED_SIGNING.md`。

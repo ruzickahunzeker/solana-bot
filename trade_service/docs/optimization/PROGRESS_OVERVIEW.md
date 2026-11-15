@@ -6,7 +6,7 @@
 
 ## 统计口径
 
-- 当前 C3b7 已写一次性签名 permit、真实受控签名核心/私有签后产物及规范化 MEV/provider 核对，原 controller 第一测试后端源码改为调用该真实签名核心，新增五项待 CI 执行，受限类型检查通过；正式 executor/真实钱包 getter/sender 尚未接线。C3b6 `bd39f04` / Actions `43678564856` 已失败（candidate 15、prepared 21/1），损坏 Quote 夹具提前触发原 CHECK，已保留约束拒绝并隔离注入 reader 负例修复，生产约束不变；其后 controller/全套尚未运行。完整授权/供应商回执/原签名恢复、其他方向/协议与发布门槛继续，见 `SDK_CONTROLLED_SIGNING.md`。
+- 当前 C3c1 在源码接通 Durable Live 直接 DAMM 卖出的原 owner、真实钱包 getter/受控签名、落盘原字节与固定 sender；该子路径不再走旧 SDK worker，其他模式/协议保持。新增 20 项仅受限类型检查，原五组生产警告保持，无部署/实网验收；SDK 持续观测/恢复、其他方向/协议、资源及发布门槛继续。C3b7 CI 的账本 11/控制器 10 已通过，受控签名 4/5 失败于过期夹具构造，cfg(test) 注入已修复，完整套件未执行。见 `SDK_ORIGINAL_DAMM_RUNTIME.md`。
 - 最新已验收为 C3b4：`b1fbc86` / Actions `43675181497` / artifact `14145658342` 已下载核对，完整并发 1348（114.52 秒）/串行 1348（213.36 秒）零失败/忽略/过滤，compiled-binding 4、候选 54、prepared 11、HTTP 200、probe 59、参数 3 通过。不包含当前 C3b5 的 11 项，不据此宣称正式 SDK 账本/签名发送已接入。
 
 ### 历史检查点
@@ -76,7 +76,7 @@
 
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
-| 普通 SDK 完整授权 | DAMM probe、nominal candidate 与 B4c1 不可变零签名交易已实际使用；模拟无 SDK signer，但正式仍 opaque SDK | 独立完整证据授权且 signer 只接唯一已授权产物，原 owner 账本/原字节发送，全方向与其他 backend/mode |
+| 普通 SDK 完整授权 | C3c1 在源码对新 Durable Live DAMM 卖出接原 owner、真实授权 signer/原字节账本/固定 sender；其他模式和协议仍 legacy，新增用例待运行 | 该新子路径的完整 CI/真实环境验收，SDK 持续只读观测/恢复、其他方向/协议/backend/mode 及所有资金安全门槛 |
 | 完整架构隔离 | Handler 已归位，余额/管理/vanity 控制已接项目服务和 port；直接 worker 及四个冗余资源字段不再存在于生产 AppState | full Config、普通接受/index/journal、cache、原始 RPC/SDK 资源及 bootstrap 等继续收口；局部分层不等于全量资源隔离、实际生成验收或原子生命周期 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
@@ -84,7 +84,7 @@
 ## 必须继续完成的大项
 
 1. DAMM 本笔输出的源码/离线子项已完成；仍需真实节点格式/能力验收及其他方向/协议扩展，不能把只读模拟当作最终交易授权。
-2. 普通 SDK 的全量不可变构建与签名前授权：池/资产/Token Program、金额/min_out/费用、账户权限、附加指令和最终消息绑定；包括买入及其他协议。B4c1 已有实际使用的不可变零签名产物/只读模拟；下一操作分型扩展原 claims/签名账本与 SDK metadata/CAS/readback/恢复，使正式 signer 只接完整授权产物并原字节发送，取代 opaque 内部重建签名广播。既有 journal 仅支持 aggregator SOL buy，不能伪造 Quote/新 owner；全方向/协议仍待完成，不以模拟/guard 代替最终授权。
+2. 普通 SDK 的全量不可变构建与签名前授权：C3c1 已在新 Durable Live DAMM 卖出源码接原 owner 的签名账本/真实 signer/固定原字节 sender，先验收本批 CI，再接 SDK 原签名持续观测/恢复，并推广到买入、其他协议和模式。池/资产/Token Program、金额/min_out/费用、权限与最终消息政策仍须按范围验证；不能伪造 Quote/新 owner，也不以单一路径替代全量授权。
 3. 普通交易唯一广播前 signed journal：C1/C2a/C2b、D1A/D1B1/D1B2 已有该 Durable 子路径的原 owner/签名字节/读回、可选跨重开只读扫描与局部预算源码/离线证据；全部 backend/mode、真实节点/生产恢复和 RPC 全局预算仍待续，不能宣称全普通交易完成。
 4. 受控发送与恢复：只使用已授权并持久化的原字节，保留所有签名证据，不确定状态不换路线/新 key 重签；处理 SDK worker 的后台副作用。
 5. 普通 SOL 聚合 legacy 路径迁移：C2b 仅迁移 Durable Live，Memory/Shadow 仍走原 legacy；独立 quote 账本不替代普通原 authority，最终订单写入不冒充广播前账本。

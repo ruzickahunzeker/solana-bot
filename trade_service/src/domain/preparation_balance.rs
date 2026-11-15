@@ -154,6 +154,20 @@ impl PreparationBalanceSnapshot {
             started,
         }
     }
+
+    #[cfg(test)]
+    pub(crate) fn expired_copy_for_test(&self) -> Self {
+        Self {
+            wallet: self.wallet,
+            mint: self.mint,
+            units: self.units,
+            program: self.program,
+            decimals: self.decimals,
+            input_account: self.input_account,
+            slot: self.slot,
+            started: Instant::now() - MAX_BALANCE_AGE - std::time::Duration::from_secs(1),
+        }
+    }
 }
 
 pub(crate) fn reject_balance(message: &'static str) -> anyhow::Error {

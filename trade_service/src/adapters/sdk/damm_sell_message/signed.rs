@@ -140,6 +140,20 @@ impl DammSignedCandidate {
             &self.signed,
         )
     }
+
+    pub(crate) fn check_submission(
+        &self,
+        execution: &AdmittedTrade,
+        context: DammSellContext,
+        signed: &SignedSubmission,
+    ) -> Result<()> {
+        self.recheck(execution, context)?;
+        ensure!(
+            self.signed.signature == signed.signature && self.signed.bytes == signed.bytes,
+            "DAMM broadcast packet differs from the original signed artifact"
+        );
+        Ok(())
+    }
 }
 
 /// Evidence validation only: never signs, refreshes a quote, or authorizes execution.

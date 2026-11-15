@@ -30,6 +30,11 @@
 
 ## 已验收运行
 
+- 当前 C3c1 真实 SDK 原 owner 执行接线及 20 项新用例已通过受限类型检查，完整验收待新 CI。
+  C3b7 `83036a4` / Actions `43680602908` 已失败，artifact `14147664555` 已核对：
+  candidate 15、prepared 22、signed journal 11、controller 10 通过，受控签名 4/5，完整套件未执行。
+  过期夹具的 cfg(test) 修复不修改生产构造器/时效限制，见 `SDK_ORIGINAL_DAMM_RUNTIME.md`。
+
 - 当前 C3b7 的五项真实受控签名用例、原控制器及完整回归待新 CI。
   C3b6 `bd39f04` / Actions `43678564856` 已失败，artifact `14147911636` 下载核对：
   类型/测试构建、candidate 15 通过，prepared 21/1；controller 与完整套件未执行。

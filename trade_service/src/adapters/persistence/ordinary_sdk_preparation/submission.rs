@@ -13,7 +13,7 @@ pub(super) fn validate_fields(
     let bytes: Option<Vec<u8>> = row.try_get("signed_transaction")?;
     let digest: Option<&str> = row.try_get("signed_sha256")?;
     match (stage, signature, bytes, digest) {
-        ("claimed" | "prepared" | "signing" | "failed", None, None, None) => {}
+        ("claimed" | "prepared" | "signing" | "failed" | "rejected", None, None, None) => {}
         (
             "signed" | "broadcasting" | "submitted" | "unknown",
             Some(signature),
@@ -32,7 +32,7 @@ pub(super) fn validate_fields(
     }
     let error: Option<&str> = row.try_get("submission_error")?;
     ensure!(
-        ["unknown", "failed"].contains(&stage) || error.is_none(),
+        ["unknown", "failed", "rejected"].contains(&stage) || error.is_none(),
         "SDK submission error belongs to a different stage"
     );
     if let Some(error) = error {
@@ -42,7 +42,7 @@ pub(super) fn validate_fields(
         );
     }
     ensure!(
-        stage != "failed" || error.is_some(),
+        !["failed", "rejected"].contains(&stage) || error.is_some(),
         "SDK failed journal requires pre-sign error evidence"
     );
     Ok(())
@@ -67,6 +67,10 @@ pub(super) fn validate_parent(row: &SqliteRow, parent: &TradeRecordV1) -> Result
         "unknown" => parent.status == TradeStatus::Unknown,
         "failed" => {
             parent.status == TradeStatus::Failed
+                && parent.error.as_deref() == row.try_get::<Option<&str>, _>("submission_error")?
+        }
+        "rejected" => {
+            parent.status == TradeStatus::Rejected
                 && parent.error.as_deref() == row.try_get::<Option<&str>, _>("submission_error")?
         }
         _ => false,
@@ -122,7 +126,34 @@ impl SqliteOrdinaryExecutionClaims {
         owner: &ExecutionOwner,
         error: &str,
     ) -> Result<()> {
+        self.terminal_sdk_before_sign(execution, owner, error, false)
+            .await
+    }
+
+    pub(crate) async fn reject_sdk_before_sign(
+        &self,
+        execution: &AdmittedTrade,
+        owner: &ExecutionOwner,
+        error: &str,
+    ) -> Result<()> {
+        self.terminal_sdk_before_sign(execution, owner, error, true)
+            .await
+    }
+
+    async fn terminal_sdk_before_sign(
+        &self,
+        execution: &AdmittedTrade,
+        owner: &ExecutionOwner,
+        error: &str,
+        rejected: bool,
+    ) -> Result<()> {
         let error = crate::sanitize::redact_urls(error);
+        let stage = if rejected { "rejected" } else { "failed" };
+        let status = if rejected {
+            TradeStatus::Rejected
+        } else {
+            TradeStatus::Failed
+        };
         ensure!(error.len() <= 65_536, "SDK pre-sign error exceeds limit");
         let mut tx = self.pool.begin().await?;
         write_lock(&mut tx).await?;
@@ -132,14 +163,14 @@ impl SqliteOrdinaryExecutionClaims {
                 && parent.status == TradeStatus::BuildingTx,
             "SDK signing may have started; do not downgrade to a pre-sign failure"
         );
-        one(sqlx::query("UPDATE ordinary_execution_claims SET submission_stage='failed',submission_error=? WHERE request_id=? AND operation='ordinary-sdk-trade' AND owner_nonce=? AND request_hash=? AND submission_stage IN ('claimed','prepared') AND signed_signature IS NULL AND signed_transaction IS NULL")
-            .bind(&error).bind(execution.reservation().request_id()).bind(owner.nonce()).bind(execution.reservation().request_hash()).execute(&mut *tx).await?.rows_affected())?;
-        one(sqlx::query("UPDATE trades SET status='failed',error=?,updated_at_ms=? WHERE request_id=? AND request_hash=? AND status='building_tx' AND signature IS NULL")
-            .bind(&error).bind(i64::try_from(crate::state::now_ms())?).bind(execution.reservation().request_id()).bind(execution.reservation().request_hash()).execute(&mut *tx).await?.rows_affected())?;
+        one(sqlx::query("UPDATE ordinary_execution_claims SET submission_stage=?,submission_error=? WHERE request_id=? AND operation='ordinary-sdk-trade' AND owner_nonce=? AND request_hash=? AND submission_stage IN ('claimed','prepared') AND signed_signature IS NULL AND signed_transaction IS NULL")
+            .bind(stage).bind(&error).bind(execution.reservation().request_id()).bind(owner.nonce()).bind(execution.reservation().request_hash()).execute(&mut *tx).await?.rows_affected())?;
+        one(sqlx::query("UPDATE trades SET status=?,error=?,updated_at_ms=? WHERE request_id=? AND request_hash=? AND status='building_tx' AND signature IS NULL")
+            .bind(stage).bind(&error).bind(i64::try_from(crate::state::now_ms())?).bind(execution.reservation().request_id()).bind(execution.reservation().request_hash()).execute(&mut *tx).await?.rows_affected())?;
         let (row, parent, _) = checked(&mut tx, execution, owner).await?;
         ensure!(
-            row.try_get::<&str, _>("submission_stage")? == "failed"
-                && parent.status == TradeStatus::Failed
+            row.try_get::<&str, _>("submission_stage")? == stage
+                && parent.status == status
                 && parent.error.as_deref() == Some(error.as_str()),
             "SDK pre-sign failure readback mismatch"
         );

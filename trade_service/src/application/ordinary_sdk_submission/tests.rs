@@ -329,7 +329,12 @@ impl OrdinarySdkCandidateBackend for First {
             self.context(),
         )
     }
-    async fn broadcast(&self, s: &SignedSubmission) -> Result<String> {
+    async fn broadcast(
+        &self,
+        artifact: &DammSignedCandidate,
+        s: &SignedSubmission,
+    ) -> Result<String> {
+        artifact.recheck(&self.0.execution, self.context())?;
         self.0.send(s).await
     }
 }
@@ -383,7 +388,11 @@ impl OrdinarySdkCandidateBackend for Second {
         self.0.authorize_broadcast()?;
         validate_signed_candidate(&s.candidate.metadata, &s.candidate.message, &s.signed)
     }
-    async fn broadcast(&self, s: &SignedSubmission) -> Result<String> {
+    async fn broadcast(&self, artifact: &SecondSigned, s: &SignedSubmission) -> Result<String> {
+        ensure!(
+            artifact.signed.signature == s.signature && artifact.signed.bytes == s.bytes,
+            "fake second sender bytes changed"
+        );
         self.0.send(s).await
     }
 }
@@ -896,6 +905,14 @@ async fn sdk_application_submission_journal_cannot_downgrade_any_postsigning_sta
             h.journal
                 .store
                 .fail_sdk_before_sign(&h.execution, &h.owner, "cannot downgrade")
+                .await
+                .is_err(),
+            "{target}"
+        );
+        assert!(
+            h.journal
+                .store
+                .reject_sdk_before_sign(&h.execution, &h.owner, "cannot reject after signing")
                 .await
                 .is_err(),
             "{target}"

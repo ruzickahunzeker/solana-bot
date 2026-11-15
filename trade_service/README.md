@@ -174,7 +174,7 @@ A3c 已将该 read port 接第六类共享 HTTP profile，不再持 SDK RpcClien
 
 普通 SDK 的最终无 signer 构建仍在实施。[B4b 候选 guard](docs/optimization/DAMM_FINAL_CANDIDATE_GUARD.md) 后，B4c1 已把完整不可变零签名交易接实际 DAMM 卖出的 `simulate=true` 与 Live preview，仅调用原 lane 的只读 RPC、不进入 SDK signer；模拟成功仍为 `simulated`，`signature:null`。预检失败/取消/过期不继续正式提交，原参数/hash/生命周期与 SDK 方法准入保持，未部署。正式 Live 仍 opaque SDK/原私有 guard，完整证据授权及原 owner 的签名账本/原字节发送未完成；其他方向/协议不因此无签名。详见 [不可变产物、模拟与账本接续](docs/optimization/DAMM_UNSIGNED_CANDIDATE_AND_SIMULATION.md)。
 
-原账本接续的 C3a 已增加 SDK 操作分型、008 兼容事务迁移及完整命令/钱包/字面幂等键的 owner 绑定；当前只覆盖 Durable Live 直接 DAMM 卖出的占用，旧聚合 quote journal 不接受它。正式 SDK 入口未切换，新类型尚无 SDK prepared metadata/签名前账本/受控原字节发送；不因此扩大实盘或恢复权限。源码/离线证据和迁移风险见 [原 owner 的 SDK 操作分型](docs/optimization/ORDINARY_SDK_CLAIM_OPERATIONS.md)，未在生产部署或迁移。
+原账本接续的 C3a-C3c1 已在源码接入 Durable Live 直接 DAMM v2 卖出的原 owner、prepared/签名账本、受控签名和落盘原字节发送，旧聚合 Quote journal 不接受该操作。其他 SDK 方向/协议、Memory/Shadow 与 PumpAPI 不因此获得同样保证；SDK 持续观测/恢复及真实 SDK/供应商/迁移/发布验收仍待完成。当前仅源码与受限类型检查，无生产部署或迁移，详见 [实际 SDK 子路径](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)。
 
 推荐切换顺序：
 
@@ -457,7 +457,7 @@ ENABLE_SIMULATE=true
 
 `MEV_SUBMIT_VERIFY_MS`
 
-MEV/SWQoS lane 返回提交成功后，服务继续用 RPC 短暂查询签名是否可见，单位毫秒。默认 `1200`。如果签名在这个窗口内仍然查不到，服务会认为该 MEV lane 没有可靠落地，并继续回退普通 RPC lane。设为 `0` 可关闭这个校验。
+MEV/SWQoS 提交后查询原签名是否可见的预算，单位毫秒，默认 `1200`。查不到或查询异常不是未发送证明，保留原签名和 `unknown`，不自动换 lane/重签/补单。`0` 关闭 legacy 可见性检查；新增源码 C3c1 的 Durable Live DAMM 卖出在 provider trait 没有可核验回执且预算为 0 时仍为 `unknown`，Default 匹配的 typed RPC 回执不受此限制。新子路径确认模式由共享只读观测执行，详见 [发送与预算](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)，尚未部署。
 
 `ENABLE_PUMPAPI_EXECUTOR`
 

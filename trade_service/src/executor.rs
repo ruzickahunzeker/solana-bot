@@ -1,7 +1,6 @@
 use tracing::{error, info};
 
 use crate::adapters::persistence::ordinary_claims::RuntimeExecutionClaims;
-#[cfg(test)]
 use crate::application::ports::ordinary_claims::ExecutionOwner;
 use crate::application::ports::ordinary_claims::{ExecutionClaim, OrdinaryExecutionClaimer};
 use crate::application::ports::ordinary_execution::SdkExecutionContext;
@@ -22,6 +21,8 @@ mod contract_tests;
 mod execution_tests;
 #[cfg(test)]
 mod journal_tests;
+#[cfg(test)]
+mod sdk_journal_tests;
 
 #[cfg(test)]
 pub(crate) async fn execute_trade(state: AppState, request_id: String, command: TradeCommand) {
@@ -59,7 +60,7 @@ async fn execute_with_claims<C: OrdinaryExecutionClaimer>(
     let reservation = execution.reservation();
     let request_id = reservation.request_id().to_owned();
     let command = execution.command();
-    let owner = if command.aggregator_sol && !command.execution.mode.simulate() {
+    let mut owner = if command.aggregator_sol && !command.execution.mode.simulate() {
         match claims.claim(execution).await {
             Ok(ExecutionClaim::Acquired(owner)) => Some(owner),
             Ok(ExecutionClaim::AlreadyHeld) => return,
@@ -83,6 +84,19 @@ async fn execute_with_claims<C: OrdinaryExecutionClaimer>(
         );
         persist_update(state.persistence.as_ref(), record.as_ref()).await;
         return;
+    }
+    if matches!(
+        crate::application::ordinary_claims::operation_for_claim(execution, reservation.mode()),
+        Ok(crate::application::ordinary_claims::ClaimOperation::SdkTrade)
+    ) {
+        match claims.claim(execution).await {
+            Ok(ExecutionClaim::Acquired(acquired)) => owner = Some(acquired),
+            Ok(ExecutionClaim::AlreadyHeld) => return,
+            Err(error) => {
+                error!(request_id = %request_id, error = %crate::sanitize::redact_urls(&error.to_string()), "original SDK execution claim unavailable; no execution or retry");
+                return;
+            }
+        }
     }
     let idempotency_key = reservation.idempotency_key().to_owned();
     let wallet_id = reservation.wallet_id().to_owned();
@@ -108,6 +122,18 @@ async fn execute_with_claims<C: OrdinaryExecutionClaimer>(
         .trades
         .update(&request_id, TradeStatus::BuildingTx, None, None);
     if !persist_before_execution(state.persistence.as_ref(), building.as_ref()).await {
+        return;
+    }
+
+    if owner.as_ref().is_some_and(|owner| {
+        owner.operation() == crate::application::ordinary_claims::ClaimOperation::SdkTrade
+    }) {
+        execute_original_sdk(
+            &state,
+            execution,
+            owner.take().expect("checked original SDK owner"),
+        )
+        .await;
         return;
     }
 
@@ -219,6 +245,80 @@ async fn execute_with_claims<C: OrdinaryExecutionClaimer>(
         simulate,
     )
     .await;
+}
+
+async fn execute_original_sdk(state: &AppState, execution: &AdmittedTrade, owner: ExecutionOwner) {
+    let anchor = execution.reservation();
+    let command = execution.command();
+    let Some(journal) = state.persistence.ordinary_execution_claims() else {
+        finish_journaled(
+            state,
+            anchor.request_id(),
+            anchor.idempotency_key(),
+            command,
+            JournaledSolBuyOutcome {
+                record: None,
+                signature: None,
+                error: Some("original SDK durable journal is unavailable; do not resubmit".into()),
+            },
+        );
+        return;
+    };
+    let Some(wallet) = state.ordinary_execution.resolve(anchor.wallet_id()) else {
+        let outcome = crate::application::ordinary_sdk_submission::reject_preparation(
+            &journal,
+            execution,
+            owner,
+            anyhow::anyhow!("wallet_id {} not found", anchor.wallet_id()),
+        )
+        .await;
+        finish_journaled(
+            state,
+            anchor.request_id(),
+            anchor.idempotency_key(),
+            command,
+            outcome,
+        );
+        return;
+    };
+    let Some(blockhash) = state
+        .blockhash_cache
+        .get_fresh(state.config.blockhash_max_age_ms)
+    else {
+        let outcome = crate::application::ordinary_sdk_submission::reject_context(
+            &journal,
+            execution,
+            owner,
+            "blockhash cache is empty or stale",
+        )
+        .await;
+        finish_journaled(
+            state,
+            anchor.request_id(),
+            anchor.idempotency_key(),
+            command,
+            outcome,
+        );
+        return;
+    };
+    let outcome = wallet
+        .sdk_journaled(
+            execution,
+            owner,
+            SdkExecutionContext {
+                blockhash: blockhash.hash,
+                wait_tx_confirmed: state.config.wait_tx_confirmed,
+                mev_submit_verify_ms: state.config.mev_submit_verify_ms,
+            },
+        )
+        .await;
+    finish_journaled(
+        state,
+        anchor.request_id(),
+        anchor.idempotency_key(),
+        command,
+        outcome,
+    );
 }
 
 async fn fail_missing_wallet(state: &AppState, request_id: &str, wallet_id: &str) {

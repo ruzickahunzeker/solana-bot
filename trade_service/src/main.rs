@@ -214,6 +214,7 @@ async fn main() -> anyhow::Result<()> {
         wallets.clone(),
         config.pumpapi.clone(),
         read_rpc.clone(),
+        persistence.clone(),
     ));
     let wallet_identity = Arc::new(SdkWalletIdentityDirectory::new(wallets.clone()));
     let aggregator_quotes = Arc::new(QuoteStore::default());

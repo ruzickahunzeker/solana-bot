@@ -54,9 +54,10 @@ pub(super) fn validate_sdk_row(row: &SqliteRow) -> Result<Option<StoredSdkCandid
     let message: Option<Vec<u8>> = row.try_get("unsigned_message")?;
     let digest: Option<&str> = row.try_get("unsigned_sha256")?;
     let stored = match (stage, json, message, digest) {
-        ("claimed" | "failed", None, None, None) => None,
+        ("claimed" | "failed" | "rejected", None, None, None) => None,
         (
-            "prepared" | "signing" | "signed" | "broadcasting" | "submitted" | "unknown" | "failed",
+            "prepared" | "signing" | "signed" | "broadcasting" | "submitted" | "unknown" | "failed"
+            | "rejected",
             Some(json),
             Some(message),
             Some(digest),

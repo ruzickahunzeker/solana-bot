@@ -9,6 +9,14 @@ use std::future::Future;
 
 /// Uses the original ordinary-order authority, never an independent Quote reservation.
 pub(crate) trait OrdinarySdkSubmissionJournal: Sync {
+    fn reject_before_sign(
+        &self,
+        _execution: &AdmittedTrade,
+        _owner: &ExecutionOwner,
+        _error: &str,
+    ) -> impl Future<Output = anyhow::Result<()>> + Send {
+        async { anyhow::bail!("SDK pre-sign context rejection is not supported by this journal") }
+    }
     fn prepare(
         &self,
         execution: &AdmittedTrade,
@@ -95,6 +103,7 @@ pub(crate) trait OrdinarySdkCandidateBackend: Sync {
     fn authorize_broadcast(&self, signed: &Self::Signed) -> anyhow::Result<()>;
     fn broadcast(
         &self,
+        artifact: &Self::Signed,
         signed: &SignedSubmission,
     ) -> impl Future<Output = anyhow::Result<String>> + Send;
 }

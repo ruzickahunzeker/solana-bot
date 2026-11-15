@@ -4,6 +4,36 @@ use tokio::sync::Notify;
 
 mod transport;
 
+#[test]
+fn sdk_selected_observer_retains_only_the_selected_registered_endpoint_and_shared_runtime() {
+    let urls = vec![
+        "http://127.0.0.1:1/".to_string(),
+        "http://127.0.0.1:2/".to_string(),
+    ];
+    let runtime = Arc::new(SharedReadRuntime::new(&urls).unwrap());
+    let reader = SingleShotStatusReader::with_selected_runtime(runtime.clone(), &urls[1]).unwrap();
+    assert_eq!(
+        reader.urls.iter().map(Url::as_str).collect::<Vec<_>>(),
+        [urls[1].as_str()]
+    );
+    assert!(Arc::ptr_eq(&runtime, &reader.transport.runtime));
+    assert_eq!(reader.gate.state.lock().unwrap().cooldowns.len(), 1);
+}
+
+#[test]
+fn sdk_selected_observer_rejects_unregistered_or_different_key_endpoints_without_io() {
+    let runtime = Arc::new(
+        SharedReadRuntime::new(&["https://rpc.example.invalid/?api-key=test-a".into()]).unwrap(),
+    );
+    for selected in [
+        "https://rpc.example.invalid/?api-key=test-b",
+        "http://127.0.0.1:3/",
+        "not-a-url",
+    ] {
+        assert!(SingleShotStatusReader::with_selected_runtime(runtime.clone(), selected).is_err());
+    }
+}
+
 fn signature() -> String {
     Signature::from([1; 64]).to_string()
 }

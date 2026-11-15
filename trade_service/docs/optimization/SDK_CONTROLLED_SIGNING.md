@@ -43,6 +43,12 @@ signer 为测试生成的临时 Keypair；另一后端保留不同的项目 Cand
 最终受限 test check 约 10 秒、RSS 1,216,508 KiB；bin check 通过且仍 21 组警告，
 包含尚未接正式入口的 permit/受控核心，不压制或加假调用。fmt/diff、policy 七项及来源检查通过。
 
+已推送独立提交 `83036a4ca03a6b66d8ad3623a2e8afa450a0f63e`，
+[Actions 43680602908](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43680602908)
+已终态 failure：artifact `14147664555` 核对，candidate 15、prepared 22、signed journal 11、
+controller 10 通过，受控签名 4/5；过期 helper 被生产构造器提前拒绝，完整回归未跑。
+cfg(test) 注入修复与真实执行接线见 [C3c1](SDK_ORIGINAL_DAMM_RUNTIME.md)，不再轮询该终态任务。
+
 ## C3b6 CI 与夹具修复
 
 `bd39f04` / Actions `43678564856` 已终态 failure，artifact `14147911636` 下载核对：

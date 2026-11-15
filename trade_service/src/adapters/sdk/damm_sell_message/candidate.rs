@@ -77,24 +77,9 @@ impl DammSellCandidate {
 
     #[cfg(test)]
     pub(crate) fn expire_holding_for_test(&mut self) {
-        use crate::domain::preparation_balance::{PreparationBalanceSnapshot, MAX_BALANCE_AGE};
         let profile =
             Arc::get_mut(&mut self.profile).expect("test requires a uniquely owned profile");
-        let wallet = Address::from_bytes(profile.context.wallet.to_bytes());
-        let mint = Address::from_bytes(profile.intent.mint.to_bytes());
-        let input = profile.holding.checked_input(wallet, mint).unwrap();
-        let slot = profile.holding.checked_slot(wallet, mint).unwrap();
-        profile.holding = Arc::new(
-            PreparationBalanceSnapshot::from_account(
-                wallet,
-                mint,
-                profile.balance,
-                input,
-                slot,
-                std::time::Instant::now() - MAX_BALANCE_AGE - std::time::Duration::from_secs(1),
-            )
-            .unwrap(),
-        );
+        profile.holding = Arc::new(profile.holding.expired_copy_for_test());
     }
 }
 

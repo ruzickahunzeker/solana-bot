@@ -5,6 +5,14 @@ use crate::{
 };
 
 impl OrdinarySdkSubmissionJournal for SqliteOrdinaryExecutionClaims {
+    async fn reject_before_sign(
+        &self,
+        execution: &AdmittedTrade,
+        owner: &ExecutionOwner,
+        error: &str,
+    ) -> Result<()> {
+        self.reject_sdk_before_sign(execution, owner, error).await
+    }
     async fn prepare(
         &self,
         execution: &AdmittedTrade,

@@ -40,6 +40,14 @@ impl DammSellMessageProfile {
         DammSellCandidate::build(self.clone(), None)
     }
 
+    pub(crate) fn prepare_live(self: &Arc<Self>, tip: Option<Pubkey>) -> Result<DammSellCandidate> {
+        ensure!(
+            !self.intent.simulate,
+            "DAMM live candidate requires its original live profile"
+        );
+        DammSellCandidate::build(self.clone(), tip)
+    }
+
     pub(crate) async fn execute<F, Fut>(
         self: &Arc<Self>,
         rpc: &RpcClient,
@@ -70,6 +78,17 @@ impl DammSellMessageProfile {
         F: FnOnce() -> Fut + Send,
         Fut: Future<Output = Result<SdkLaneReport, SdkInvocationFailure>> + Send,
     {
+        self.validate_unsigned_preview(preview, rpc)
+            .await
+            .map_err(failure)?;
+        submit().await
+    }
+
+    pub(crate) async fn validate_unsigned_preview(
+        self: &Arc<Self>,
+        preview: &Arc<Self>,
+        rpc: &RpcClient,
+    ) -> Result<()> {
         let checked = (|| -> Result<()> {
             ensure!(
                 !self.intent.simulate
@@ -84,24 +103,15 @@ impl DammSellMessageProfile {
             intent.simulate = true;
             preview.validate_intent(&intent)
         })();
-        checked.map_err(failure)?;
-        let result = preview
-            .prepare_simulation()
-            .map_err(failure)?
-            .simulate(rpc)
-            .await
-            .map_err(failure)?;
+        checked?;
+        let result = preview.prepare_simulation()?.simulate(rpc).await?;
         if !result.success {
-            return Err(SdkInvocationFailure {
-                signatures: vec![],
-                message: format!(
-                    "DAMM v2 final transaction simulation failed: {}",
-                    result.error.unwrap_or_else(|| "simulation rejected".into())
-                ),
-            });
+            anyhow::bail!(
+                "DAMM v2 final transaction simulation failed: {}",
+                result.error.unwrap_or_else(|| "simulation rejected".into())
+            );
         }
-        self.recheck().map_err(failure)?;
-        submit().await
+        self.recheck()
     }
 }
 

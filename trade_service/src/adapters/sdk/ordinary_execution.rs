@@ -2,13 +2,14 @@ use crate::{
     adapters::{pumpapi::pumpapi_trade, sdk::trade_command::sdk_trade},
     application::{
         ports::ordinary_execution::{
-            OrdinaryExecutionBackend, OrdinaryExecutionWallet, SdkExecutionContext,
-            TradeExecutionFuture,
+            JournaledSdkFuture, OrdinaryExecutionBackend, OrdinaryExecutionWallet,
+            SdkExecutionContext, TradeExecutionFuture,
         },
         trade_command::TradeCommand,
     },
     config::PumpApiConfig,
     domain::trade::Side,
+    persistence::TradePersistence,
     sdk_client::SdkTradeClient,
     wallets::WalletRegistry,
 };
@@ -18,6 +19,7 @@ pub(crate) struct SdkOrdinaryExecutionBackend {
     wallets: Arc<WalletRegistry>,
     pumpapi: PumpApiConfig,
     read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    journal: Arc<TradePersistence>,
 }
 
 impl SdkOrdinaryExecutionBackend {
@@ -25,11 +27,13 @@ impl SdkOrdinaryExecutionBackend {
         wallets: Arc<WalletRegistry>,
         pumpapi: PumpApiConfig,
         read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+        journal: Arc<TradePersistence>,
     ) -> Self {
         Self {
             wallets,
             pumpapi,
             read_rpc,
+            journal,
         }
     }
 }
@@ -38,6 +42,7 @@ struct ResolvedSdkWallet {
     client: Arc<SdkTradeClient>,
     pumpapi: PumpApiConfig,
     read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    journal: Arc<TradePersistence>,
 }
 
 impl OrdinaryExecutionBackend for SdkOrdinaryExecutionBackend {
@@ -47,12 +52,35 @@ impl OrdinaryExecutionBackend for SdkOrdinaryExecutionBackend {
                 client,
                 pumpapi: self.pumpapi.clone(),
                 read_rpc: self.read_rpc.clone(),
+                journal: self.journal.clone(),
             }) as Box<dyn OrdinaryExecutionWallet>
         })
     }
 }
 
 impl OrdinaryExecutionWallet for ResolvedSdkWallet {
+    fn sdk_journaled<'a>(
+        &'a self,
+        execution: &'a crate::application::trade_admission::AdmittedTrade,
+        owner: crate::application::ports::ordinary_claims::ExecutionOwner,
+        context: SdkExecutionContext,
+    ) -> JournaledSdkFuture<'a> {
+        Box::pin(async move {
+            let Some(journal) = self.journal.ordinary_execution_claims() else {
+                return crate::application::trade_execution::JournaledTradeOutcome {
+                    record: None,
+                    signature: None,
+                    error: Some(
+                        "original durable SDK journal unavailable; operation was not retried"
+                            .into(),
+                    ),
+                };
+            };
+            self.client
+                .execute_original_damm(&journal, execution, owner, context, self.read_rpc.clone())
+                .await
+        })
+    }
     fn sdk<'a>(
         &'a self,
         command: &'a TradeCommand,
@@ -95,6 +123,7 @@ mod tests {
             state.wallets.clone(),
             state.config.pumpapi.clone(),
             Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap()),
+            state.persistence.clone(),
         );
         assert!(backend.resolve("fixture-wallet").is_none());
         assert!(backend.resolve("absent").is_none());
@@ -111,6 +140,7 @@ mod tests {
             state.wallets.clone(),
             state.config.pumpapi.clone(),
             runtime.clone(),
+            state.persistence.clone(),
         );
         assert!(Arc::ptr_eq(&runtime, &backend.read_rpc));
         drop(runtime);
