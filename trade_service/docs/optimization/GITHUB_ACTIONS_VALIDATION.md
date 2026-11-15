@@ -30,6 +30,16 @@
 
 ## 已验收运行
 
+最新原 NP-01 买入净报价/min_out 准备绑定 `61af682d81a52b69db891ebf12226095c7004cd6` /
+[Actions 43734656743](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43734656743)
+终态 success，artifact `14170038159` 下载独立核对：买入专项 49（含新增 16），完整并发
+1564（152.42 秒）/串行 1564（268.72 秒）零失败/忽略/过滤，全部 51 步骤 exit=0。
+两套原始名称集合相同，父批 1548 全保留、增量恰为源码中的十六项；原源码/恢复 Clippy
+成功，原始 JSON spans 独立核对三层 87 个不同字段拒绝。identity 与 manifest/lock/vendor
+manifest 指纹匹配，发布审计绑定 1039 文件/12,820,838 字节、19 路径；真实 main/索引/
+冻结历史保持。不重跑终态 CI，后续验收记录不单独触发 CI；仅源码离线验收，不等于
+最终买入消息授权、买入原 owner 账本/固定 sender、SDK 入场后时效或真实供应商/发布验收。
+
 最新原 NP-01 买入同步/预充值兼容 `fca54ff9a87581822502707bd9226a5a917c2786` /
 [Actions 43730145561](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43730145561)
 终态 success，artifact `14168537736` 下载独立核对：买入专项 33（含新增 10），完整并发

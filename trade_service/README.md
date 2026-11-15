@@ -166,7 +166,9 @@ Quote 余额查询仍只用原首个 Default RPC：依次 supply、token scan/�
 
 普通 SDK 的直接 DAMM 买入已有净报价/min_out 准备保护：沿用原 lane RPC，九账户快照及零签名模拟后，用净输出和整数滑点计算最小输出，绑定本笔钱包/池/输入量/模式并在 SDK 入口前复查三秒期限。不增加 API 参数、不改变 WSOL/USDC 金额单位；失败、零输出/舍入或不完整证据不会回退常量 1。节点须返回同次模拟的 fee、pre/post lamports 和 token balances；仅适用 V0 兼容/canonical 账户、直接 WSOL/USDC 方向，其他情形拒绝。当前源码完整验收状态见优化执行记录。
 
-此批尚待独立 CI/真实节点验收，未部署，不是新的 Live 准入或完整签名前授权。SDK 入场后仍有 opaque worker、最终不可变消息与买入原 owner 签名字节账本缺口，不得据此自动重发或宣称全链路安全，见 [原 NP-01 范围](docs/TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
+准备绑定已由 `61af682` 的独立 CI 验收。当前后继源码复用卖出的纯费用/编译封装，增加买入整笔候选、protocol/full 回调检查及返回签名绑定；同次报价后的 native 余额还须覆盖固定优先费和选定小费。该 DAMM 买入模拟子路径只提交零签名候选，不调用 SDK signer；原 SDK 模拟返回的非广播签名不再生成，现有可空 `signature` 为 `null`，不是交易提交。后继完整运行仍待独立 CI，不借用父批结果。
+
+未部署，不是新的 Live 准入或完整签名权威迁移。买入原 owner 的签名字节账本/固定 sender、最后回调之后 SDK worker 的时效及副作用、其他协议/模式与真实节点仍有门槛，不得据此自动重发或宣称全链路安全，见 [原 NP-01 范围](docs/TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
 
 ### 交易准备余额（源码阶段，未部署）
 

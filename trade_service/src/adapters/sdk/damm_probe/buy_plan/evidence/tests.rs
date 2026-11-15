@@ -163,6 +163,25 @@ impl Case {
         output: (bool, Pubkey),
         kind: Encoding,
     ) -> Self {
+        Self::with_wallet(
+            reversed,
+            native,
+            extended,
+            input_exists,
+            output,
+            kind,
+            key(5),
+        )
+    }
+    fn with_wallet(
+        reversed: bool,
+        native: bool,
+        extended: bool,
+        input_exists: bool,
+        output: (bool, Pubkey),
+        kind: Encoding,
+        wallet: Pubkey,
+    ) -> Self {
         let (output_exists, target) = output;
         assert!(native || input_exists);
         let quote_mint = if native {
@@ -208,20 +227,20 @@ impl Case {
             false,
         );
         source.rpc.values[6] = if input_exists {
-            state(spl_token_interface::ID, quote_mint, key(5), 1000, false)
+            state(spl_token_interface::ID, quote_mint, wallet, 1000, false)
         } else {
             Value::Null
         };
         source.rpc.values[7] = if output_exists {
-            state(target_program, target, key(5), 2000, extended)
+            state(target_program, target, wallet, 2000, extended)
         } else {
             Value::Null
         };
-        let mut wallet = ui(solana_system_interface::program::id(), vec![]);
-        wallet["lamports"] = json!(10_000_000);
-        source.rpc.values.push(wallet);
+        let mut wallet_account = ui(solana_system_interface::program::id(), vec![]);
+        wallet_account["lamports"] = json!(10_000_000);
+        source.rpc.values.push(wallet_account);
         let plan = super::super::prepare(
-            key(5),
+            wallet,
             &source.params,
             if native {
                 SOL_TOKEN_ACCOUNT
@@ -241,14 +260,14 @@ impl Case {
         post[6] = state(
             spl_token_interface::ID,
             quote_mint,
-            key(5),
+            wallet,
             input_before + if native { 100 } else { 0 } - 100,
             false,
         );
         post[7] = state(
             target_program,
             target,
-            key(5),
+            wallet,
             output_before + net_output,
             extended,
         );
@@ -284,7 +303,7 @@ impl Case {
                 plan.accounts.input_ata,
                 quote_mint,
                 spl_token_interface::ID,
-                key(5),
+                wallet,
                 input_before,
                 6,
                 input_exists,
@@ -293,7 +312,7 @@ impl Case {
                 plan.accounts.output_ata,
                 target,
                 target_program,
-                key(5),
+                wallet,
                 output_before,
                 7,
                 output_exists,
@@ -311,7 +330,7 @@ impl Case {
                 after[i] = post[position]["lamports"].as_u64().unwrap_or(0);
             }
         }
-        before[index(&plan, key(5)).unwrap()] = SAME_BANK_WALLET;
+        before[index(&plan, wallet).unwrap()] = SAME_BANK_WALLET;
         for (ata, mint, program, owner, pre_amount, position, exists) in roles.into_iter().chain([
             (
                 if reversed {
@@ -778,6 +797,35 @@ pub(in crate::adapters::sdk::damm_probe::buy_plan) async fn binding_fixture(
         output_exists,
         Encoding::Parsed,
     );
+    let evidence = case.run().await.unwrap();
+    (case.plan, evidence)
+}
+
+pub(in crate::adapters::sdk::damm_probe::buy_plan) async fn message_fixture(
+    wallet: Pubkey,
+    native: bool,
+    extended: bool,
+    exists: bool,
+    reversed: bool,
+    remaining: Option<u64>,
+) -> (PreparedDammBuyProbe, BuyOutputEvidence) {
+    let mut case = Case::with_wallet(
+        reversed,
+        native,
+        extended,
+        true,
+        (exists, key(4)),
+        Encoding::Parsed,
+        wallet,
+    );
+    if let Some(remaining) = remaining {
+        let i = index(&case.plan, wallet).unwrap();
+        let debit = case.result["preBalances"][i].as_u64().unwrap()
+            - case.result["postBalances"][i].as_u64().unwrap();
+        case.result["preBalances"][i] = json!(remaining.checked_add(debit).unwrap());
+        case.result["postBalances"][i] = json!(remaining);
+        case.result["accounts"][8]["lamports"] = json!(remaining);
+    }
     let evidence = case.run().await.unwrap();
     (case.plan, evidence)
 }

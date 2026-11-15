@@ -12,6 +12,9 @@ use sol_trade_sdk::{
 };
 use solana_sdk::pubkey::Pubkey;
 
+mod message;
+pub(crate) use message::DammBuyMessage;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct DammBuyContext {
     pub wallet: Pubkey,

@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 DAMM 买入只读取证/兼容 `fca54ff` 已验收，完整并发/串行各 1548；当前净报价/min_out 准备绑定源码通过受限类型检查，完整执行待独立 CI，不借用父批结果。普通任务与 Shadow 生命周期已验收，不再排队；其他 NP-01/03/04/05 门槛保留，不以准备参数检查冒充最终消息授权、签名字节账本或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 DAMM 买入净报价/min_out 准备绑定 `61af682` / Actions `43734656743` / artifact `14170038159` 已独立验收，买入专项 49、完整并发/串行各 1564，87 字段拒绝与全部 51 步骤通过。普通任务、Shadow 生命周期及买入准备绑定不再排队；其他 NP-01/03/04/05 门槛保留，不以准备参数检查冒充最终消息授权、签名字节账本或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -339,15 +339,48 @@ ATA 在读取时为非执行、空数据的 System 账户，余额不伪装成 T
 
 新增十六项合同：绑定十项（含真实只读取证→实际准备/投影→入口复查串联）、当前 bank
 两项、准备/拒绝/取消/显式 min 四项；受限 check 13 秒/RSS 1,286,520 KiB、production
-check 12 秒/RSS 1,004,892 KiB 通过，原七组警告保持，完整运行待本批独立 CI。原冻结
+check 12 秒/RSS 1,004,892 KiB 通过，原七组警告保持；完整运行已由本批独立 CI 验收。原冻结
 参数指纹显式传入历史的 1 验证投影一致，不重写 oracle 迎合差异，也不把此控制样本当
 执行许可。节点缺少同次模拟 fee/pre/post lamports/token balances、未审计模式或扩展均拒绝。
+
+本批 `61af682` / Actions `43734656743` / artifact `14170038159` 已下载独立核对：
+买入专项 49，完整并发 1564（152.42 秒）/串行 1564（268.72 秒）零失败/忽略/过滤，
+全部 51 步骤通过。两套名称相同、父批 1548 保留，增量恰为上述十六项；原始 compiler
+spans 确认 87 字段拒绝、原源码/恢复成功。identity 与 manifest/lock/vendor manifest
+匹配，审计绑定 1039 文件/12,820,838 字节、19 路径，不重跑终态 CI 或另发文档 CI。
 
 本子项只加固旧已许可 SDK 买入的准备参数，不完成上方第 3 步或扩大 Live/operation profile。
 SDK 入场后的 worker/时效、最终不可变消息/完整费用和权限授权、原 owner 的买入签名字节
 账本/固定 sender、共享 RPC 全局治理、真实供应商字段能力/生产恢复/发布仍须继续。
 不因本批提前拆出准备保护而删除、降低这些门槛，亦不把 SDK simulate 称全程无 signer。
 源码未部署或触碰生产数据，不表示已核对/修复线上版本。
+
+2026-11-16 恢复后续同一 NP-01：买入 `DammBuyMessage` 已接原 lane 准备、实际请求入口
+复查及 SDK protocol/full 回调，私有候选保存完整零签名交易，核对充值/ATA、池/程序、
+原始金额/min_out、权限、计算费、小费目的地与顺序，再独立对照编译字节。回调 clone
+共用单次状态，失败、重复、取消或原报价过期均拒绝；返回签名须绑定冻结消息，异常
+保留所有已知签名，不换 lane。模拟分支复用原只读 RPC/quote slot，不进入 SDK signer。
+
+原卖出的费用封装、规范编译和 provider 小费表按原行为移入 `damm_instructions/message.rs`
+供两侧复用，保留旧测试入口/指纹，不另建 Client/Registry/执行通道。新费用预留只读取
+同一次已核验报价模拟的 wallet post lamports：原报价已扣充值、实际租金和基础费，正式
+固定 envelope 还需 300 lamports 优先费及按原 SDK 规则取整的小费；不足/溢出为终态
+准备拒绝，不据此换 provider。不会用更早账户 RPC 的钱包余额冒充同 bank 预留。
+
+新增十九项仅源码/受限类型检查阶段，含 64 组真实 SDK 原始指令及独立整笔编译对照、
+资金边界、ATA 创建冻结、无签名模拟、错误/取消/过期、回调顺序/并发/权限/费用和签名
+保留。两种买入专属 adapter 类型加入现有三层类型门禁，预期 93 字段拒绝（含外部别名）；
+完整 1583、买入专项 68 与 51 步骤均须本批 CI 实际验收，不按预期值计完成。
+其中一项串到原普通执行编排，核对模拟结果不带交易签名、不查询/广播；旧 SDK 模拟
+曾生成非广播签名，本子路径移除 signer 后现有可空 signature 返回 null，不伪造签名维持旧值。
+暂停前的夹具 wallet 变量遮蔽已修正，不删除用例或放宽 oracle。
+最终受限 test check 11 秒/RSS 1,387,596 KiB、production check 5 秒/RSS 601,988 KiB
+通过，原七组生产警告保持；Python 门禁十项/workflow 七项与格式通过。本地不链接
+大型测试，以上元数据检查不是本批 Rust 运行或真实供应商验收。
+
+此子项不是完整买入授权/账本完成：最后 SDK 回调与实际签名/发送之间仍由旧 worker
+处理；原 owner、prepared/signed 原字节持久化/固定 sender 及恢复、全局 RPC 与真实节点
+门槛继续按原队列推进，不新增 nominal operation profile 或生产许可，也不扩展暂停的 PumpAPI。
 
 ## 4. 稳定类型和后端边界
 

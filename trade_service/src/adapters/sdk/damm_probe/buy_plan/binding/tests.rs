@@ -4,7 +4,7 @@ use crate::adapters::sdk::{
 };
 use solana_sdk::hash::Hash;
 
-fn intent(plan: &PreparedDammBuyProbe, simulate: bool) -> ExecuteTrade {
+pub(super) fn intent(plan: &PreparedDammBuyProbe, simulate: bool) -> ExecuteTrade {
     ExecuteTrade {
         pool: Pool::MeteoraDammV2,
         mint: plan.accounts.output_mint,
@@ -25,7 +25,7 @@ fn intent(plan: &PreparedDammBuyProbe, simulate: bool) -> ExecuteTrade {
     }
 }
 
-async fn fixture(
+pub(super) async fn fixture(
     native: bool,
     extended: bool,
     exists: bool,

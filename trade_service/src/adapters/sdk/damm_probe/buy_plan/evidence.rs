@@ -33,6 +33,7 @@ pub(crate) struct BuyOutputEvidence {
     simulation_slot: u64,
     probe_fee_lamports: u64,
     output_initialized: bool,
+    wallet_remaining_lamports: u64,
     started: Instant,
 }
 
@@ -60,6 +61,18 @@ impl BuyOutputEvidence {
     }
     pub(super) fn output_initialized(&self) -> bool {
         self.output_initialized
+    }
+    pub(super) fn check_additional_native_budget(
+        &self,
+        plan: &PreparedDammBuyProbe,
+        lamports: u64,
+    ) -> Result<()> {
+        self.minimum(plan, 0)?;
+        ensure!(
+            self.wallet_remaining_lamports >= lamports,
+            "DAMM buy native balance cannot cover final priority fee and relay tip"
+        );
+        Ok(())
     }
     #[cfg(test)]
     pub(super) fn expire_for_tests(&mut self) {
@@ -485,6 +498,7 @@ async fn quote_inner(
         simulation_slot: simulated.context.slot,
         probe_fee_lamports: funding.fee,
         output_initialized: movements.output_initialized,
+        wallet_remaining_lamports: post.wallet_lamports,
         started,
     };
     evidence.minimum(plan, 0)?;

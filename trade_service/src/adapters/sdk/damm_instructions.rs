@@ -7,6 +7,11 @@ use solana_sdk::{
     pubkey::Pubkey,
 };
 
+mod message;
+pub(super) use message::{compile_candidate, full_instructions, tip_lamports};
+#[cfg(test)]
+pub(super) use message::{tip_accounts, validate_compiled_message};
+
 pub(super) fn pool_snapshot(
     pool: &MeteoraDammV2Params,
 ) -> crate::domain::sdk_candidate::DammCandidatePool {

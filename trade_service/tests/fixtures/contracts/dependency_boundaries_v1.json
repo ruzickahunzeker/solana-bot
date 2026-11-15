@@ -33,6 +33,8 @@
     {"id": "wallet_storage", "path": "pump_trade_service::wallet_repository::WalletRepository", "probe": "crate::wallet_repository::WalletRepository"},
     {"id": "sdk_wallet", "path": "pump_trade_service::sdk_client::SdkTradeClient", "probe": "crate::sdk_client::SdkTradeClient"},
     {"id": "trade_tasks", "path": "pump_trade_service::infrastructure::trade_tasks::TradeTasks", "probe": "crate::infrastructure::trade_tasks::TradeTasks"},
-    {"id": "dispatch_ticket", "path": "pump_trade_service::infrastructure::trade_tasks::DispatchTicket", "probe": "crate::infrastructure::trade_tasks::DispatchTicket"}
+    {"id": "dispatch_ticket", "path": "pump_trade_service::infrastructure::trade_tasks::DispatchTicket", "probe": "crate::infrastructure::trade_tasks::DispatchTicket"},
+    {"id": "damm_buy_quote", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuyQuote", "probe": "crate::adapters::sdk::damm_probe::DammBuyQuote"},
+    {"id": "damm_buy_message", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuyMessage", "probe": "crate::adapters::sdk::damm_probe::DammBuyMessage"}
   ]
 }

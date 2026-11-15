@@ -114,6 +114,12 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The 2026-11-16 buy-message batch adds DammBuyQuote and DammBuyMessage to the
+same policy: 30 selected types and an expected 93 scoped fields including the
+outside-alias probe. This new compiler count still needs its own isolated CI;
+the accepted 28-type/87-field parent evidence below must not be reused for it.
+The adapter-specific nominal objects are not new Application signing authority.
+
 The NP-03 task-lifecycle batch added TradeTasks and DispatchTicket to the selected
 concrete-runtime denial policy (28 selected types; 87 scoped fields including the
 outside-alias probe). Commit c6f2745 / Actions 43718342603 / artifact 14163942665
@@ -124,7 +130,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The versioned JSON fixture now lists 28 selected SDK,
+`clippy::disallowed_types`. The versioned JSON fixture now lists 30 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 
