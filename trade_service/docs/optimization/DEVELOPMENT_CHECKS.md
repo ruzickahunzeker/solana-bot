@@ -134,7 +134,8 @@ parser to collect outside-layer aliases from the service module tree, including
 inline modules; comments/strings are not parsed as Rust declarations. The gate
 also adds an outside alias in the CI root and repeats inventory, so the extra
 three scoped rejection assertions test the actual parser-to-compiler connection.
-The intended total is 81 negative fields, not yet runtime-verified in this batch.
+All 81 negative fields passed in e3be442 / Actions 43711006653; raw diagnostic
+spans were independently checked, including all three outside-alias fields.
 Guarded layers' own project aliases are not banned; associated trait types are
 not mistaken for module aliases. Explicit production `#[path]` modules require
 review instead of silently accepting an incorrect module inventory.
@@ -150,9 +151,10 @@ the service manifest/lock/vendor stay unchanged.
 Local evidence: ten Python policy/restoration/metadata-only alias regressions
 and seven workflow tests passed. The helper's isolated 512 MiB `cargo check`
 passed in 5.66 seconds/RSS 232,864 KiB; no service test binary was linked.
-The helper's three Rust tests and the real production/81-field checks still
-require this batch's cloud run. Prior 26445c5 acceptance covers 1,473 service
-tests, not this new guard. Macro-generated interfaces, opaque capability/value
+The helper's three Rust tests, production/81-field/restored checks and complete
+concurrent/serial 1,473-test suites passed in e3be442; artifact 14161032189 was
+downloaded and verified (44 steps exit=0). Prior 26445c5 did not contain this
+guard. Macro-generated interfaces, opaque capability/value
 flows, API-specific rules and remaining dependency directions retain their
 original review/acceptance requirements; this is not TS-09 completion.
 
@@ -165,4 +167,5 @@ now passes `--config` after `clippy`. A dependency-free temporary Cargo fixture
 proves the child receives that configuration by requiring its sentinel invalid
 target error. This is metadata-only, has no SDK or runtime inputs, and does not
 relax offline mode, the lockfile, source provenance or negative assertions.
-Corrected production/negative/restoration acceptance still needs a new run.
+The corrected production/negative/restoration path is accepted in e3be442;
+the failed first run is terminal and must not be restarted.

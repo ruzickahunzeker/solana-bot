@@ -30,27 +30,36 @@
 
 ## 已验收运行
 
+最新已验收类型/别名门禁 `e3be4420fe68049f5f5ce399405682620d44ee17` /
+[Actions 43711006653](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43711006653)
+已终态 success，artifact `14161032189` 下载核对：44 步骤全部 exit=0，完整并发
+1473（144.04 秒）/串行 1473（253.36 秒）零失败/忽略/过滤；工具三项、Python 门禁十项/
+workflow 七项及原专项通过。原源码/恢复 Clippy 成功，negative exit=101 是预期；另独立
+读取原始 JSON 诊断确认三个层共 81 个不同字段均被拒绝，含外层别名，不仅依赖摘要。
+身份/manifest/lock/vendor 匹配，原发布审计绑定 1017 文件/12,572,454 字节；真实 main/
+索引不变。没有合并或部署，不重跑旧任务；本地后续仅整理文档，下一源码批再发布。
+
 首轮类型/别名边界 `8bd77968dce15ac2985808a88614d6b78780949c` /
 [Actions 43710108477](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43710108477)
 已终态 failure，artifact `14159823162` 下载核对：全部前置/服务类型检查及工具三项
 通过。Clippy 子命令未收到全局 --config，离线 zap 来源解析失败，未到真实类型检查，
-81 负例和完整回归未执行。现只修参数转发及其零依赖真实 Cargo 回归，待新快照；
-保留离线、源替换、lock/vendor 和全部原断言，不重跑旧失败任务。原审计绑定 1017 文件/
+81 负例和完整回归未执行。后继修正参数转发并增加零依赖真实 Cargo 回归，
+保留离线、源替换、lock/vendor 和全部原断言；修正已由 e3be442 验收，不重跑旧失败任务。原审计绑定 1017 文件/
 12,568,938 字节，真实 main/索引不变，不套用父批。
 
-最新完整验收普通执行编排 `26445c597c75d273bf7a8a7264da9cc33192fb16` /
+前序完整验收普通执行编排 `26445c597c75d273bf7a8a7264da9cc33192fb16` /
 [Actions 43707853050](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43707853050)
 已终态 success，artifact `14159283766` 下载核对：完整并发 1473（112.34 秒）/串行
 1473（209.87 秒）零失败/忽略/过滤，ordinary-runtime 七项及全部步骤 exit=0。
 identity/manifest/lock/vendor 匹配，真实 main/索引不变；原审计绑定 1010 文件/12,531,337 字节。
-后继类型门禁/小型开发工具仅局部验证，须新快照，不套用本结果或重跑旧任务。
+后继类型门禁/小型开发工具另由上方 e3be442 独立验收，不套用本结果或重跑旧任务。
 
 前序完整验收普通接受快照 `26be71781406be7f912d53bd26e04fb549dce363` /
 [Actions 43706312318](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43706312318)
 已终态 success，artifact `14159195795` 下载核对：完整并发 1466（129.94 秒）/串行
 1466（238.29 秒），零失败/忽略/过滤，ordinary-intake 八项、HTTP 202 与全部步骤 exit=0；
 identity/manifest/lock/vendor 匹配。1006 文件/12,503,715 字节审计只绑定本快照。
-后继 ordinary-runtime 七项及完整编排源码仅本地类型检查，尚无运行证据，不套用 1466。
+后继 ordinary-runtime 七项及完整编排另由上方 26445c5 独立验收，不套用 1466。
 
 首轮普通接受流程 `c58eb8cfdc68e72bb1b9a67bb34e90cae69f6c3e` /
 [Actions 43705256866](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43705256866)

@@ -19,6 +19,7 @@ use sqlx::SqlitePool;
 use std::sync::{Arc, Mutex};
 use tokio::sync::Notify;
 
+mod backend_contracts;
 #[path = "reconciliation_tests.rs"]
 mod reconciliation_tests;
 

@@ -56,7 +56,7 @@ git diff --check                                             # passed
 | SharedReadRuntime | initialize 创建，刷新/只读观测/readiness/余额与准备 reader 复用 | 六类 profile 的局部预算/冷却/取消合同，资源随原持有者释放 | 寻池/参数/ATA/模拟等剩余读路径及全服务配额 |
 | BlockhashCache/Refresher | 原缓存由 refresher、readiness、AppState 持有，main 接原 refresher owner | Drop/显式 shutdown 取消；main 的 signal 先 abort，serve 返回后 await shutdown；已有 lifecycle/bootstrap 合同 | 链上有效期/真实节点、异常进程退出和全部交易任务排空 |
 | ParamCache | complete 创建一次，PoolQueryService 与 executor writer 共享 | 同实例写入/保留键、最后服务释放后回收，见 PARAM_CACHE_RESOURCE_BOUNDARY.md | 缓存版本/全局一致性与 SDK 内部参数缓存 |
-| TradeStore/IdempotencyStore/TradePersistence | initialize 打开原持久化，complete 创建原内存资源；接受/查询/claims/执行共享 | 新接受服务仅借用原实例；原 reservation/hash/JSON 和文件恢复合同继续适用 | 普通执行具体依赖、全部 backend/mode 的 signed journal 及生产刷盘 |
+| TradeStore/IdempotencyStore/TradePersistence | initialize 打开原持久化，complete 创建原内存资源；接受/查询/claims/执行共享 | 接受与普通执行服务借用原实例/项目 ports；26be717、26445c5 已验收，原 reservation/hash/JSON 和文件恢复合同继续适用 | 根资源所有权/交易任务生命周期、全部 backend/mode 的 signed journal 及生产刷盘 |
 | QuoteStore/ConversionStore | complete 创建原报价缓存，initialize 按配置打开可选 conversion store | 原服务持有和 bootstrap Some/None/Arc 交接合同 | 不合并独立操作账本；真实节点/恢复与发布仍独立验收 |
 | ObservationPlan/Worker | complete 只 prepare，main 成功 bind 后按原开关 start | main 发 stop signal 并 await shutdown，Drop 有取消；已有默认关闭/局部恢复合同 | 真实部署调度、断电与全系统 RPC 预算 |
 | 普通交易后台任务 | Handler Created 后 `tokio::spawn`，返回 handle 未保存 | 新身份 lease 合同只覆盖 dispatch 和响应等待；没有新增任务 supervisor | 不能宣称全部任务可追踪/退出已排空；需在原生命周期和资金恢复任务中验收 |

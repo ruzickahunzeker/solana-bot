@@ -2,18 +2,24 @@
 
 日期：2026-11-15。依据：当前源码路径、主计划与执行记录。用户已恢复持续目标，本轮续非 PumpAPI 普通接受流程的源码/离线验收；历史暂停及运维记录保留。修改计划本身不触发暂停或恢复。不再用缺少权重的百分比表达完成度。
 
-恢复前的总体审查及获准 RPC 运维见 [历史审查](../../../docs/optimization/PROJECT_REVIEW_2026-11-14.md)：当时源码全套 1038 项通过、优化未部署，仅更换失效 RPC 并重启同一旧 release。本轮不做生产运维；最新验收及当前待验源码以下方首两条为准，后续历史检查点不是重新等待或重复执行的任务。外部 Copy/Bridge 已有兼容规则集中见 [对接边界](SERVICE_INTEGRATION_BOUNDARIES.md)，不是新增协议或对接功能完成声明。
+恢复前的总体审查及获准 RPC 运维见 [历史审查](../../../docs/optimization/PROJECT_REVIEW_2026-11-14.md)：当时源码全套 1038 项通过、优化未部署，仅更换失效 RPC 并重启同一旧 release。本轮不做生产运维；当前唯一任务和已验收基线见 [当前执行状态](EXECUTION_STATUS.md)，全部旧发布记录原字节保留到 [执行历史](EXECUTION_HISTORY_20261115.md)。下方历史检查点不是重新等待或重复执行的任务。外部 Copy/Bridge 已有兼容规则集中见 [对接边界](SERVICE_INTEGRATION_BOUNDARIES.md)，不是新增协议或对接功能完成声明。
 
 ## 统计口径
 
+- 原 NP-04 本批新增 Record/Tape 独立构建表示的八项共同合同，沿用普通 SOL Quote
+  控制器、原 admission/claim/journal，无 RPC/真实 signer；当前运行待新 CI，不套用
+  父批 1473。边界/源码与剩余适用范围见 `BACKEND_CONSTRUCTION_CONTRACT.md`。
+- 最新已验收类型/别名门禁 e3be442 / Actions 43711006653 已终态 success，artifact
+  14161032189 下载核对：原源码/恢复成功，原始诊断独立核对 81 个字段拒绝；完整并发
+  1473（144.04 秒）/串行 1473（253.36 秒）零失败/忽略/过滤，44 步骤通过。旧任务不重跑。
 - 首轮类型/别名门禁 8bd7796 / Actions 43710108477 已终态失败，artifact 14159823162
   核对：服务类型检查/AST 工具三项及全部前置通过；Clippy 未接源替换配置，负例/完整
-  回归未运行。参数转发已修正、十项本地回归通过，待新快照，不套用父批 1473。
-- 最新完整验收普通执行编排 26445c5 / Actions 43707853050 已终态 success，artifact
+  回归未运行。参数转发修正已在 e3be442 完整验收，不重跑旧失败。
+- 前序完整验收普通执行编排 26445c5 / Actions 43707853050 已终态 success，artifact
   14159283766 下载核对：完整并发 1473（112.34 秒）/串行 1473（209.87 秒）零失败/
   忽略/过滤，ordinary-runtime 七项及所有步骤通过，不等同 main 合并或部署。
 - 后继三个生产层的类型门禁/别名解析/恢复与预期 81 负例已接 CI；十项 Python/七项
-  policy 及小工具类型检查通过，工具 Rust 三项在首轮 CI 通过；实际门禁/完整回归未验收。
+  policy、工具 Rust 三项及实际门禁/完整回归已由 e3be442 验收；不等于整个依赖治理完成。
 - 前序完整验收普通接受流程 26be717 / Actions 43706312318 已终态 success，artifact
   14159195795 下载核对：完整并发 1466（129.94 秒）/串行 1466（238.29 秒）零失败/
   忽略/过滤，ordinary-intake 八项、HTTP 202 与全部步骤通过；不等同 main 合并或部署。
@@ -126,7 +132,7 @@
 
 | 类别 | 已验收交付 | 尚不能据此宣称 |
 | --- | --- | --- |
-| 内部模型/参数 | 普通及聚合 DTO/项目 command、整数金额/地址/模式、校验输入/parser/settings、record/V1 codec、接受与拒绝编排分离 | 全服务已无 SDK/旧状态对象耦合 |
+| 内部模型/参数 | 普通及聚合 DTO/项目 command、整数金额/地址/模式、校验输入/parser/settings、record/V1 codec、接受/拒绝与普通执行编排分离；接受 26be717、执行 26445c5 已完整验收 | 全服务已无 SDK/旧状态对象耦合，或全部资源生命周期已隔离 |
 | 普通持久化兼容 | 原 request hash/JSON/键/存储模式保持，旧 hash 歧义校验、重复/冲突/重启合同、journal port 接入；C1 Created 原身份/hash 与冻结命令已接实际执行，聚合拒绝公钥变化 | 所有普通交易已有广播前账本、完整授权或跨进程 exactly-once |
 | 普通聚合执行占用 | C2a Memory/Shadow 原幂等行标记、Durable 原父行关联表/CAS/精确身份读回；报价前使用，重复不改原结果，取消/丢回执/文件恢复及两个 SQLite pool 竞争合同 | 所有 backend 已接入或跨重启 exactly-once；Memory/Shadow 不提供 durable 保证 |
 | Durable 普通 SOL 聚合签名账本 | C2b 原 owner/005 同 authority 子表扩展、消息绑定、签名落盘/独立读回/只发原字节；旧 004 表迁移、竞争/取消/写失败/文件重开及真实 HTTP+fake backend 合同通过 | Memory/Shadow/opaque SDK 已迁移、完整协议授权、只读链上对账或真实 SDK/节点/发布已验收 |
@@ -138,7 +144,7 @@
 | 普通 SDK 构建入口 | B4a 实际调用链审查、九项无 Keypair/RPC 编译/费用合同，明确版本/ALT/权限提升/字节绑定与编译不提供的保证 | 无 signer 最终协议构建/不可变授权已接真实路径，或签名/广播前账本完成 |
 | DAMM 卖出候选 | B4b 正式/preview nominal profile 接实际 SDK protocol/full callback、原请求/费用/消息/返回签名、取消/单次/时效核对；25 新测试含 384 SDK 指令对照 | 已隔离 SDK 签名能力、全量可信协议授权/全方向已覆盖，或 ordinary signed journal 已实现 |
 | DAMM 不可变产物与模拟 | B4c1 私有完整零签名交易及不可写出口，实际 simulation/Live preview 只读 RPC、不进入 SDK signer；正式 guard 复用产物，API null/状态/重复保持 | 正式 Live 已受控签名/落盘发送，原账本已扩展 SDK，全 SDK simulate 无签名，或共享 RPC/真实节点已验收 |
-| API Handler/DTO 归位及 Application 子集 | 普通交易/批量/查询/等待、独立报价/预检/提交/对账、转账与 WSOL、Pool/系统、余额、六个管理操作与三靓号任务控制均有 Application 子项；全部 Handler/路由组归位，http.rs 仅 17 行组合 | 全部资金/任务状态安全与资源隔离完成；AppState/接受入口、完整 SDK 构建/授权仍待续；管理/生成的原部分失败不等于原子生命周期 |
+| API Handler/DTO 归位及 Application 子集 | 普通交易/批量/查询/等待、独立报价/预检/提交/对账、转账与 WSOL、Pool/系统、余额、管理/靓号控制均有 Application 子项；普通接受与执行已接项目服务，全部 Handler/路由组归位 | 全部资金/任务状态安全与资源隔离完成；根入口/AppState 所有权、完整 SDK 构建/授权仍待续；管理/生成的原部分失败不等于原子生命周期 |
 | 独立聚合提交 | durable 保留/签名与广播阶段、状态与原签名只读对账、临时库恢复/竞争/错误合同 | 普通 SOL 聚合 legacy 分支自动获得相同保证 |
 | Native SOL 转账 | 阶段化准备/签名/发送、完整意图、签名账本/CAS、API/Application、取消/写失败/临时库恢复测试 | 真实签名、断电、生产数据库与节点验收 |
 | WSOL 包装/解包 | 查询/模拟/提交分层，签名前消息绑定、签名落盘、单向状态、原 key 只读恢复、存储及错误完整性 | 已完成真实节点/调用方迁移/生产发布验收 |
@@ -151,8 +157,8 @@
 
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
-| 普通 SDK 完整授权 | C3c1/C3c2 受控执行、C3d1 原签名恢复、C3d2 扫描及 C3e 完整准备串联已离线验收；后继完整并发/串行各 1437 通过，原 scope 之外仍 legacy | 真实 provider/节点、生产恢复/发布及其他方向/协议/backend/mode 的全部门槛 |
-| 完整架构隔离 | Handler 已归位，余额/管理/vanity 控制已接项目服务和 port；直接 worker 及四个冗余资源字段不再存在于生产 AppState | full Config、普通接受/index/journal、cache、原始 RPC/SDK 资源及 bootstrap 等继续收口；局部分层不等于全量资源隔离、实际生成验收或原子生命周期 |
+| 普通 SDK 完整授权 | C3c1/C3c2 受控执行、C3d1 原签名恢复、C3d2 扫描及 C3e 准备串联已离线验收；后继 26445c5 完整各 1473 通过，但原 scope 之外仍 legacy | 真实 provider/节点、生产恢复/发布及其他方向/协议/backend/mode 的全部门槛 |
+| 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；旧冗余资源字段不在生产 AppState | 根入口仍持具体 index/journal/cache/Config 与任务状态；全局 RPC/SDK 资源、依赖方向与退出仍待续。普通接受/执行和 Bootstrap 不重新立项；局部通过不等于全生命周期或原子激活 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
 
