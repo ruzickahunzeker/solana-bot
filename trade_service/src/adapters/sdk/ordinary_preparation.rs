@@ -32,6 +32,12 @@ pub(crate) trait OrdinaryPreparationSource: Sync {
         params: &MeteoraDammV2Params,
         input_amount: u64,
     ) -> impl Future<Output = anyhow::Result<u64>> + Send;
+    fn damm_buy_output(
+        &self,
+        trade: &ExecuteTrade,
+        params: &MeteoraDammV2Params,
+        input_amount: u64,
+    ) -> impl Future<Output = anyhow::Result<u64>> + Send;
 }
 
 pub(crate) async fn buy(
@@ -39,7 +45,7 @@ pub(crate) async fn buy(
     trade: &ExecuteTrade,
     lane: SwqosType,
 ) -> anyhow::Result<TradeBuyParams> {
-    let params = source.load_params(trade).await?;
+    let mut params = source.load_params(trade).await?;
     let input_token_type = if trade.sol_hop_pool_id.is_some() {
         TradeTokenType::SOL
     } else {
@@ -58,14 +64,35 @@ pub(crate) async fn buy(
         }
     }
     let exists = source.mint_account_exists(trade.mint).await?;
-    Ok(ordinary_buy_params(
+    let fixed_output = if trade.pool == Pool::MeteoraDammV2 {
+        if trade.sol_hop_pool.is_some()
+            || trade.sol_hop_pool_id.is_some()
+            || trade.sell_percent.is_some()
+        {
+            bail!("DAMM buy requires a direct buy-only intent");
+        }
+        let DexParamEnum::MeteoraDammV2(ref mut damm) = params else {
+            bail!("DAMM v2 protocol params missing");
+        };
+        damm.swap_mode = 0;
+        Some(
+            source
+                .damm_buy_output(trade, damm, amount)
+                .await
+                .and_then(|quote| minimum_output(quote, trade.slippage_bps))?,
+        )
+    } else {
+        None
+    };
+    ordinary_buy_params(
         trade,
         params,
         input_token_type,
         amount,
         exists,
         lane,
-    ))
+        fixed_output,
+    )
 }
 
 pub(crate) async fn sell(

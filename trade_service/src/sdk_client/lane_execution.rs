@@ -28,6 +28,7 @@ pub(super) enum PreparedLaneRequest {
         client: TradingClient,
         request: TradeBuyParams,
         holding: Option<PreparationBalanceSnapshot>,
+        quote: Option<Arc<crate::adapters::sdk::damm_probe::DammBuyQuote>>,
     },
     Sell {
         client: TradingClient,
@@ -66,6 +67,18 @@ fn recheck_after_entry(
 
 fn damm_context(client: &TradingClient, provider: SwqosType) -> DammSellContext {
     DammSellContext {
+        wallet: client.payer.pubkey(),
+        provider,
+        version: client.transaction_version,
+        seed_optimized: client.use_seed_optimize,
+    }
+}
+
+fn buy_context(
+    client: &TradingClient,
+    provider: SwqosType,
+) -> crate::adapters::sdk::damm_probe::DammBuyContext {
+    crate::adapters::sdk::damm_probe::DammBuyContext {
         wallet: client.payer.pubkey(),
         provider,
         version: client.transaction_version,
@@ -161,6 +174,7 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                     client,
                     request,
                     holding: source.take_balance()?,
+                    quote: source.take_buy_output()?,
                 })
             }
             Side::Sell => {
@@ -254,6 +268,7 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                 client,
                 request,
                 holding,
+                quote,
             } => {
                 if self.side != Side::Buy
                     || request.mint != trade.mint
@@ -263,6 +278,12 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                     return Err(reject_balance(
                         "prepared buy does not match its wallet or input intent",
                     ));
+                }
+                if quote.is_some() != (trade.pool == Pool::MeteoraDammV2) {
+                    return Err(reject_balance("DAMM buy quote is missing or unexpected"));
+                }
+                if let Some(quote) = quote {
+                    quote.validate(buy_context(client, self.provider()), trade, request)?;
                 }
                 (holding.as_ref(), SdkInput::Buy(request))
             }
@@ -350,12 +371,29 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                 client,
                 request,
                 holding,
+                quote,
             } => {
                 recheck_after_entry(
                     holding.as_ref(),
                     Address::from_bytes(self.wallet.wallet().to_bytes()),
                     vec![],
                 )?;
+                if quote.is_some()
+                    != (request.dex_type == sol_trade_sdk::trading::factory::DexType::MeteoraDammV2)
+                {
+                    return Err(SdkInvocationFailure {
+                        signatures: vec![],
+                        message: "DAMM buy quote is missing or unexpected at SDK entry".into(),
+                    });
+                }
+                if let Some(quote) = quote {
+                    quote
+                        .recheck_request(buy_context(&client, self.provider()), &request)
+                        .map_err(|error| SdkInvocationFailure {
+                            signatures: vec![],
+                            message: error.to_string(),
+                        })?;
+                }
                 decode_sdk_report(client.buy(request).await)
             }
             PreparedLaneRequest::Sell {

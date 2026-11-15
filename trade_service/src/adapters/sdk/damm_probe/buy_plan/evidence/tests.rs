@@ -764,3 +764,64 @@ async fn damm_buy_quote_native_rent_overflow_cannot_produce_output_evidence() {
 }
 
 mod funding_compatibility;
+
+pub(in crate::adapters::sdk::damm_probe::buy_plan) async fn binding_fixture(
+    native: bool,
+    extended: bool,
+    output_exists: bool,
+) -> (PreparedDammBuyProbe, BuyOutputEvidence) {
+    let case = Case::new(
+        false,
+        native,
+        extended,
+        true,
+        output_exists,
+        Encoding::Parsed,
+    );
+    let evidence = case.run().await.unwrap();
+    (case.plan, evidence)
+}
+
+pub(in crate::adapters::sdk::damm_probe::buy_plan) fn preparation_fixture(
+    native: bool,
+    extended: bool,
+    output_exists: bool,
+) -> (
+    PreparedDammBuyProbe,
+    crate::adapters::sdk::damm_probe::evidence::tests::ReadRpc,
+) {
+    let case = Case::new(
+        false,
+        native,
+        extended,
+        true,
+        output_exists,
+        Encoding::Parsed,
+    );
+    let mut read = case.source.rpc.clone();
+    read.simulation_value = Some(case.result);
+    (case.plan, read)
+}
+
+#[tokio::test]
+async fn damm_buy_quote_current_binds_its_own_bank_without_a_separate_slot_rpc() {
+    let case = Case::default();
+    let mut read = case.source.rpc.clone();
+    read.simulation_value = Some(case.result.clone());
+    let evidence = quote_current(&read.client(), &case.plan).await.unwrap();
+    assert_eq!(evidence.context(), (42, 43, FEE));
+    let calls = read.calls.lock().unwrap();
+    assert_eq!(calls.len(), 2);
+    assert!(calls[0].1[1]["minContextSlot"].is_null());
+    assert_eq!(calls[1].1[1]["minContextSlot"], 42);
+}
+
+#[tokio::test]
+async fn damm_buy_quote_current_rejects_a_zero_bank_without_simulation() {
+    let mut case = Case::default();
+    case.source.rpc.bank = 0;
+    assert!(quote_current(&case.source.rpc.client(), &case.plan)
+        .await
+        .is_err());
+    assert_eq!(case.source.rpc.methods(), [RpcRequest::GetMultipleAccounts]);
+}

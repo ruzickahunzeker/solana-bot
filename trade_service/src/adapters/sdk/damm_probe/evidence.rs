@@ -165,9 +165,7 @@ pub(super) fn check_snapshot(
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum InputRequirement {
     Existing,
-    #[cfg(test)]
     ExistingBuy,
-    #[cfg(test)]
     NativeDeposit,
 }
 
@@ -184,9 +182,7 @@ pub(super) fn check_snapshot_for_accounts(
     }
     let requires_balance = match input_requirement {
         InputRequirement::Existing => true,
-        #[cfg(test)]
         InputRequirement::ExistingBuy => true,
-        #[cfg(test)]
         InputRequirement::NativeDeposit => false,
     };
     let requires_input = requires_balance || post_simulation;
@@ -305,7 +301,6 @@ pub(super) fn check_snapshot_for_accounts(
             &mint_evidence[0].required,
         )
     };
-    #[cfg(test)]
     if input_requirement == InputRequirement::NativeDeposit
         && (intent.input_mint != WSOL_TOKEN_ACCOUNT || input_program != spl_token_interface::ID)
     {
@@ -314,7 +309,6 @@ pub(super) fn check_snapshot_for_accounts(
     let balance = values[6]
         .as_ref()
         .map(|account| {
-            #[cfg(test)]
             if !post_simulation
                 && input_requirement != InputRequirement::Existing
                 && prefunded_ata(account)?
@@ -341,7 +335,6 @@ pub(super) fn check_snapshot_for_accounts(
     let output_before = values[7]
         .as_ref()
         .map(|account| {
-            #[cfg(test)]
             if !post_simulation
                 && input_requirement != InputRequirement::Existing
                 && prefunded_ata(account)?
@@ -376,7 +369,6 @@ pub(super) fn check_snapshot_for_accounts(
     })
 }
 
-#[cfg(test)]
 fn prefunded_ata(account: &solana_account_decoder::UiAccount) -> Result<bool> {
     let system = solana_system_interface::program::id();
     if account.owner != system.to_string() {

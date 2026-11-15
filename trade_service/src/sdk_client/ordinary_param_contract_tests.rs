@@ -247,7 +247,9 @@ fn final_sdk_params_v1_projection_baseline() {
                             trade.amount_lamports.unwrap(),
                             scenario & 4 != 0,
                             lane,
-                        );
+                            (pool == Pool::MeteoraDammV2).then_some(1),
+                        )
+                        .unwrap();
                         assert_eq!(params.input_token_amount, trade.amount_lamports.unwrap());
                         assert_eq!(
                             opaque_snapshot(&params.extension_params),

@@ -26,17 +26,18 @@ struct BuySnapshot {
 }
 
 /// Discovery evidence only; neither serializable nor accepted by the sell signing profile.
-struct BuyOutputEvidence {
+pub(crate) struct BuyOutputEvidence {
     message_hash: [u8; 32],
     output_units: u64,
     account_slot: u64,
     simulation_slot: u64,
     probe_fee_lamports: u64,
+    output_initialized: bool,
     started: Instant,
 }
 
 impl BuyOutputEvidence {
-    fn minimum(&self, plan: &PreparedDammBuyProbe, slippage_bps: u64) -> Result<u64> {
+    pub(super) fn minimum(&self, plan: &PreparedDammBuyProbe, slippage_bps: u64) -> Result<u64> {
         ensure!(
             self.started.elapsed() <= crate::domain::preparation_balance::MAX_BALANCE_AGE,
             "DAMM buy output evidence expired"
@@ -46,6 +47,23 @@ impl BuyOutputEvidence {
             "DAMM buy output evidence differs from its discovery message"
         );
         crate::protocol::meteora_damm_v2::minimum_output(self.output_units, slippage_bps)
+    }
+    pub(super) fn output_units(&self) -> u64 {
+        self.output_units
+    }
+    pub(super) fn context(&self) -> (u64, u64, u64) {
+        (
+            self.account_slot,
+            self.simulation_slot,
+            self.probe_fee_lamports,
+        )
+    }
+    pub(super) fn output_initialized(&self) -> bool {
+        self.output_initialized
+    }
+    #[cfg(test)]
+    pub(super) fn expire_for_tests(&mut self) {
+        self.started = Instant::now() - Duration::from_secs(4);
     }
 }
 
@@ -331,10 +349,30 @@ fn check_native_budget(
     Ok(FundingProof { fee, credits })
 }
 
+#[cfg(test)]
 async fn quote(
     rpc: &RpcClient,
     plan: &PreparedDammBuyProbe,
     minimum_slot: u64,
+) -> Result<BuyOutputEvidence> {
+    ensure!(
+        minimum_slot > 0,
+        "DAMM buy quote requires a nonzero context slot"
+    );
+    quote_with_context(rpc, plan, Some(minimum_slot)).await
+}
+
+pub(crate) async fn quote_current(
+    rpc: &RpcClient,
+    plan: &PreparedDammBuyProbe,
+) -> Result<BuyOutputEvidence> {
+    quote_with_context(rpc, plan, None).await
+}
+
+async fn quote_with_context(
+    rpc: &RpcClient,
+    plan: &PreparedDammBuyProbe,
+    minimum_slot: Option<u64>,
 ) -> Result<BuyOutputEvidence> {
     let started = Instant::now();
     tokio::time::timeout(
@@ -348,13 +386,9 @@ async fn quote(
 async fn quote_inner(
     rpc: &RpcClient,
     plan: &PreparedDammBuyProbe,
-    minimum_slot: u64,
+    minimum_slot: Option<u64>,
     started: Instant,
 ) -> Result<BuyOutputEvidence> {
-    ensure!(
-        minimum_slot > 0,
-        "DAMM buy quote requires a nonzero context slot"
-    );
     let keys = keys(plan);
     ensure!(
         keys.iter().collect::<HashSet<_>>().len() == keys.len(),
@@ -367,13 +401,14 @@ async fn quote_inner(
                 encoding: Some(UiAccountEncoding::Base64),
                 commitment: Some(CommitmentConfig::processed()),
                 data_slice: None,
-                min_context_slot: Some(minimum_slot),
+                min_context_slot: minimum_slot,
             },
         )
         .await
         .map_err(|error| anyhow::anyhow!("{}", crate::sanitize::redact_urls(&error.to_string())))?;
     ensure!(
-        response.context.slot >= minimum_slot,
+        response.context.slot > 0
+            && minimum_slot.is_none_or(|minimum| response.context.slot >= minimum),
         "DAMM buy account context regressed"
     );
     snapshot(plan, response.context.slot, &response.value, false)?;
@@ -449,6 +484,7 @@ async fn quote_inner(
         account_slot: response.context.slot,
         simulation_slot: simulated.context.slot,
         probe_fee_lamports: funding.fee,
+        output_initialized: movements.output_initialized,
         started,
     };
     evidence.minimum(plan, 0)?;
@@ -456,4 +492,4 @@ async fn quote_inner(
 }
 
 #[cfg(test)]
-mod tests;
+pub(super) mod tests;

@@ -21,6 +21,7 @@ enum Event {
     Balance(Pubkey),
     Exists(Pubkey),
     Probe(Pubkey, Pubkey, u64, u8, Hash),
+    BuyProbe(Pubkey, Pubkey, u64, u8, Hash),
 }
 
 struct Source {
@@ -151,6 +152,22 @@ impl OrdinaryPreparationSource for Source {
         self.checkpoint(Stage::Probe).await?;
         Ok(self.quoted)
     }
+    async fn damm_buy_output(
+        &self,
+        trade: &ExecuteTrade,
+        params: &MeteoraDammV2Params,
+        amount: u64,
+    ) -> anyhow::Result<u64> {
+        self.events.lock().unwrap().push(Event::BuyProbe(
+            trade.mint,
+            trade.quote_mint,
+            amount,
+            params.swap_mode,
+            trade.recent_blockhash,
+        ));
+        self.checkpoint(Stage::Probe).await?;
+        Ok(self.quoted)
+    }
 }
 
 fn load(t: &ExecuteTrade) -> Event {
@@ -180,6 +197,9 @@ async fn buy_preparation_keeps_protocol_quote_balance_ata_order_and_hop_units() 
                 for simulate in [false, true] {
                     let source = Source::new();
                     let mut t = trade(pool, quote);
+                    if pool == Pool::MeteoraDammV2 {
+                        t.sell_percent = None;
+                    }
                     t.simulate = simulate;
                     if hop {
                         t.sol_hop_pool = Some(Pool::RaydiumCpmm);
@@ -209,6 +229,23 @@ async fn buy_preparation_keeps_protocol_quote_balance_ata_order_and_hop_units() 
                                 expected.push(Event::Balance(quote));
                             }
                             expected.push(Event::Exists(t.mint));
+                            if pool == Pool::MeteoraDammV2 && hop {
+                                assert_eq!(
+                                    result.err().unwrap().to_string(),
+                                    "DAMM buy requires a direct buy-only intent"
+                                );
+                                assert_eq!(*source.events.lock().unwrap(), expected);
+                                continue;
+                            }
+                            if pool == Pool::MeteoraDammV2 {
+                                expected.push(Event::BuyProbe(
+                                    t.mint,
+                                    t.quote_mint,
+                                    1000,
+                                    0,
+                                    t.recent_blockhash,
+                                ));
+                            }
                             let params = result.unwrap();
                             assert_eq!(params.input_token_type, token);
                             assert_eq!(params.input_token_amount, 1_000);
@@ -216,7 +253,7 @@ async fn buy_preparation_keeps_protocol_quote_balance_ata_order_and_hop_units() 
                             assert!(params.create_mint_ata);
                             assert_eq!(
                                 params.fixed_output_token_amount,
-                                (pool == Pool::MeteoraDammV2).then_some(1)
+                                (pool == Pool::MeteoraDammV2).then_some(850)
                             );
                         }
                     }
@@ -505,4 +542,93 @@ async fn cancellation_drops_each_preparation_await_without_retry_or_detached_wor
         };
         assert_eq!(source.events.lock().unwrap().len(), expected);
     }
+}
+
+#[tokio::test]
+async fn damm_buy_preparation_uses_a_net_quote_minimum_instead_of_a_constant_floor() {
+    for quote in [WSOL_MINT.parse().unwrap(), USDC_MINT.parse().unwrap()] {
+        let source = Source::new();
+        let mut command = trade(Pool::MeteoraDammV2, quote);
+        command.sell_percent = None;
+        let request = buy(&source, &command, SwqosType::Temporal).await.unwrap();
+        assert_eq!(request.fixed_output_token_amount, Some(850));
+        assert_eq!(
+            *source.events.lock().unwrap(),
+            [
+                load(&command),
+                Event::Exists(command.mint),
+                Event::BuyProbe(
+                    command.mint,
+                    command.quote_mint,
+                    1000,
+                    0,
+                    command.recent_blockhash
+                )
+            ]
+        );
+    }
+}
+
+#[tokio::test]
+async fn damm_buy_preparation_quote_failure_zero_rounding_and_bad_slippage_never_fall_back_to_one()
+{
+    for (units, slippage, fail) in [
+        (1000, 1500, Some(Stage::Probe)),
+        (0, 1500, None),
+        (1, 1500, None),
+        (1000, 10000, None),
+    ] {
+        let mut source = Source::new();
+        source.quoted = units;
+        source.fail = fail;
+        let mut command = trade(Pool::MeteoraDammV2, WSOL_MINT.parse().unwrap());
+        command.sell_percent = None;
+        command.slippage_bps = slippage;
+        assert!(buy(&source, &command, SwqosType::Default).await.is_err());
+        assert_eq!(source.events.lock().unwrap().len(), 3);
+    }
+}
+
+#[tokio::test]
+async fn damm_buy_preparation_cancellation_drops_the_quote_without_detached_retry() {
+    let mut source = Source::new();
+    source.block = Some(Stage::Probe);
+    let mut command = trade(Pool::MeteoraDammV2, WSOL_MINT.parse().unwrap());
+    command.sell_percent = None;
+    assert!(tokio::time::timeout(
+        std::time::Duration::from_millis(20),
+        buy(&source, &command, SwqosType::Default)
+    )
+    .await
+    .is_err());
+    assert!(source.dropped.load(Ordering::SeqCst));
+    assert_eq!(source.events.lock().unwrap().len(), 3);
+}
+
+#[test]
+fn damm_buy_projection_requires_an_explicit_positive_minimum_and_keeps_other_protocols_unset() {
+    let command = trade(Pool::MeteoraDammV2, WSOL_MINT.parse().unwrap());
+    for minimum in [None, Some(0)] {
+        assert!(ordinary_buy_params(
+            &command,
+            DexParamEnum::Bonk(Default::default()),
+            TradeTokenType::SOL,
+            1000,
+            false,
+            SwqosType::Default,
+            minimum
+        )
+        .is_err());
+    }
+    let command = trade(Pool::Pump, WSOL_MINT.parse().unwrap());
+    assert!(ordinary_buy_params(
+        &command,
+        DexParamEnum::Bonk(Default::default()),
+        TradeTokenType::SOL,
+        1000,
+        false,
+        SwqosType::Default,
+        Some(1)
+    )
+    .is_err());
 }

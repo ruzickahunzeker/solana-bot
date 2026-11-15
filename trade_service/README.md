@@ -162,6 +162,12 @@ Quote 余额查询仍只用原首个 Default RPC：依次 supply、token scan/�
 
 只有上述六类 profile 已迁移，不代表真实交易准备的其他参数/ATA 读取、寻池、独立 quote/WSOL、模拟或 SDK 全部读取已统一限流；也不能控制供应商账户/其他进程额度。观测默认关闭，但未来部署此源码时上述读取实现会生效；没有更换交易发送 client 或修改钱包存储。详见 [共享预算与生命周期](docs/optimization/SHARED_READ_RPC_RUNTIME.md)、[Readiness 合同与时序修复](docs/optimization/READINESS_SHARED_RPC_RUNTIME.md)、[原生余额合同](docs/optimization/NATIVE_BALANCE_SHARED_RPC_RUNTIME.md)、[Quote 余额合同](docs/optimization/QUOTE_BALANCE_SHARED_RPC_RUNTIME.md) 和 [准备余额预算](docs/optimization/PREPARATION_SHARED_RPC_RUNTIME.md)。
 
+### DAMM 买入准备（源码阶段，未部署）
+
+普通 SDK 的直接 DAMM 买入已有净报价/min_out 准备保护：沿用原 lane RPC，九账户快照及零签名模拟后，用净输出和整数滑点计算最小输出，绑定本笔钱包/池/输入量/模式并在 SDK 入口前复查三秒期限。不增加 API 参数、不改变 WSOL/USDC 金额单位；失败、零输出/舍入或不完整证据不会回退常量 1。节点须返回同次模拟的 fee、pre/post lamports 和 token balances；仅适用 V0 兼容/canonical 账户、直接 WSOL/USDC 方向，其他情形拒绝。当前源码完整验收状态见优化执行记录。
+
+此批尚待独立 CI/真实节点验收，未部署，不是新的 Live 准入或完整签名前授权。SDK 入场后仍有 opaque worker、最终不可变消息与买入原 owner 签名字节账本缺口，不得据此自动重发或宣称全链路安全，见 [原 NP-01 范围](docs/TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
+
 ### 交易准备余额（源码阶段，未部署）
 
 普通 SDK 买卖准备已用公开地址读取端口和 SDK 入口检查替代旧余额 helper。原 scan 校验之后还会批量读取原始 Mint 和两个规范 ATA，根据实际 Mint owner 核验 canonical 输入、钱包/Mint/程序、精度、initialized、权限/扩展及 raw 整数；有效 parsed 结果必须与 raw 一致。扫描不可用或全未解析时只能依据合法 raw 输入恢复，坏扫描不被 fallback 掩盖。快照从整次读开始计时，最多 3 秒；scan + raw 共用 4 秒逻辑 deadline。

@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新 NP-03 Shadow writer 生命周期 `796ba50` / Actions `43722582055` / artifact `14165837512` 已验收，专项 13/4、完整并发/串行各 1515、87 字段拒绝与全部 50 步骤通过。普通任务与 Shadow 生命周期不再排队，下一优先续原 NP-01 DAMM 买入可信输出及 min_out（3.3）；其他 NP-01/03/04/05 门槛保留，不以 FIFO SQL 完成冒充额外刷盘/断电或全服务退出。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 DAMM 买入只读取证/兼容 `fca54ff` 已验收，完整并发/串行各 1548；当前净报价/min_out 准备绑定源码通过受限类型检查，完整执行待独立 CI，不借用父批结果。普通任务与 Shadow 生命周期已验收，不再排队；其他 NP-01/03/04/05 门槛保留，不以准备参数检查冒充最终消息授权、签名字节账本或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -251,17 +251,17 @@ Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节�
 | --- | --- | --- |
 | Parser | `src/adapters/sdk/protocol_params/mod.rs` 仍直接接 `RpcClient`，集中加载、协议检查及 SDK 参数转换；`checks.rs`、`quote_tokens.rs` 已拆出纯检查 | NP-01/03 内按实际读取路径分离已有账户快照的解码/检查与 RPC；仍不可将参数 loader 称为独立纯 Parser，不复制 vendor 解码或新增第二套发现缓存 |
 | SDK 门面 | `src/sdk_client.rs` 已委托 `adapters/sdk/` 多个实现；`application/ordinary_runtime.rs` 经项目 ports 执行，26445c5 已验收 | 兼容门面尚未收完：根 Client 仍有 SDK 初始化、寻池及聚合模拟实现。按调用迁移并保留旧 oracle，不另造 Client；三层选定类型门禁不证明所有 SDK 能力均已隔离 |
-| 资源所有权 | `src/bootstrap.rs` 交接原资源；`optimization/APP_STATE_RESOURCE_OWNERSHIP.md` 已列创建/共享/退出责任；接受与执行使用原权威；普通后台任务生命周期已在 c6f2745 验收 | 原任务追踪/关闸/drain 不再排队；Shadow writer 生命周期本批见 `optimization/EXECUTION_STATUS.md`。NP-03 继续根具体资源、SDK 内部/独立操作任务与剩余 RPC/cache 治理，不重复建立 runtime、连接池、cache、reservation 或 journal |
+| 资源所有权 | `src/bootstrap.rs` 交接原资源；`optimization/APP_STATE_RESOURCE_OWNERSHIP.md` 已列创建/共享/退出责任；接受与执行使用原权威；普通后台任务与 Shadow writer 生命周期分别在 c6f2745、796ba50 验收 | 原任务追踪/关闸/drain 和 Shadow FIFO 排空不再排队；`src/infrastructure/` 已有任务与退出编排，不能沿用附件中“缺少该目录”的旧判断。NP-03 继续根具体资源、SDK 内部/独立操作任务与剩余 RPC/cache 治理，不重复建立 runtime、连接池、cache、reservation 或 journal |
 | 能力证据 | `src/protocol/registry.rs` 是唯一身份/旧政策表；`protocol_capabilities.rs` 只投影旧 V1；`domain/sdk_candidate.rs` 仅有 `DammV2SellV1` nominal profile | NP-01/04/05 按 backend/版本/方向/Quote/Token/模式/路线绑定证据。DAMM Durable Live 直接卖出局部验收不覆盖其他协议；Parser/Builder/V1 live 声明不新增实盘许可 |
 | 通用后端 / RouterLeg | `application/ports/ordinary_sdk_submission.rs` 已有后端私有 Candidate/Signed 类型与原 journal；其原 First/Second 测试仍共用 Engine。后继普通 SOL Quote 控制器的 Record/Tape 独立构建/候选八项合同已在 91b3d94 验收 | 本批共同合同不重做；其他业务路径的适用性和真实 Router/SDK 仍须独立证据，不用原两包装测试冒充独立构建。不为测试泛化扩大生产 profile；RouterLeg 仅保留本节与 4.3 的设计方向 |
 
-推进时沿用 NP-04 当前续作点及 NP-01/03/05 原队列；本轮仅核对和校准记录，
+推进时沿用 `EXECUTION_STATUS.md` 的 NP-01 当前续作点及 NP-03/04/05 原队列；设计归并本身仅核对和校准记录，
 不把相同缺口分别计入“新设计项目”和“旧优化任务”。完整当前状态只看
 `optimization/EXECUTION_STATUS.md`，历史终态通过/失败不重新等待、执行或计数。
 
-#### 原 NP-01 下一资金安全续作：DAMM 买入输出
+#### 原 NP-01 资金安全续作：DAMM 买入输出
 
-本项是原“其他方向”缺口的源码核实，不新增任务、协议或执行许可。当前
+本项是原“其他方向”缺口的源码核实，不新增任务、协议或执行许可。前序核实到
 `adapters/sdk/ordinary_params.rs::ordinary_buy_params` 对 DAMM 固定给出
 `fixed_output_token_amount=Some(1)`；固定 SDK 的 exact-in/partial-fill 分支直接将其
 编码为 `minimum_amount_out`，不能据此宣称买入已具有完整滑点保护。现有可信输出证据、
@@ -286,20 +286,20 @@ Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节�
 上述第 1 步的 ABI 原型已在 `48f15b3` / Actions `43725621186` / artifact `14166866773`
 独立验收：七项专项、完整并发 1522（147.65 秒）/串行 1522（258.80 秒），51 步骤
 exit=0；原始测试名增量恰为七项、87 字段拒绝及源身份已核对，不重跑旧任务。
-`adapters/sdk/damm_probe/buy_plan.rs` 仍为 `cfg(test)` 独立名义类型，不接生产准备。
+当批 `adapters/sdk/damm_probe/buy_plan.rs` 为 `cfg(test)` 独立名义类型，不接生产准备。
 72 组真实 SDK 指令对照覆盖两侧方向、WSOL/USDC 及 SOL 别名、目标 Token/Token-2022、
 sysvar 和三个原始整数输入（含 u64::MAX）；未充值测试身份只用于 builder 的公钥读取。
 其余合同检查精确充值/sync_native/不关闭原 WSOL、USDC 单位、拒绝边界、上下文绑定、
 与原预持币 probe 的区别，以及 SDK 的滑点字段不会代替 fixed_output 编码。
 
 这是 ABI 与能力边界证据，不是余额、租金、完整费用、池状态/扩展验证或可信报价完成。
-原型本身的 floor=1 仅用于未来无签名发现；正式普通买入仍为旧实现，未改 Some(1)，
-不能宣称已修复买入滑点。下一实际接线须在同一 NP-01 内补 SOL/WSOL funding 的同 bank
+原型本身的 floor=1 仅用于无签名发现；当批正式普通买入仍为旧实现、未改 Some(1)，
+不能宣称已修复买入滑点。后继在同一 NP-01 内补 SOL/WSOL funding 的同 bank
 账户取证、动态顶层指令分组/CPI 净输出与可选同次 pre/post balances，再绑定正式 min_out
-和最终消息/原 owner；不以现有卖出八账户、两顶层指令假设直接接入买入。当前不推广
-新的 production profile、Quote 授权、API 或 SDK/vendor 改动。
+和最终消息/原 owner；不以现有卖出八账户、两顶层指令假设直接接入买入，不因此推广
+新的 Live operation profile、签名许可、API 或 SDK/vendor 改动。
 
-后继本批在同一测试原型增加买入只读取证核心，未接普通准备/签名：同一九账户快照
+后继当批在同一测试原型增加买入只读取证核心，未接普通准备/签名：同一九账户快照
 （含 System 钱包）、有界零签名模拟，复用原纯解码、Token/扩展、CPI 转账与同次 token
 balance 校验，不构造假的账户余额或再建 RPC/cache/账本。原卖出继续用 Existing 输入及
 原 output-setup=0/swap=1；买入原型单独识别 input-setup、output-setup 与 swap 索引。
@@ -312,10 +312,10 @@ exit=0；原始名称增量、87 字段拒绝与源身份核对，不重跑旧�
 同 bank fee/pre/post native 与 token balances 必须完整；节点不支持时拒绝，不回退常量 1。
 该验收快照保守拒绝未同步 WSOL、预充值未初始化 ATA，不能据此宣称覆盖这些状态；
 也不提供最终计算费/小费政策、全消息授权、原 owner 账本或真实节点能力验收。
-后续在这些缺口与最终输入/费用/消息绑定成立后，才把原型提升至正式买入准备，不能直接
-把只读净输出数值塞入 opaque SDK 并称完整授权。API、普通买入 Some(1) 与 SDK/vendor 未改。
+完整执行准入仍需最终输入/费用/消息绑定及原 owner，不能直接把只读净输出数值塞入
+opaque SDK 并称完整授权。当批 API、普通买入 Some(1) 与 SDK/vendor 未改。
 
-当前在同一 NP-01 内补上述兼容：按固定 SDK 的 sync_native/ATA 初始化语义，允许规范
+后继在同一 NP-01 内补上述兼容：按固定 SDK 的 sync_native/ATA 初始化语义，允许规范
 ATA 在读取时为非执行、空数据的 System 账户，余额不伪装成 Token 数量；USDC 输入仍须
 已有真实 Token 余额。同步前的多余 WSOL lamports 和初始化后的 native 初始量，只从同次
 模拟的 pre lamports/pre token balances 与已核验 post reserve 计算，不使用早期 RPC 差额。
@@ -324,11 +324,30 @@ ATA 在读取时为非执行、空数据的 System 账户，余额不伪装成 T
 与不完整证据继续拒绝。共用转账 Parser 仅提取转账/初始化，资金校验提供命名信用量，
 旧卖出显式使用零信用量/原布局，未放宽其准入或导出新的业务 API。
 
-新增十项合同：九项同步/预充值与方向兼容、一项真实 SDK USDC→WSOL 指令对照。
-受限 check 13 秒/RSS 1,587,496 KiB、production check 6 秒/RSS 804,792 KiB 通过，
-原七组警告不抑制；实际运行待本批 CI，不借用前批 1538。当前买入仍 cfg(test)，后续
-优先建立正式输入/意图/min_out 绑定及最终不可变消息/原 owner 授权；不能把本轮只读
-兼容原型、测试数量或文档完成当作普通买入 Some(1) 已修复。
+此兼容已在 fca54ff / Actions 43730145561 / artifact 14168537736 独立验收：新增十项、
+买入专项 33、完整并发 1548（138.47 秒）/串行 1548（251.95 秒），全部 51 步骤 exit=0，
+原始名称增量、87 字段拒绝及源身份独立核对。其当时仍为测试原型，不冒充正式买入完成。
+
+2026-11-16 当前续原准备子项：只读取证接入原 `LanePreparation` 和 ordinary buy，正式
+参数工厂必须显式接收正值 min_out，非 DAMM 保持 None；实际值由本笔净输出/整数滑点
+计算，不以旧常量回退。`DammBuyQuote` 冻结原 ExecuteTrade、钱包/provider/V0 模式、
+池/程序、原始输入量和 blockhash，复查请求 flags/费用与 3 秒证据期限；SDK 入口前再次
+核对，缺失名义证据也拒绝。`CapturedDammOutput` 沿用同一个每次调用的 mutex/atomic，
+买卖证据不能互换，不创建新 RPC client、缓存、队列、reservation 或 journal。原 WSOL
+买入类型/包装和 USDC 原始单位、V1 hash/JSON/Oracle 保持；Quote 当前 bank 的非零 slot
+直接来自同一次九账户读取，不额外查询 getSlot，也不冒充已有余额快照的 slot。
+
+新增十六项合同：绑定十项（含真实只读取证→实际准备/投影→入口复查串联）、当前 bank
+两项、准备/拒绝/取消/显式 min 四项；受限 check 13 秒/RSS 1,286,520 KiB、production
+check 12 秒/RSS 1,004,892 KiB 通过，原七组警告保持，完整运行待本批独立 CI。原冻结
+参数指纹显式传入历史的 1 验证投影一致，不重写 oracle 迎合差异，也不把此控制样本当
+执行许可。节点缺少同次模拟 fee/pre/post lamports/token balances、未审计模式或扩展均拒绝。
+
+本子项只加固旧已许可 SDK 买入的准备参数，不完成上方第 3 步或扩大 Live/operation profile。
+SDK 入场后的 worker/时效、最终不可变消息/完整费用和权限授权、原 owner 的买入签名字节
+账本/固定 sender、共享 RPC 全局治理、真实供应商字段能力/生产恢复/发布仍须继续。
+不因本批提前拆出准备保护而删除、降低这些门槛，亦不把 SDK simulate 称全程无 signer。
+源码未部署或触碰生产数据，不表示已核对/修复线上版本。
 
 ## 4. 稳定类型和后端边界
 

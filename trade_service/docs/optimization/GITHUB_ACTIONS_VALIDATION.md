@@ -30,6 +30,15 @@
 
 ## 已验收运行
 
+最新原 NP-01 买入同步/预充值兼容 `fca54ff9a87581822502707bd9226a5a917c2786` /
+[Actions 43730145561](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43730145561)
+终态 success，artifact `14168537736` 下载独立核对：买入专项 33（含新增 10），完整并发
+1548（138.47 秒）/串行 1548（251.95 秒）零失败/忽略/过滤，51 步骤 exit=0。两套
+原始名称相同，父批 1538 全保留、增量恰为十项；原源码/恢复 Clippy 成功，原始 spans
+逐项核对 87 个不同字段拒绝。identity/manifest/lock/vendor manifest 匹配，审计绑定
+1037 文件/12,779,254 字节、12 路径，真实 main/索引/冻结历史保持。此证据不覆盖
+后继 actual ordinary buy 准备/min_out 接线，不重跑终态 CI 或因文档记录另触发 CI。
+
 最新原 NP-01 买入只读资金/净输出原型 `5e0ed8f64bcdfc8b0b5b4cdd61a4051df41114fe` /
 [Actions 43727995203](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43727995203)
 终态 success，artifact `14167687550` 下载独立核对：买入专项 23（含新增 16），完整并发

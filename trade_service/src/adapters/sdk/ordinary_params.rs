@@ -19,8 +19,17 @@ pub(crate) fn ordinary_buy_params(
     amount: u64,
     mint_account_exists: bool,
     lane: SwqosType,
-) -> TradeBuyParams {
-    TradeBuyParams {
+    fixed_output_token_amount: Option<u64>,
+) -> anyhow::Result<TradeBuyParams> {
+    anyhow::ensure!(
+        if trade.pool == Pool::MeteoraDammV2 {
+            fixed_output_token_amount.is_some_and(|units| units > 0)
+        } else {
+            fixed_output_token_amount.is_none()
+        },
+        "ordinary buy minimum output is missing, zero or unexpected"
+    );
+    Ok(TradeBuyParams {
         dex_type: dex_type(trade.pool),
         input_token_type,
         mint: trade.mint,
@@ -35,15 +44,12 @@ pub(crate) fn ordinary_buy_params(
         close_input_token_ata: false,
         create_mint_ata: !mint_account_exists,
         durable_nonce: None,
-        fixed_output_token_amount: match trade.pool {
-            Pool::MeteoraDammV2 => Some(1),
-            _ => None,
-        },
+        fixed_output_token_amount,
         gas_fee_strategy: default_fee_strategy(lane, trade.tip_sol),
         simulate: trade.simulate,
         use_exact_sol_amount: Some(true),
         grpc_recv_us: None,
-    }
+    })
 }
 
 pub(crate) fn ordinary_sell_params(

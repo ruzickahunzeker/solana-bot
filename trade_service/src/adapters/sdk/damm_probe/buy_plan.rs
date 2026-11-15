@@ -1,4 +1,4 @@
-//! Quote-only fixture prototype. Not wired to preparation, signing or submission.
+//! Public-input discovery plan; not a signing or submission permission.
 use super::{plan::ProbeAccounts, unsigned_probe};
 use anyhow::{ensure, Result};
 use sol_trade_sdk::{
@@ -18,14 +18,14 @@ enum Funding {
     ExistingUsdc,
 }
 
-// Nominally separate from the sell probe: its account and transfer evidence is not yet audited.
-struct PreparedDammBuyProbe {
+// Nominally separate from the sell probe and its signing profile.
+pub(crate) struct PreparedDammBuyProbe {
     transaction: Transaction,
     accounts: ProbeAccounts,
     funding: Funding,
 }
 
-fn prepare(
+pub(crate) fn prepare(
     wallet: Pubkey,
     pool: &MeteoraDammV2Params,
     input: Pubkey,
@@ -112,6 +112,7 @@ fn prepare(
     })
 }
 
-mod evidence;
+pub(super) mod binding;
+pub(super) mod evidence;
 #[cfg(test)]
 mod tests;

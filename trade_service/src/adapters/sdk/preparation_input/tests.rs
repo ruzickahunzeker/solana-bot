@@ -188,14 +188,18 @@ fn request(t: &ExecuteTrade, p: DexParamEnum, side: Side) -> Request {
             )
             .unwrap()
         };
-        Request::Buy(ordinary_buy_params(
-            t,
-            p,
-            ty,
-            t.amount_lamports.unwrap(),
-            true,
-            SwqosType::Temporal,
-        ))
+        Request::Buy(
+            ordinary_buy_params(
+                t,
+                p,
+                ty,
+                t.amount_lamports.unwrap(),
+                true,
+                SwqosType::Temporal,
+                (t.pool == Pool::MeteoraDammV2).then_some(1),
+            )
+            .unwrap(),
+        )
     } else {
         Request::Sell(
             ordinary_sell_params(t, p, Some(1), t.sell_percent.unwrap(), SwqosType::Temporal)
