@@ -819,7 +819,7 @@ async fn ordinary_observation_005_schema_migrates_once_preserving_signed_rows_an
     let (f, owner, backend, journal) = setup().await;
     execute(&journal, &backend, &backend, &f.execution, &owner).await;
     let before = snapshot(&f, &journal.pool).await;
-    sqlx::raw_sql("DROP INDEX idx_ordinary_signed_observation_scan; ALTER TABLE ordinary_execution_claims DROP COLUMN final_observation_json; DELETE FROM ordinary_submission_migrations WHERE name IN ('006_ordinary_final_observations','007_ordinary_observation_scan');")
+    sqlx::raw_sql("DROP INDEX idx_ordinary_signed_observation_scan; DROP INDEX idx_ordinary_sdk_observation_scan; ALTER TABLE ordinary_execution_claims DROP COLUMN final_observation_json; DELETE FROM ordinary_submission_migrations WHERE name IN ('006_ordinary_final_observations','007_ordinary_observation_scan','010_ordinary_sdk_observation_scan');")
         .execute(&journal.pool).await.unwrap();
     for _ in 0..2 {
         journal.inner.initialize().await.unwrap();
@@ -829,6 +829,8 @@ async fn ordinary_observation_005_schema_migrates_once_preserving_signed_rows_an
             ExecutionClaim::AlreadyHeld
         );
         assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM ordinary_submission_migrations WHERE name='006_ordinary_final_observations'").fetch_one(&journal.pool).await.unwrap(), 1);
+        assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM ordinary_submission_migrations WHERE name='010_ordinary_sdk_observation_scan'").fetch_one(&journal.pool).await.unwrap(), 1);
+        assert_eq!(sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM sqlite_schema WHERE type='index' AND name='idx_ordinary_sdk_observation_scan'").fetch_one(&journal.pool).await.unwrap(), 1);
     }
     assert_eq!(count(&backend, "sign"), 1);
     assert_eq!(count(&backend, "broadcast"), 1);

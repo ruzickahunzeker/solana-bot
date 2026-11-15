@@ -32,6 +32,9 @@ use anyhow::{ensure, Context, Result};
 use solana_sdk::signature::Signer;
 use std::sync::Arc;
 
+#[cfg(test)]
+mod tests;
+
 struct OriginalDammBackend<'a> {
     wallet: &'a SdkTradeClient,
     execution: &'a AdmittedTrade,

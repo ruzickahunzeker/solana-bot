@@ -30,12 +30,21 @@
 
 ## 已验收运行
 
+最近终态 C3d2 `57c75c5f39b59a55685dbc4fefcc7b906ab246d8` /
+[Actions 43688840398](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43688840398)
+已终态 failure；artifact `14152165576` 已下载核对，sqlite-sdk-scan、sdk-scan 16 与全部
+前置步骤 exit=0，完整并发 1431 通过/1 失败（128.17 秒），串行未运行。失败为旧 005
+历史结构测试在删除 final_observation_json 前没有删除新 010 索引，不是扫描专项失败。
+当前只修测试基线重建，补 010 重建/唯一 marker 断言，不放宽生产迁移。C3e 新增五个入口
+仅类型检查，待新 CI；增加独立 observation-migration/sdk-original-runtime 步骤，保留全套。
+不要重新轮询或重跑这个终态失败任务；新快照身份另行记录。
+
 最新已验收 C3d1 `87f86775c533ab18306abed634c1827eb02e98ec` /
 [Actions 43686886493](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43686886493)
 已终态 success，artifact `14150979478` 下载核对，identity/manifest 指纹匹配，所有步骤 exit=0。
 完整并发 1416 / 129.44 秒、串行 1416 / 229.33 秒，零失败/忽略/过滤；恢复 16、controller 12、
-sender 14、HTTP 200、参数 3 通过，原 18 项新增已实际执行。当前 C3d2 的 16 项新用例
-仅类型检查，独立 DDL 六项已通过，完整 Rust 验收待新源码快照，不混用 1416。
+sender 14、HTTP 200、参数 3 通过，原 18 项新增已实际执行。当前 C3d2 的 16 项扫描专项
+已通过，独立 DDL 六项已通过，但完整 Rust 验收未过，不混用 1416。
 下方 C3d1 in_progress 是发布时历史，不再等待或重跑这个终态任务。
 
 当前待验收 C3d1 `87f86775c533ab18306abed634c1827eb02e98ec` /

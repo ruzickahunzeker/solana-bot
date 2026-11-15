@@ -15,6 +15,10 @@ mod evidence;
 mod output;
 mod plan;
 mod quoted_output;
+#[cfg(test)]
+pub(crate) mod test_support {
+    pub(crate) use super::evidence::tests::{change_token, clock, key, Fixture};
+}
 pub(crate) use evidence::inspect_prepared_damm_probe_at_slot;
 pub(crate) use output::evidence_damm_probe_output;
 pub(crate) use plan::prepare_damm_probe;

@@ -41,7 +41,7 @@
 
 | 顺序 | 任务 | 交付与边界 |
 | --- | --- | --- |
-| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行及 C3d1 显式恢复/finality/迟到 receipt 保护已验收，完整并发/串行各 1416、恢复 16/controller 12/sender 14。C3d2 010 严格索引/同快照有界分页/SDK worker 与回环源码已接，16 项仅类型检查，独立 DDL 六项通过，完整 CI 待验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
+| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行及 C3d1 显式恢复/finality/迟到 receipt 保护已验收，完整并发/串行各 1416。C3d2 扫描专项 16/独立 DDL 六项通过，完整并发 1431/1，串行未跑；旧 005 测试未清理 010 索引，现仅修测试基线，待 CI。C3e 完整准备/模拟/签名账本/固定发送串联新增五入口，仅类型检查，详见 optimization/SDK_ORIGINAL_RUNTIME_INTEGRATION.md。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
 | NP-03 | 基础设施与依赖方向收口 | TS-09-A 四个冗余生产字段仅测试保留；RPC-01A 配置去重，B1/B2/C1/C2/A3c 的刷新/观测/readiness/两个查询余额/准备余额共六类接 main 同一 runtime、独立容量/间隔与共享冷却。准备 reader 只持公开地址/当前 URL/runtime，raw 固定三地址，真实 HTTP 无 SDK 内部重试，流式 cap/最小 slot/时效/取消有测试。原 SDK reader/17 项用例仅 oracle，必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取仍未全覆盖，资源/接受/index/journal/cache 与依赖检查继续，不新增平行框架 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |

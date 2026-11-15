@@ -78,6 +78,7 @@ PY
         step sqlite-sdk-scan python3 scripts/test_sdk_observation_index.py
         step type-check cargo check --locked --offline --all-targets
         step compile-tests cargo test --locked --offline --no-run
+        step observation-migration cargo test --locked --offline ordinary_observation_005_schema_migrates_once_preserving_signed_rows_and_parent -- --test-threads=1
         step sdk-candidate cargo test --locked --offline sdk_candidate -- --test-threads=2
         step sdk-preparation cargo test --locked --offline ordinary_sdk_preparation -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
@@ -87,6 +88,7 @@ PY
         step sdk-controlled-signing cargo test --locked --offline sdk_controlled_signing -- --test-threads=2
         step sdk-original-sender cargo test --locked --offline sdk_original_sender -- --test-threads=2
         step sdk-runtime-dispatch cargo test --locked --offline sdk_runtime_dispatch -- --test-threads=2
+        step sdk-original-runtime cargo test --locked --offline sdk_original_runtime -- --test-threads=2
         step sdk-selected-observer cargo test --locked --offline sdk_selected_observer -- --test-threads=2
         step parameter-contract cargo test --locked --offline ordinary_param_contract_tests -- --test-threads=2
         step http-contract cargo test --locked --offline http_contract_tests -- --test-threads=2

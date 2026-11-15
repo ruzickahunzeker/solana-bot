@@ -59,6 +59,8 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("step sdk-controlled-signing", script)
         self.assertIn("step sdk-original-sender", script)
         self.assertIn("step sdk-runtime-dispatch", script)
+        self.assertIn("step sdk-original-runtime cargo test --locked --offline sdk_original_runtime -- --test-threads=2", script)
+        self.assertIn("step observation-migration cargo test --locked --offline ordinary_observation_005_schema_migrates_once_preserving_signed_rows_and_parent -- --test-threads=1", script)
         self.assertIn("step sdk-selected-observer", script)
         self.assertIn("step sdk-recovery", script)
         self.assertIn("step sdk-scan", script)

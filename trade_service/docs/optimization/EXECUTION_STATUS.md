@@ -2,6 +2,32 @@
 
 更新日期：2026-11-15。主计划：`../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md`。
 
+## 当前续作检查点（覆盖下方历史状态）
+
+C3d2 `57c75c5` / Actions `43688840398` 已终态 failure，artifact `14152165576`
+已下载核对：全部前置步骤通过，sdk-scan 16 通过；完整并发 1431/1（128.17 秒），串行未运行。
+唯一失败为旧 005 schema 测试未删除新 010 索引就删除其引用列。本次只改测试基线重建与对应
+marker 清理，保留原数据/父行/claim 断言并补 010 重建/唯一标记断言；生产迁移策略不变。
+
+C3e 新增实际 execute_original_damm 的完整准备/模拟/签名账本/固定发送器测试，四个父用例
+及一个隔离子入口，覆盖成功、三种签前拒绝、两种签后异常和两个取消点；仅临时 Keypair、
+隔离 SQLite、回环 HTTP 和内存 RpcSender。初始七个类型错误已修复，受限 check 通过：
+`target/dev-checks/20261115T072730Z-136412`，36 秒/RSS 2,154,948 KiB，exit=0。
+没有本地链接/执行 Rust 测试；新增 observation-migration/sdk-original-runtime CI 专项，
+保留完整并发/串行。新串联尚未运行，不冒用已通过的父批测试，详见 `SDK_ORIGINAL_RUNTIME_INTEGRATION.md`。
+
+下方 in_progress 是当时发布记录，已终态任务不再等待或重跑。当前目标 active，所有 SDK/
+部署/生产数据/真实广播边界及 PumpAPI 暂停不变。
+
+## 历史发布记录
+
+最新唯一运行句柄：C3d2 `57c75c5f39b59a55685dbc4fefcc7b906ab246d8` / Actions `43688840398`
+已推送并确认 in_progress，987 文件/12,348,411 字节经白名单/常见敏感字面量/diff 审计，
+真实 main/索引不变。16 项新 Rust（含回环入口）、010 实际 SQLx/worker 与完整套件待终态。
+先核对该运行并优先修复实际失败，不重跑已成功的 C3d1，也不重新实施当前已接线的索引/扫描。
+之后继续实际完整准备 RPC→受控 signer→固定 sender 的离线集成及其他方向/协议/模式，
+保留资源边界/通用后端/SDK 演练与发布门槛；所有生产边界和 PumpAPI 暂停不变。
+
 当前 C3d2 源码已接 010 专有 partial index/严格初始化 guard、原聚合与 SDK 两索引同只读快照
 有界分页归并、同一 scanner/worker/共享 RPC 预算与默认关闭开关。16 项新增 Rust（含回环子进程
 入口）仅类型检查（最终约 8 秒/RSS 1,188,120 KiB），bin check 约 5 秒/RSS 710,956 KiB、
