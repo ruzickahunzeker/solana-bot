@@ -1,0 +1,45 @@
+{
+  "minimal_buy": {
+    "side": "buy",
+    "pool": "pump",
+    "mint": "11111111111111111111111111111111",
+    "idempotency_key": "fixture-buy"
+  },
+  "serialized_minimal_buy": {
+    "wallet_id": null,
+    "side": "buy",
+    "pool": "pump",
+    "mint": "11111111111111111111111111111111",
+    "pool_id": null,
+    "quote_mint": null,
+    "settlement_asset": null,
+    "sol_hop_pool": null,
+    "sol_hop_pool_id": null,
+    "amount_sol": null,
+    "amount_lamports": null,
+    "amount_quote": null,
+    "amount_usdc": null,
+    "amount_quote_units": null,
+    "sell_percent": null,
+    "slippage_percent": null,
+    "slippage_bps": null,
+    "tip_sol": null,
+    "execution_method": null,
+    "use_mev": null,
+    "mev_provider": null,
+    "simulate": null,
+    "source": null,
+    "source_signature": null,
+    "idempotency_key": "fixture-buy"
+  },
+  "accepted_response": {
+    "request_id": "tr_fixture",
+    "wallet_id": "fixture-wallet",
+    "wallet_pubkey": "11111111111111111111111111111111",
+    "execution_method": "sdk",
+    "status": "accepted",
+    "signature": null,
+    "error": null,
+    "duplicate": false
+  }
+}

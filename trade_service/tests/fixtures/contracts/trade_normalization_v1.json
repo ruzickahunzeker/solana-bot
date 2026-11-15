@@ -1,0 +1,43 @@
+{
+  "accepted": [
+    {"name":"defaults", "patch":{}},
+    {"name":"sol_alias_and_rounding", "patch":{"quote_mint":"So11111111111111111111111111111111111111111","amount_sol":0.0010000006,"slippage_percent":15.006,"slippage_bps":99}},
+    {"name":"maximum_integer", "patch":{"amount_quote_units":18446744073709551615,"simulate":false,"tip_sol":0.0001}},
+    {"name":"usdc_units", "patch":{"quote_mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","amount_usdc":1.2345676,"mev_provider":"temporal"}},
+    {"name":"usdc_alias", "patch":{"quote_mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","amount_quote":1.2345676,"mev_provider":"temporal"}},
+    {"name":"usd1", "patch":{"pool":"bonk","quote_mint":"USD1ttGY1N17NEEHLmELoaybftRBUSErhqYiQzvEmuB","amount_quote":2.000001}},
+    {"name":"custom_quote", "patch":{"pool":"raydium-cpmm","pool_id":"11111111111111111111111111111111","quote_mint":"11111111111111111111111111111111","amount_quote_units":9007199254740993}},
+    {"name":"aggregator_sol", "patch":{"pool":"pump-amm","quote_mint":"11111111111111111111111111111111","amount_sol":0.001,"simulate":true}},
+    {"name":"aggregator_precedes_pumpapi", "patch":{"pool":"pump-amm","quote_mint":"11111111111111111111111111111111","amount_sol":0.001,"execution_method":"pump-api","simulate":true}},
+    {"name":"via_sol_buy", "patch":{"pool":"stonk-fun","pool_id":"11111111111111111111111111111111","quote_mint":"11111111111111111111111111111111","settlement_asset":"sol","sol_hop_pool":"raydium-cpmm","sol_hop_pool_id":"11111111111111111111111111111111","amount_lamports":1000000}},
+    {"name":"via_sol_sell", "patch":{"side":"sell","sell_percent":50,"pool":"stonk-fun-swap","pool_id":"11111111111111111111111111111111","quote_mint":"11111111111111111111111111111111","settlement_asset":"sol","sol_hop_pool":"raydium-cpmm","sol_hop_pool_id":"11111111111111111111111111111111","simulate":false}},
+    {"name":"pumpapi_defaults", "patch":{"execution_method":"pump-api","mev_provider":"rpc"}},
+    {"name":"pumpapi_tip", "patch":{"side":"sell","sell_percent":100,"execution_method":"pumpapi","tip_sol":0.0003,"simulate":true}},
+    {"name":"sell_dust_percent", "patch":{"side":"sell","sell_percent":1,"use_mev":false,"mev_provider":"auto"}},
+    {"name":"explicit_default_slippage", "patch":{"slippage_bps":1500}},
+    {"name":"source_metadata", "patch":{"source":"fixture","source_signature":"synthetic-signature","wallet_id":"ignored-unresolved-id"}},
+    {"name":"explicit_simulation", "patch":{"simulate":true}},
+    {"name":"explicit_live", "patch":{"simulate":false}}
+  ],
+  "rejected": [
+    {"patch":{"idempotency_key":" "},"error":"idempotency_key is required"},
+    {"patch":{"amount_sol":0.001,"amount_lamports":1000000},"error":"buy request must provide at most one amount field"},
+    {"patch":{"side":"sell","amount_sol":0.001},"error":"sell request must not provide buy amount fields"},
+    {"patch":{"sell_percent":100},"error":"buy request must not provide sell_percent"},
+    {"patch":{"side":"sell"},"error":"sell_percent is required for sell"},
+    {"patch":{"side":"sell","sell_percent":0},"error":"sell_percent must be between 1 and 100"},
+    {"patch":{"amount_sol":0.0000000001},"error":"buy amount must be greater than 0"},
+    {"patch":{"amount_sol":-1},"error":"amount_sol must be greater than or equal to 0"},
+    {"patch":{"amount_sol":1e30},"error":"amount_sol is too large"},
+    {"patch":{"quote_mint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","amount_lamports":1000000},"error":"USDC quote requires amount_quote, amount_usdc, or amount_quote_units"},
+    {"patch":{"pool":"raydium-cpmm","pool_id":"11111111111111111111111111111111","quote_mint":"11111111111111111111111111111111","amount_quote":1},"error":"custom quote token requires amount_quote_units"},
+    {"patch":{"pool_id":"11111111111111111111111111111111"},"error":"pool_id is not used for this pool"},
+    {"patch":{"pool":"meteora-dbc"},"error":"pool_id is required for MeteoraDbc"},
+    {"patch":{"slippage_bps":10001},"error":"slippage must be between 0% and 100%"},
+    {"patch":{"tip_sol":-1},"error":"tip_sol must be greater than or equal to 0"},
+    {"patch":{"use_mev":false,"mev_provider":"temporal"},"error":"mev_provider requires use_mev=true or use_mev omitted"},
+    {"patch":{"execution_method":"pumpapi","use_mev":true},"error":"execution_method=pumpapi does not support use_mev=true in the first version"},
+    {"patch":{"side":"sell","sell_percent":50,"execution_method":"pumpapi"},"error":"execution_method=pumpapi only supports sell_percent=100 in the first version"},
+    {"patch":{"settlement_asset":"sol"},"error":"settlement_asset=sol is only supported for stonkfun pools"}
+  ]
+}

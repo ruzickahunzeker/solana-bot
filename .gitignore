@@ -1,0 +1,30 @@
+# Secrets and local wallet material
+**/.env
+**/.env.*
+!**/.env.example
+**/*.key
+**/*.pem
+**/.wallets.passphrase
+**/wallets.json
+**/wallets.json.enc
+
+# Runtime state and backups
+**/data/
+**/backups/
+**/logs/
+**/*.sqlite
+**/*.sqlite-*
+**/*.db
+**/*.db-*
+**/*.log
+**/*.pid
+
+# Build and local tooling output
+**/target/
+trade_service/vendor/sol-trade-sdk.*.local-before-*/
+**/__pycache__/
+**/*.pyc
+.DS_Store
+**/.idea/
+**/.vscode/
+**/*.swp

@@ -1,0 +1,9 @@
+{
+  "warmup": {"ok":true,"cache_key":"pump:11111111111111111111111111111111"},
+  "pump": {"mint":"11111111111111111111111111111111","pool":"pump","pool_id":null,"quote_mint":"So11111111111111111111111111111111111111112"},
+  "pump_amm": {"mint":"11111111111111111111111111111111","pool":"pump-amm","pool_id":"11111111111111111111111111111111","quote_mint":"So11111111111111111111111111111111111111112"},
+  "dbc": {"mint":"11111111111111111111111111111111","pool":"meteora-dbc","pool_id":"11111111111111111111111111111111","quote_mint":"So11111111111111111111111111111111111111112"},
+  "hop_available": {"available":true,"pool":"raydium-cpmm","pool_id":"11111111111111111111111111111111","reason":null},
+  "hop_unavailable": {"available":false,"pool":null,"pool_id":null,"reason":"synthetic discovery timeout"},
+  "hop_disabled": {"available":false,"pool":null,"pool_id":null,"reason":"STONKFUN_VIA_SOL_ENABLED is false"}
+}

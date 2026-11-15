@@ -1,0 +1,37 @@
+# GitHub Actions 验证边界
+
+日期：2026-11-15。用户选择以 GitHub Actions 验收，并完成浏览器设备授权；仅使用源码和公开测试数据。
+目标仓库为 `ruzickahunzeker/solana-bot`，不是其他 bot 仓库。
+
+## 发布与输入
+
+- 本地优化基线与远端 main 没有共同祖先，且 SDK 基线不同；不合并、不改写或强推 main。
+  使用独立、无历史的 `ci/trade-service-validation-*` 源码快照分支，仅供验证当前本地 Trade Service。
+- 独立临时索引不改变工作区 main 或真实索引。只纳入 Trade Service 源码、其原 vendor、manifest/lock、
+  文档、公开 fixtures、验证脚本和本工作流；另含相关优化方案。Copy/Bridge/sdk9 修改不进入快照。
+- 不纳入 `.env`、passphrase、钱包 JSON/密文、数据库、日志、backup、target 或编译产物。
+  路径白名单、常见敏感字面量扫描与 CI preflight 是防线，不把模式扫描声称为通用密钥证明。
+- OAuth 凭据只在本机标准 gh 配置，权限 600，不进入源码、日志、workflow secrets 或 artifacts。
+  CI checkout 不持久化仓库凭据，job 只有 `contents: read`。
+
+## 验证过程
+
+1. GitHub-hosted Ubuntu 22.04，固定 Rust 1.95.0，与本地编译器一致。
+2. 检查源码输入、可用内存/磁盘，下载锁定依赖；不自动更新 Cargo.lock 或 SDK。
+3. 创建临时 network namespace，仅开启 lo；setpriv 降回 runner 身份，env -i 丢弃外部配置/凭据。
+   之后所有编译/测试为 `--offline`。实际 probe 确认回环可用、无默认路由、文档地址不可达。
+4. 顺序执行格式、workflow policy、namespace probe、shell runner、SQLite DDL、类型检查、编译测试、
+   SDK prepared/候选、参数/HTTP、DAMM/probe/lanes 专项、完整两线程和串行套件。
+5. 不 build release、不启动服务、不连接真实 RPC/Telegram、不注入任何生产密钥或数据库。
+6. artifacts 只允许生成的 logs、identity.txt、results.tsv；不上传 target 二进制、临时 SQLite 或钱包。
+
+云端是独立冷构建环境，关闭依赖的 debug/incremental 以控制空间，与本机复用缓存的规则不同；
+不改变 SDK 版本或 release 行为。新旧参数/消息/合同必须真正运行通过，不能因构建地点变化更新 oracle。
+
+## 当前证据
+
+- 官方 checkout/upload-artifact 的固定提交已通过 GitHub API 核实。
+- 本地 workflow policy 五项通过；临时 namespace probe 确认仅回环、无外部路由。
+- 本机没有运行大 Rust 测试编译；完整验收以实际 Actions run/commit 与结果为准。
+- 当前文件记录的是验证设施与发布规则，不是 CI 已通过。CI 若失败，应修正对应源码并重跑同一验证链，
+  不删断言、不开放外网或 Live、不自动合并/部署。

@@ -1,0 +1,10 @@
+ALTER TABLE ordinary_execution_claims ADD COLUMN owner_nonce TEXT;
+ALTER TABLE ordinary_execution_claims ADD COLUMN submission_stage TEXT NOT NULL DEFAULT 'claimed';
+ALTER TABLE ordinary_execution_claims ADD COLUMN bound_quote_json TEXT;
+ALTER TABLE ordinary_execution_claims ADD COLUMN preflight_json TEXT;
+ALTER TABLE ordinary_execution_claims ADD COLUMN unsigned_message BLOB;
+ALTER TABLE ordinary_execution_claims ADD COLUMN unsigned_sha256 TEXT;
+ALTER TABLE ordinary_execution_claims ADD COLUMN signed_signature TEXT;
+ALTER TABLE ordinary_execution_claims ADD COLUMN signed_transaction BLOB;
+ALTER TABLE ordinary_execution_claims ADD COLUMN signed_sha256 TEXT;
+ALTER TABLE ordinary_execution_claims ADD COLUMN submission_error TEXT;

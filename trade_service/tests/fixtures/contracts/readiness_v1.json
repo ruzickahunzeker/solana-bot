@@ -1,0 +1,22 @@
+{
+  "ready": true,
+  "wallet": "11111111111111111111111111111111",
+  "default_wallet_id": "fixture-main",
+  "wallet_count": 2,
+  "wallets": [
+    {"wallet_id":"fixture-main","pubkey":"11111111111111111111111111111111"},
+    {"wallet_id":"fixture-other","pubkey":"So11111111111111111111111111111111111111112"}
+  ],
+  "has_blockhash": true,
+  "blockhash_age_ms": 15,
+  "rpc_ok": true,
+  "paused": false,
+  "rpc_lanes": 3,
+  "swqos_lanes": ["Jito","Temporal","Default"],
+  "active_swqos_lanes": ["Jito","Temporal"],
+  "mev_protection": true,
+  "require_mev_submit": true,
+  "pumpapi_executor": false,
+  "trade_persistence_mode": "durable",
+  "trade_database_healthy": true
+}

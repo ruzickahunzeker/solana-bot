@@ -1,0 +1,61 @@
+{
+  "original_fingerprint": "0a0a5408fabdf8c4aa7d5ce1187245ebc3e37f7482ab8ffe11f08a87adf60bdb",
+  "submit": {
+    "wallet_id": "fixture-wallet",
+    "confirmed": true,
+    "simulate": false,
+    "idempotency_key": "fixture-quote-v1"
+  },
+  "bound": {
+    "quote_id": "fixture-quote-v1",
+    "wallet_id": "fixture-wallet",
+    "wallet_pubkey": "fixture-public-key",
+    "quote_slippage_bps": 1500,
+    "expires_at_ms": 18446744073709551615,
+    "input_mint": "fixture-wsol",
+    "output_mint": "fixture-target",
+    "amount_lamports": 9007199254740993,
+    "expected_output_units": 18446744073709551615,
+    "minimum_output_units": 15679732462653118872,
+    "price_impact_percent": "0.01234567890123456789",
+    "route": [
+      {"label":"first-hop","input_mint":"fixture-wsol","output_mint":"fixture-quote"},
+      {"label":"second-hop","input_mint":"fixture-quote","output_mint":"fixture-target"}
+    ],
+    "executable": false
+  },
+  "preflight": {
+    "quote_id": "fixture-quote-v1",
+    "wallet_id": "fixture-wallet",
+    "quote_still_valid": true,
+    "unsigned_transaction_built": true,
+    "aggregator_simulation_ok": true,
+    "local_simulation_ok": true,
+    "instruction_count": 7,
+    "address_lookup_table_count": 1,
+    "resolved_account_count": 33,
+    "instruction_audit_passed": true,
+    "executable": true,
+    "reason": "synthetic preflight snapshot",
+    "prioritization_fee_lamports": 11,
+    "compute_unit_limit": 234553,
+    "calculated_priority_fee_lamports": 12,
+    "explicit_system_spend_lamports": 9007199254740993,
+    "writable_account_count": 17,
+    "target_ata": "fixture-target-ata",
+    "top_level_programs": ["fixture-system","fixture-aggregator"],
+    "simulated_fee_lamports": 5012,
+    "simulated_units_consumed": 221019,
+    "simulated_payer_debit_lamports": 9007199254746005,
+    "simulated_inner_instruction_groups": 2,
+    "simulated_target_token_delta_units": 18446744073709551615,
+    "simulated_target_token_post_units": 18446744073709551615,
+    "baseline_slot": 123456789,
+    "simulation_slot": 123456790,
+    "observed_same_slot_payer_debit_lamports": null,
+    "observed_same_slot_target_token_delta_units": null,
+    "simulated_inner_instruction_count": 9,
+    "simulated_inner_programs": ["fixture-token","fixture-amm"],
+    "simulated_inner_payer_system_spend_lamports": 9007199254740993
+  }
+}

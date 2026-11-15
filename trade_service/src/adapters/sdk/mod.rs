@@ -1,0 +1,37 @@
+pub(crate) mod address_parser;
+mod damm_instructions;
+pub(crate) mod damm_probe;
+pub(crate) mod damm_sell_message;
+pub(crate) mod observed_quote;
+pub(crate) mod ordinary_execution;
+pub(crate) mod ordinary_lanes;
+pub(crate) mod ordinary_params;
+pub(crate) mod ordinary_preparation;
+pub(crate) mod ordinary_sol_buy;
+pub(crate) mod pool_queries;
+pub(crate) mod preparation_assets;
+pub(crate) mod preparation_balance;
+pub(crate) mod preparation_input;
+pub(crate) mod protocol_params;
+pub(crate) mod pumpapi_accounts;
+pub(crate) mod pumpapi_assets;
+pub(crate) mod pumpapi_cpmm;
+pub(crate) mod pumpapi_pool_accounts;
+pub(crate) mod pumpapi_pumpswap;
+pub(crate) mod pumpapi_simulation;
+pub(crate) mod pumpapi_transaction;
+pub(crate) mod quote_preflight;
+pub(crate) mod quote_reconciliation;
+pub(crate) mod quote_submission;
+pub(crate) mod quote_submit;
+pub(crate) mod sol_transfer;
+pub(crate) mod trade_command;
+pub(crate) mod vanity_worker;
+pub(crate) mod wallet_balances;
+pub(crate) mod wallet_identity;
+pub(crate) mod wallet_management;
+pub(crate) mod wsol_conversion;
+pub(crate) mod wsol_queries;
+
+#[cfg(test)]
+mod unsigned_compile_contract_tests;

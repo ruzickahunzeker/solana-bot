@@ -1,0 +1,63 @@
+name: Trade Service Validation
+
+on:
+  push:
+    branches:
+      - 'ci/trade-service-validation-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trade-service-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: trade_service
+        shell: bash
+    env:
+      RUST_TOOLCHAIN: '1.95.0'
+      CARGO_BUILD_JOBS: '2'
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+      CARGO_TERM_COLOR: never
+    steps:
+      - name: Check out source without persistent credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Check source-only inputs and runner capacity
+        run: bash scripts/ci_validate.sh preflight
+
+      - name: Install pinned compiler and build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes clang cmake libssl-dev pkg-config python3-yaml
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --component rustfmt --no-self-update
+          rustup override set "$RUST_TOOLCHAIN"
+
+      - name: Fetch locked dependencies before network isolation
+        run: cargo fetch --locked
+
+      - name: Validate offline with loopback networking only
+        run: bash scripts/ci_test_namespace.sh
+
+      - name: Upload validation logs only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: trade-service-validation-${{ github.sha }}
+          path: |
+            trade_service/target/ci-validation/logs/
+            trade_service/target/ci-validation/identity.txt
+            trade_service/target/ci-validation/results.tsv
+          if-no-files-found: warn
+          retention-days: 7
