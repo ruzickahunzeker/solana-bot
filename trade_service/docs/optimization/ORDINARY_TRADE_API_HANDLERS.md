@@ -51,3 +51,38 @@ b606c815480a3538fe97eba423a4e3e8211e764f8cf068673a3aa98ef92ce47f target/release/
 本批没有增加新执行能力或完成普通发送前签名账本；`accept_trade_for_wallet`、结果等待和订单查询仍需进一步经 Application/query ports 薄化，不能把文件移动当作整个 TS-08 或基础设施隔离完成。SDK/legacy 安全工作按 `ORDINARY_SDK_SUBMISSION_SAFETY_WORKPACK.md` 继续。
 
 后续检查点：TS-08-C 已将这里的订单查询/结果等待接入项目只读 source 和 Application，进度与验证见 `ORDINARY_TRADE_QUERY_BOUNDARIES.md`。本文件 778/155 是 B 阶段的冻结记录，不替代后续全量结果。
+
+## 2026-11-15 原接受流程的 Application 收口
+
+归入现有 TS-02/08、NP-02/03，不新增任务编号。当前源码与八项新增合同已通过受限
+test/bin 类型检查，运行验收待本批独立 CI；前序 c220ba8 的 1458 不包含这些修改。
+
+- `application/trade_intake.rs` 接窄 Settings、项目钱包身份/地址解析 port 和原
+  journal/index/reservations，按原顺序解析默认或强制钱包、绑定 DTO 钱包元数据、
+  校验、拒绝记录/尽力镜像、执行政策、项目 command、原 admission 保留。
+  不访问 API DTO、Config、SDK、Keypair，不生成第二个幂等键或账本。
+- `ports/trade_intake.rs` 只定义借用输入和惰性 payload 工厂；V1 DTO 的实现位于
+  `adapters/persistence/trade_admission.rs`，原 hash/JSON/记录转换不移动到业务层。
+  Memory/重复请求仍不提前序列化，Durable/Shadow 保持原保留及镜像规则。
+- `AppState::trade_intake()` 借用原资源，无新 Arc/store/cache 或后台任务。
+  Config 只投影原 validation、command、broadcast 字段，不新增配置或值检查。
+- HTTP 保留鉴权、错误/HTTP 映射、原 task spawn/结果等待与批量逐项顺序；
+  Application 返回钱包身份 lease，由 Handler 保留到原响应等待结束。
+  rejected/duplicate 不生成执行输入，Created 只消费原 `AdmittedTrade` 一次。
+- 五处原日志保留 `api::handlers::trades` target、原字段和相对时序；成功接单日志
+  target 遗漏已补并新增 scoped subscriber 回归，不修改全局 subscriber 或过滤配置。
+  原 DTO `to_command`/validation 兼容 helper 仅测试保留作旧行为 oracle。
+
+新增七项 Application 合同覆盖：三种存储模式的强制钱包/hash/JSON/lease、缺钱包先于解析、
+校验先于政策且拒绝不占正常 key、重复/冲突与来源元数据不重写原记录、存储失败模式差异、
+所有旧 accepted fixture 到完整项目 command 的对照，以及原成功/拒绝日志 target。
+第八项真实 Router + fake backend 门闩用例覆盖 dispatch/响应等待期间的身份 lease。
+测试仅公开/合成输入、内存 SQLite 和 fake backend，不加载真实 SDK 钱包或发送交易。
+
+本批本机验证：`cargo fmt --check`、workflow policy 七项通过；受限 test check
+`20261115T103713Z-198978` 9 秒/RSS 1,331,668 KiB，bin check
+`20261115T103808Z-199318` 4 秒/RSS 575,448 KiB，均 exit=0，原七组生产警告保留。
+CI 增加 `ordinary-intake` 专项，保留全部既有专项及完整并发/串行；不在小 VM 链接测试。
+
+这批不是全部 Application/资源隔离、全协议授权、SDK 升级或生产恢复完成；
+普通执行/状态存储的剩余具体依赖、全局 RPC/生命周期、双假后端及发布门槛继续保留。

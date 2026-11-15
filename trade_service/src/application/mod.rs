@@ -24,6 +24,7 @@ pub(crate) mod trade_admission;
 pub(crate) mod trade_command;
 pub(crate) mod trade_execution;
 pub(crate) mod trade_input;
+pub(crate) mod trade_intake;
 pub(crate) mod trade_persistence_input;
 pub(crate) mod trade_queries;
 pub(crate) mod trade_record;

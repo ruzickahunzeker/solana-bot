@@ -5,23 +5,15 @@ use axum::{
     Json,
 };
 use std::net::SocketAddr;
-use tracing::{info, warn};
 
 use crate::{
-    adapters::persistence::trade_admission::{AdmissionPayloadV1, RejectionPayloadV1},
     api::{dto::trades::ListTradesQuery, middleware::auth, response::error},
-    application::{
-        trade_admission::{self, AdmissionDecision, AdmissionError},
-        trade_execution::ensure_execution_allowed,
-        trade_queries::is_pending_status,
-    },
+    application::trade_queries::is_pending_status,
     executor,
     models::{
         BatchTradeItemResponse, BatchTradeRequest, BatchTradeResponse, TradeRecord, TradeRequest,
-        TradeResponse, TradeStatus,
+        TradeResponse,
     },
-    state::new_request_id,
-    validation::validate_with_settings,
     AppState,
 };
 
@@ -52,126 +44,41 @@ async fn accept_trade_for_wallet(
     mut request: TradeRequest,
     forced_wallet_id: Option<String>,
 ) -> Result<AcceptTradeOutcome, (StatusCode, String)> {
-    let wallet_id = forced_wallet_id.unwrap_or_else(|| {
-        state
-            .wallet_identity
-            .resolve_id(request.wallet_id.as_deref())
-    });
-    request.wallet_id = Some(wallet_id.clone());
-
-    let Some(wallet) = state.wallet_identity.lookup(&wallet_id) else {
-        return Err((
-            StatusCode::BAD_REQUEST,
-            format!("wallet_id {wallet_id} not found"),
-        ));
-    };
-    let wallet_pubkey = wallet.pubkey().to_string();
-
-    let normalized = match validate_with_settings(
-        &request,
-        &state.config.trade_validation_settings(),
-    ) {
-        Ok(normalized) => normalized,
-        Err(error) => {
-            let rejection_error = error.to_string();
-            let payload = RejectionPayloadV1::new(&wallet_id, &wallet_pubkey, &request);
-            let record = trade_admission::reject(
-                state.trades.as_ref(),
-                &payload,
-                new_request_id(),
-                rejection_error,
-                crate::state::now_ms,
-            );
-            warn!(
-                request_id = %record.request_id,
-                wallet_id = %record.wallet_id,
-                idempotency_key = %request.idempotency_key,
-                side = ?request.side,
-                pool = ?request.pool,
-                mint = %request.mint,
-                status = ?record.status,
-                error = ?record.error,
-                "trade rejected"
-            );
-            if let Err(persist_error) =
-                trade_admission::mirror_rejection(state.persistence.as_ref(), &payload, &record)
-                    .await
-            {
-                warn!(error = %persist_error, request_id = %record.request_id, "failed to persist rejected trade");
-            }
+    let outcome = state
+        .trade_intake()
+        .accept(&mut request, forced_wallet_id)
+        .await
+        .map_err(|error| {
+            use crate::application::trade_intake::IntakeFailureKind;
+            let status = match error.kind {
+                IntakeFailureKind::UnknownWallet => StatusCode::BAD_REQUEST,
+                IntakeFailureKind::Forbidden => StatusCode::FORBIDDEN,
+                IntakeFailureKind::Internal => StatusCode::INTERNAL_SERVER_ERROR,
+                IntakeFailureKind::Conflict => StatusCode::CONFLICT,
+                IntakeFailureKind::Unavailable => StatusCode::SERVICE_UNAVAILABLE,
+            };
+            (status, error.message)
+        })?;
+    let _wallet_identity = outcome.wallet_identity;
+    let wallet_id = outcome.wallet_id;
+    let record = outcome.record;
+    let execution = match outcome.decision {
+        crate::application::trade_intake::IntakeDecision::Rejected => {
             return Ok(AcceptTradeOutcome {
                 http_status: StatusCode::BAD_REQUEST,
                 wallet_id,
                 response: TradeResponse::from(record),
-            });
+            })
         }
-    };
-
-    ensure_execution_allowed(
-        &normalized,
-        state.config.enable_simulate,
-        state.config.security.broadcast,
-    )
-    .map_err(|err| (StatusCode::FORBIDDEN, err.to_string()))?;
-    let command = request
-        .to_command(
-            wallet_id.clone(),
-            &normalized,
-            state.config.trade_command_defaults(),
-        )
-        .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))?;
-    let payload =
-        AdmissionPayloadV1::new(&wallet_id, &wallet_pubkey, &request, &normalized, &command);
-    let (record, execution) = match trade_admission::accept(
-        state.persistence.as_ref(),
-        state.trades.as_ref(),
-        state.idempotency.as_ref(),
-        &payload,
-        new_request_id(),
-    )
-    .await
-    {
-        Ok(AdmissionDecision::Duplicate(existing)) => {
+        crate::application::trade_intake::IntakeDecision::Duplicate => {
             return Ok(AcceptTradeOutcome {
                 http_status: StatusCode::OK,
                 wallet_id,
-                response: TradeResponse::from(existing),
+                response: TradeResponse::from(record),
             })
         }
-        Ok(AdmissionDecision::Created {
-            record,
-            shadow_error,
-            execution,
-        }) => {
-            if let Some(error) = shadow_error {
-                warn!(error = %error, request_id = %record.request_id, "shadow trade persistence failed");
-            }
-            (record, execution)
-        }
-        Err(AdmissionError::Internal(error)) => {
-            return Err((StatusCode::INTERNAL_SERVER_ERROR, error.to_string()))
-        }
-        Err(AdmissionError::Conflict(message)) => {
-            return Err((StatusCode::CONFLICT, message.into()))
-        }
-        Err(AdmissionError::PersistenceUnavailable(error)) => {
-            warn!(error = %error, "durable idempotency reservation failed; trade not started");
-            return Err((
-                StatusCode::SERVICE_UNAVAILABLE,
-                "trade persistence unavailable; trade was not started".into(),
-            ));
-        }
+        crate::application::trade_intake::IntakeDecision::Created(execution) => execution,
     };
-    info!(
-        request_id = %record.request_id,
-        wallet_id = %record.wallet_id,
-        idempotency_key = %request.idempotency_key,
-        side = ?request.side,
-        pool = ?request.pool,
-        mint = %request.mint,
-        status = ?TradeStatus::Accepted,
-        "trade accepted"
-    );
 
     let state_for_task = state.clone();
     tokio::spawn(async move {

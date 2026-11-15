@@ -1,16 +1,22 @@
 # Trade Service 已完成与未完成盘点
 
-日期：2026-11-15。依据：当前源码路径、主计划与执行记录。用户已重新将持续优化目标设为 active，本轮继续非 PumpAPI 源码/离线任务；历史暂停及运维记录保留。修改计划本身不触发暂停或恢复。不再用缺少权重的百分比表达完成度。
+日期：2026-11-15。依据：当前源码路径、主计划与执行记录。用户已恢复持续目标，本轮续非 PumpAPI 普通接受流程的源码/离线验收；历史暂停及运维记录保留。修改计划本身不触发暂停或恢复。不再用缺少权重的百分比表达完成度。
 
 恢复前的总体审查及获准 RPC 运维见 [历史审查](../../../docs/optimization/PROJECT_REVIEW_2026-11-14.md)：当时源码全套 1038 项通过、优化未部署，仅更换失效 RPC 并重启同一旧 release。本轮不做生产运维；最新验收及当前待验源码以下方首两条为准，后续历史检查点不是重新等待或重复执行的任务。外部 Copy/Bridge 已有兼容规则集中见 [对接边界](SERVICE_INTEGRATION_BOUNDARIES.md)，不是新增协议或对接功能完成声明。
 
 ## 统计口径
 
-- 最新完整验收 bootstrap `970d835` / Actions `43695116074` 已终态 success，artifact
+- 最新完整验收 readiness `c220ba8` / Actions `43696813225` / artifact `14154584905`
+  已下载核对：完整并发 1458（143.31 秒）/串行 1458（252.76 秒）零失败/忽略/过滤，
+  readiness-settings 六项及所有步骤 exit=0；不重跑旧任务，不等同 main 合并或生产部署。
+- 本地后续普通交易接受流程与八项新用例仅通过类型检查，尚未运行/发布完整 CI，
+  不计入上述 1458；本轮补成功日志原 target 和回归。主计划 3.3 把五项设计并入原 TS/NP 验收，
+  不增加任务编号、重建框架、改变分母或将设计记录算作功能完成。
+- 前序完整验收 bootstrap `970d835` / Actions `43695116074` 已终态 success，artifact
   `14154666415` 核对：完整并发 1452（143.42 秒）/串行 1452（253.37 秒）零失败/忽略/过滤，
   bootstrap 4、HTTP 201、参数 3 及全部步骤通过，不重跑旧任务。
-- 下一批 readiness 三值设置/项目钱包诊断 port 已接源码，六项新合同仅受限 test/bin
-  check，尚未发布，不套用当前 bootstrap CI，见 `READINESS_RESOURCE_BOUNDARY.md`。
+- readiness 三值设置/项目钱包诊断 port 已接源码，六项新合同已在 c220ba8 专项与完整
+  CI 验收，不套用父批 bootstrap CI，见 `READINESS_RESOURCE_BOUNDARY.md`。
 - 前序完整验收 `cb94bdd` / Actions `43693519994` 已终态 success，artifact `14153732230`
   核对：完整并发 1448（142.77 秒）/串行 1448（251.64 秒）零失败/忽略/过滤，
   api-access-policy 4、validation-settings 4、HTTP 201、参数 3 与全部步骤通过，旧任务不重跑。

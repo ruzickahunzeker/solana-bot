@@ -1,12 +1,16 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    application::trade_command::{CommandContext, TradeCommand},
     application::trade_input::TradeInput,
     application::trade_record::TradeRecordV1 as TradeRecord,
-    application::trade_settings::TradeCommandDefaults,
-    application::validated_trade::ValidatedTrade as NormalizedTrade,
     domain::trade::{ExecutionMethod, MevProvider, Pool, SettlementAsset, Side, TradeStatus},
+};
+
+#[cfg(test)]
+use crate::application::{
+    trade_command::{CommandContext, TradeCommand},
+    trade_settings::TradeCommandDefaults,
+    validated_trade::ValidatedTrade as NormalizedTrade,
 };
 
 #[derive(Deserialize)]
@@ -71,6 +75,7 @@ impl TradeRequest {
         }
     }
 
+    #[cfg(test)]
     pub(crate) fn to_command(
         &self,
         wallet_id: String,

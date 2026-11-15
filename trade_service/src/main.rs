@@ -114,6 +114,26 @@ pub struct AppState {
 }
 
 impl AppState {
+    pub(crate) fn trade_intake(
+        &self,
+    ) -> crate::application::trade_intake::TradeIntakeService<
+        '_,
+        TradePersistence,
+        TradeStore,
+        IdempotencyStore,
+    > {
+        crate::application::trade_intake::TradeIntakeService::new(
+            self.persistence.as_ref(),
+            self.trades.as_ref(),
+            self.idempotency.as_ref(),
+            self.wallet_identity.as_ref(),
+            &crate::adapters::sdk::address_parser::SdkAddressParser,
+            self.config.trade_intake_settings(),
+            crate::state::new_request_id,
+            crate::state::now_ms,
+        )
+    }
+
     pub(crate) fn trade_queries(&self) -> TradeQueryService<impl TradeRecordReadSource + '_> {
         TradeQueryService::new(StoredTradeReadSource::new(
             self.persistence.as_ref(),

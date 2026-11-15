@@ -30,7 +30,14 @@
 
 ## 已验收运行
 
-最新完整验收 bootstrap `970d8350a6508bbebcf2ebbbbae7b09bebfa7b8c` /
+最新完整验收 readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
+[Actions 43696813225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43696813225)
+已终态 success，artifact `14154584905` 下载核对：完整并发 1458（143.31 秒）/串行
+1458（252.76 秒）零失败/忽略/过滤，readiness-settings 六项和全部步骤 exit=0。
+本轮再次查询该句柄确认为 completed/success，不重复触发。后续普通接受流程及八项新合同
+只通过本地类型检查，ordinary-intake 专项已加入 runner，待新的源码快照，不能套用 1458。
+
+前序完整验收 bootstrap `970d8350a6508bbebcf2ebbbbae7b09bebfa7b8c` /
 [Actions 43695116074](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43695116074)
 已终态 success，artifact `14154666415` 下载核对。完整并发 1452（143.42 秒）/串行 1452
 （253.37 秒）零失败/忽略/过滤，bootstrap-assembly 4/HTTP 201/参数 3 与全部 steps exit=0。

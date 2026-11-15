@@ -12,6 +12,7 @@ mod sol_transfer_execution_tests;
 mod sol_transfer_tests;
 mod state_resource_tests;
 mod trade_execution_tests;
+mod trade_intake_tests;
 mod trade_query_tests;
 mod vanity_application_tests;
 mod wallet_balance_query_tests;

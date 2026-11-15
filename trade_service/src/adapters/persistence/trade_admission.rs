@@ -19,6 +19,36 @@ pub(crate) struct AdmissionPayloadV1<'a> {
     command: &'a TradeCommand,
 }
 
+impl crate::application::ports::trade_intake::TradeIntakeRequest for TradeRequest {
+    type Validated<'a> = AdmissionPayloadV1<'a>;
+    type Rejected<'a> = RejectionPayloadV1<'a>;
+    fn requested_wallet_id(&self) -> Option<&str> {
+        self.wallet_id.as_deref()
+    }
+    fn bind_wallet(&mut self, wallet_id: String) {
+        self.wallet_id = Some(wallet_id);
+    }
+    fn validation_input(&self) -> crate::application::trade_input::TradeInput<'_> {
+        TradeRequest::validation_input(self)
+    }
+    fn validated_payload<'a>(
+        &'a self,
+        wallet_id: &'a str,
+        wallet_pubkey: &'a str,
+        normalized: &'a NormalizedTrade,
+        command: &'a TradeCommand,
+    ) -> Self::Validated<'a> {
+        AdmissionPayloadV1::new(wallet_id, wallet_pubkey, self, normalized, command)
+    }
+    fn rejected_payload<'a>(
+        &'a self,
+        wallet_id: &'a str,
+        wallet_pubkey: &'a str,
+    ) -> Self::Rejected<'a> {
+        RejectionPayloadV1::new(wallet_id, wallet_pubkey, self)
+    }
+}
+
 impl<'a> AdmissionPayloadV1<'a> {
     pub(crate) fn new(
         wallet_id: &'a str,

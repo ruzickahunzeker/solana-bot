@@ -129,6 +129,16 @@ pub struct StonkFunViaSolConfig {
 }
 
 impl Config {
+    pub(crate) fn trade_intake_settings(
+        &self,
+    ) -> crate::application::trade_intake::TradeIntakeSettings {
+        crate::application::trade_intake::TradeIntakeSettings {
+            validation: self.trade_validation_settings(),
+            command: self.trade_command_defaults(),
+            broadcast: self.security.broadcast,
+        }
+    }
+
     pub(crate) fn readiness_settings(&self) -> crate::application::readiness::ReadinessSettings {
         crate::application::readiness::ReadinessSettings {
             blockhash_max_age_ms: self.blockhash_max_age_ms,

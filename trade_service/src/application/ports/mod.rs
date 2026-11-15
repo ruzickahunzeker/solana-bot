@@ -21,6 +21,7 @@ pub(crate) mod sol_transfer_execution;
 pub(crate) mod sol_transfer_journal;
 pub(crate) mod submission_journal;
 pub(crate) mod trade_admission;
+pub(crate) mod trade_intake;
 pub(crate) mod trade_reads;
 pub(crate) mod vanity;
 pub(crate) mod wallet_balances;

@@ -4,13 +4,33 @@
 
 ## 当前续作检查点（覆盖下方历史状态）
 
-最新完整验收：bootstrap `970d8350a6508bbebcf2ebbbbae7b09bebfa7b8c` /
+用户已恢复持续目标，当前继续原 TS-02/08、NP-02/03 的普通接受流程收口；
+计划 3.3 的五项设计补充不新增 TS/NP 编号，RouterLeg 不引入实现或依赖。
+PumpAPI 开发暂停，SDK 升级及生产边界保持不变。
+
+最新完整验收：readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
+Actions `43696813225` / artifact `14154584905` 已下载核对，所有步骤 exit=0；
+完整并发 1458（143.31 秒）/串行 1458（252.76 秒），零失败/忽略/过滤，readiness-settings
+六项通过。此前路径/敏感字面量审计只绑定该快照，不覆盖后续未发布改动；不重跑旧 CI。
+
+本地后续 `application/trade_intake.rs`、对应 port/adapter/AppState/Handler 接线已通过
+受限 test/bin 类型检查；本轮补成功日志原 target 及第八项回归，原校验/钱包 lease/
+hash/JSON/保留顺序不改。test check `20261115T103713Z-198978` 9 秒/RSS 1,331,668 KiB，
+bin check `20261115T103808Z-199318` 4 秒/RSS 575,448 KiB，均 exit=0，原七组警告。
+新增七项 Application 与一项 HTTP 用例尚未运行或发布 CI；未计入上述 1458。
+ordinary-intake 专项已接 CI runner，policy 七项/格式通过，保留所有原专项/完整回归。
+见 `ORDINARY_TRADE_API_HANDLERS.md`；不宣称运行验收、合并 main 或部署完成。
+
+下方 readiness 的“仅类型检查/待验”和 active 描述保留为历史，不覆盖本检查点，
+不覆盖本次用户恢复的非 PumpAPI 队列，也不授权重复发布旧任务。
+
+前序完整验收：bootstrap `970d8350a6508bbebcf2ebbbbae7b09bebfa7b8c` /
 Actions `43695116074` 已终态 success，artifact `14154666415` 下载核对。完整并发 1452
 （143.42 秒）/串行 1452（253.37 秒）零失败/忽略/过滤；bootstrap-assembly 4/HTTP 201/
 参数 3 及全部步骤 exit=0，manifest/lock/vendor 指纹匹配，原七组生产警告。
 999 文件/12,438,464 字节审计通过，真实 main/索引未变；旧终态任务不重跑。
 
-下一批 readiness 窄资源边界已有源码：三值 Settings 与项目钱包诊断 port，SDK 查询留在
+本批 readiness 窄资源边界已发布源码：三值 Settings 与项目钱包诊断 port，SDK 查询留在
 SdkReadinessWalletObserver，原 Registry/runtime/cache/persistence Arcs 复用；observe_health
 helper 字节不变，V1 ready/诊断/采样顺序不改。六项新合同仅类型检查，未纳入 970d835。
 test check `20261115T084206Z-166970` 33 秒/RSS 2,130,684 KiB、bin check

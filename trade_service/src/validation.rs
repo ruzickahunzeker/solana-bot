@@ -1,4 +1,5 @@
 use crate::adapters::sdk::address_parser::SdkAddressParser;
+#[cfg(test)]
 use crate::application::trade_settings::TradeValidationSettings;
 use crate::application::trade_validation::TradeValidator;
 #[cfg(test)]
@@ -9,6 +10,7 @@ use crate::models::{TradeRequest, WarmupRequest};
 #[cfg(test)]
 mod settings_tests;
 
+#[cfg(test)]
 pub use crate::application::validated_trade::ValidatedTrade as NormalizedTrade;
 pub use crate::application::validated_trade::ValidatedWarmup as NormalizedWarmup;
 
@@ -41,6 +43,7 @@ pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result
     validate_with_settings(request, &config.trade_validation_settings())
 }
 
+#[cfg(test)]
 pub(crate) fn validate_with_settings(
     request: &TradeRequest,
     settings: &TradeValidationSettings,

@@ -69,6 +69,7 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("step validation-settings cargo test --locked --offline validation::settings_tests -- --test-threads=2", script)
         self.assertIn("step bootstrap-assembly cargo test --locked --offline bootstrap::tests -- --test-threads=2", script)
         self.assertIn("step readiness-settings cargo test --locked --offline readiness_settings -- --test-threads=2", script)
+        self.assertIn("step ordinary-intake cargo test --locked --offline ordinary_intake -- --test-threads=2", script)
         self.assertIn("step sdk-scan", script)
         self.assertIn("step sqlite-sdk-scan python3 scripts/test_sdk_observation_index.py", script)
         self.assertIn("step damm-output-evidence", script)

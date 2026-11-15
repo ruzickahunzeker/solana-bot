@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 目标 active，PumpAPI 开发暂停。C3d2/C3e、NP-03 默认值/缓存/鉴权/普通校验与 bootstrap 资源组装均已离线验收；最新 `970d835` / Actions `43695116074` / artifact `14154666415` 核对，完整并发/串行各 1452 通过。接续 readiness 三值设置/钱包诊断 port 六项仅类型检查，尚未在上述快照。SDK 固定 6.0.2，不部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[SDK 扫描](optimization/SDK_PENDING_OBSERVATION_SCAN.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 用户已恢复持续目标，仅续非 PumpAPI 源码/离线队列。最新已验收快照 `c220ba8` / Actions `43696813225` / artifact `14154584905`，完整并发/串行各 1458、readiness 专项 6 项通过；后续普通交易接受流程及八项新合同已类型检查，待独立 CI，不套用前序结果。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[普通接受边界](optimization/ORDINARY_TRADE_API_HANDLERS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -21,8 +21,9 @@ NP-03 API 鉴权/普通校验配置边界及五项新增合同已在 cb94bdd/436
 提取组装当作所有资源隔离或真实 SDK/生产初始化验收。
 
 NP-03 接续 readiness：汇总层只接三值设置/项目钱包诊断 observer，原 SDK probe/Registry/
-共享 runtime 留在 SDK adapter，原 observe_health 与 V1 ready 规则不变。六项新增仅类型
-检查，不在 970d835 的 bootstrap CI，详见 `optimization/READINESS_RESOURCE_BOUNDARY.md`。
+共享 runtime 留在 SDK adapter，原 observe_health 与 V1 ready 规则不变。六项新增已在
+c220ba8 的专项及完整回归通过，不在前序 970d835 的 bootstrap CI，详见
+`optimization/READINESS_RESOURCE_BOUNDARY.md`；不因此宣称真实节点或已部署验收。
 
 ## 1. 范围与目标
 
@@ -60,7 +61,7 @@ NP-03 接续 readiness：汇总层只接三值设置/项目钱包诊断 observer
 | --- | --- | --- |
 | NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
-| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取接同一 runtime/共享冷却。默认值/参数缓存/鉴权/普通校验与 bootstrap 已离线验收，970d835 完整回归各 1452 通过。后续 readiness 汇总只接三值设置/项目 observer，SDK 查询留在 adapter，六项仅类型检查，见 READINESS_RESOURCE_BOUNDARY.md。原 SDK reader oracle/必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、Config/接受/index/journal/cache/依赖及全部生命周期仍待续 |
+| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取接同一 runtime/共享冷却。默认值/参数缓存/鉴权/普通校验、bootstrap 与 readiness 已离线验收，c220ba8 完整回归各 1458、readiness 六项通过。SDK 查询留在 adapter，见 READINESS_RESOURCE_BOUNDARY.md。原 SDK reader oracle/必要 Arc 注入不改钱包初始化或发送 client。本地后续接受流程仅类型检查；寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、Config/index/journal/cache/依赖及全部生命周期仍待续 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 
@@ -200,6 +201,45 @@ Bootstrap wires adapters, infrastructure and services
 - blockhash、路由和参数缓存由明确的接口访问；私钥和 SDK 客户端不得作为通用缓存值对外暴露。
 - Router backend 仅在探针进入适配阶段时创建，默认关闭，不以这次重构替换现有后端。
 - 现有 Pool 枚举可先保留。中心化的一处穷尽映射是可接受的，不为追求“零 match”引入动态插件或弱类型配置系统。
+
+### 3.3 2026-11-15 设计补充的核对与归并
+
+本节是现有任务的边界和验收补充，不新增任务编号、第二套计划或完成度分母。
+仅吸收 Parser 职责、SDK 兼容门面、资源所有权、能力证据及 RouterLeg 设计方向；
+不引入参考项目的语言/运行依赖，不因文档补充恢复持续源码目标或 PumpAPI 工作。
+
+| 设计点 | 本地已存在的基础 | 归入原任务 | 仅补充的边界与验收 |
+| --- | --- | --- | --- |
+| DEX Parser 职责划分 | `adapters/sdk/protocol_params/` 集中参数加载与成员检查；已有合成 loader、raw account 与 DAMM 账户证据 | TS-03/05、NP-01/03 | 区分 RPC 取得账户、纯解码、协议政策、SDK 参数映射；按实际调用渐进整理，不新增全协议 Parser 框架。既有 `TradeAddressParser` 仅作地址语法解析，不能记为 DEX 账户解析完成 |
+| SDK 兼容门面 | `sdk_client.rs` 已委托多个 `adapters/sdk/` 实现，原 sender/journal 边界已局部验收 | TS-04/07/08、NP-01/03 | 按真实调用方逐项迁移，再保留必要兼容委托；SDK 参数与指令类型不进入 Domain/Application。不按文件大小验收，不为对称增加 Client/signing/submission 包装层 |
+| 资源所有权 | Bootstrap 已交接原 Arcs/refresher；参数缓存与六类只读 runtime 已复用原实例 | TS-04/09、NP-03 | 在原资源记录中标明创建者、共享者、任务启动/取消及退出 owner；复用既有释放/失败测试，缺口再补。Infrastructure 管生命周期，adapter 管转换；不新建缓存、连接池、worker 或持久化权威 |
+| 能力证据 | `protocol/registry.rs` 为唯一身份/旧政策来源，V1 capability 只是兼容投影 | TS-03/07/09/11、NP-01/04/05 | 证据绑定 backend、协议/程序与布局版本、方向、Quote/Token 扩展、直接/多跳、模式和源码/测试身份；标明未支持/未验证范围。不加另一套 registry，不靠旧 live/builder 布尔值授权 |
+| RouterLeg 设计方向 | 4.3 已保留项目意图、候选/验证路线、受控未签名计划与后端合同 | TS-02/04/05/07、NP-04 | 仅保留逐跳输入输出资产、原始整数金额、池/程序身份和 min_out/费用约束的表达需求。raw AccountMeta/Instruction/SDK 类型留在 adapter；不创建 RouterLeg 实现、Router SDK 依赖或多跳发送通道 |
+
+归并后的验收规则，不单独扩大功能范围：
+
+1. **账户解析不等于路线授权。** Parser 接收已有账户快照与必要上下文，不持 RPC、钱包、
+   signer 或发送能力；纯解码与项目协议校验可分层实现，不重复 vendor decoder。
+   错 owner/discriminator/布局、截断数据、错误 Mint/方向/vault/权限及 Token 扩展按适用范围
+   有拒绝证据；active/migration、slot/时效由验证流程核对。`PoolRouteHint` 不升级为可信路线。
+2. **迁移按行为而非目录验收。** 旧参数、错误/顺序、费用、hash/JSON、幂等与恢复合同保持；
+   新旧实现对照使用既有 fixture/oracle，不能重写期待值接纳差异。未迁移入口明确保留，
+   不以 facade 存在宣称所有 backend/方向已隔离。
+3. **一项操作只有原来的持久化权威。** 生命周期收口不合并钱包、兑换、普通交易数据库，
+   不复制 reservation/journal。SDK 专属参数缓存仍在适配边界，通用层不泄漏 SDK 类型。
+4. **证据按范围准入。** 解析/寻池/报价/构建/模拟证据与服务级受控签名/发送准入分开；
+   版本或绑定上下文改变须重验，来源不可用/未知/过期时不给新增许可。旧 V1 字段及现有
+   准入规则不随文档改变，不能以若干全局布尔值替代证据，也不要求本轮补完全部协议实盘。
+5. **逐跳描述不能绕过整笔审计。** 后续实际接 Router 时仍须核对最终不可变交易的资产、
+   输入预算/min_out、signer/权限、费用/小费、临时账户创建/关闭与 ALT/交易版本；统一经过
+   原授权、保留、签名字节账本和固定 sender。签名后不换路线、blockhash 或后端重签，
+   不开放任意交易签名。该条只补设计约束，不授权现在实现 Router。
+
+已有详细依据继续复用 [参数映射](optimization/SDK_PROTOCOL_PARAMS.md)、
+[Registry](optimization/PROTOCOL_REGISTRY.md)、[Bootstrap](optimization/BOOTSTRAP_ASSEMBLY_BOUNDARY.md)、
+[缓存所有权](optimization/PARAM_CACHE_RESOURCE_BOUNDARY.md) 和 [共享 RPC](optimization/SHARED_READ_RPC_RUNTIME.md)。
+Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节；本补充不重复立项，
+也不修改 API、金额/钱包语义、数据库、依赖/vendor、配置、默认 backend 或生产状态。
 
 ## 4. 稳定类型和后端边界
 
