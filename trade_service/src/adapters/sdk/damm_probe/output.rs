@@ -10,7 +10,7 @@ use super::{
     evidence::{check_snapshot, AccountSnapshot, AssetSnapshot, DammProbeEvidence},
     simulate_packet, DammOutputEvidence,
 };
-mod trace;
+pub(super) mod trace;
 
 /// Output of this unsigned simulation, never a delta against an earlier RPC bank.
 pub(crate) async fn evidence_damm_probe_output(
@@ -98,7 +98,7 @@ pub(crate) async fn evidence_damm_probe_output(
         (Some(pre), Some(post)) => cross_check(
             pre,
             post,
-            prepared,
+            prepared.view(),
             &snapshot,
             &movements,
             credited_input,
@@ -121,7 +121,7 @@ pub(crate) async fn quote_evidenced_damm_probe(evidence: &DammProbeEvidence<'_>)
     Ok(evidence_damm_probe_output(evidence).await?.output_units())
 }
 
-fn net_amount(transfer: &trace::Transfer, asset: &AssetSnapshot) -> Result<u64> {
+pub(super) fn net_amount(transfer: &trace::Transfer, asset: &AssetSnapshot) -> Result<u64> {
     if transfer.program != asset.program
         || transfer.mint.is_some_and(|mint| mint != asset.mint)
         || transfer
@@ -183,19 +183,19 @@ fn amount_row(
     Ok(Some(trace::integer(&row.ui_token_amount.amount)?))
 }
 
-fn cross_check(
+pub(super) fn cross_check(
     pre: &[UiTransactionTokenBalance],
     post: &[UiTransactionTokenBalance],
-    prepared: &super::plan::PreparedDammProbe,
+    view: super::plan::ProbeView<'_>,
     snapshot: &AccountSnapshot,
     movements: &trace::Transfers,
     credited_input: u64,
     output: u64,
 ) -> Result<()> {
-    let keys = &prepared.transaction().message.account_keys;
+    let keys = &view.message.account_keys;
     checked_rows(pre, keys)?;
     checked_rows(post, keys)?;
-    let intent = prepared.accounts();
+    let intent = view.accounts;
     let a_in = intent.input_mint == intent.pool.token_a_mint;
     let (input_vault, output_vault) = if a_in {
         (intent.pool.token_a_vault, intent.pool.token_b_vault)
@@ -208,7 +208,7 @@ fn cross_check(
             &snapshot.input,
             intent.wallet,
             snapshot.input_amount,
-            false,
+            movements.input_initialized,
         ),
         (
             intent.output_ata,
@@ -252,7 +252,10 @@ fn cross_check(
         }
         before.push(previous);
     }
-    if before[0].checked_sub(movements.input.amount) != Some(snapshot.input_amount)
+    if before[0]
+        .checked_add(movements.native_deposit_units)
+        .and_then(|units| units.checked_sub(movements.input.amount))
+        != Some(snapshot.input_amount)
         || before[1].checked_add(output) != Some(snapshot.output_amount)
         || before[2].checked_add(credited_input) != Some(snapshot.input_vault_amount)
         || before[3].checked_sub(movements.output.amount) != Some(snapshot.output_vault_amount)

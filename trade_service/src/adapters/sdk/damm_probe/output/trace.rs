@@ -7,9 +7,9 @@ use solana_transaction_status_client_types::{
 };
 use spl_token_2022_interface::instruction::TokenInstruction;
 
-use super::super::plan::PreparedDammProbe;
+use super::super::plan::{PreparedDammProbe, ProbeView};
 
-pub(super) struct Transfer {
+pub(in crate::adapters::sdk::damm_probe) struct Transfer {
     pub program: Pubkey,
     pub from: Pubkey,
     pub to: Pubkey,
@@ -19,10 +19,12 @@ pub(super) struct Transfer {
     pub decimals: Option<u8>,
     pub fee: Option<u64>,
 }
-pub(super) struct Transfers {
+pub(in crate::adapters::sdk::damm_probe) struct Transfers {
     pub input: Transfer,
     pub output: Transfer,
     pub output_initialized: bool,
+    pub input_initialized: bool,
+    pub native_deposit_units: u64,
 }
 enum Action {
     Transfer(Transfer),
@@ -60,9 +62,39 @@ pub(super) fn transfers(
     prepared: &PreparedDammProbe,
     groups: &[UiInnerInstructions],
 ) -> Result<Transfers> {
-    let intent = prepared.accounts();
-    let keys = &prepared.transaction().message.account_keys;
-    if groups.len() > 2 {
+    transfers_for(
+        prepared.view(),
+        groups,
+        Layout {
+            input_setup: None,
+            output_setup: 0,
+            swap: 1,
+            native_deposit: false,
+        },
+    )
+}
+
+pub(in crate::adapters::sdk::damm_probe) struct Layout {
+    pub input_setup: Option<u8>,
+    pub output_setup: u8,
+    pub swap: u8,
+    pub native_deposit: bool,
+}
+
+pub(in crate::adapters::sdk::damm_probe) fn transfers_for(
+    view: ProbeView<'_>,
+    groups: &[UiInnerInstructions],
+    layout: Layout,
+) -> Result<Transfers> {
+    let intent = view.accounts;
+    let keys = &view.message.account_keys;
+    if layout.native_deposit
+        && (intent.input_mint != sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT
+            || layout.input_setup.is_none())
+    {
+        bail!("DAMM v2 native deposit trace has inconsistent input roles");
+    }
+    if groups.len() > if layout.input_setup.is_some() { 3 } else { 2 } {
         bail!("DAMM v2 simulation has too many inner instruction groups");
     }
     let a_in = intent.input_mint == intent.pool.token_a_mint;
@@ -86,8 +118,13 @@ pub(super) fn transfers(
     let mut input = None;
     let mut output = None;
     let mut output_initialized = false;
+    let mut input_initialized = false;
     for group in groups {
-        if group.index > 1 || previous.is_some_and(|index| group.index <= index) {
+        if (Some(group.index) != layout.input_setup
+            && group.index != layout.output_setup
+            && group.index != layout.swap)
+            || previous.is_some_and(|index| group.index <= index)
+        {
             bail!("DAMM v2 inner instruction group is duplicate or out of order");
         }
         previous = Some(group.index);
@@ -114,7 +151,7 @@ pub(super) fn transfers(
                 }
             };
             if program != spl_token_interface::ID && program != spl_token_2022_interface::ID {
-                let allowed = if group.index == 0 {
+                let allowed = if group.index != layout.swap {
                     program == solana_system_interface::program::id()
                         || program == spl_associated_token_account_interface::program::id()
                 } else {
@@ -148,13 +185,14 @@ pub(super) fn transfers(
             };
             match (group.index, action) {
                 (
-                    0,
+                    setup,
                     Action::Initialize {
                         account,
                         mint,
                         owner,
                     },
-                ) if program == output_program
+                ) if setup == layout.output_setup
+                    && program == output_program
                     && account == intent.output_ata
                     && mint == intent.output_mint
                     && owner == intent.wallet =>
@@ -164,11 +202,41 @@ pub(super) fn transfers(
                     }
                     output_initialized = true;
                 }
-                (0, Action::Immutable(account))
-                    if program == output_program && account == intent.output_ata => {}
-                (0, Action::Size(mint))
-                    if program == output_program && mint == intent.output_mint => {}
-                (1, Action::Transfer(transfer)) => {
+                (setup, Action::Immutable(account))
+                    if setup == layout.output_setup
+                        && program == output_program
+                        && account == intent.output_ata => {}
+                (setup, Action::Size(mint))
+                    if setup == layout.output_setup
+                        && program == output_program
+                        && mint == intent.output_mint => {}
+                (
+                    setup,
+                    Action::Initialize {
+                        account,
+                        mint,
+                        owner,
+                    },
+                ) if Some(setup) == layout.input_setup
+                    && program == input_program
+                    && account == intent.input_ata
+                    && mint == intent.input_mint
+                    && owner == intent.wallet =>
+                {
+                    if input_initialized {
+                        bail!("DAMM v2 simulation initialized input ATA twice");
+                    }
+                    input_initialized = true;
+                }
+                (setup, Action::Immutable(account))
+                    if Some(setup) == layout.input_setup
+                        && program == input_program
+                        && account == intent.input_ata => {}
+                (setup, Action::Size(mint))
+                    if Some(setup) == layout.input_setup
+                        && program == input_program
+                        && mint == intent.input_mint => {}
+                (swap, Action::Transfer(transfer)) if swap == layout.swap => {
                     if transfer.program == input_program
                         && transfer.from == intent.input_ata
                         && transfer.to == input_vault
@@ -199,6 +267,12 @@ pub(super) fn transfers(
         input: input.context("DAMM v2 simulation omitted the input transfer")?,
         output: output.context("DAMM v2 simulation omitted the output transfer")?,
         output_initialized,
+        input_initialized,
+        native_deposit_units: if layout.native_deposit {
+            intent.amount
+        } else {
+            0
+        },
     })
 }
 

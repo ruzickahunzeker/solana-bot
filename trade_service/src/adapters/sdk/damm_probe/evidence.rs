@@ -16,7 +16,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::plan::PreparedDammProbe;
+use super::plan::{PreparedDammProbe, ProbeAccounts};
 #[cfg(test)]
 use super::simulate_prepared_damm_probe;
 // Reuse the existing generic validators without changing the paused backend's code.
@@ -153,12 +153,39 @@ pub(super) fn check_snapshot(
     values: &[Option<solana_account_decoder::UiAccount>],
     post_simulation: bool,
 ) -> Result<AccountSnapshot> {
+    check_snapshot_for_accounts(
+        prepared.accounts(),
+        slot,
+        values,
+        post_simulation,
+        InputRequirement::Existing,
+    )
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum InputRequirement {
+    Existing,
+    #[cfg(test)]
+    NativeDeposit,
+}
+
+/// Pure account decoding/validation; no RPC, signing or executable route capability.
+pub(super) fn check_snapshot_for_accounts(
+    intent: &ProbeAccounts,
+    slot: u64,
+    values: &[Option<solana_account_decoder::UiAccount>],
+    post_simulation: bool,
+    input_requirement: InputRequirement,
+) -> Result<AccountSnapshot> {
     if values.len() != 8 || slot == 0 {
         bail!("SDK DAMM v2 quote account count or context is invalid");
     }
-    let intent = prepared.accounts();
+    let requires_input = input_requirement == InputRequirement::Existing || post_simulation;
+    if requires_input && values[..7].iter().any(Option::is_none) {
+        bail!("SDK DAMM v2 quote required account is missing");
+    }
     let expected = &intent.pool;
-    let required = values[..7]
+    let required = values[..6]
         .iter()
         .map(|account| {
             account
@@ -269,15 +296,30 @@ pub(super) fn check_snapshot(
             &mint_evidence[0].required,
         )
     };
-    let balance = check_vault(
-        required[6],
-        intent.input_mint,
-        input_program,
-        input_extensions,
-        intent.wallet,
-        "SDK DAMM v2 quote input ATA",
-    )?;
-    if !post_simulation && balance < intent.amount {
+    #[cfg(test)]
+    if input_requirement == InputRequirement::NativeDeposit
+        && (intent.input_mint != WSOL_TOKEN_ACCOUNT || input_program != spl_token_interface::ID)
+    {
+        bail!("DAMM native deposit requires canonical WSOL input");
+    }
+    let balance = values[6]
+        .as_ref()
+        .map(|account| {
+            check_vault(
+                account,
+                intent.input_mint,
+                input_program,
+                input_extensions,
+                intent.wallet,
+                "SDK DAMM v2 quote input ATA",
+            )
+        })
+        .transpose()?
+        .unwrap_or(0);
+    if !post_simulation
+        && input_requirement == InputRequirement::Existing
+        && balance < intent.amount
+    {
         bail!("SDK DAMM v2 quote input ATA balance is insufficient");
     }
     if post_simulation && values[7].is_none() {

@@ -30,6 +30,16 @@
 
 ## 已验收运行
 
+最新原 NP-01 买入 ABI/funding 原型 `48f15b3300e0206132d771bb7807dd1cfb63eef6` /
+[Actions 43725621186](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43725621186)
+终态 success，artifact `14166866773` 下载独立核对：专项七项含 72 组 SDK builder
+指令对照，完整并发 1522（147.65 秒）/串行 1522（258.80 秒）零失败/忽略/过滤，
+51 步骤 exit=0。两套原始测试名集合相同、父批 1515 保留、增量恰为这七项；原源码/
+恢复 Clippy 成功，原始 spans 的 87 个不同字段拒绝逐项匹配。identity/manifest/lock/
+vendor manifest 匹配，发布审计绑定 1034 文件/12,713,954 字节、12 路径；真实 main/
+索引/冻结历史不变。此批仅 cfg(test) 原型、合同/CI 与文档，不等于完整报价取证或
+买入 min_out 保护，后继源码必须独立验收；终态运行不重跑，验收记录不单独触发 CI。
+
 最新 NP-03 原 Shadow writer 生命周期 `796ba5037149db4c3511aff7c3c7ae80f83cbc67` /
 [Actions 43722582055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43722582055)
 终态 success，artifact `14165837512` 下载核对：专项 13/4 共 17，完整并发

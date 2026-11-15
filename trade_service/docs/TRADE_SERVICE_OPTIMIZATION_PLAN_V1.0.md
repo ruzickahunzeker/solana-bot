@@ -283,11 +283,12 @@ Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节�
 此优先级先于继续纯目录整理；Parser 职责、SDK 门面与能力证据在实际买入链路中逐步吸收，
 不为设计对称另造 Parser 框架、Client、registry 或资金权威。
 
-本批先落实上述第 1 步：`adapters/sdk/damm_probe/buy_plan.rs` 为 `cfg(test)` 的
-独立名义类型报价原型，无 RPC、签名或发送入口，不接生产准备。七项合同已受限类型
-检查通过（11 秒/RSS 1,274,444 KiB），实际运行待本批源码 CI，不能套用父批 1515。
-72 组对照拟覆盖两侧方向、WSOL/USDC 及 SOL 别名、目标 Token/Token-2022、sysvar 和
-三个原始整数输入（含 u64::MAX）；使用现有未充值测试身份只调用真实 SDK 指令构建器。
+上述第 1 步的 ABI 原型已在 `48f15b3` / Actions `43725621186` / artifact `14166866773`
+独立验收：七项专项、完整并发 1522（147.65 秒）/串行 1522（258.80 秒），51 步骤
+exit=0；原始测试名增量恰为七项、87 字段拒绝及源身份已核对，不重跑旧任务。
+`adapters/sdk/damm_probe/buy_plan.rs` 仍为 `cfg(test)` 独立名义类型，不接生产准备。
+72 组真实 SDK 指令对照覆盖两侧方向、WSOL/USDC 及 SOL 别名、目标 Token/Token-2022、
+sysvar 和三个原始整数输入（含 u64::MAX）；未充值测试身份只用于 builder 的公钥读取。
 其余合同检查精确充值/sync_native/不关闭原 WSOL、USDC 单位、拒绝边界、上下文绑定、
 与原预持币 probe 的区别，以及 SDK 的滑点字段不会代替 fixed_output 编码。
 
@@ -297,6 +298,21 @@ Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节�
 账户取证、动态顶层指令分组/CPI 净输出与可选同次 pre/post balances，再绑定正式 min_out
 和最终消息/原 owner；不以现有卖出八账户、两顶层指令假设直接接入买入。当前不推广
 新的 production profile、Quote 授权、API 或 SDK/vendor 改动。
+
+后继本批在同一测试原型增加买入只读取证核心，未接普通准备/签名：同一九账户快照
+（含 System 钱包）、有界零签名模拟，复用原纯解码、Token/扩展、CPI 转账与同次 token
+balance 校验，不构造假的账户余额或再建 RPC/cache/账本。原卖出继续用 Existing 输入及
+原 output-setup=0/swap=1；买入原型单独识别 input-setup、output-setup 与 swap 索引。
+本笔 Native SOL 充值与 ATA 初始化由固定消息绑定，租金/fee/钱包支出只能对比同一次
+模拟的 pre/post lamports，净输出按该模拟 epoch 的 Token-2022 费用计算，不跨 RPC bank 相减。
+
+新增十六项 Rust 合同仅受限类型检查通过（10 秒/RSS 1,300,652 KiB），production check
+13 秒/RSS 991,808 KiB、原七组警告保持；实际运行待本批 CI，不借用前批 1522。
+同 bank fee/pre/post native 与 token balances 必须完整；节点不支持时拒绝，不回退常量 1。
+原型目前保守拒绝未同步的 WSOL lamports/amount、预充值但未初始化的 ATA，仍需补充相应
+兼容证据；也不提供最终计算费/小费政策、全消息授权、原 owner 账本或真实节点能力验收。
+后续在这些缺口与最终输入/费用/消息绑定成立后，才把原型提升至正式买入准备，不能直接
+把只读净输出数值塞入 opaque SDK 并称完整授权。API、普通买入 Some(1) 与 SDK/vendor 未改。
 
 ## 4. 稳定类型和后端边界
 

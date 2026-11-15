@@ -6,8 +6,10 @@
 
 ## 当前任务
 
-- 原 NP-01 DAMM 买入 ABI/funding 第一步新增七项 `cfg(test)` 合同及独立报价原型；受限 test check 11 秒/RSS 1,274,444 KiB 通过，fmt/workflow policy 通过，实际运行待本批独立源码 CI，不借用父批 1515。72 组真实 SDK builder 对照、SOL 充值/sync_native 与 USDC 单位/拒绝/上下文/最小输出编码见主计划 3.3；不接生产准备，不声明可信买入报价或 min_out 修复。
-- 当前源码 `796ba5037149db4c3511aff7c3c7ae80f83cbc67` 已验收；[Actions 43722582055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43722582055) 终态 success，artifact `14165837512` 已下载独立核对，不再等待或重跑。发布审计绑定 1032 文件/12,691,338 字节、17 变更路径；SQL helper/recovery 字节、WAL/Full/Normal/连接上限、manifest/lock/vendor 和其他原源码与父快照一致。
+- 原 NP-01 买入只读取证核心本批源码已完成：原 `cfg(test)` 原型增加九账户/零签名模拟与同 bank 资金/租金/fee、CPI 净输出/Token-2022 epoch 证据；共用纯校验提取保留原卖出 Existing/两指令布局。新增十六项仅受限 test check 通过（10 秒/RSS 1,300,652 KiB），production check 13 秒/RSS 991,808 KiB、原七组警告保持；fmt/Python 门禁通过，实际运行待本批源码 CI。
+- 本批不接普通买入准备/签名或声明 min_out 修复；原 Some(1) 仍在。节点缺少同次 fee/pre/post native/token balances 即拒绝；未同步 WSOL、预充值未初始化 ATA、最终消息/费用授权、原 owner 和真实节点仍有门槛，具体见主计划 3.3。不得借用前批 1522；预期专项买入 23、完整 1538、51 步骤不是已验收结果。
+- 上个已验收买入 ABI 基线 `48f15b3300e0206132d771bb7807dd1cfb63eef6`；[Actions 43725621186](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43725621186) 终态 success，artifact `14166866773` 下载独立核对，不再等待或重跑。专项七项、完整并发 1522（147.65 秒）/串行 1522（258.80 秒），原始名称增量恰为这七项；87 字段拒绝、原源码/恢复成功及全部 51 步骤通过。审计绑定 1034 文件/12,713,954 字节、12 路径，manifest/lock/vendor 和真实 main/索引/冻结历史保持。
+- 上个已验收基线 `796ba5037149db4c3511aff7c3c7ae80f83cbc67`；[Actions 43722582055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43722582055) 终态 success，artifact `14165837512` 已下载独立核对，不再等待或重跑。发布审计绑定 1032 文件/12,691,338 字节、17 变更路径；SQL helper/recovery 字节、WAL/Full/Normal/连接上限、manifest/lock/vendor 和其他原源码与父快照一致。
 - 原 NP-03 Shadow writer 关闭/排空本批源码及离线验收完成：同一个原 1024 项 FIFO、pool 和 SQL 调用，保留原 handle、取消安全等待及历史错误退出诊断。新增专项 13/4 共 17；完整并发 1515（147.21 秒）/串行 1515（258.54 秒），原始测试名集合相同，较父批 1498 恰增加这 17 项，全部 50 步骤 exit=0。三层原始诊断独立确认 87 字段拒绝，原源码/恢复检查成功。详见 [Shadow 生命周期](SHADOW_WRITER_LIFECYCLE.md)。
 - 新 `TRADE_SHADOW_DRAIN_TIMEOUT_MS` 默认 5000、范围 1..300000，独立于普通任务预算，Memory/Durable 无队列退出动作；原 health/非阻塞 enqueue/幂等及签名权威不改。未修改线上配置、SDK、服务或生产数据。
 - 前序普通任务生命周期 `c6f2745e2fee315d454b0c7327d1469f6c1fb441` 已验收；[Actions 43718342603](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43718342603) 终态 success，artifact `14163942665` 下载核对，不再等待或重跑。该批审计绑定 1029 文件/12,654,972 字节、25 个变更路径，不套用给当前 Shadow 子项。
@@ -21,6 +23,7 @@
 
 | 范围 | 提交 / CI / artifact | 已核对结果 |
 | --- | --- | --- |
+| 买入 ABI/funding 原型 | `48f15b3` / `43725621186` / `14166866773` | 专项 7（含 72 SDK builder 对照）；完整并发 1522（147.65 秒）/串行 1522（258.80 秒）；87 字段拒绝，51 步骤通过 |
 | 原 Shadow writer 生命周期 | `796ba50` / `43722582055` / `14165837512` | 专项 13/4；完整并发 1515（147.21 秒）/串行 1515（258.54 秒）；87 字段拒绝，50 步骤通过 |
 | 普通后台交易生命周期 | `c6f2745` / `43718342603` / `14163942665` | 专项 12/4/1；完整并发 1498（134.03 秒）/串行 1498（244.95 秒）；87 字段拒绝，48 步骤通过 |
 | 原普通 SOL Quote 双假构建后端合同 | `91b3d94` / `43714527309` / `14162686991` | 专项 8；完整并发 1481（129.52 秒）/串行 1481（236.54 秒）；81 字段拒绝，45 步骤通过 |

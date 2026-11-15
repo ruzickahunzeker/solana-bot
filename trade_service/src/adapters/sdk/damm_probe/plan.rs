@@ -28,6 +28,12 @@ pub(super) struct ProbeAccounts {
     pub amount: u64,
 }
 
+#[derive(Clone, Copy)]
+pub(super) struct ProbeView<'a> {
+    pub message: &'a solana_sdk::message::Message,
+    pub accounts: &'a ProbeAccounts,
+}
+
 impl PreparedDammProbe {
     pub(super) fn transaction(&self) -> &Transaction {
         &self.transaction
@@ -37,6 +43,12 @@ impl PreparedDammProbe {
     }
     pub(super) fn accounts(&self) -> &ProbeAccounts {
         &self.accounts
+    }
+    pub(super) fn view(&self) -> ProbeView<'_> {
+        ProbeView {
+            message: &self.transaction.message,
+            accounts: &self.accounts,
+        }
     }
 }
 
