@@ -1,4 +1,4 @@
-use crate::models::Pool;
+use crate::domain::trade::Pool;
 use crate::state::now_ms;
 use dashmap::DashMap;
 

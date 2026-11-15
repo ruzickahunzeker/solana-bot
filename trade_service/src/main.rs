@@ -93,7 +93,10 @@ pub struct AppState {
     #[cfg(test)]
     pub wallet_repository: Arc<WalletRepository>,
     pub blockhash_cache: Arc<BlockhashCache>,
+    #[cfg(test)]
     pub params: Arc<ParamCache>,
+    pub(crate) param_cache_writer:
+        Arc<dyn crate::application::ports::pool_queries::ParamCacheWriter>,
     pub trades: Arc<TradeStore>,
     pub idempotency: Arc<IdempotencyStore>,
     pub persistence: Arc<TradePersistence>,
@@ -292,7 +295,9 @@ async fn main() -> anyhow::Result<()> {
         #[cfg(test)]
         wallet_repository: wallet_repository.clone(),
         blockhash_cache,
-        params,
+        #[cfg(test)]
+        params: params.clone(),
+        param_cache_writer: params,
         trades: Arc::new(TradeStore::default()),
         idempotency: Arc::new(IdempotencyStore::default()),
         persistence,

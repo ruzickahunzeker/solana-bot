@@ -92,7 +92,11 @@ async fn internal_command_and_both_adapter_mappings_preserve_normalized_values()
         let request = request(&case["patch"]);
         let n = validate_trade(&request, &config).unwrap();
         let command = request
-            .to_command("resolved-wallet".into(), &n, &config)
+            .to_command(
+                "resolved-wallet".into(),
+                &n,
+                config.trade_command_defaults(),
+            )
             .unwrap();
         assert_eq!(command.wallet_id, "resolved-wallet");
         assert_eq!(command.idempotency_key, " literal-key ");
@@ -195,7 +199,9 @@ async fn resolved_mode_keeps_wire_tristate_and_durable_hashes_distinct() {
             let mut request = request(&json!({}));
             request.simulate = requested;
             let n = validate_trade(&request, &config).unwrap();
-            let command = request.to_command("wallet".into(), &n, &config).unwrap();
+            let command = request
+                .to_command("wallet".into(), &n, config.trade_command_defaults())
+                .unwrap();
             assert_eq!(
                 command.execution.mode.simulate(),
                 requested.unwrap_or(default)
@@ -220,7 +226,9 @@ async fn sdk_tip_and_pumpapi_priority_fee_defaults_stay_independent() {
         let mut request = request(&json!({"execution_method":"pumpapi"}));
         request.tip_sol = tip;
         let n = validate_trade(&request, &config).unwrap();
-        let command = request.to_command("wallet".into(), &n, &config).unwrap();
+        let command = request
+            .to_command("wallet".into(), &n, config.trade_command_defaults())
+            .unwrap();
         assert_eq!(
             command.execution.tip_sol.to_bits(),
             tip.unwrap_or(0.0001).to_bits()
@@ -230,6 +238,28 @@ async fn sdk_tip_and_pumpapi_priority_fee_defaults_stay_independent() {
             tip.unwrap_or(0.0002).to_bits()
         );
     }
+}
+
+#[tokio::test]
+async fn command_defaults_projection_is_a_value_snapshot_without_unrelated_config() {
+    let state = crate::http_contract_tests::state().await;
+    let mut config = (*state.config).clone();
+    config.enable_simulate = true;
+    config.pumpapi.default_priority_fee_sol = -0.0;
+    let snapshot = config.trade_command_defaults();
+    config.enable_simulate = false;
+    config.pumpapi.default_priority_fee_sol = f64::NAN;
+    config.default_tip_sol = 42.0;
+    config.rpc_urls.clear();
+    config.local_trade_api_token = "unrelated-test-token".into();
+    assert!(snapshot.default_simulate);
+    assert_eq!(
+        snapshot.pumpapi_priority_fee_sol.to_bits(),
+        (-0.0f64).to_bits()
+    );
+    let next = config.trade_command_defaults();
+    assert!(!next.default_simulate);
+    assert_eq!(next.pumpapi_priority_fee_sol.to_bits(), f64::NAN.to_bits());
 }
 
 #[tokio::test]
@@ -288,7 +318,7 @@ async fn command_mapping_rejects_missing_normalized_amount_without_panicking() {
         n.amount_lamports = None;
         n.sell_percent = None;
         assert!(request
-            .to_command("wallet".into(), &n, &state.config)
+            .to_command("wallet".into(), &n, state.config.trade_command_defaults())
             .is_err());
     }
 }
@@ -324,7 +354,11 @@ async fn project_validated_addresses_stay_distinct_through_command_and_sdk_mappi
             (mint, quote, Some(pool), Some(hop))
         );
         let command = request
-            .to_command("wallet".into(), &normalized, &config)
+            .to_command(
+                "wallet".into(),
+                &normalized,
+                config.trade_command_defaults(),
+            )
             .unwrap();
         assert_eq!(
             (
@@ -409,7 +443,11 @@ async fn project_validated_result_preserves_simulate_tristate_and_exact_quote_un
         assert_eq!(normalized.amount_lamports, Some(u64::MAX));
         assert_eq!(normalized.quote_mint.to_string(), USDC_MINT);
         let command = request
-            .to_command("wallet".into(), &normalized, &state.config)
+            .to_command(
+                "wallet".into(),
+                &normalized,
+                state.config.trade_command_defaults(),
+            )
             .unwrap();
         assert!(
             matches!(command.amount, TradeAmount::BuyQuote {mint, units} if mint == normalized.quote_mint && units == u64::MAX)
@@ -432,16 +470,24 @@ async fn legacy_hash_omits_sol_aggregator_vs_direct_quote_input_kind() {
     assert!(sol_n.aggregator_sol);
     assert!(!quote_n.aggregator_sol);
     assert!(matches!(
-        sol.to_command("wallet".into(), &sol_n, &state.config)
-            .unwrap()
-            .amount,
+        sol.to_command(
+            "wallet".into(),
+            &sol_n,
+            state.config.trade_command_defaults()
+        )
+        .unwrap()
+        .amount,
         TradeAmount::BuySol {
             lamports: 1_000_000
         }
     ));
     assert!(matches!(
         quote
-            .to_command("wallet".into(), &quote_n, &state.config)
+            .to_command(
+                "wallet".into(),
+                &quote_n,
+                state.config.trade_command_defaults()
+            )
             .unwrap()
             .amount,
         TradeAmount::BuyQuote {

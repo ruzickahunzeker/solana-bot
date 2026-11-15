@@ -203,7 +203,11 @@ mod tests {
             let request: TradeRequest = serde_json::from_value(value).unwrap();
             let normalized = crate::validation::validate_trade(&request, &config).unwrap();
             let command = request
-                .to_command("resolved-wallet".into(), &normalized, &config)
+                .to_command(
+                    "resolved-wallet".into(),
+                    &normalized,
+                    config.trade_command_defaults(),
+                )
                 .unwrap();
             let payload = AdmissionPayloadV1::new(
                 "resolved-wallet",

@@ -69,7 +69,11 @@ pub(crate) async fn admit_request_for_pubkey(
 ) -> Fixture {
     let normalized = crate::validation::validate_trade(&request, &state.config).unwrap();
     let command = request
-        .to_command("fixture-wallet".into(), &normalized, &state.config)
+        .to_command(
+            "fixture-wallet".into(),
+            &normalized,
+            state.config.trade_command_defaults(),
+        )
         .unwrap();
     let payload =
         AdmissionPayloadV1::new("fixture-wallet", &pubkey, &request, &normalized, &command);

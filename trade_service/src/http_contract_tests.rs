@@ -233,6 +233,7 @@ pub(crate) async fn state() -> AppState {
         wallet_repository.clone(),
         wallets.clone(),
     );
+    let params = Arc::new(crate::param_cache::ParamCache::default());
     AppState {
         vanity_tasks: Arc::new(crate::application::vanity::VanityService::new(wallet_ops)),
         wallet_management: Arc::new(
@@ -278,7 +279,8 @@ pub(crate) async fn state() -> AppState {
         wallet_repository,
         persistence,
         blockhash_cache: Arc::new(BlockhashCache::default()),
-        params: Arc::default(),
+        params: params.clone(),
+        param_cache_writer: params,
         trades: Arc::default(),
         idempotency: Arc::default(),
         aggregator_quotes,
@@ -1041,7 +1043,11 @@ async fn executor_checks_policy_even_when_http_is_bypassed() {
         .trades
         .create(&request, "fixture-wallet".into(), "fixture-pubkey".into());
     let command = request
-        .to_command("fixture-wallet".into(), &normalized, &state.config)
+        .to_command(
+            "fixture-wallet".into(),
+            &normalized,
+            state.config.trade_command_defaults(),
+        )
         .unwrap();
     crate::executor::execute_trade(state.clone(), record.request_id.clone(), command).await;
     let blocked = state.trades.get(&record.request_id).unwrap();

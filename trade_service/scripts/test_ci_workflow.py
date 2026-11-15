@@ -63,6 +63,8 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("step observation-migration cargo test --locked --offline ordinary_observation_005_schema_migrates_once_preserving_signed_rows_and_parent -- --test-threads=1", script)
         self.assertIn("step sdk-selected-observer", script)
         self.assertIn("step sdk-recovery", script)
+        self.assertIn("step command-defaults cargo test --locked --offline command_defaults -- --test-threads=2", script)
+        self.assertIn("step param-cache-port cargo test --locked --offline param_cache_port -- --test-threads=2", script)
         self.assertIn("step sdk-scan", script)
         self.assertIn("step sqlite-sdk-scan python3 scripts/test_sdk_observation_index.py", script)
         self.assertIn("step damm-output-evidence", script)

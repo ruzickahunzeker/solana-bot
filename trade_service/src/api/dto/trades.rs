@@ -4,8 +4,8 @@ use crate::{
     application::trade_command::{CommandContext, TradeCommand},
     application::trade_input::TradeInput,
     application::trade_record::TradeRecordV1 as TradeRecord,
+    application::trade_settings::TradeCommandDefaults,
     application::validated_trade::ValidatedTrade as NormalizedTrade,
-    config::Config,
     domain::trade::{ExecutionMethod, MevProvider, Pool, SettlementAsset, Side, TradeStatus},
 };
 
@@ -75,7 +75,7 @@ impl TradeRequest {
         &self,
         wallet_id: String,
         value: &NormalizedTrade,
-        config: &Config,
+        defaults: TradeCommandDefaults,
     ) -> anyhow::Result<TradeCommand> {
         TradeCommand::from_validated(
             CommandContext {
@@ -83,11 +83,9 @@ impl TradeRequest {
                 idempotency_key: &self.idempotency_key,
                 side: self.side,
                 pool: self.pool,
-                default_simulate: config.enable_simulate,
+                default_simulate: defaults.default_simulate,
                 // PumpAPI has always used a different default than the SDK tip.
-                pumpapi_priority_fee_sol: self
-                    .tip_sol
-                    .unwrap_or(config.pumpapi.default_priority_fee_sol),
+                pumpapi_priority_fee_sol: self.tip_sol.unwrap_or(defaults.pumpapi_priority_fee_sol),
             },
             value,
         )
@@ -240,3 +238,6 @@ mod tests {
         assert!(view.simulate.is_none());
     }
 }
+
+#[cfg(test)]
+mod command_defaults_tests;

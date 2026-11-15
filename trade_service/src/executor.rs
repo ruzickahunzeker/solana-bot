@@ -9,8 +9,13 @@ use crate::application::ports::ordinary_sol_buy::{JournaledSolBuyOutcome, SolBuy
 use crate::application::trade_execution::{classify_result, TradeExecutionResult as ExecuteResult};
 use crate::application::trade_record::TradeRecordV1 as TradeRecord;
 use crate::application::{trade_admission::AdmittedTrade, trade_command::TradeCommand};
-use crate::domain::trade::{ExecutionMethod, TradeStatus};
-use crate::state::{cache_key, describe_trade};
+use crate::domain::{
+    route::PoolRouteHint,
+    trade::{ExecutionMethod, TradeStatus},
+};
+#[cfg(test)]
+use crate::state::cache_key;
+use crate::state::describe_trade;
 use crate::AppState;
 
 #[cfg(test)]
@@ -377,10 +382,12 @@ fn after_trade(
     command: &TradeCommand,
     record: Option<TradeRecord>,
 ) {
-    let mint = command.route.mint.to_string();
-    let pool_id = command.route.pool_id.map(|v| v.to_string());
-    let key = cache_key(command.route.pool, &mint, pool_id.as_deref());
-    state.params.insert(key, command.route.pool, mint, pool_id);
+    state.param_cache_writer.record(&PoolRouteHint {
+        pool: command.route.pool,
+        mint: command.route.mint,
+        quote_mint: command.route.quote_mint,
+        pool_id: command.route.pool_id,
+    });
 
     if let Some(record) = record {
         info!(

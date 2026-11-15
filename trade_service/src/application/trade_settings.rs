@@ -7,3 +7,10 @@ pub(crate) struct TradeValidationSettings {
     pub via_sol_enabled: bool,
     pub via_sol_max_buy_sol: f64,
 }
+
+/// Only defaults needed after validation to construct the internal command.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct TradeCommandDefaults {
+    pub default_simulate: bool,
+    pub pumpapi_priority_fee_sol: f64,
+}

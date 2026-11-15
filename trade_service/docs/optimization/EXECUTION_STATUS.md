@@ -4,6 +4,26 @@
 
 ## 当前续作检查点（覆盖下方历史状态）
 
+最新完整验收 `6c50aca628313a8683b84800adbba1b72e751cd3` / Actions `43690435964`
+已终态 success，artifact `14152368482` 下载核对：完整并发 1437（128.56 秒）/串行 1437
+（235.46 秒）零失败/忽略/过滤，原五组生产警告。sdk-original-runtime 5、sdk-scan 16、
+observation-migration 1、HTTP 200、参数 3 与全部步骤 exit=0，manifest/lock/vendor 身份匹配。
+原 C3d2 旧夹具问题已验证修复，不重跑旧失败任务；当前真实 main/索引保持不变。
+
+等待该 CI 时继续 NP-03：普通 DTO 的命令构造只接两项项目默认值快照，不再导入 Config；
+原校验/政策/保留/序列化顺序不变，原合同仅改调用签名不改期望。四项新合同仅类型检查，
+尚未在上述快照中。test check `20261115T073633Z-140454` 35 秒/RSS 2,177,116 KiB，
+bin check `20261115T073740Z-140817` 13 秒/RSS 979,788 KiB 均 exit=0，原五组生产警告。
+后续单独 `command-defaults` 专项及完整回归验收，不抢先触发重复 CI；见 `COMMAND_DEFAULTS_BOUNDARY.md`。
+
+接续 NP-03 参数缓存：after_trade 复用已有 ParamCacheWriter，PoolQueryService 与 executor
+仍持同一原缓存，生产 AppState 不再有具体 params 字段（仅测试保留），原键/写入时机不变。
+新增两项 actual executor/原 fake backend/三个存储模式及服务释放合同，仅类型检查。
+最终 test check `20261115T074510Z-143335` 9 秒/RSS 1,229,316 KiB、bin check
+`20261115T074419Z-143028` 5 秒/RSS 701,196 KiB 通过；生产七组警告（原五组加既有
+缓存字段/get 未读两组），不抑制、不假读取。后批增加 param-cache-port 专项；尚未在当前
+CI 快照，详见 `PARAM_CACHE_RESOURCE_BOUNDARY.md`。没有生产操作或 SDK/依赖变化。
+
 C3d2 `57c75c5` / Actions `43688840398` 已终态 failure，artifact `14152165576`
 已下载核对：全部前置步骤通过，sdk-scan 16 通过；完整并发 1431/1（128.17 秒），串行未运行。
 唯一失败为旧 005 schema 测试未删除新 010 索引就删除其引用列。本次只改测试基线重建与对应
@@ -14,7 +34,7 @@ C3e 新增实际 execute_original_damm 的完整准备/模拟/签名账本/固�
 隔离 SQLite、回环 HTTP 和内存 RpcSender。初始七个类型错误已修复，受限 check 通过：
 `target/dev-checks/20261115T072730Z-136412`，36 秒/RSS 2,154,948 KiB，exit=0。
 没有本地链接/执行 Rust 测试；新增 observation-migration/sdk-original-runtime CI 专项，
-保留完整并发/串行。新串联尚未运行，不冒用已通过的父批测试，详见 `SDK_ORIGINAL_RUNTIME_INTEGRATION.md`。
+保留完整并发/串行。新串联现已由上方实际 CI 验收，不冒用父批结果，详见 `SDK_ORIGINAL_RUNTIME_INTEGRATION.md`。
 
 下方 in_progress 是当时发布记录，已终态任务不再等待或重跑。当前目标 active，所有 SDK/
 部署/生产数据/真实广播边界及 PumpAPI 暂停不变。

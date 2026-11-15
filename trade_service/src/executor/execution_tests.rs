@@ -17,6 +17,7 @@ use std::sync::{
     Arc, Mutex,
 };
 
+mod param_cache_tests;
 mod sol_buy_tests;
 
 #[derive(Clone)]
@@ -173,7 +174,11 @@ async fn fixture(
     .unwrap();
     let normalized = validate_trade(&request, &state.config).unwrap();
     let command = request
-        .to_command("fixture-wallet".into(), &normalized, &state.config)
+        .to_command(
+            "fixture-wallet".into(),
+            &normalized,
+            state.config.trade_command_defaults(),
+        )
         .unwrap();
     if mode != TradePersistenceMode::Memory {
         state.persistence = Arc::new(

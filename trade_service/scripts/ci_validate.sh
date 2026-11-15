@@ -91,6 +91,8 @@ PY
         step sdk-original-runtime cargo test --locked --offline sdk_original_runtime -- --test-threads=2
         step sdk-selected-observer cargo test --locked --offline sdk_selected_observer -- --test-threads=2
         step parameter-contract cargo test --locked --offline ordinary_param_contract_tests -- --test-threads=2
+        step command-defaults cargo test --locked --offline command_defaults -- --test-threads=2
+        step param-cache-port cargo test --locked --offline param_cache_port -- --test-threads=2
         step http-contract cargo test --locked --offline http_contract_tests -- --test-threads=2
         step damm-output-evidence cargo test --locked --offline damm_output_evidence -- --test-threads=2
         step damm-preview-context cargo test --locked --offline damm_unsigned_simulation -- --test-threads=2

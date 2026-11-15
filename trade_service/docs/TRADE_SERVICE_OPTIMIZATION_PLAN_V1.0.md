@@ -2,10 +2,14 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 目标 active，PumpAPI 开发暂停。当前 C3d2 已接 SDK 010 严格索引/同快照有界归并扫描及原 worker 源码，16 项新增 Rust 仅类型检查、独立 DDL 六项通过，完整 CI 待验，未部署/启用线上扫描。最近已验收 C3d1 `87f8677` / Actions `43686886493` / artifact `14150979478` 下载核对，完整并发 1416（129.44 秒）/串行 1416（229.33 秒）通过，不覆盖本批扫描。其他方向/协议/模式、资源/升级/发布门槛继续，SDK 固定 6.0.2，不操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[SDK 扫描](optimization/SDK_PENDING_OBSERVATION_SCAN.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 目标 active，PumpAPI 开发暂停。C3d2 扫描/历史迁移夹具修复及 C3e 完整准备串联已在 `6c50aca` / Actions `43690435964` 验收，artifact `14152368482` 核对；完整并发/串行各 1437 通过。NP-03 命令默认值/参数缓存 port 收口另有六项新增合同，仅受限类型检查，不在上述快照。SDK 固定 6.0.2，不部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[SDK 扫描](optimization/SDK_PENDING_OBSERVATION_SCAN.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
-当前 C3d2 在已验收的 C3d1 恢复核心上接有界后台扫描，16 项新 Rust 待 CI，不把父提交 1416 当本批验收。原聚合查询/索引/Quote scope 保持，SDK 与聚合共享一个游标、批量上限、runtime 与默认关闭开关；不恢复 owner、重签/重发或静默修复索引。未部署、未启用线上任务；其他 SDK/模式仍 legacy，真实准备 RPC/供应商/发布未验收。保持原参数/hash/JSON，不升级/部署或接触生产数据。
+当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
+不将其扩大为其他方向/协议/provider 或生产验收。
+原聚合查询/索引/Quote scope 保持，SDK 与聚合共享一个游标、批量上限、runtime 与默认关闭开关；
+不恢复 owner、重签/重发或静默修复索引。未部署或启用线上任务，其他 SDK/模式仍 legacy，
+真实供应商/生产恢复/发布未验收。NP-03 只复用原资源/两项默认值，不改变 API/校验/hash/JSON。
 
 ## 1. 范围与目标
 
@@ -41,9 +45,9 @@
 
 | 顺序 | 任务 | 交付与边界 |
 | --- | --- | --- |
-| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行及 C3d1 显式恢复/finality/迟到 receipt 保护已验收，完整并发/串行各 1416。C3d2 扫描专项 16/独立 DDL 六项通过，完整并发 1431/1，串行未跑；旧 005 测试未清理 010 索引，现仅修测试基线，待 CI。C3e 完整准备/模拟/签名账本/固定发送串联新增五入口，仅类型检查，详见 optimization/SDK_ORIGINAL_RUNTIME_INTEGRATION.md。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
+| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
-| NP-03 | 基础设施与依赖方向收口 | TS-09-A 四个冗余生产字段仅测试保留；RPC-01A 配置去重，B1/B2/C1/C2/A3c 的刷新/观测/readiness/两个查询余额/准备余额共六类接 main 同一 runtime、独立容量/间隔与共享冷却。准备 reader 只持公开地址/当前 URL/runtime，raw 固定三地址，真实 HTTP 无 SDK 内部重试，流式 cap/最小 slot/时效/取消有测试。原 SDK reader/17 项用例仅 oracle，必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取仍未全覆盖，资源/接受/index/journal/cache 与依赖检查继续，不新增平行框架 |
+| NP-03 | 基础设施与依赖方向收口 | TS-09-A 四个冗余生产字段仅测试保留；六类读取接 main 同一 runtime、独立容量/间隔与共享冷却。后续 DTO 命令仅接两项默认值，普通 executor 复用 ParamCacheWriter，具体 params 字段仅测试保留，原同一缓存/键/写入时机保持；六项新合同仅 test/bin check，完整运行待后批，见 COMMAND_DEFAULTS_BOUNDARY.md/PARAM_CACHE_RESOURCE_BOUNDARY.md。原 SDK reader oracle/必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、Config/接受/index/journal/cache/依赖与 bootstrap 仍待续 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 

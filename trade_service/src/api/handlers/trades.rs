@@ -106,7 +106,11 @@ async fn accept_trade_for_wallet(
     validate_execution_policy(&normalized, &state.config)
         .map_err(|err| (StatusCode::FORBIDDEN, err.to_string()))?;
     let command = request
-        .to_command(wallet_id.clone(), &normalized, &state.config)
+        .to_command(
+            wallet_id.clone(),
+            &normalized,
+            state.config.trade_command_defaults(),
+        )
         .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))?;
     let payload =
         AdmissionPayloadV1::new(&wallet_id, &wallet_pubkey, &request, &normalized, &command);

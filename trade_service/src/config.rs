@@ -129,6 +129,15 @@ pub struct StonkFunViaSolConfig {
 }
 
 impl Config {
+    pub(crate) fn trade_command_defaults(
+        &self,
+    ) -> crate::application::trade_settings::TradeCommandDefaults {
+        crate::application::trade_settings::TradeCommandDefaults {
+            default_simulate: self.enable_simulate,
+            pumpapi_priority_fee_sol: self.pumpapi.default_priority_fee_sol,
+        }
+    }
+
     pub fn from_env() -> anyhow::Result<Self> {
         let rpc_urls = rpc::from_env()?;
         let default_wallet_id =

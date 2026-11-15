@@ -30,6 +30,14 @@
 
 ## 已验收运行
 
+最新完整验收快照 `6c50aca628313a8683b84800adbba1b72e751cd3` /
+[Actions 43690435964](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43690435964)
+已终态 success，artifact `14152368482` 下载核对，identity/manifest/lock/vendor 身份匹配，
+全部 steps exit=0。完整并发 1437（128.56 秒）/串行 1437（235.46 秒）零失败/忽略/过滤，
+runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 通过。990 文件/12,383,832 字节审计通过，
+真实 main/索引不变；后续默认值/缓存 port 六项不在本批。下方 43688840398 为历史失败，
+其夹具已由本后继修复验收，旧终态任务不重跑。
+
 最近终态 C3d2 `57c75c5f39b59a55685dbc4fefcc7b906ab246d8` /
 [Actions 43688840398](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43688840398)
 已终态 failure；artifact `14152165576` 已下载核对，sqlite-sdk-scan、sdk-scan 16 与全部
