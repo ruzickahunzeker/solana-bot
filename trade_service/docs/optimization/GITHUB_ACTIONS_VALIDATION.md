@@ -28,7 +28,22 @@
 云端是独立冷构建环境，关闭依赖的 debug/incremental 以控制空间，与本机复用缓存的规则不同；
 不改变 SDK 版本或 release 行为。新旧参数/消息/合同必须真正运行通过，不能因构建地点变化更新 oracle。
 
-## 当前证据
+## 已验收运行
+
+- [Actions 43667516925](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43667516925)，
+  commit `35e436296cebcc2edda99bc7faa541f64217c758`，全部 job 步骤成功，约 15 分钟。
+- 已下载并核对 artifact `14143511883`：身份、白名单路径和所有 results.tsv 行 exit=0；
+  完整两线程 1321 / 123.08 秒、串行 1321 / 221.71 秒，均零失败/忽略/过滤。
+- 专项：SDK candidate 15、prepared 11、参数 3、HTTP 200、DAMM candidate 43、probe 48、lanes 19。
+  Rust all-target 类型检查 238 秒，test 冷构建 226 秒；没有 skip 完整套件。
+- policy 六项、锁定依赖四项、SQLite DDL 六项、shell runner、实际 namespace probe 均通过。
+  七组生产警告原样保留，其中两组说明 prepared helper/方法仍未接正式 SDK，不伪称接线完成。
+- 运行只用了源码/公开 fixtures；manifest/lock/vendor 未被 CI 修改，没有 release、部署或生产网络访问。
+  本机锁文件与原 release 哈希也保持不变。
+- NP-05-A 后续新增的只读 SDK 来源 checker/八项负例与 policy 第七项已在本机通过，待下一 CI。
+  它们未改 Rust 源码、manifest/lock 或 vendor，不把本机 Python 结果冒称为本轮 CI 已执行。
+
+## 历史诊断与设施
 
 - 第三轮 `452dce7` / [Actions 43666935608](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43666935608)
   进入 Rust 类型检查，发现 Cargo vendor 未包含 Anchor 宏读取的 workspace 级 Jupiter IDL。
@@ -44,5 +59,5 @@
 - 官方 checkout/upload-artifact 的固定提交已通过 GitHub API 核实。
 - 本地 workflow policy 五项通过；临时 namespace probe 确认仅回环、无外部路由。
 - 本机没有运行大 Rust 测试编译；完整验收以实际 Actions run/commit 与结果为准。
-- 当前文件记录的是验证设施与发布规则，不是 CI 已通过。CI 若失败，应修正对应源码并重跑同一验证链，
+- 上面的已验收运行才是当前完整结果，前三次失败是历史诊断。后续 CI 若失败，应修正对应源码并重跑同一验证链，
   不删断言、不开放外网或 Live、不自动合并/部署。

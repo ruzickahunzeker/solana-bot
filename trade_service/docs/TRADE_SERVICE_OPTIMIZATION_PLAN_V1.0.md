@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，PumpAPI 交易对接开发仍暂停。最新 C3a 已扩展原 claims 操作分型、008 兼容事务迁移与完整命令/钱包/字面键的 owner 绑定；新增 15，完整并发/串行各 1304、HTTP 200、专项/check/fmt/diff 通过，仍五组原警告。原 API/校验/金额/hash/JSON 保持，008 只在隔离库验证、未部署或操作生产。正式 SDK 仍 opaque，SDK 类型只开放 Durable Live 直接 DAMM 卖出的内部占用，不能进入旧聚合 quote journal；下一 C3b 独立 SDK metadata/完整授权/CAS/readback，再接原 owner 的受控签名/已落盘原字节发送，不伪造 Quote 或恢复 owner。完整方向/协议/backend/mode 等门槛继续。最新见 [执行状态](optimization/EXECUTION_STATUS.md) 与 [SDK 操作分型](optimization/ORDINARY_SDK_CLAIM_OPERATIONS.md)；[B4c1 产物/模拟](optimization/DAMM_UNSIGNED_CANDIDATE_AND_SIMULATION.md)、[B4b](optimization/DAMM_FINAL_CANDIDATE_GUARD.md)、[入口审查](optimization/ORDINARY_UNSIGNED_BUILD_AUDIT.md)、[准备预算](optimization/PREPARATION_SHARED_RPC_RUNTIME.md) 和 [恢复前总体审查](../../docs/optimization/PROJECT_REVIEW_2026-11-14.md) 保留历史证据。
+- 状态：2026-11-15 持续目标 active，PumpAPI 交易开发仍暂停。C3b1 独立 SDK metadata/prepared/CAS/readback 的源码和隔离测试已验收；GitHub Actions `43667516925` / `35e4362` 完整并发/串行各 1321、HTTP 200、参数及专项通过，七组生产警告保留。正式 SDK 仍 opaque，prepared 读写尚未接正式编排，不代表完整独立授权/签名账本或可上线。NP-05-A 已核对固定 SDK 6.0.2 上游来源及既有 DBC 补丁，隔离重放完全一致，未改 vendor/依赖或升级；上游无签名及实际升级/协议演练仍是独立门槛。后续继续独立最终证据授权、原 owner 下签名账本/受控签名/原字节发送，以及其余方向/backend/mode/资源/协议验收。最新见 [执行状态](optimization/EXECUTION_STATUS.md)、[C3b1](optimization/SDK_CANDIDATE_PREPARATION.md)、[来源账本](optimization/SDK_PROVENANCE.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 ## 1. 范围与目标
@@ -43,9 +43,9 @@
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
 | NP-03 | 基础设施与依赖方向收口 | TS-09-A 四个冗余生产字段仅测试保留；RPC-01A 配置去重，B1/B2/C1/C2/A3c 的刷新/观测/readiness/两个查询余额/准备余额共六类接 main 同一 runtime、独立容量/间隔与共享冷却。准备 reader 只持公开地址/当前 URL/runtime，raw 固定三地址，真实 HTTP 无 SDK 内部重试，流式 cap/最小 slot/时效/取消有测试。原 SDK reader/17 项用例仅 oracle，必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取仍未全覆盖，资源/接受/index/journal/cache 与依赖检查继续，不新增平行框架 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |
-| NP-05 | SDK 来源与后续升级演练准备 | 补版本/补丁证据及协议回归矩阵；缺可信来源时记录缺口，不盲目覆盖 vendor。实际升级、release 与部署仍另行授权 |
+| NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 
-PumpAPI 缺口仍计入完整优化与 Live 准入门槛；完成上述非 PumpAPI 队列不等于整体完成。后续实施仍限定 Trade Service，不触碰生产钱包/数据库，不签名广播、不重启服务、不提交推送。
+PumpAPI 缺口仍计入完整优化与 Live 准入门槛；完成上述非 PumpAPI 队列不等于整体完成。后续实施仍限定 Trade Service，不触碰生产钱包/数据库，不签名广播、不重启服务。默认不提交推送；2026-11-15 用户另外授权仅源码/公开测试数据的 GitHub Actions 与设备登录，允许独立 `ci/trade-service-validation-*` 验证分支，不合并、改写或强推远端 main，不发布凭据/运行数据或部署，见 `optimization/GITHUB_ACTIONS_VALIDATION.md`。
 
 ## 2. 本地现状与已知风险
 

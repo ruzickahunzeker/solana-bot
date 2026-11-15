@@ -1,7 +1,7 @@
-# C3b1 SDK 候选元数据与 Prepared 草稿
+# C3b1 SDK 候选元数据与 Prepared 源码验收
 
 日期：2026-11-15。持续目标已恢复 active；接续 C3a，不重复操作分型。
-这是当前未验收源码检查点，不是 SDK 已有完整授权/广播前账本或允许上线的声明。
+当前源码/离线验收已通过，不是 SDK 已有完整授权/广播前账本或允许上线的声明。
 不升级 SDK、不部署/重启、不访问生产钱包或数据库、不签名广播。PumpAPI 开发继续暂停。
 
 ## 源码与接线
@@ -21,14 +21,16 @@
   事务内重新校验及精确读回，另有只读 `read_sdk_candidate`。旧聚合 journal 和恢复扫描不扩展为 SDK。
   prepared 元数据不产生 signing、signed、发送许可或自动重试；Unknown 读回不恢复执行身份。
 
-候选构建已使用元数据，但 prepared 写入/读回尚未接正式 SDK 编排。不能把局部实现或类型检查
-当作上述全部行为已由运行测试证实，更不能通过 fake 调用消除未使用告警后宣称接线完成。
+候选构建已使用元数据，prepared 写入/读回的隔离运行测试已通过，但尚未接正式 SDK 编排。
+不能把这些局部证据当成正式签名授权，更不能通过 fake 调用消除未使用告警后宣称接线完成。
 
 ## 已验证证据
 
 | 检查 | 结果与范围 |
 | --- | --- |
-| SQLite DDL 检查 | `python3 scripts/test_sdk_candidate_migration.py`：6 项通过，SQLite 3.37.2，约 0.22 秒；仅内存/临时文件库 |
+| 云端完整 Rust 验收 | `35e4362` / Actions `43667516925`：完整两线程 1321（123.08 秒）及串行 1321（221.71 秒），零失败/忽略/过滤；无生产数据 |
+| 云端专项 | SDK prepared 11、SDK candidate 15、DAMM candidate 43、DAMM probe 48、HTTP 200、参数 3、lanes 19 全部通过；新增 17 项已实际运行 |
+| SQLite DDL 检查 | `python3 scripts/test_sdk_candidate_migration.py`：6 项通过；仅内存/临时文件库，CI 中也通过 |
 | Rust test 配置类型检查 | `bash scripts/dev_check.sh check`：通过，约 15 秒，最大 RSS 1,169,156 KiB；没有链接/运行测试 |
 | 正式 bin 类型检查 | `bash scripts/dev_check.sh bin-check`：通过，约 11 秒，最大 RSS 972,892 KiB；没有生成/运行 release |
 | 验证入口 shell 测试 | 成功、失败、超时、重复锁、状态/旧 running 标记与 bin-check 路径通过 |
@@ -45,17 +47,16 @@ nullable 默认 NULL、重复执行、marker 写失败时 ALTER 回滚、未标�
 
 ## 尚未通过的验收
 
-- 相对 C3a 草稿新增的 17 项 Rust 用例仅通过类型检查，未运行；其中本轮补三项独立行类型检查、
-  非规范/缺字段记录拒绝和 prepared 文件重开。不能将其计入“通过”的测试数量。
-- 旧 576/384 指令与参数 oracle、候选/模拟/HTTP 合同、SQLx 故障与竞争、完整并发/串行回归未在
-  当前源码运行。旧 C3a 的 1304 是历史证据，不能复用为 C3b 通过。
-- 本机 3.6 GiB/无 Swap，已有两次受控内存限制失败与一次超时。未再次链接大测试目标；
-  更大构建环境待确认。资源约束不授权跳过测试或放宽交易准入。
+- 当前完整源码已在仅回环/env-i/offline 环境运行，详见 `GITHUB_ACTIONS_VALIDATION.md`；
+  GitHub-hosted runner 不是交易服务器、真实 RPC 或断电恢复环境，不能替代生产验收。
+- prepared 写入/读回尚未接正式 SDK，完整独立授权、signing/signed/receipt CAS、受控签名和
+  原字节发送仍未完成。现有七组警告未抑制，其中两组正说明这项接线仍待继续。
+- 本机 3.6 GiB/无 Swap 不再重复大链接；后续里程碑沿用已授权的云端验证，不反复询问环境。
 - 009 的生产规模/锁等待/临时空间、备份恢复、旧二进制兼容和调用方验收均未完成。
 
 ## 继续顺序
 
-1. 在合适环境运行当前 Rust 专项/旧 oracle/完整回归，先修正失败，再完成此检查点验收。
+1. C3b1 源码及离线回归已验收；保留 run/commit 与原证据，不重复实现本子项。
 2. 补最终原池/资产/Token 扩展/费用版本/整数预算/权限及有效期的独立证据；元数据与重编译结果
    不能代替它们。规范 JSON 也不认证 metadata 数值未被另行修改，读回不证明快照仍新鲜。
 3. 在原 owner 下扩展独立 SDK 授权状态/CAS、受控签名、签后 durable 落盘/独立读回/原字节发送；

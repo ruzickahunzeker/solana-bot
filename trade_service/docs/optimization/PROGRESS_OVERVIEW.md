@@ -6,7 +6,13 @@
 
 ## 统计口径
 
-- 当前 C3b1 草稿见 `SDK_CANDIDATE_PREPARATION.md`：SDK 自有 metadata 与 prepared/CAS/只读回接口仍未完成验收；本轮补类型/规范编码拒绝及恢复用例，实际 009 DDL 轻量 SQLite 六项通过，test/bin 类型检查通过，七组生产警告如实保留。当前新增 17 项 Rust 用例未运行，旧 C3a 1304 不计为新源码通过；本机大目标编译资源问题未绕过，目标 active，完整构建环境待确认。不升级/部署/生产操作，PumpAPI 开发仍暂停。
+- 完整 Rust 验收已按用户选择移到 GitHub-hosted Actions，设备授权完成；独立源码分支
+  `ci/trade-service-validation-20261115-c3b` 的最新验证提交 `35e4362`，运行 `43667516925`。
+  前三次运行暴露的上游依赖 404、缺 rg、缺原始 IDL 已作 CI-only 复现修正；当前运行已成功，
+  完整两线程 1321（123.08 秒）/串行 1321（221.71 秒），零失败/忽略/过滤，日志已下载核对。
+  不覆盖远端 main，不注入生产配置或凭据，不在小 VM 重试大链接，详见 `GITHUB_ACTIONS_VALIDATION.md`。
+- 当前 C3b1 见 `SDK_CANDIDATE_PREPARATION.md`：SDK metadata 与 prepared/CAS/只读回的源码及隔离测试已验收，新增 17 项实际执行；prepared 11、candidate 15、DAMM candidate 43、HTTP 200 与完整并发/串行各 1321 通过。七组生产警告保留；正式 prepared/signing/原字节发送仍未接入，不把局部通过当完整授权。009 生产/恢复演练仍待验收，不在本机重试大链接。
+- NP-05-A 已取得当前 SDK 6.0.2 固定公开上游提交，372/375 文件逐字节及模式核对，既有 DBC 差异 8 修改/3 新增、486 行可重放补丁已在隔离目录验证完全一致；只读 checker 八项负例通过，后续 CI 已接。签名来源信任（上游 unsigned）、实际 SDK 升级/适配演练和真实节点/发布仍未完成，详见 `SDK_PROVENANCE.md`。
 - 最新 NP-01-C3a：原 claims 操作分型/008 兼容迁移/完整命令与钱包及字面键 owner 绑定已接源码，旧聚合 journal 不放宽。仅新 Durable Live 直接 DAMM 卖出可占用新类型，正式入口未切换，SDK metadata/CAS/签名/原字节发送仍未完成。新增 15，专项 26、完整并发 1304（145.68 秒）/串行 1304（251.95 秒）、HTTP 200、参数 3、候选 37 及 check/fmt/diff 通过，五组原警告。首轮沙箱失败及负例 fixture 修正、严格未知 DDL/依赖拒绝、旧行/storage class/索引/FK/文件重开/单与双 pool 竞争证据见 `ORDINARY_SDK_CLAIM_OPERATIONS.md`。未部署/操作生产库，不新增 Quote 或恢复 owner。
 - 前序 NP-01-B4c1：完整私有零签名候选接实际 DAMM 卖出 simulation/Live preview，固定只读 RPC、不调用 SDK signer；失败/取消/过期不释放正式闭包，原 3 秒起点/准入保持。正式 guard 改持同类型产物，正式 Live 仍 opaque SDK。新增 20（SDK 12/RPC 7/HTTP 1），候选 37、readonly/HTTP 8、完整并发 1289（142.51 秒）/串行 1289（246.58 秒）、HTTP 200、probe 48、lanes 19、参数 3 与 check/fmt/diff 通过，五组原警告。见 `DAMM_UNSIGNED_CANDIDATE_AND_SIMULATION.md`；当批未部署，无新迁移/Quote/owner。当时接续要求现由 C3a 操作分型部分接续，SDK metadata/CAS/readback/恢复、受控正式签名/原字节发送继续，不把无签名模拟当完整链路。
 - NP-01-B4b 前序：实际 DAMM nominal profile 与私有 protocol/full guard 已接原路径，原参数/费用/消息/签名/单次核对；新增 25、完整并发/串行各 1269、HTTP 199、专项/check/fmt/diff 通过，见 `DAMM_FINAL_CANDIDATE_GUARD.md`。当时 preview 仍 SDK 调用，现由 B4c1 接续，历史数字/指纹不冒充最新。
@@ -61,7 +67,7 @@
 | 普通 SDK 完整授权 | DAMM probe、nominal candidate 与 B4c1 不可变零签名交易已实际使用；模拟无 SDK signer，但正式仍 opaque SDK | 独立完整证据授权且 signer 只接唯一已授权产物，原 owner 账本/原字节发送，全方向与其他 backend/mode |
 | 完整架构隔离 | Handler 已归位，余额/管理/vanity 控制已接项目服务和 port；直接 worker 及四个冗余资源字段不再存在于生产 AppState | full Config、普通接受/index/journal、cache、原始 RPC/SDK 资源及 bootstrap 等继续收口；局部分层不等于全量资源隔离、实际生成验收或原子生命周期 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
-| SDK 来源 | 已整理本地 6.0.2 与历史证据 | 可信上游 revision、导入补丁账本和可复现来源证据仍不完整 |
+| SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
 
 ## 必须继续完成的大项
 

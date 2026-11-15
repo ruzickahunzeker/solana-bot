@@ -64,6 +64,12 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("time", install.split())
         self.assertIn("python3-yaml", install.split())
 
+    def test_sdk_source_identity_and_negative_tests_precede_rust_compilation(self):
+        script = (ROOT / "trade_service/scripts/ci_validate.sh").read_text()
+        for command in ["step sdk-provenance-tests python3 scripts/test_sdk_provenance.py",
+                        "step sdk-provenance python3 scripts/check_sdk_provenance.py"]:
+            self.assertLess(script.index(command), script.index("step type-check"))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

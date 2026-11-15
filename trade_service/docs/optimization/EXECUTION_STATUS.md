@@ -6,6 +6,12 @@
 
 ## 最新范围与执行指令
 
+2026-11-15 C3b1 云端验收完成：commit `35e4362` / Actions `43667516925`、artifact `14143511883` 已实际下载核对，所有步骤 exit=0。完整两线程 1321（123.08 秒）/串行 1321（221.71 秒）零失败/忽略/过滤；prepared 11、candidate 15、DAMM candidate 43/probe 48、HTTP 200、参数 3、lanes 19 通过，七组原生产警告保留。新增 17 项不再是“仅类型检查”，但正式 SDK prepared/signing/签名落盘/原字节发送仍未接，009 生产演练未完成。前述三次失败是设施诊断，不重复实现 C3b1；见 `GITHUB_ACTIONS_VALIDATION.md`。
+
+同轮 NP-05-A 取得固定公开 SDK 6.0.2 commit `dc97b56c602a13d8967973c6eadcf79ab1fcddaa`（tag/commit 均 unsigned），完整比较上游 372/本地 375 文件：364 相同、8 修改、3 新增，全属既有 DBC 扩展，486 行补丁隔离重放后完全一致。新增只读来源 checker、八项负例及 CI 步骤，本机通过，尚未声称这些新增 Python 项已在上述旧 CI 执行。未改 vendor/manifest/lock/Rust 生产代码、release 或其他服务，无生产/签名/部署操作；目标 active，PumpAPI 开发仍暂停。来源/补丁账本及后续门槛见 `SDK_PROVENANCE.md`。
+
+2026-11-15 当前云端验证为 `35e4362` / Actions `43667516925`，独立分支 `ci/trade-service-validation-20261115-c3b`。此前三次 CI-only 环境缺口（原 Git 依赖 404、缺 rg、Anchor 包外 IDL 缺失）已修正；原源码/迁移/manifest/lock/SDK vendor 与快照一致，尚待完整结果。用户环境选择和设备授权均已完成，不再重复询问/本机大编译。main 与真实索引未变，未部署/重启/操作生产数据或签名发送。
+
 2026-11-15 独立验证分支 `ci/trade-service-validation-20261115-c3b` 已推送，首个提交 `ffc506e`，Actions `43666176316`。源码/资源检查通过；在依赖下载阶段，原锁定 zap-program 返回 404/认证失败，尚未编译或测试。CI-only 源替换保留原 Git 提交，使用 Cargo vendor 三包及逐文件校验，详见 `GITHUB_ACTIONS_VALIDATION.md` 与 `../../ci/README.md`。不改 SDK/manifest/lock、不注入本机登录凭据、不改真实索引/main、不部署。
 
 2026-11-15 用户已选择 GitHub Actions 完成完整 Rust 验收，并完成设备授权读取私有仓库 CI。现准备独立源码快照分支，不合并或改写远端 main，不改变工作区 main/真实索引；只发布 Trade Service 源码/原 vendor/文档/公开 fixtures 与验证设施，排除所有运行配置/钱包/数据库/日志/产物和 Copy/Bridge/sdk9 修改。工作流固定 Rust 1.95.0，下载依赖后以仅回环网络 namespace/env-i/普通 runner 身份执行 offline 类型/专项/完整并发及串行套件，无 release/部署/交易。policy 五项和本地隔离 probe 通过；实际 CI 尚待启动/验收，见 `GITHUB_ACTIONS_VALIDATION.md`。目标 active，PumpAPI 开发仍暂停。

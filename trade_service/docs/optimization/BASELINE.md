@@ -17,7 +17,7 @@
 | 开始时测试 | `cargo test --locked --offline --quiet`：47 项通过 |
 | 磁盘 | 开始时约 4.4 GiB 可用，不制作生产库副本，不做 release 构建 |
 
-上游 revision 和本地 vendor 补丁来源尚未逐项证明。Git 历史存在 vendor 导入/升级提交，不等于可直接重放的上游补丁账本。
+这是 2026-11-12 的初始基线。2026-11-15 NP-05-A 已核对固定上游 revision 与逐文件差异，并在隔离目录重放既有 DBC 补丁；上游无签名、实际升级/协议/发布门槛仍保留，见 `SDK_PROVENANCE.md`。以下历史指纹不自动替代当前 CI 身份记录。
 
 上表保留首轮基线。本轮 HTTP 合同测试仅添加 Tower 0.5.3 测试依赖及对应锁文件依赖边，未升级包版本。当前 `Cargo.toml` SHA-256 为 `67e9b12563a4540e5055224aebdb7dc52f16170d838353c5cfa90367fc6f3a89`，`Cargo.lock` 为 `4f0bebf3947336878f5d16ad491074748cf882da806986a4e5b623deb67520d5`。vendor manifest 与原 release 指纹不变。历史来源证据见 `SDK_PROVENANCE.md`，资金操作边界见 `SUBMISSION_BOUNDARIES.md`。
 

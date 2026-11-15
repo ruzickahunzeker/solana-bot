@@ -1,0 +1,647 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index c6110af..00a053f 100755
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -75,6 +75,9 @@ solana-clmm-raydium = "=0.3.0"
+ meteora-dlmm = "=0.2.0"
+ 
+ borsh = { version = "1.5.3", features = ["derive"] }
++bytemuck = "1.4.0"
++dynamic-bonding-curve = { git = "https://github.com/MeteoraAg/dynamic-bonding-curve.git", rev = "3b540e94b5b20ba37733de6e25f58522a0cd8961", features = ["no-entrypoint"] }
++dynamic-bonding-curve-sdk = { git = "https://github.com/MeteoraAg/dynamic-bonding-curve.git", rev = "3b540e94b5b20ba37733de6e25f58522a0cd8961" }
+ serde = { version = "1.0.215", features = ["derive"] }
+ serde_json = "1.0.134"
+ futures = "0.3.31"
+diff --git a/src/client/mod.rs b/src/client/mod.rs
+index d8effb5..a6d8316 100644
+--- a/src/client/mod.rs
++++ b/src/client/mod.rs
+@@ -18,6 +18,7 @@ use crate::swqos::SwqosType;
+ use crate::swqos::TradeType;
+ use crate::trading::core::params::DexParamEnum;
+ use crate::trading::core::params::MeteoraDammV2Params;
++use crate::trading::core::params::MeteoraDbcParams;
+ use crate::trading::core::params::MeteoraDlmmParams;
+ use crate::trading::core::params::PumpFunParams;
+ use crate::trading::core::params::RaydiumAmmV4Params;
+@@ -61,6 +62,7 @@ fn validate_protocol_params(dex_type: DexType, params: &DexParamEnum) -> bool {
+         DexType::RaydiumCpmm => params.as_any().downcast_ref::<RaydiumCpmmParams>().is_some(),
+         DexType::RaydiumAmmV4 => params.as_any().downcast_ref::<RaydiumAmmV4Params>().is_some(),
+         DexType::MeteoraDammV2 => params.as_any().downcast_ref::<MeteoraDammV2Params>().is_some(),
++        DexType::MeteoraDbc => params.as_any().downcast_ref::<MeteoraDbcParams>().is_some(),
+         DexType::RaydiumClmm => params.as_any().downcast_ref::<RaydiumClmmParams>().is_some(),
+         DexType::OrcaWhirlpool => params.as_any().downcast_ref::<WhirlpoolParams>().is_some(),
+         DexType::MeteoraDlmm => params.as_any().downcast_ref::<MeteoraDlmmParams>().is_some(),
+@@ -96,6 +98,11 @@ pub async fn find_pool_by_mint(
+ ) -> Result<Pubkey, anyhow::Error> {
+     match dex_type {
+         DexType::PumpSwap => crate::instruction::utils::pumpswap::find_pool(rpc, mint).await,
++        DexType::MeteoraDbc => {
++            crate::instruction::utils::meteora_dbc::find_pool_by_base_mint(rpc, mint)
++                .await
++                .map(|(pool, _)| pool)
++        }
+         _ => Err(anyhow::anyhow!("find_pool_by_mint not implemented for {:?}", dex_type)),
+     }
+ }
+diff --git b/src/instruction/meteora_dbc.rs b/src/instruction/meteora_dbc.rs
+new file mode 100644
+index 0000000..375aeda
+--- /dev/null
++++ b/src/instruction/meteora_dbc.rs
+@@ -0,0 +1,227 @@
++use crate::{
++    instruction::{
++        token_account_setup::{
++            push_close_wsol_if_needed, push_create_or_wrap_user_token_account,
++            push_create_user_token_account,
++        },
++        utils::meteora_dbc::{
++            accounts, get_event_authority_pda, SWAP2_DISCRIMINATOR, SWAP_MODE_EXACT_IN,
++        },
++    },
++    trading::core::{
++        params::{MeteoraDbcParams, SwapParams},
++        traits::InstructionBuilder,
++    },
++};
++use anyhow::{anyhow, bail, Context};
++use dynamic_bonding_curve_sdk::quote_exact_in::quote_exact_in;
++use solana_sdk::{
++    instruction::{AccountMeta, Instruction},
++    signer::Signer,
++};
++
++pub struct MeteoraDbcInstructionBuilder;
++
++#[async_trait::async_trait]
++impl InstructionBuilder for MeteoraDbcInstructionBuilder {
++    async fn build_buy_instructions(
++        &self,
++        params: &SwapParams,
++    ) -> anyhow::Result<Vec<Instruction>> {
++        let protocol = dbc_params(params)?;
++        validate_quote_mint(protocol)?;
++        build_exact_in(params, protocol, false, true).await
++    }
++
++    async fn build_sell_instructions(
++        &self,
++        params: &SwapParams,
++    ) -> anyhow::Result<Vec<Instruction>> {
++        let protocol = dbc_params(params)?;
++        validate_quote_mint(protocol)?;
++        build_exact_in(params, protocol, true, false).await
++    }
++}
++
++fn dbc_params(params: &SwapParams) -> anyhow::Result<&MeteoraDbcParams> {
++    params
++        .protocol_params
++        .as_any()
++        .downcast_ref::<MeteoraDbcParams>()
++        .ok_or_else(|| anyhow!("Invalid protocol params for MeteoraDbc"))
++}
++
++fn validate_quote_mint(params: &MeteoraDbcParams) -> anyhow::Result<()> {
++    if params.quote_mint != crate::constants::WSOL_TOKEN_ACCOUNT
++        && params.quote_mint != crate::constants::USDC_TOKEN_ACCOUNT
++    {
++        bail!("Meteora DBC quote mint must be WSOL or USDC");
++    }
++    Ok(())
++}
++
++async fn build_exact_in(
++    params: &SwapParams,
++    protocol: &MeteoraDbcParams,
++    swap_base_for_quote: bool,
++    is_buy: bool,
++) -> anyhow::Result<Vec<Instruction>> {
++    let amount_in = params.input_amount.filter(|amount| *amount > 0).context(if is_buy {
++        "Meteora DBC buy amount is not set"
++    } else {
++        "Meteora DBC sell amount is not set"
++    })?;
++    let minimum_amount_out =
++        quote_minimum_amount_out(params, protocol, swap_base_for_quote, amount_in).await?;
++
++    let (input_mint, input_program, output_mint, output_program) = if swap_base_for_quote {
++        (
++            protocol.base_mint,
++            protocol.base_token_program,
++            protocol.quote_mint,
++            protocol.quote_token_program,
++        )
++    } else {
++        (
++            protocol.quote_mint,
++            protocol.quote_token_program,
++            protocol.base_mint,
++            protocol.base_token_program,
++        )
++    };
++    let payer = params.payer.pubkey();
++    let input_token_account =
++        crate::common::fast_fn::get_associated_token_address_with_program_id_fast_use_seed(
++            &payer,
++            &input_mint,
++            &input_program,
++            params.open_seed_optimize,
++        );
++    let output_token_account =
++        crate::common::fast_fn::get_associated_token_address_with_program_id_fast_use_seed(
++            &payer,
++            &output_mint,
++            &output_program,
++            params.open_seed_optimize,
++        );
++
++    let mut instructions = Vec::with_capacity(6);
++    if params.create_input_mint_ata {
++        push_create_or_wrap_user_token_account(
++            &mut instructions,
++            &payer,
++            &input_mint,
++            &input_program,
++            amount_in,
++            params.open_seed_optimize,
++        );
++    }
++    if params.create_output_mint_ata {
++        push_create_user_token_account(
++            &mut instructions,
++            &payer,
++            &output_mint,
++            &output_program,
++            params.open_seed_optimize,
++        );
++    }
++
++    let mut metas = Vec::with_capacity(16);
++    metas.extend([
++        accounts::POOL_AUTHORITY_META,
++        AccountMeta::new_readonly(protocol.config, false),
++        AccountMeta::new(protocol.pool, false),
++        AccountMeta::new(input_token_account, false),
++        AccountMeta::new(output_token_account, false),
++        AccountMeta::new(protocol.base_vault, false),
++        AccountMeta::new(protocol.quote_vault, false),
++        AccountMeta::new_readonly(protocol.base_mint, false),
++        AccountMeta::new_readonly(protocol.quote_mint, false),
++        AccountMeta::new(payer, true),
++        AccountMeta::new_readonly(protocol.base_token_program, false),
++        AccountMeta::new_readonly(protocol.quote_token_program, false),
++    ]);
++    metas.push(match protocol.referral_token_account {
++        Some(referral) => AccountMeta::new(referral, false),
++        None => accounts::PROGRAM_META,
++    });
++    metas.extend([
++        AccountMeta::new_readonly(get_event_authority_pda(), false),
++        accounts::PROGRAM_META,
++    ]);
++    if protocol.include_instructions_sysvar {
++        metas.push(accounts::SYSVAR_INSTRUCTIONS_META);
++    }
++
++    let mut data = [0_u8; 25];
++    data[..8].copy_from_slice(&SWAP2_DISCRIMINATOR);
++    data[8..16].copy_from_slice(&amount_in.to_le_bytes());
++    data[16..24].copy_from_slice(&minimum_amount_out.to_le_bytes());
++    data[24] = SWAP_MODE_EXACT_IN;
++    instructions.push(Instruction::new_with_bytes(accounts::PROGRAM, &data, metas));
++
++    if params.close_output_mint_ata {
++        push_close_wsol_if_needed(&mut instructions, &payer, &output_mint);
++    }
++    if params.close_input_mint_ata {
++        push_close_wsol_if_needed(&mut instructions, &payer, &input_mint);
++    }
++    Ok(instructions)
++}
++
++async fn quote_minimum_amount_out(
++    params: &SwapParams,
++    protocol: &MeteoraDbcParams,
++    swap_base_for_quote: bool,
++    amount_in: u64,
++) -> anyhow::Result<u64> {
++    let rpc = params.rpc.as_ref().context("Meteora DBC quote requires an RPC client")?;
++    let current_slot = rpc.get_slot().await?;
++    let current_timestamp = if protocol.pool_config.activation_type == 1 {
++        rpc.get_block_time(current_slot)
++            .await
++            .context("failed to fetch the current DBC block time")?
++            .max(0) as u64
++    } else {
++        chrono::Utc::now().timestamp().max(0) as u64
++    };
++    let quote = quote_exact_in(
++        &protocol.virtual_pool.pool_state,
++        &protocol.pool_config,
++        swap_base_for_quote,
++        current_timestamp,
++        current_slot,
++        amount_in,
++        protocol.referral_token_account.is_some(),
++        false,
++    )
++    .map_err(|error| anyhow!("Meteora DBC quote failed: {error}"))?;
++    let slippage_bps = params.slippage_basis_points.unwrap_or(0);
++    if slippage_bps > 10_000 {
++        bail!("slippage_basis_points cannot exceed 10000");
++    }
++    let minimum = (u128::from(quote.output_amount)
++        * u128::from(10_000_u64.saturating_sub(slippage_bps))
++        / 10_000) as u64;
++    Ok(minimum.max(1))
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn swap2_data_layout_is_exact_in() {
++        let amount_in = 1_000_000_u64;
++        let minimum_out = 42_u64;
++        let mut data = [0_u8; 25];
++        data[..8].copy_from_slice(&SWAP2_DISCRIMINATOR);
++        data[8..16].copy_from_slice(&amount_in.to_le_bytes());
++        data[16..24].copy_from_slice(&minimum_out.to_le_bytes());
++        data[24] = SWAP_MODE_EXACT_IN;
++        assert_eq!(&data[..8], &[65, 75, 63, 76, 235, 91, 91, 136]);
++        assert_eq!(u64::from_le_bytes(data[8..16].try_into().unwrap()), amount_in);
++        assert_eq!(u64::from_le_bytes(data[16..24].try_into().unwrap()), minimum_out);
++        assert_eq!(data[24], 0);
++    }
++}
+diff --git a/src/instruction/mod.rs b/src/instruction/mod.rs
+index 95caf90..ae8ec2c 100755
+--- a/src/instruction/mod.rs
++++ b/src/instruction/mod.rs
+@@ -3,6 +3,7 @@ pub mod bonk;
+ mod cross_dex_mainnet;
+ pub mod launchlab;
+ pub mod meteora_damm_v2;
++pub mod meteora_dbc;
+ #[cfg(test)]
+ mod meteora_damm_v2_mainnet;
+ pub mod meteora_dlmm;
+diff --git b/src/instruction/utils/meteora_dbc.rs b/src/instruction/utils/meteora_dbc.rs
+new file mode 100644
+index 0000000..b74fe59
+--- /dev/null
++++ b/src/instruction/utils/meteora_dbc.rs
+@@ -0,0 +1,150 @@
++use crate::common::SolanaRpcClient;
++use anyhow::{anyhow, bail, Context};
++use dynamic_bonding_curve::state::{PoolConfig, VirtualPool};
++use solana_account_decoder::UiAccountEncoding;
++use solana_sdk::{account::Account, pubkey::Pubkey};
++
++pub mod accounts {
++    use solana_sdk::{instruction::AccountMeta, pubkey, pubkey::Pubkey};
++
++    pub const PROGRAM: Pubkey = pubkey!("dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN");
++    pub const POOL_AUTHORITY: Pubkey = pubkey!("FhVo3mqL8PW5pH5U2CN4XE33DokiyZnUwuGpH2hmHLuM");
++    pub const SYSVAR_INSTRUCTIONS: Pubkey = pubkey!("Sysvar1nstructions1111111111111111111111111");
++
++    pub const PROGRAM_META: AccountMeta =
++        AccountMeta { pubkey: PROGRAM, is_signer: false, is_writable: false };
++    pub const POOL_AUTHORITY_META: AccountMeta =
++        AccountMeta { pubkey: POOL_AUTHORITY, is_signer: false, is_writable: false };
++    pub const SYSVAR_INSTRUCTIONS_META: AccountMeta =
++        AccountMeta { pubkey: SYSVAR_INSTRUCTIONS, is_signer: false, is_writable: false };
++}
++
++pub const VIRTUAL_POOL_DISCRIMINATOR: [u8; 8] = [213, 224, 5, 209, 98, 69, 119, 92];
++pub const POOL_CONFIG_DISCRIMINATOR: [u8; 8] = [26, 108, 14, 123, 116, 230, 129, 43];
++pub const SWAP2_DISCRIMINATOR: [u8; 8] = [65, 75, 63, 76, 235, 91, 91, 136];
++pub const SWAP_MODE_EXACT_IN: u8 = 0;
++pub const VIRTUAL_POOL_ACCOUNT_SIZE: u64 = 8 + 416;
++pub const BASE_MINT_OFFSET: usize = 136;
++
++pub fn decode_virtual_pool(account: &Account) -> anyhow::Result<VirtualPool> {
++    decode_account(account, accounts::PROGRAM, VIRTUAL_POOL_DISCRIMINATOR, "VirtualPool")
++}
++
++pub fn decode_pool_config(account: &Account) -> anyhow::Result<PoolConfig> {
++    decode_account(account, accounts::PROGRAM, POOL_CONFIG_DISCRIMINATOR, "PoolConfig")
++}
++
++fn decode_account<T: bytemuck::Pod + Copy>(
++    account: &Account,
++    owner: Pubkey,
++    discriminator: [u8; 8],
++    name: &str,
++) -> anyhow::Result<T> {
++    if account.owner != owner {
++        bail!("{name} account is not owned by Meteora DBC");
++    }
++    let actual = account.data.get(..8).context("DBC account is shorter than its discriminator")?;
++    if actual != discriminator {
++        bail!("invalid Meteora DBC {name} discriminator");
++    }
++    let size = std::mem::size_of::<T>();
++    let bytes = account
++        .data
++        .get(8..8 + size)
++        .with_context(|| format!("Meteora DBC {name} account is shorter than {size} bytes"))?;
++    Ok(bytemuck::pod_read_unaligned(bytes))
++}
++
++pub async fn fetch_pool(
++    rpc: &SolanaRpcClient,
++    pool_address: &Pubkey,
++) -> anyhow::Result<VirtualPool> {
++    decode_virtual_pool(&rpc.get_account(pool_address).await?)
++}
++
++pub async fn fetch_config(
++    rpc: &SolanaRpcClient,
++    config_address: &Pubkey,
++) -> anyhow::Result<PoolConfig> {
++    decode_pool_config(&rpc.get_account(config_address).await?)
++}
++
++pub async fn find_pool_by_base_mint(
++    rpc: &SolanaRpcClient,
++    base_mint: &Pubkey,
++) -> anyhow::Result<(Pubkey, VirtualPool)> {
++    let config = solana_rpc_client_api::config::RpcProgramAccountsConfig {
++        filters: Some(vec![
++            solana_rpc_client_api::filter::RpcFilterType::DataSize(VIRTUAL_POOL_ACCOUNT_SIZE),
++            solana_rpc_client_api::filter::RpcFilterType::Memcmp(
++                solana_client::rpc_filter::Memcmp::new_base58_encoded(
++                    0,
++                    &VIRTUAL_POOL_DISCRIMINATOR,
++                ),
++            ),
++            solana_rpc_client_api::filter::RpcFilterType::Memcmp(
++                solana_client::rpc_filter::Memcmp::new_base58_encoded(
++                    BASE_MINT_OFFSET,
++                    base_mint.as_ref(),
++                ),
++            ),
++        ]),
++        account_config: solana_rpc_client_api::config::RpcAccountInfoConfig {
++            encoding: Some(UiAccountEncoding::Base64),
++            data_slice: None,
++            commitment: None,
++            min_context_slot: None,
++        },
++        with_context: None,
++        sort_results: None,
++    };
++    #[allow(deprecated)]
++    let accounts = rpc.get_program_ui_accounts_with_config(&accounts::PROGRAM, config).await?;
++    let mut decoded = accounts
++        .into_iter()
++        .filter_map(|(address, ui_account)| {
++            ui_account
++                .to_account()
++                .and_then(|account| decode_virtual_pool(&account).ok())
++                .map(|pool| (address, pool))
++        })
++        .collect::<Vec<_>>();
++    decoded.retain(|(_, pool)| pool.pool_state.base_mint == *base_mint);
++    decoded.sort_by(|a, b| {
++        a.1.pool_state
++            .is_migrated
++            .cmp(&b.1.pool_state.is_migrated)
++            .then_with(|| b.1.pool_state.quote_reserve.cmp(&a.1.pool_state.quote_reserve))
++    });
++    decoded
++        .into_iter()
++        .next()
++        .ok_or_else(|| anyhow!("No Meteora DBC pool found for mint {base_mint}"))
++}
++
++#[inline]
++pub fn get_event_authority_pda() -> Pubkey {
++    Pubkey::find_program_address(&[b"__event_authority"], &accounts::PROGRAM).0
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn dbc_offsets_match_current_virtual_pool_layout() {
++        assert_eq!(std::mem::size_of::<VirtualPool>(), 416);
++        let pool = VirtualPool::default();
++        let start = &pool as *const _ as usize;
++        let base_mint = &pool.pool_state.base_mint as *const _ as usize;
++        assert_eq!(8 + base_mint - start, BASE_MINT_OFFSET);
++    }
++
++    #[test]
++    fn event_authority_matches_official_idl() {
++        assert_eq!(
++            get_event_authority_pda(),
++            solana_sdk::pubkey!("8Ks12pbrD6PXxfty1hVQiE9sc289zgU1zHkvXhrSdriF")
++        );
++    }
++}
+diff --git a/src/instruction/utils/mod.rs b/src/instruction/utils/mod.rs
+index 4d1c9d3..2626e2d 100644
+--- a/src/instruction/utils/mod.rs
++++ b/src/instruction/utils/mod.rs
+@@ -1,5 +1,6 @@
+ pub mod bonk;
+ pub mod meteora_damm_v2;
++pub mod meteora_dbc;
+ pub mod meteora_dlmm;
+ pub mod pumpfun;
+ pub mod pumpswap;
+diff --git a/src/lib.rs b/src/lib.rs
+index c7e7f9f..287c462 100755
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -16,6 +16,7 @@ pub use client::{
+     TradeSellParams, TradeTokenType, TradingClient, TradingInfrastructure,
+ };
+ pub use trading::core::params::{
++    MeteoraDbcParams,
+     PreparedPumpSwapTrade, PumpSwapQuoteHop, PumpSwapQuoteRoute, PumpSwapQuoteVenue,
+     PumpSwapRouteRejection, PumpSwapRouteSearch, PumpSwapRouteSelection,
+     StonkFunMemeLeg, StonkFunParams, StonkFunQuoteHop, StonkFunQuoteHopPreview, StonkFunQuoteRoute,
+diff --git a/src/trading/core/params/dex_swap.rs b/src/trading/core/params/dex_swap.rs
+index 5cc34ff..a71b242 100644
+--- a/src/trading/core/params/dex_swap.rs
++++ b/src/trading/core/params/dex_swap.rs
+@@ -10,6 +10,7 @@ use std::sync::Arc;
+ 
+ use super::bonk::BonkParams;
+ use super::meteora_damm_v2::MeteoraDammV2Params;
++use super::meteora_dbc::MeteoraDbcParams;
+ use super::meteora_dlmm::MeteoraDlmmParams;
+ use super::pumpfun::PumpFunParams;
+ use super::pumpswap::PumpSwapParams;
+@@ -48,6 +49,7 @@ pub enum DexParamEnum {
+     RaydiumCpmm(RaydiumCpmmParams),
+     RaydiumAmmV4(RaydiumAmmV4Params),
+     MeteoraDammV2(MeteoraDammV2Params),
++    MeteoraDbc(MeteoraDbcParams),
+     RaydiumClmm(RaydiumClmmParams),
+     OrcaWhirlpool(WhirlpoolParams),
+     MeteoraDlmm(MeteoraDlmmParams),
+@@ -70,6 +72,7 @@ impl DexParamEnum {
+             DexParamEnum::RaydiumCpmm(p) => p,
+             DexParamEnum::RaydiumAmmV4(p) => p,
+             DexParamEnum::MeteoraDammV2(p) => p,
++            DexParamEnum::MeteoraDbc(p) => p,
+             DexParamEnum::RaydiumClmm(p) => p,
+             DexParamEnum::OrcaWhirlpool(p) => p,
+             DexParamEnum::MeteoraDlmm(p) => p,
+diff --git b/src/trading/core/params/meteora_dbc.rs b/src/trading/core/params/meteora_dbc.rs
+new file mode 100644
+index 0000000..d400d3f
+--- /dev/null
++++ b/src/trading/core/params/meteora_dbc.rs
+@@ -0,0 +1,78 @@
++use crate::{
++    common::SolanaRpcClient,
++    instruction::utils::meteora_dbc::{fetch_config, fetch_pool, find_pool_by_base_mint},
++};
++use anyhow::{bail, Context};
++use dynamic_bonding_curve::state::{PoolConfig, VirtualPool};
++use solana_sdk::pubkey::Pubkey;
++
++/// Accounts and current curve state required by Meteora Dynamic Bonding Curve `swap2`.
++#[derive(Clone)]
++pub struct MeteoraDbcParams {
++    pub pool: Pubkey,
++    pub config: Pubkey,
++    pub base_vault: Pubkey,
++    pub quote_vault: Pubkey,
++    pub base_mint: Pubkey,
++    pub quote_mint: Pubkey,
++    pub base_token_program: Pubkey,
++    pub quote_token_program: Pubkey,
++    pub virtual_pool: VirtualPool,
++    pub pool_config: PoolConfig,
++    pub referral_token_account: Option<Pubkey>,
++    pub include_instructions_sysvar: bool,
++}
++
++impl MeteoraDbcParams {
++    pub async fn from_pool_address_by_rpc(
++        rpc: &SolanaRpcClient,
++        pool_address: &Pubkey,
++    ) -> anyhow::Result<Self> {
++        let virtual_pool = fetch_pool(rpc, pool_address).await?;
++        let state = &virtual_pool.pool_state;
++        if state.is_migrated != 0 {
++            bail!("Meteora DBC pool {pool_address} has migrated");
++        }
++        let pool_config = fetch_config(rpc, &state.config).await?;
++        let mint_accounts =
++            rpc.get_multiple_accounts(&[state.base_mint, pool_config.quote_mint]).await?;
++        let base_token_program = mint_accounts
++            .first()
++            .and_then(Option::as_ref)
++            .map(|account| account.owner)
++            .context("Meteora DBC base mint account not found")?;
++        let quote_token_program = mint_accounts
++            .get(1)
++            .and_then(Option::as_ref)
++            .map(|account| account.owner)
++            .context("Meteora DBC quote mint account not found")?;
++        Ok(Self {
++            pool: *pool_address,
++            config: state.config,
++            base_vault: state.base_vault,
++            quote_vault: state.quote_vault,
++            base_mint: state.base_mint,
++            quote_mint: pool_config.quote_mint,
++            base_token_program,
++            quote_token_program,
++            virtual_pool,
++            pool_config,
++            referral_token_account: None,
++            // Harmless when inactive and required by rate-limited configurations.
++            include_instructions_sysvar: true,
++        })
++    }
++
++    pub async fn from_base_mint_by_rpc(
++        rpc: &SolanaRpcClient,
++        base_mint: &Pubkey,
++    ) -> anyhow::Result<Self> {
++        let (pool, _) = find_pool_by_base_mint(rpc, base_mint).await?;
++        Self::from_pool_address_by_rpc(rpc, &pool).await
++    }
++
++    pub fn with_referral_token_account(mut self, referral: Pubkey) -> Self {
++        self.referral_token_account = Some(referral);
++        self
++    }
++}
+diff --git a/src/trading/core/params/mod.rs b/src/trading/core/params/mod.rs
+index fe655b6..b936183 100644
+--- a/src/trading/core/params/mod.rs
++++ b/src/trading/core/params/mod.rs
+@@ -7,6 +7,7 @@ mod cpmm_creator_fee_preparation;
+ mod cached_quote_mainnet;
+ mod dex_swap;
+ mod meteora_damm_v2;
++mod meteora_dbc;
+ mod meteora_dlmm;
+ mod pumpfun;
+ mod pumpswap;
+@@ -26,6 +27,7 @@ pub use cached_quote::{CachedQuoteRequest, CachedRouteStep, CachedSwapQuote};
+ pub use cpmm_creator_fee_preparation::PreparedCpmmCreatorFeeCollection;
+ pub use dex_swap::{DexParamEnum, SenderConcurrencyConfig, SwapParams};
+ pub use meteora_damm_v2::MeteoraDammV2Params;
++pub use meteora_dbc::MeteoraDbcParams;
+ pub use meteora_dlmm::MeteoraDlmmParams;
+ pub use pumpfun::PumpFunParams;
+ pub use pumpswap::PumpSwapParams;
+diff --git a/src/trading/factory.rs b/src/trading/factory.rs
+index 1e3ae91..604e9ba 100755
+--- a/src/trading/factory.rs
++++ b/src/trading/factory.rs
+@@ -2,6 +2,7 @@ use std::sync::Arc;
+ 
+ use crate::instruction::{
+     bonk::BonkInstructionBuilder, meteora_damm_v2::MeteoraDammV2InstructionBuilder,
++    meteora_dbc::MeteoraDbcInstructionBuilder,
+     meteora_dlmm::MeteoraDlmmInstructionBuilder, pumpfun::PumpFunInstructionBuilder,
+     pumpswap::PumpSwapInstructionBuilder, raydium_amm_v4::RaydiumAmmV4InstructionBuilder,
+     raydium_clmm::RaydiumClmmInstructionBuilder, raydium_cpmm::RaydiumCpmmInstructionBuilder,
+@@ -21,6 +22,7 @@ pub enum DexType {
+     RaydiumCpmm,
+     RaydiumAmmV4,
+     MeteoraDammV2,
++    MeteoraDbc,
+     RaydiumClmm,
+     OrcaWhirlpool,
+     MeteoraDlmm,
+@@ -41,6 +43,7 @@ impl TradeFactory {
+             DexType::RaydiumCpmm => Self::raydium_cpmm_executor(),
+             DexType::RaydiumAmmV4 => Self::raydium_amm_v4_executor(),
+             DexType::MeteoraDammV2 => Self::meteora_damm_v2_executor(),
++            DexType::MeteoraDbc => Self::meteora_dbc_executor(),
+             DexType::RaydiumClmm => Self::raydium_clmm_executor(),
+             DexType::OrcaWhirlpool => Self::whirlpool_executor(),
+             DexType::MeteoraDlmm => Self::meteora_dlmm_executor(),
+@@ -128,6 +131,16 @@ impl TradeFactory {
+         INSTANCE.clone()
+     }
+ 
++    #[inline]
++    fn meteora_dbc_executor() -> Arc<dyn TradeExecutor> {
++        static INSTANCE: std::sync::LazyLock<Arc<dyn TradeExecutor>> =
++            std::sync::LazyLock::new(|| {
++                let instruction_builder = Arc::new(MeteoraDbcInstructionBuilder);
++                Arc::new(GenericTradeExecutor::new(instruction_builder, "MeteoraDbc"))
++            });
++        INSTANCE.clone()
++    }
++
+     #[inline]
+     fn raydium_clmm_executor() -> Arc<dyn TradeExecutor> {
+         static INSTANCE: std::sync::LazyLock<Arc<dyn TradeExecutor>> =

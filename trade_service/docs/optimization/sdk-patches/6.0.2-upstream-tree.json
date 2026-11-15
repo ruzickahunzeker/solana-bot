@@ -1,0 +1,2238 @@
+{
+  "sha": "6c106a09b8bd04f8541e3aa9db03857db61bdf00",
+  "tree": [
+    {
+      "mode": "100644",
+      "path": ".github/workflows/release.yml",
+      "sha": "9414fc1bfb6982416c9deb1d53ffd234e1cdd0c4",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": ".gitignore",
+      "sha": "7b60e0c1947d9ee96f5a689c043211753a31f6c8",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "Cargo.toml",
+      "sha": "c6110aff1592045351c1ca47ec4f0a5ebfae4932",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "LICENSE",
+      "sha": "cd645b45244186a2eb5513d64eff64c72d0fd113",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "README.md",
+      "sha": "e57b03656682c3ea709b617c55977b0377240561",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "README_CN.md",
+      "sha": "9ca3e1f2c431388902276af5eb5652ea128020fd",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "context7.json",
+      "sha": "2dea49340114daf27be0933127f044b77cc58a2d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/ADDRESS_LOOKUP_TABLE.md",
+      "sha": "21d1ffb662f042204953eec62d2a441806a00f81",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/ADDRESS_LOOKUP_TABLE_CN.md",
+      "sha": "6d1912ede3290846f1eebab246007021d0ed5e1e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/GAS_FEE_STRATEGY.md",
+      "sha": "0285987fd8d56d49709abf0d5db3f97f9c885954",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/GAS_FEE_STRATEGY_CN.md",
+      "sha": "1879b2ca4ec5712f0a6e9d48c37bf05882c6d677",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/LOW_LATENCY_BOTS.md",
+      "sha": "bfb7b5383d023f0b6e5f23f578a9de77ddc537f3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/LOW_LATENCY_BOTS_CN.md",
+      "sha": "56c629a1c9da7a07c72dd07bd439c3eded78aeaf",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/NONCE_CACHE.md",
+      "sha": "62049f3fcb43676604b2b3f364eded6919d86a78",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/NONCE_CACHE_CN.md",
+      "sha": "a8f891fb454f9d42051ccd69b39d675be17291a3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/PRE_BUY_RISK_GATE.md",
+      "sha": "606eea72af839e9064f885cc56972db9e3f2daa4",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/PRE_BUY_RISK_GATE_CN.md",
+      "sha": "8180e73267ddfc8429872dbd030ec6b8395c1042",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/PUMPSWAP_QUOTE_ROUTING.md",
+      "sha": "420e19846e4c5625d22cd26c21fc316085e78706",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/PUMPSWAP_REPORTED_FAILURE.md",
+      "sha": "91422a37379f3d8c6fe833de72115124fb5cc14c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/PUMP_CASHBACK_README.md",
+      "sha": "717589bce637d023fdc23611b5b5873db93bd684",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/PUMP_ERRORS_AND_TROUBLESHOOTING_CN.md",
+      "sha": "e09ad67ffbd1d8d160d24393d791169b49a41360",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/STONKFUN_GRPC_EXAMPLES.md",
+      "sha": "c7bfeeffa396780672340bb9f9e6184c35ade9a5",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/STONKFUN_ROUTES.md",
+      "sha": "3126a59737396a970f4884a13faf5f2b06c37033",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/TRADING_PARAMETERS.md",
+      "sha": "b9c3ac0d3e8abfea026254636df2916a9e6d7a24",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/TRADING_PARAMETERS_CN.md",
+      "sha": "dc528f8300d624ed55aaf6b8c78c65c364f3a12c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "docs/cpmm-creator-fee-share.md",
+      "sha": "8a413a24769b6d3ecbf23cd32afce227283bbae0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/README.md",
+      "sha": "531f5ebc12b52343d41f6d76b2faeed7e502011c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/README_CN.md",
+      "sha": "a88895e97c810a98b12f92bed8ae1a28f09a4301",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/SIMULATION.md",
+      "sha": "809e492740e521d914fbf2ed50abdbf1003e3cc6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/address_lookup/Cargo.toml",
+      "sha": "e908a68f0f1d1541ab7804b06879eb171b926e02",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/address_lookup/README.md",
+      "sha": "d10be1b5c1c2cf88128b1e7e899d4445a82ed62d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/address_lookup/README_CN.md",
+      "sha": "11c33963b559398ef661a7f71b8745861abd1a8c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/address_lookup/src/main.rs",
+      "sha": "7fbe4ad56f78a2a36c2361fdba39f459c5e64a1e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_copy_trading/Cargo.toml",
+      "sha": "be9088e70da937b009efae65cf15c1bb323c187f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_copy_trading/README.md",
+      "sha": "a19862997fb74f4bdc7a2209270eaf276bc995af",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_copy_trading/README_CN.md",
+      "sha": "66450bd5048f06fd2e22114d88320e697019a28a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_copy_trading/src/main.rs",
+      "sha": "7d259f0ccbc26a9fa04035577a03d5d19f44c4ab",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_sniper_trading/Cargo.toml",
+      "sha": "5965f30854c9586596a4bb47c6dcb0a3f0a36ae7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_sniper_trading/README.md",
+      "sha": "7332f328dbf9a8d23bcbfb3063f206bb713c604d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_sniper_trading/README_CN.md",
+      "sha": "35d7f565ea4d56ad007992026ed1b690638cc7d3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/bonk_sniper_trading/src/main.rs",
+      "sha": "8f869eeff02c65e5c2dc06a6bd40b814550e05dd",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cli_trading/Cargo.toml",
+      "sha": "b56441fd138949b180d32d6453f66fbfd1ea6208",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cli_trading/README.md",
+      "sha": "6b8a19b7086e7f87c2eddb199cabe2fe22f4a5e7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cli_trading/README_CN.md",
+      "sha": "b10b8cd501238edaed2f36a8250ded756246eef4",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cli_trading/src/main.rs",
+      "sha": "584e10c89c3f89d4b8ef5d48d8809359b90eaf2b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cpmm_creator_fee_simulate.rs",
+      "sha": "0894da5d10ec5082cbb07623cc955ba8d96bcfbe",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cpmm_creator_fee_stream.rs",
+      "sha": "4c0920f5b526d75646f8800d4655be0c62526ceb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cpmm_lp_after_collection_simulate.rs",
+      "sha": "1a15490668faffe50f7c35f78beacf67fece4ae2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/cpmm_swap_after_collection_simulate.rs",
+      "sha": "e3e586f15e044ad1323dfa4cee28ba399cf3bc33",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/gas_fee_strategy/Cargo.toml",
+      "sha": "f8e43a83126937418f503c391243fbd4eb12a5c0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/gas_fee_strategy/README.md",
+      "sha": "3b2ec315f70904c8b14e2ad366ba88490899b9f0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/gas_fee_strategy/README_CN.md",
+      "sha": "f92b8d84543543df99d5cd9b36dee631f2ad2423",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/gas_fee_strategy/src/main.rs",
+      "sha": "1f8da0790d95b958039b9c5fe30deef9e0e233b9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/meteora_damm_v2_direct_trading/Cargo.toml",
+      "sha": "a247cc84231a48dfbfea1c59743f7b4638daa091",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/meteora_damm_v2_direct_trading/README.md",
+      "sha": "95ff4741c08d5cdda49198e47fe3e63e4bfee61d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/meteora_damm_v2_direct_trading/README_CN.md",
+      "sha": "d1d493275c13a31d5775fe50dcd99b87229bbafc",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/meteora_damm_v2_direct_trading/src/main.rs",
+      "sha": "b1f94722f199c78b92b6457765966c2e93540e21",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/middleware_system/Cargo.toml",
+      "sha": "c2d68dc35b414c688753554ea24ead25a4038c22",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/middleware_system/README.md",
+      "sha": "e157c40733aa50f6c5af8d8bdb8026977cbef77a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/middleware_system/README_CN.md",
+      "sha": "46b2aa7f784d0fba78d57d67d8fe59feca14b75b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/middleware_system/src/main.rs",
+      "sha": "cfa3379a517c50c902f8983500f7411e801a7c29",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/nonce_cache/Cargo.toml",
+      "sha": "808d2a914a1944ce9702ffd964c69b1dd09484da",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/nonce_cache/README.md",
+      "sha": "f63f9e483187cc443a7ae1cae83c65f965d36057",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/nonce_cache/README_CN.md",
+      "sha": "01724597a9ca0804d158945293bcec509d47272b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/nonce_cache/src/main.rs",
+      "sha": "6a5e5091e9e82d5eefe76a17121bc4b17208ee85",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_copy_trading/Cargo.toml",
+      "sha": "ba7caa7e5570c286b45b3086a4125d5bc30db334",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_copy_trading/README.md",
+      "sha": "038d2476eb93bd17c8d7494e31db6aab738550a7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_copy_trading/README_CN.md",
+      "sha": "a86bc43b73b8ac4818b179ff9bdd82cb154a3ef9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_copy_trading/src/main.rs",
+      "sha": "3c902de34df1be8bc300dce330cc3348732f33ec",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_sniper_trading/Cargo.toml",
+      "sha": "b09e3906064e71ad28a871f4db04f2dff8b9afc9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_sniper_trading/README.md",
+      "sha": "3efa41c00a94b1d4a31dc7ef88052a6685004224",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_sniper_trading/README_CN.md",
+      "sha": "fce261d81fd73db6827be5d2e400176b48d08938",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpfun_sniper_trading/src/main.rs",
+      "sha": "7cded67f831ad682aadb586fd8f975b28c69c973",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_cached_prepare.rs",
+      "sha": "8b09431f5874d97e6729071872029a30f9605b11",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_direct_trading/Cargo.toml",
+      "sha": "4b0f95bf6403cfa5e56105fb55c5a18e163bd7f7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_direct_trading/README.md",
+      "sha": "ea942a6c1b4fb97f0d4c78eeef9bc24e250ab5b3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_direct_trading/README_CN.md",
+      "sha": "1fcc026c3834f20852450cbd1160ade553e2f0fd",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_direct_trading/src/main.rs",
+      "sha": "915fcd68ec6276fe116c89e806832cbd82d3eee3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_hotpath_benchmark.json",
+      "sha": "371cc1c2969ceae4e66e800005d9983140b593e7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_hotpath_benchmark.rs",
+      "sha": "9ccd692c274ffca754670f5d0a27b95945e92c80",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_trading/.env.example",
+      "sha": "9fe753e53b5c76d51375a922d202ac2f32793e97",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_trading/Cargo.toml",
+      "sha": "000e2395ad032582a8e978d2fdbde3beb9e399b5",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_trading/README.md",
+      "sha": "09127a5c3f0bab9a2e119607096cd56fa97fa74c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_trading/README_CN.md",
+      "sha": "e4648b09430772be15bc4c0f1a1edab05515053e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/pumpswap_trading/src/main.rs",
+      "sha": "c887c62903659ae16a4c9f10a76d8907221069e3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_amm_v4_trading/Cargo.toml",
+      "sha": "c854e4da8e02c52384a8d3b1f1ca17234287d03e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_amm_v4_trading/README.md",
+      "sha": "e74db820946893fcc7a2d763c926b323275f7ce0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_amm_v4_trading/README_CN.md",
+      "sha": "b3ff2fbc45ec4d15e17998f331ccf58bf6c044df",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_amm_v4_trading/src/main.rs",
+      "sha": "10148a5f2a2906ffbd372f75f42b8241dc9e3a9f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_cpmm_trading/Cargo.toml",
+      "sha": "8970157058be0c9fcf98532e58945694f3e39dfa",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_cpmm_trading/README.md",
+      "sha": "a2580aedab4e5741b7054d3f7cd86644dfc696c1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_cpmm_trading/README_CN.md",
+      "sha": "8d6210b341463f1743dd7a6ce359f3c06eb9b4c0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/raydium_cpmm_trading/src/main.rs",
+      "sha": "663e83c2009016bd7d3067a617ecc43792937d1f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/seed_trading/Cargo.toml",
+      "sha": "4b61d54d00f244a6285eaf2515fe0c87ffdde5c7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/seed_trading/README.md",
+      "sha": "d1f93f3216200450cdf7a61f2e965e8a3d2fec70",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/seed_trading/README_CN.md",
+      "sha": "ebbcda1e26ad4f887bd455d04902819c5df1b77e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/seed_trading/src/main.rs",
+      "sha": "0a17536c07b463a5763811c3196a4c68b8997f3a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/shared_infrastructure/Cargo.toml",
+      "sha": "2391822daddcec6708ff93dde4021d8f9b0a9ae7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/shared_infrastructure/README.md",
+      "sha": "b8715c2dd35fd4ec5aa86e525e55c99b75027994",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/shared_infrastructure/README_CN.md",
+      "sha": "36d87cb3dcceca64ff1c9500fcf5926994e1bea6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/shared_infrastructure/src/main.rs",
+      "sha": "70949237324640fef3dd6f777f72937ffde981c6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/simple_trading/Cargo.toml",
+      "sha": "df893c7590ae9cbb85ea1e1b160dad2cf3548040",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/simple_trading/README.md",
+      "sha": "c8ac898d08cca1866ec965caf5b167304fcfdc12",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/simple_trading/README_CN.md",
+      "sha": "133a26854876feda0d3ecd45cdb5faf2aaab05a3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/simple_trading/src/main.rs",
+      "sha": "be6a4ffd5d9e8d7380dd051d87baf3b86752f656",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/simulation_replay.rs",
+      "sha": "18eda2ac53a6a09f45dfd2218842ab0463891f34",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/stonkfun_cached_prepare.rs",
+      "sha": "f5f2a8b7360721e47ffc4afad7d3765af0b4e429",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/stonkfun_grpc_simulate.rs",
+      "sha": "7ec4dc6475bcabf44e332a967cf662fc75819c55",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/stonkfun_via_sol_simulate/Cargo.toml",
+      "sha": "820dc0fc3b0b0ce291643cd6d61e84c613f80a3c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/stonkfun_via_sol_simulate/src/main.rs",
+      "sha": "de46332f3f61c9b4121157531eb22bac09c77f12",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/support/cpmm_creator_fee_simulation.rs",
+      "sha": "67aa4bb427b24d4f22e62fba3fd2c1a353470479",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/support/cpmm_creator_fee_stream_guard.rs",
+      "sha": "e425792c16b14b1f1ab7488d8028d4fef3eebeee",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/support/cpmm_lp_collection_simulation.rs",
+      "sha": "01d638746eeb8efc682b170dff22df25f15d7fea",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/support/cpmm_swap_collection_simulation.rs",
+      "sha": "07b765981b57ffbd012931b195155ab585fc68a6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/support/pumpswap_offline.rs",
+      "sha": "3176a0619f85c6c59bfec6348d8eda43fdfc1198",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/trading_client/Cargo.toml",
+      "sha": "70499d5e2d836b3dd2e37a550594474d6d20585a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/trading_client/README.md",
+      "sha": "8f3a3120e7c11ecf677b59ada8458ff338ca021e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/trading_client/README_CN.md",
+      "sha": "103072023e40799a1765cdea4b86ce56e4405251",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/trading_client/src/main.rs",
+      "sha": "41a422830443e425bb8996cfffbd94168221e9a1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/wsol_wrapper/Cargo.toml",
+      "sha": "01fa0d93809bd5bee4b1e60be3045a10163888a5",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/wsol_wrapper/README.md",
+      "sha": "0788261f7d6dfc2fef56e322f704e750a082bda3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/wsol_wrapper/README_CN.md",
+      "sha": "f9ac830b36dd88cc813ca622d10984973ebe8c89",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "examples/wsol_wrapper/src/main.rs",
+      "sha": "b526d2271158b62e8f19bce428d5e0cbd4289aa2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/README.md",
+      "sha": "48f61302ab02a3ad49830943daea155ce3e08051",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_amm.json",
+      "sha": "57704f21a076a3c6fbabe77eddd4cd743f3f3d49",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_amm_052.json",
+      "sha": "19ad9d1e74924d0dd50feebff85f87803705db7c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_cp_amm_011.json",
+      "sha": "d098b5f39ef24323af28a3e2351caa13e4213c03",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_cp_amm_015.json",
+      "sha": "19c3187f09a4f87dadcc6a22d77345b0651b26ac",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_damm_v2.json",
+      "sha": "2a9ab1d5f48a485c946d786a5ea9d324d94752eb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_dynamic_bonding_curve.json",
+      "sha": "f2f215831b2b0386ee1a8353062aa4683760db36",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_lb_clmm.json",
+      "sha": "6715f5cf19dffa8651a185ac0dd823218c6a2a75",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/meteora_lb_clmm_090.json",
+      "sha": "052baa0beb6a10f896714aef6d1873b5747d10ad",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/orca_lyf_orca.json",
+      "sha": "4f109993af6bec4ac8ce9511b957c2726e0e2aa4",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/orca_whirlpool.json",
+      "sha": "24cd9111cc101ad71ce030cdf51263b5a96990de",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/orca_whirlpool_v2.json",
+      "sha": "24cd9111cc101ad71ce030cdf51263b5a96990de",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/pump.json",
+      "sha": "a8afe58cdeb43f8fa9b6115b4af3dc1dcd44b9cd",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/pump_amm.json",
+      "sha": "d907b16a91f035aeb3c3182bfa0972a91bf23a86",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/pump_fees.json",
+      "sha": "8de5fc909aa1087e5a3e96c2894b5635ccff59ee",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/raydium_amm_v3.json",
+      "sha": "7df50fd4e02e518d759f90ae000838b468a1e422",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/raydium_amm_v3_with_swapv2.json",
+      "sha": "c44c25cd35257cc9d2588dc0ff04c02bf434c7ee",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/raydium_amm_v4.json",
+      "sha": "291f16888a6dfc073577f30f854704fa6eb2e290",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/raydium_clmm.json",
+      "sha": "5b941610311597c7da75a6bf0304f43345c9e179",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/raydium_cpmm.json",
+      "sha": "6e3b959dd840e77a8f2a8a234db33fbc94ac0fc7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/raydium_launchpad.json",
+      "sha": "70186e3f02c2bead7e5a9a92453104df853683ed",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "idl/raydium_pool_v4.json",
+      "sha": "39d2ee9235eae1feb931fbfbbf51251f32028d62",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "rustfmt.toml",
+      "sha": "5a59d38e246e2fa9b9c0fe15cb04b629d4581ad0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/client/mod.rs",
+      "sha": "d8effb5e63b5b00cdc60b6010b7be6c2ff9fc618",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/common/address_lookup.rs",
+      "sha": "389718bba42b93880266ca7e21da569f3f6b89fb",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/common/bonding_curve.rs",
+      "sha": "757b001b49f3c0b9972799774eab12940b9293df",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/clock.rs",
+      "sha": "916aed9a8460b959598d8ddb9697627f769f29f9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/fast_fn.rs",
+      "sha": "e00f488a0df0870cb23b153d438e5c460b8faad4",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/fast_timing.rs",
+      "sha": "cf5b6d80b6e0366b0b4bb2005168746813fed1a6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/gas_fee_strategy.rs",
+      "sha": "19ab6c8e043b5b600fe1cf14c60d416922b109a1",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/common/global.rs",
+      "sha": "ea37fb956e9561526f54421604c75b637190425d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/keypair.rs",
+      "sha": "51c241dc7edb1778c3d108496d245c1e054117e7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/mainnet_sim.rs",
+      "sha": "627a860e1239bbf31c142ad1021c4c68b64f44f3",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/common/mod.rs",
+      "sha": "b99abc3d44d00575e61b8d1cfb7c53b1cfd2aa2a",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/common/nonce_cache.rs",
+      "sha": "0d9ce448259a58b2901bd87658b6266e92809c61",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/sdk_log.rs",
+      "sha": "715681f1b12fd7627deb1f70ef18150374cf393e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/seed.rs",
+      "sha": "71e7575e8750a47374715c3cb6b94ea258e05d4f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/spl_associated_token_account.rs",
+      "sha": "ed047be727914000d96f9640d42a74a7b29c6964",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/spl_token.rs",
+      "sha": "0c819577c7b0b2d118d2799738d25f85ed3cc243",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/common/spl_token_2022.rs",
+      "sha": "ed2925feb675c4b9e3d52dc8416415bda7247aaa",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/common/subscription_handle.rs",
+      "sha": "e9395faac0ed100405b491febcb47dc61686ebf6",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/common/types.rs",
+      "sha": "31a5203fbc81e11cf4e754c47518654b311a281b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/constants/accounts.rs",
+      "sha": "34ef263f1827c0d2f6345c2184bb724795b2f7cb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/constants/decimals.rs",
+      "sha": "ea62371fe167f1cf7bd3b7343c092a679dbcddbc",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/constants/mod.rs",
+      "sha": "2249453266b4a79de101fed6ec20e90a4860e157",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/constants/swqos.rs",
+      "sha": "3633a4e490de62b810b7f3e47d3304da99a0a2b6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/constants/trade.rs",
+      "sha": "eab0c5f274b30bbcbd5d0b969b2624c0732e0f9d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/constants/trade_platform.rs",
+      "sha": "05da7d8720ca9fb317a950d56f61be9ba7e2bd06",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/instruction/bonk.rs",
+      "sha": "076dc3e3e3b33056a85385c8058848175f8e3792",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/cross_dex_mainnet.rs",
+      "sha": "a9fe61ecc651f3ce118e7468b72ec2d793978bdf",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/launchlab.rs",
+      "sha": "a942100c2a5b611b776d6768cfe79674f49acbba",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/meteora_damm_v2.rs",
+      "sha": "ad10a1c135339b9b7b991534ea82d0b63e4c9085",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/meteora_damm_v2_mainnet.rs",
+      "sha": "8f1e9f7cee6f89505b4726b67ed9daadc767067f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/meteora_dlmm.rs",
+      "sha": "ced6eeaa92f33f12f8d31b1047976a82c9a1dd35",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/meteora_dlmm_mainnet.rs",
+      "sha": "417edd1f0728c92759bd6d8d1f75d3b73105e016",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/instruction/mod.rs",
+      "sha": "95caf902590fca4e07798046e5f1a222560647a1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pump_compact_accounts.rs",
+      "sha": "844c29bc39329de064cfbbe3decfca25431bc9a3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pump_create_v2.rs",
+      "sha": "27c5a311496774002a4f6eaab61f65157cb6b713",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pump_upgrade.rs",
+      "sha": "370f28b6b97c7533702798d2125bcf0e7d42fc97",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pump_v3_quote.rs",
+      "sha": "780687ed26a62e89326d9d962a86dbc75df08c27",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pumpfun.rs",
+      "sha": "743cb0a7e6ad0b4b24f0fb841e1f3050c8824826",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pumpfun_ix_data.rs",
+      "sha": "c4cfa25c25bba5b2539a94c8b53e1a107bf0cb52",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pumpfun_mainnet.rs",
+      "sha": "6171388c6203ebb0385f91469c46e530fa39b5b6",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/instruction/pumpswap.rs",
+      "sha": "b4c31ab45e714e3e9bde50218104341a3bbbdc9a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pumpswap_ix_data.rs",
+      "sha": "16d326a0d55f79d9de4be1fb0c67302efc0ce066",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pumpswap_mainnet.rs",
+      "sha": "d2732a986652ed1b512d2e16619dc7e332e1dca2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pumpswap_quote_tests.rs",
+      "sha": "b7eee50b264effd22f5e2a6c1c5843ecf1dca11e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/pumpswap_reported_failure_tests.rs",
+      "sha": "bf4dafe7ed6d9eedbb0b15f675cdf5d9f2fc803f",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/instruction/raydium_amm_v4.rs",
+      "sha": "a76f8da83b786836b481ce693a25c048352040a9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/raydium_amm_v4_mainnet.rs",
+      "sha": "bf2be6b094b478adec2555be6c2f64435c7b834f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/raydium_clmm.rs",
+      "sha": "6fa8de91ce9578b8916581161103a4b348ae1f3f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/raydium_clmm_mainnet.rs",
+      "sha": "f8967ddec8179770e69d7d88c2fa29327b998008",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/instruction/raydium_cpmm.rs",
+      "sha": "2dc1c5fc7a3ebd5c41a113b52396d590b5f1eeb1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/raydium_cpmm_mainnet.rs",
+      "sha": "4589a1b79cd454d6ec567dcc37d2074bf834d93b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/stonkfun.rs",
+      "sha": "f597e9243d119714a17ebc143cd00806ca9017c4",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/stonkfun_mainnet.rs",
+      "sha": "855e8132c152291c758bca2880a1bf8d64b006f6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/stonkfun_quote_route.rs",
+      "sha": "38852fa0b5772ebe1f35c598aefc94a13376ffd5",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/stonkfun_via_sol_mainnet.rs",
+      "sha": "a30314a7d499e00432338116ba00ced74fb4344c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/token2022_hook.rs",
+      "sha": "d67ea81e8ad39832c6cd662a277681512200bae8",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/token_account_setup.rs",
+      "sha": "1191c6583e280bf8b6087525a5286e5ced41759d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/bonk.rs",
+      "sha": "2694e1843a66d6be07d056c0898b5503ab042bef",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/bonk_types.rs",
+      "sha": "aebaa042b6d8de9c169b95a6f4c4098fe321039e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/meteora_damm_v2.rs",
+      "sha": "f2fdacacdb660be25aa8b3b510378fb20cb90803",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/meteora_damm_v2_types.rs",
+      "sha": "09d4dc04b3fe0f4fddad8a9c59697105eb4eb661",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/meteora_dlmm.rs",
+      "sha": "64452a864bddc41ae4134d0391825f5224c59a59",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/mod.rs",
+      "sha": "4d1c9d3f1f51b11ff3e87c5ace2df79a0f08b65a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/pumpfun.rs",
+      "sha": "1d064ace7bfb3ee2778324cee7c3b1cb3cbd14ec",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/pumpswap.rs",
+      "sha": "1b7538023ccee4f804c26d9ed1a06ea59dd5b594",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/pumpswap_types.rs",
+      "sha": "7775f84fcbed13c042889b1675ca11b772c894c1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/raydium_amm_v4.rs",
+      "sha": "f55739ece78bf146dd61962b47dd885c5110470c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/raydium_amm_v4_types.rs",
+      "sha": "4ef12b8522f49fa65c79633122b4a1bec7e219ff",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/raydium_clmm.rs",
+      "sha": "05f57be7328ab760c5c2625a315d71eaf63f6951",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/raydium_cpmm.rs",
+      "sha": "7a0033450b874573963e87429d5400b8175a060d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/raydium_cpmm_types.rs",
+      "sha": "f9f5484db2b8c3ffcda41395c7b1d52c8c45f009",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/utils/whirlpool.rs",
+      "sha": "a0a48884cf20279be38dc1cc9b4d293f47bbce1a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/whirlpool.rs",
+      "sha": "50a556799c12223b57b79424e46a7e100ea10888",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/instruction/whirlpool_mainnet.rs",
+      "sha": "49789923ed9e1e22067c74874897ef5015790666",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/lib.rs",
+      "sha": "c7e7f9ff59caffc631f5c55e17997e4889f2cca9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/compiler_optimization.rs",
+      "sha": "588b6704386d2120cdac75e2fccbacde2b3c76c2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/hardware_optimizations.rs",
+      "sha": "a88c03dc65161353d0056f58a573bd2bb43af8cb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/kernel_bypass.rs",
+      "sha": "deaeea17237e9aa4fd3a079ea5688550216579a0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/mod.rs",
+      "sha": "64ce4642ec09e7ec756100ef16eb185b8c374dc1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/protocol_optimization.rs",
+      "sha": "8f2deeeafcc76fd5358105acbb58eaa2eab23641",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/realtime_tuning.rs",
+      "sha": "0e3736fa90e1ee62f7b98540ff9f9e1a704eded1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/simd.rs",
+      "sha": "83eba865276f95c18aa1c8a03239b07bc5cace05",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/syscall_bypass.rs",
+      "sha": "b5cb0c16b1f2d8c14f544a8ca9da2e5c47d4ee6e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/ultra_low_latency.rs",
+      "sha": "1d11c4656257f89e7a39b13d58e6374219f7f031",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/perf/zero_copy_io.rs",
+      "sha": "fc411651fcdae1cf6f1d2c980ea13716ff8231f1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/astralane.rs",
+      "sha": "710d1985460b54fa30575a22abbbfc3e699ce589",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/astralane_quic.rs",
+      "sha": "13cc5b19cb91479ff34eba992d784151501caa46",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/blockrazor.rs",
+      "sha": "8dba3ba33e1bea591128030b47329cb6a552ecdd",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/bloxroute.rs",
+      "sha": "12e9e742fe50bd9a1a0d57ea8b5c1ee56c61f1d3",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/common.rs",
+      "sha": "18b3351edb2e77e7df0bd2bc0632443c458b248c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/flashblock.rs",
+      "sha": "023ef120832d0a4b6f2ab575aaa36f9447d2ec7d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/glaive.rs",
+      "sha": "47aebf1c20ee559b63e7d9e38fd0ea56a4644643",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/glaive_quic.rs",
+      "sha": "d1f3763dd4ff9861644d7887f48c6fd3ba594aa4",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/helius.rs",
+      "sha": "6f0d5e61fb0d9b74a8c67297dcc49c762f0fcc61",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/jito.rs",
+      "sha": "9de71e06671f71cc0624dc30bd763c32f27cb029",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/lightspeed.rs",
+      "sha": "d2e31e5d6ef97d21ac52f02cfba7f44150d5c342",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/lunarlander.rs",
+      "sha": "43da099943488ff765ca661775522b40e38f9e45",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/mod.rs",
+      "sha": "629b218541073fbd4059787c5aa87aaa1f6ed704",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/nextblock.rs",
+      "sha": "99a5ed0bf294ad0a6af40ff45f448ddc22c3c8cd",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/node1.rs",
+      "sha": "497e715c94473184ded539b4cc7e93a25a632464",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/node1_quic.rs",
+      "sha": "b2127b9ea9fdc8753cab05e1a36b071f8d682d5c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/pb/README.md",
+      "sha": "26a96be0fa4d5593c1d17eb10fd0ef3874d3d697",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/pb/serverpb.rs",
+      "sha": "137d1aabac26cc1593a517270e140ef737005cf1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/serialization.rs",
+      "sha": "c9128c6b4d18cc46d0523c91059f7eb329eb2c6a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/solami.rs",
+      "sha": "7cd51c7a1ec5b4d4ec752393a9e08c21a53a1869",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/solana_rpc.rs",
+      "sha": "8bccf4b5f6a56a560ea758f96426d185dc400f03",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/soyas.rs",
+      "sha": "032ffc4e489d05cb502c8441e732450ce7f1a5a7",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/speedlanding.rs",
+      "sha": "4352862af625da6d4c789888b62fb0e03affcf4c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/stellium.rs",
+      "sha": "65cc6de2eee905732862946b8734cec5240a7e39",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/temporal.rs",
+      "sha": "51c585829e627dd226ee5026b3043023233fe23a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/swqos/temporal_quic.rs",
+      "sha": "17f76bf6d8010f5388f55a94e4e565f6f17696b3",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/swqos/zeroslot.rs",
+      "sha": "64daf7b1c0986a37721c17754376b5b2106c7d57",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/common/compute_budget_manager.rs",
+      "sha": "26b0fc87a0e2f2b67478698e2b829c24476c6bc6",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/common/mod.rs",
+      "sha": "939e1d3ababb0a601dfee1da27424cc48a56f91d",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/common/nonce_manager.rs",
+      "sha": "898755a2ac35cc00cdf2c82d16f0f5f0a145d194",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/common/transaction_builder.rs",
+      "sha": "171e6e01efae8bb599f5230d8e556210a2c59b30",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/common/utils.rs",
+      "sha": "54a2e0d74b793106acc67b45fe861279de5313e2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/common/wsol_manager.rs",
+      "sha": "db73d44da9352424058baf87e59daf28508fed64",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/async_executor.rs",
+      "sha": "7937c2f4e89de64e432f00cacf75eb90e8e531db",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/execution.rs",
+      "sha": "06cf08be929cc3943d990bf9b9d09cfe21d6b26e",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/core/executor.rs",
+      "sha": "b460c14e73e1acd8d4790a1ec6376abc71a397e0",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/core/mod.rs",
+      "sha": "f3d7012cfd3a80ca22e441120c0ea9d228571f9b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/bonk.rs",
+      "sha": "d0fa3eaa1b227fef0e785c0e50cbe3c3b6f737f2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/cached_quote.rs",
+      "sha": "db3dcfa9d990f80c81dab5fd9dbe256b8a4926e3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/cached_quote_mainnet.rs",
+      "sha": "c2a23ba10d76162e742092a48dcc7e2d72831e75",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/cpmm_creator_fee_preparation.rs",
+      "sha": "8fbaa4375bb344d9c84a27ce92925f8652ab0533",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/dex_swap.rs",
+      "sha": "5cc34ff8528acdd38023e671410e61e941c6d0fe",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/meteora_damm_v2.rs",
+      "sha": "431ab540f801081dcf6d56f8bb7bd00097d7f697",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/meteora_dlmm.rs",
+      "sha": "cc4adab24c85452e642229742a99631c8c231b1a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/mod.rs",
+      "sha": "fe655b6b7a558ab0b875d7850edf6210def3dba9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/pumpfun.rs",
+      "sha": "d0801fb9ba6a569f0cc5ba0d05d1b37b170ceddd",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/pumpswap.rs",
+      "sha": "ab8f38e48f9be68fbcae31d1ab15acdb91bc5320",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/pumpswap_preparation.rs",
+      "sha": "c3cb3d268051e1c16813f7f2c324b93d7397f0c0",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/pumpswap_route_search.rs",
+      "sha": "17aa34f99ee870824c3454a41b7bbd24b0b7efa9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/pumpswap_transaction_tests.rs",
+      "sha": "3f5afbb0b814cb7d0ee9991c4f5abd6fb0098ed3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/raydium_amm_v4.rs",
+      "sha": "ee9516acd0534f158fc9952e1c24a36b96d19efb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/raydium_clmm.rs",
+      "sha": "1f57e286296a5c4a376bc7ed1b1f1859dce43803",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/raydium_cpmm.rs",
+      "sha": "8180bacf65361c511fff319f2b396c54efe4d767",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/stonkfun_preparation.rs",
+      "sha": "63078cdf0362bb488d9c7cbbaf96aa2625acae17",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/stonkfun_quote_route.rs",
+      "sha": "e52942e8a02841763b5703845d07e278b5e1414a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/stonkfun_via_sol.rs",
+      "sha": "13c95f9b1d9f67fe498517d7abebc14c76e911fa",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/subscription_cache.rs",
+      "sha": "c3ed5bda660042235997773a36d3e50b6c76f3f3",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/subscription_cache_hook_bank_test.rs",
+      "sha": "9f6bcc5739241b5d341fead5f6532c0bbf6237b1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/params/whirlpool.rs",
+      "sha": "ae728f137e5b88bc7261b95c8856d0c9770d8575",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/core/traits.rs",
+      "sha": "1b02d5e39e895169d257680f2b2dfe64b1c7894c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/core/transaction_pool.rs",
+      "sha": "39f5e6c2818f54837c065f3dda8aebc8a0e03ac6",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/factory.rs",
+      "sha": "1e3ae91adc6362b97ecc9cf0a0e41fc50c642405",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/middleware/builtin.rs",
+      "sha": "90b36d3440b17481376ad949aa4d999de2ef93de",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/middleware/mod.rs",
+      "sha": "133a68bfab408b21fe0ccaf7cdf3cf0436017936",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/trading/middleware/traits.rs",
+      "sha": "0481339fcee78e3d94f733f7ef9cf0f83d08c776",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "src/trading/mod.rs",
+      "sha": "506bb012567bf5d22ad58d13d17c4abc415d2e6f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/calc/bonk.rs",
+      "sha": "396aec74807d6f0510a89aa86d75126265dc3d3b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/calc/common.rs",
+      "sha": "359c1665a55660ae9c8f1ce54ea8de52d09c9a4a",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/calc/mod.rs",
+      "sha": "88efb9afdeeefdfe083b463cf9a8860feb670831",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/calc/pumpfun.rs",
+      "sha": "18290e9108c37eb524d17f7f0e0f3e018c23c9e1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/calc/pumpswap.rs",
+      "sha": "687693b813d8edb8b9fb87a9a313df46364f5677",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/calc/raydium_amm_v4.rs",
+      "sha": "1316de5193c03d74cb81656bb29e5407d71c145b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/calc/raydium_cpmm.rs",
+      "sha": "5cbd7bf99b3ba917134d6bf4d972accc1f62f0f9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/mod.rs",
+      "sha": "625c322b88b1eb923a8e329d80d2a017d8790808",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/bonk.rs",
+      "sha": "305b1a594e22ba4d9f49cd8c614469f9ce08a902",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/common.rs",
+      "sha": "af0d5c833e6c76dd12e3be1b69aeb821cc29251e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/mod.rs",
+      "sha": "e0cd9c4ab054f566991a9a49546821b9331b3d76",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/pumpfun.rs",
+      "sha": "a683c60ca213fc681ad942c2ce6af7c26ba2753d",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/pumpswap.rs",
+      "sha": "664d51e3aefdd7215a06cc9960c5cca5f4105e8f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/raydium_amm_v4.rs",
+      "sha": "276dcf03344bd9cecebbe73b45e6d74ee63b9de5",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/raydium_clmm.rs",
+      "sha": "44c08e366d03c62fa8d70d206684a4e2e4f11ff9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "src/utils/price/raydium_cpmm.rs",
+      "sha": "276dcf03344bd9cecebbe73b45e6d74ee63b9de5",
+      "type": "blob"
+    },
+    {
+      "mode": "100755",
+      "path": "test_latency.sh",
+      "sha": "733fa26bc3ace237bac0e9b81d31e2f02d4e6527",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/README.md",
+      "sha": "e9e2ec2af36999e62fb5889f8c6166b48abac777",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/cached_mint_tlv.rs",
+      "sha": "d0842ccaf75bd6ec5393524a41a7f55e0aa2821e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/cpmm_creator_fee_cached.rs",
+      "sha": "d25b148b89504195d0987f9b92a1c067b73b0899",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/cpmm_creator_fee_share.rs",
+      "sha": "591950416beb3b5856f666d0a24a0e1aee974561",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/cpmm_creator_fee_simulation.rs",
+      "sha": "c52c3ce1cb8c1780072626c3c28b236b44178f01",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/cpmm_lp_after_collection.rs",
+      "sha": "e3124e9e4ad5aa61d82d8ff77215e409ffbd1f8b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/cpmm_swap_after_collection.rs",
+      "sha": "cea9a520a077ec3aa73a50f62e99374da9031ea2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/cpmm_transfer_fee_bank.rs",
+      "sha": "37b3ec72a91e6af5ff8fba60ea148bd0693e4c00",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/damm_cpi_context.rs",
+      "sha": "e2847322a8e9f6c4960a8f15878ca67f4b422b14",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/damm_hook_context.rs",
+      "sha": "843867e043d8b4ab543814218ed664d0e524c6e5",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/devnet_v1.rs",
+      "sha": "7d12da6086d38f2bf3df735808d4de672d41f930",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/dlmm_hook_context.rs",
+      "sha": "4f89185024b641dea94545d77c16885c6f16ae3f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cached_mint_tlv_20261009.json",
+      "sha": "d36be0d86adf20826c78747191e6e4b0d1ed23dc",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cpmm_creator_fee_default_mainnet.json",
+      "sha": "7cf1c5d32bbdc7dd032f9662259ce82154ead6bb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cpmm_creator_fee_grpc_config_mainnet.jsonl",
+      "sha": "242d1a457b1a260be7c35d6feb6e9de270b97c70",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cpmm_creator_fee_override_mainnet.json",
+      "sha": "6dc23f812b57c9a4dac9b009e9a2394789e64d0e",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cpmm_creator_fee_token2022_mainnet.json",
+      "sha": "b7a3a6355092383e6fafd3592902c5c85e54a1d4",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cpmm_lp_after_collection_mainnet.json",
+      "sha": "a81682ff46dfcab00f76f46bf1626645791bc449",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cpmm_swap_after_collection_mainnet.json",
+      "sha": "dd26bf77d858b2468dc0f7941caac73a328e35bf",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/cpmm_transfer_fee_bank_20261008.json",
+      "sha": "e76dc00b84e953ddefcba395d2822a92b90ee4b6",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/damm_cpi_context_20261009.json",
+      "sha": "11f6e296ac4465a8357c9e81d813268e122f46d9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/damm_hook_context_20261009.json",
+      "sha": "16e128a5435f0f8b3c65348bd6628ef57c69fbef",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/damm_v2_current.json",
+      "sha": "23bdd7250c637c1ede4288fc0107b290750c31ee",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/dlmm_bitmap_selection.json",
+      "sha": "8ff3c5b68899d8222e198bcc02d1499ac461f701",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/dlmm_hook_context_20261009.json",
+      "sha": "2e4d3c0da808e13cbd93673f643461a4f5fd7feb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/hook_mint_tlv_20261009.json",
+      "sha": "37e738cf0a13c00ab94d2af51ae664365e62a191",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/hook_seed_context_20261009.json",
+      "sha": "a7e1687e926bdbf45503cf8d4708aab7c1ec6588",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_holder_bank_20261009.json",
+      "sha": "5237ebf687d630def1bb152aab550a312cbe7728",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_routes_bank_20261009.json",
+      "sha": "7f0ba42e58eb5aee47cb27f2aba890108017dfc9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_upgrade/create.json",
+      "sha": "7ef0e85c886adca89442ce4c2c92063b6c7df3bd",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_upgrade/create_depth2.json",
+      "sha": "a1f0053991d5eaabd4edccde55d0d3cf0b5ed0ed",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_upgrade/instructions.json",
+      "sha": "903fd69f2323f76672ed603de4a72d7b987e0370",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_upgrade/native_aliases.json",
+      "sha": "cd4eb895b62cd902b74980cd69a33865390fb630",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_upgrade/quote_control.json",
+      "sha": "1c19dda9f434f0b94b2e1091809a07be347929fc",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_upgrade/quotes.json",
+      "sha": "2ba99a1bd5231b272c7837ddac90b1b4495505b1",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pump_upgrade/simulated_instructions.json",
+      "sha": "577e99bd0d83966fbdf3196b66dd118cca86fcc8",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pumpswap_reported_failure.json",
+      "sha": "ca5e302c07334cae7d432a18010440d00be321af",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pumpswap_signed_official_1_19_0.json",
+      "sha": "4a14ec750aa75a0bb8793ec30d847c8708d47534",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pumpswap_ttwo.json",
+      "sha": "6ff35065968f6e47e3366efd8fce0c8a9a9b6716",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pumpswap_ttwo_accounts.json",
+      "sha": "bd0867189a2ef7be9a5f0df9cde3f03b92ec25ed",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/pumpswap_ttwo_route_accounts.json",
+      "sha": "74eb507a6afc229abcc4cabc9032b0afbd6ae1df",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/token_hook_bank_20261008.json",
+      "sha": "483e35d61765ec9291d33155039ef81e0be9e45f",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/fixtures/whirlpool_hook_bank_20261008.json",
+      "sha": "047282f1b0f3c25f027e69203571176a72f3d972",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/hook_mint_tlv.rs",
+      "sha": "c94c9d8d47e04d49e8c56a62089132cc84f5abc8",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/hook_seed_context.rs",
+      "sha": "d3e7ea5c076692b66d676780bba708c37aa7b1fb",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/performance_cached_hotpath.rs",
+      "sha": "e295f453c26617fc7b3e10e83e4da6ce3b14487b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/pump_depth2.rs",
+      "sha": "b5fdaa3189065c0c5b65ece7ccdd1f882176d7c5",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/pump_holder_bank.rs",
+      "sha": "aa184a2bd2127dfe8f55a33e258f851181c50287",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/pump_routes_bank.rs",
+      "sha": "667299997f6a87bab8c136c88ce0c92e84574d5b",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/pump_upgrade.rs",
+      "sha": "15381da261fadcce71b3f7d93c7fb5b3847216b9",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/pumpswap_signed_official.rs",
+      "sha": "08faa95d0be7beaaaa790496f0541065e6e92164",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/review_decimal_routes.rs",
+      "sha": "0449e0e6017d7a24525bcacd2f52a771fc1258b2",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/review_durable_nonce.rs",
+      "sha": "322dc7549d625cc00c2328b9e35e3883d2c3413c",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/review_min_tip_initialization.rs",
+      "sha": "29619b9874230dd268c23ef2d6069653b844c329",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/review_signed_trade.rs",
+      "sha": "547a96635775e419d5f6f190034774b0178087de",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/review_trade_builder.rs",
+      "sha": "06a9c1dcf1464a817755e0465c27e8b005445323",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/review_transfer_fee_inverse.rs",
+      "sha": "f4548b3a3bcf5474b6548a8761f30d7459166188",
+      "type": "blob"
+    },
+    {
+      "mode": "100644",
+      "path": "tests/whirlpool_hook_bank.rs",
+      "sha": "cb54fc98a137e36cbfef3dc1c55cc89b6a057ef9",
+      "type": "blob"
+    }
+  ],
+  "truncated": false
+}

@@ -69,6 +69,8 @@ PY
         printf 'step\texit_code\telapsed_seconds\n' >"$output/results.tsv"
         step formatting cargo fmt --check
         step workflow-policy python3 scripts/test_ci_workflow.py
+        step sdk-provenance-tests python3 scripts/test_sdk_provenance.py
+        step sdk-provenance python3 scripts/check_sdk_provenance.py
         step locked-git-sources python3 scripts/test_ci_git_sources.py
         step namespace-probe python3 tests/fixtures/ci/namespace_probe.py
         step shell-runner bash scripts/test_dev_check.sh

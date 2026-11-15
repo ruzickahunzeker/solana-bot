@@ -1243,6 +1243,10 @@ curl -X POST http://127.0.0.1:18787/v1/trades \
 sol-trade-sdk = "6.0.2"
 ```
 
+本地 vendor 含既有 Meteora DBC 扩展，不与官方同版本逐字节相同。固定上游提交、差异清单、
+可重放补丁及升级门槛见 [SDK 来源账本](docs/optimization/SDK_PROVENANCE.md)。可先运行
+`python3 scripts/check_sdk_provenance.py` 做只读检查；它不联网、不修改 SDK，也不代表协议交易验收。
+
 SDK 参数通过 RPC helper 补齐：
 
 - `PumpFunParams::from_mint_by_rpc`

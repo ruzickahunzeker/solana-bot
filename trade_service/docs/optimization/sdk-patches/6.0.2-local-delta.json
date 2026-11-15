@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "sdk_version": "6.0.2",
+  "repository": "https://github.com/0xfnzero/sol-trade-sdk",
+  "tag": "v6.0.2",
+  "tag_object": "1dbc0c8bc3a7e04a962130f2e141b1ca071a4a7b",
+  "commit": "dc97b56c602a13d8967973c6eadcf79ab1fcddaa",
+  "upstream_tree": "6c106a09b8bd04f8541e3aa9db03857db61bdf00",
+  "signature_verification": "unsigned",
+  "inventory": "6.0.2-upstream-tree.json",
+  "inventory_sha256": "bf388f7d3ca1662fe674814b0a42ec34775d0c7810102393ba7602b689258701",
+  "patch": "0001-6.0.2-meteora-dbc.patch",
+  "patch_sha256": "46c758007692339983a62f44d283fae564509188d9ace26bdac1742ef703856c",
+  "patch_id": "DBC-LOCAL-001",
+  "files": [
+    {"path":"Cargo.toml","before":"c6110aff1592045351c1ca47ec4f0a5ebfae4932","after":"00a053f3c2c8f6ad001b0486a0a3d2ee35f3c29e","mode":"100755"},
+    {"path":"src/client/mod.rs","before":"d8effb5e63b5b00cdc60b6010b7be6c2ff9fc618","after":"a6d8316f0874d094461e3eff8a0350f80e454610","mode":"100644"},
+    {"path":"src/instruction/meteora_dbc.rs","before":null,"after":"375aeda9df4ef3ff4340493732d425aa4f8fbf61","mode":"100644"},
+    {"path":"src/instruction/mod.rs","before":"95caf902590fca4e07798046e5f1a222560647a1","after":"ae8ec2c0f49e212dd6face8186f6c106ac1420a5","mode":"100755"},
+    {"path":"src/instruction/utils/meteora_dbc.rs","before":null,"after":"b74fe59fe73dda830344ead906bf19a4636872de","mode":"100644"},
+    {"path":"src/instruction/utils/mod.rs","before":"4d1c9d3f1f51b11ff3e87c5ace2df79a0f08b65a","after":"2626e2d4d43bb8aa17c2d8c4a8a64e715d1a37ae","mode":"100644"},
+    {"path":"src/lib.rs","before":"c7e7f9ff59caffc631f5c55e17997e4889f2cca9","after":"287c462c81d16bb4f75e56897dbccc934f12bfd3","mode":"100755"},
+    {"path":"src/trading/core/params/dex_swap.rs","before":"5cc34ff8528acdd38023e671410e61e941c6d0fe","after":"a71b242820e80421f6e31ef3e27893aa85c45caf","mode":"100644"},
+    {"path":"src/trading/core/params/meteora_dbc.rs","before":null,"after":"d400d3f851f4d514b060166ace753fd3f8565786","mode":"100644"},
+    {"path":"src/trading/core/params/mod.rs","before":"fe655b6b7a558ab0b875d7850edf6210def3dba9","after":"b936183c21354d3a319714c069ef0913fc004723","mode":"100644"},
+    {"path":"src/trading/factory.rs","before":"1e3ae91adc6362b97ecc9cf0a0e41fc50c642405","after":"604e9ba8567c9a31c79ca448d31cf50af265c241","mode":"100755"}
+  ]
+}
