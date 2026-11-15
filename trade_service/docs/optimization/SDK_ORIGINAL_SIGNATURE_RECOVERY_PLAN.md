@@ -4,6 +4,12 @@
 范围沿用新 Durable Live SDK 直接 DAMM v2 卖出；其他 SDK 协议/方向/模式后续扩展。
 PumpAPI 暂停，不升级 SDK、不改公开 API、不部署、不读取生产钱包或数据库、不发交易。
 
+当前 C3d1 已在源码实现显式 SDK context/replay/finality 与迟到 receipt 保护，新增 18 项
+仅受限类型检查，未接 SDK 自动扫描；见 `SDK_ORIGINAL_SIGNATURE_RECOVERY.md`。
+最近已验收 C3c2 `fd1c7cb` / Actions `43685088919`，artifact `14150028402` 下载核对，
+完整并发/串行各 1398 通过；不覆盖本批恢复核心。下方缺口是制定本清单时的核查，
+其中 context/validator 核心已由 C3d1 源码接续，扫描索引/有界归并/worker 及生产验收仍待完成。
+
 ## 已核对的缺口
 
 - `ordinary_observation_scan.rs::PAGE_SQL` 及 007 partial index 仅覆盖 ordinary-sol-buy，

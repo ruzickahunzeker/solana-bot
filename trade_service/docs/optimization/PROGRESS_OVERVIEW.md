@@ -6,6 +6,19 @@
 
 ## 统计口径
 
+- 当前 C3d1 SDK 显式原签名恢复/context/replay/finality 与迟到 receipt 保护已有源码，18 项
+  新测试仅受限 check，完整运行待 CI。SDK 自动扫描、索引迁移和 worker 恢复尚未接入，
+  不是自动恢复完成；其他方向/协议/模式和真实发布仍待续，见 `SDK_ORIGINAL_SIGNATURE_RECOVERY.md`。
+- 最近已验收 C3c2 `fd1c7cb` / Actions `43685088919` / artifact `14150028402` 下载核对，
+  完整并发 1398（132.54 秒）/串行 1398（235.13 秒）零失败/忽略/过滤，sender 14 含四项
+  新串联用例、controller 10、HTTP 200、参数 3 及全部步骤通过，不覆盖 C3d1 新增 18 项。
+
+下方 C3c1/C3c2 的发布/待验叙述保留历史，不覆盖以上当前状态或形成重复任务。
+
+- 最新待验 C3c2 `fd1c7cb` / Actions `43685088919` 已推送并确认运行中；仅新增四项真实
+  受控签名/SQLite/实际 RpcClient 与固定 sender 的串联测试和文档，未改生产行为。
+  尚无本批运行结果；下方 1394 是其父提交的完整验收，不能冒用。下一实际源码任务为
+  `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md` 的只读恢复，不重复实施已通过的 C3c1。
 - 最新已验收 C3c1：`dd946aa` / Actions `43683583741` / artifact `14149574413` 已下载核对，完整并发 1394（124.26 秒）/串行 1394（225.17 秒）零失败/忽略/过滤，所有步骤 exit=0。SDK prepared 22、签名账本 11、controller 10、受控签名 5、固定 sender 10、真实 executor 分流 8、选定 observer 2、HTTP 200、参数 3 均通过。前轮过期夹具问题已验证修复，不再等待旧失败任务。
 - C3c1 对新 Durable Live 直接 DAMM 卖出已接原 owner、真实 getter/受控签名、原字节账本/固定 sender，子路径不再走旧 SDK worker；其他模式/协议不改。C3c2 后续四项真实签名/SQLite/实际 RpcClient/sender 串联测试仅受限 check 通过，尚未执行，不借用上述 1394。原五组生产警告保持，无部署/实网验收；SDK 持续只读观测/恢复及其他大项继续，实施门槛见 `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md`。
 

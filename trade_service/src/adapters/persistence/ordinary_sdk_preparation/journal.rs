@@ -89,4 +89,23 @@ impl OrdinarySdkSubmissionJournal for SqliteOrdinaryExecutionClaims {
     ) -> Result<TradeRecordV1> {
         self.observe_sdk_submission(execution, owner).await
     }
+
+    async fn finalized_failure(
+        &self,
+        execution: &AdmittedTrade,
+        owner: &ExecutionOwner,
+        signature: &str,
+    ) -> Result<Option<TradeRecordV1>> {
+        let mut tx = self.pool.begin().await?;
+        checked(&mut tx, execution, owner).await?;
+        let (row, captured) =
+            observation::capture_checked(&mut tx, execution.reservation().request_id()).await?;
+        captured.context.ensure_execution(execution)?;
+        let parent = captured.record;
+        let validated = observation::validate_finality_fields(&row)?.is_some()
+            && parent.status == TradeStatus::Failed
+            && parent.signature.as_deref() == Some(signature);
+        tx.commit().await?;
+        Ok(validated.then_some(parent))
+    }
 }

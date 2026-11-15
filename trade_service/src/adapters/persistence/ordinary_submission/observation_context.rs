@@ -20,6 +20,27 @@ pub(super) async fn capture_checked(
     tx: &mut Transaction<'_, Sqlite>,
     request_id: &str,
 ) -> Result<(SqliteRow, CapturedOrdinaryObservation)> {
+    let operation: String =
+        sqlx::query_scalar("SELECT operation FROM ordinary_execution_claims WHERE request_id=?")
+            .bind(request_id)
+            .fetch_one(&mut **tx)
+            .await?;
+    match operation.as_str() {
+        "ordinary-sdk-trade" => {
+            crate::adapters::persistence::ordinary_sdk_preparation::observation::capture_checked(
+                tx, request_id,
+            )
+            .await
+        }
+        "ordinary-sol-buy" => capture_sol_checked(tx, request_id).await,
+        _ => anyhow::bail!("unsupported ordinary observation operation"),
+    }
+}
+
+async fn capture_sol_checked(
+    tx: &mut Transaction<'_, Sqlite>,
+    request_id: &str,
+) -> Result<(SqliteRow, CapturedOrdinaryObservation)> {
     let raw = sqlx::query("SELECT * FROM trades WHERE request_id=?")
         .bind(request_id)
         .fetch_optional(&mut **tx)

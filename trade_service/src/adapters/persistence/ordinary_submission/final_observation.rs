@@ -23,7 +23,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct FinalObservationV1 {
+pub(in crate::adapters::persistence) struct FinalObservationV1 {
     schema_version: u8,
     signature: String,
     commitment: String,
@@ -32,7 +32,10 @@ struct FinalObservationV1 {
 }
 
 impl FinalObservationV1 {
-    fn new(signature: &str, observation: &ChainObservation) -> Result<Self> {
+    pub(in crate::adapters::persistence) fn new(
+        signature: &str,
+        observation: &ChainObservation,
+    ) -> Result<Self> {
         ensure!(
             !signature.is_empty()
                 && observation.signature == signature
@@ -52,12 +55,33 @@ impl FinalObservationV1 {
         })
     }
 
-    fn status(&self) -> TradeStatus {
+    pub(in crate::adapters::persistence) fn status(&self) -> TradeStatus {
         if self.error.is_some() {
             TradeStatus::Failed
         } else {
             TradeStatus::Confirmed
         }
+    }
+
+    pub(in crate::adapters::persistence) fn error(&self) -> Option<&str> {
+        self.error.as_deref()
+    }
+
+    pub(in crate::adapters::persistence) fn decode(json: &str, signature: &str) -> Result<Self> {
+        ensure!(
+            json.len() <= 65_536,
+            "ordinary final observation exceeds limit"
+        );
+        let value: Self = serde_json::from_str(json)?;
+        ensure!(
+            value.schema_version == 1
+                && value.commitment == "finalized"
+                && value.slot > 0
+                && value.signature == signature
+                && value.error == value.error.as_deref().map(crate::sanitize::redact_urls),
+            "ordinary final observation or parent evidence mismatch"
+        );
+        Ok(value)
     }
 }
 
@@ -181,6 +205,11 @@ impl RecoveredOrdinaryObservations for SqliteOrdinaryExecutionClaims {
         context: &OrdinaryObservationContext,
         observation: &ChainObservation,
     ) -> Result<TradeRecordV1> {
+        if context.operation() == crate::application::ordinary_claims::ClaimOperation::SdkTrade {
+            return crate::adapters::persistence::ordinary_sdk_preparation::observation::record_finality(
+                self, context, observation,
+            ).await;
+        }
         let signature = context.signature();
         let evidence = FinalObservationV1::new(signature, observation)?;
         let json = metadata(&evidence)?;

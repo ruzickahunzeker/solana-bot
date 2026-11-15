@@ -14,6 +14,8 @@ use crate::{
     protocol::registry::{self, PoolIdPolicy, QuotePolicy},
 };
 
+mod sdk_recovery;
+
 /// Local input policy only; parsed addresses are not verified routes or signing authority.
 pub(crate) struct TradeValidator<'a> {
     parser: &'a dyn TradeAddressParser,

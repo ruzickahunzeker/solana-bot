@@ -49,6 +49,16 @@ pub(super) fn validate_fields(
 }
 
 pub(super) fn validate_parent(row: &SqliteRow, parent: &TradeRecordV1) -> Result<()> {
+    if let Some(evidence) = super::observation::validate_finality_fields(row)? {
+        ensure!(
+            parent.status == evidence.status()
+                && parent.error.as_deref() == evidence.error()
+                && parent.signature.as_deref()
+                    == row.try_get::<Option<&str>, _>("signed_signature")?,
+            "SDK finalized parent differs from its original evidence"
+        );
+        return Ok(());
+    }
     let stage: &str = row.try_get("submission_stage")?;
     let expected = match stage {
         "claimed" => matches!(

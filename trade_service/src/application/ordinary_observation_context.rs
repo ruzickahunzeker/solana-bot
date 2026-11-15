@@ -1,9 +1,12 @@
 use anyhow::{ensure, Result};
 
-use crate::application::{trade_admission::AdmittedTrade, trade_record::TradeRecordV1};
+use crate::application::{
+    ordinary_claims::ClaimOperation, trade_admission::AdmittedTrade, trade_record::TradeRecordV1,
+};
 
 /// An immutable observation identity, never an execution owner or signing input.
 pub(crate) struct OrdinaryObservationContext {
+    operation: ClaimOperation,
     request_id: String,
     wallet_id: String,
     wallet_pubkey: String,
@@ -39,6 +42,7 @@ impl OrdinaryObservationContext {
             "ordinary observation identity is incomplete"
         );
         Ok(Self {
+            operation: ClaimOperation::SolBuy,
             request_id: record.request_id.clone(),
             wallet_id: record.wallet_id.clone(),
             wallet_pubkey: record.wallet_pubkey.clone(),
@@ -47,6 +51,22 @@ impl OrdinaryObservationContext {
             signature,
             evidence_fingerprint,
         })
+    }
+
+    pub(crate) fn captured_sdk(
+        record: &TradeRecordV1,
+        idempotency_key: String,
+        request_hash: String,
+        evidence_fingerprint: String,
+    ) -> Result<Self> {
+        let mut value =
+            Self::captured(record, idempotency_key, request_hash, evidence_fingerprint)?;
+        value.operation = ClaimOperation::SdkTrade;
+        Ok(value)
+    }
+
+    pub(crate) fn operation(&self) -> ClaimOperation {
+        self.operation
     }
 
     pub(crate) fn request_id(&self) -> &str {
@@ -78,7 +98,8 @@ impl OrdinaryObservationContext {
 
     pub(crate) fn ensure_same(&self, other: &Self) -> Result<()> {
         ensure!(
-            self.request_id == other.request_id
+            self.operation == other.operation
+                && self.request_id == other.request_id
                 && self.wallet_id == other.wallet_id
                 && self.wallet_pubkey == other.wallet_pubkey
                 && self.idempotency_key == other.idempotency_key

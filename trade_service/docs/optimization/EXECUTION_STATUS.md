@@ -2,6 +2,25 @@
 
 更新日期：2026-11-15。主计划：`../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md`。
 
+当前 C3d1 已在源码接普通 SDK 原签名的显式只读 context/历史 replay/原库 finality/CAS/读回，
+typed operation 与原请求/hash/候选/签名绑定，不恢复 owner、不取 signer、不重新发送。
+只允许 signed/broadcasting/submitted/unknown，只有合法 finalized 证据可推进 confirmed/failed；
+迟到 receipt 不覆盖终态，Application 签后 failed 需独立验证最终证据，否则保持未知。
+新增 18 项仅受限类型检查（最终 test 约 9 秒/RSS 1,293,972 KiB；bin 约 6 秒/RSS 764,880 KiB），
+生产仍原五组警告，完整运行待 CI。007/扫描/worker 未扩至 SDK，无新 DDL/配置/API，
+后续 C3d2 必须接有界扫描与严格迁移/worker 合同；详见 `SDK_ORIGINAL_SIGNATURE_RECOVERY.md`。
+前序 C3c2 `fd1c7cb` / Actions `43685088919` 已终态 success，artifact `14150028402`
+下载核对，完整并发 1398（132.54 秒）/串行 1398（235.13 秒），sender 14 及全部 steps 通过。
+下方 C3c2 运行中及待验状态保留历史，不再轮询旧终态任务，不把 1398 套给当前新增测试。
+目标 active，SDK/依赖/vendor/release/生产边界及 PumpAPI 暂停保持。
+
+最新运行句柄：C3c2 `fd1c7cb8869d670cffbd3c5485744b7e8666f773` / Actions `43685088919`
+已推送且确认 in_progress；只轮询这个新任务，不重跑已终态成功的 C3c1 `43683583741`。
+972 文件/12,234,449 字节快照经路径/字面量/diff 审计，通过独立临时索引发布，真实 main/索引未动。
+本批仅四项串联测试和已验收结果/恢复实施文档，无生产实现、SDK/依赖或运行数据变化。
+四项新测试及完整套件仍待此 CI，原 1394 只证明其父提交 C3c1，不提前宣布新批通过。
+下方 C3c2“尚未推送”保留为发布前历史；下一实际源码任务是 SDK 原签名只读恢复。
+
 2026-11-15 C3c1 `dd946aaa961f821a000db492fd8c74381180695f` / Actions `43683583741` 已终态成功，artifact `14149574413` 核对，完整并发/串行各 1394 通过，详见下方权威验收。快照 970 文件/12,211,016 字节，白名单、敏感字面量与 diff 审计通过，真实 main/索引及原 manifest/lock/vendor/release 指纹保持。之后 C3c2 新增四项 `sdk_original_sender_journal_integration_*`，真实受控 signer、原 SQLite 账本与实际 RpcClient/sender 串联，底层内存 RPC 在 egress 核对 broadcasting 原字节；成功、错回执、receipt 写失败和取消的测试源码已通过受限 check（约 9 秒，RSS 1,315,280 KiB），尚未推送/运行，不借 C3c1 结果声称验收。先前测试侧 unwrap_err 需要 Debug 的编译错误只改测试匹配，不扩大生产类型 Debug 暴露。SDK 原签名恢复的实际缺口及实施门槛已记录于 `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md`；没有恢复 owner 或放宽旧聚合 scope。目标 active，PumpAPI 暂停及所有生产边界保持。
 
 仅实施 Trade Service；其他服务既有改动保留，不纳入本队列。已按用户要求创建对话内持续执行任务，本文件记录可续作检查点；不代表额外安装了 systemd/cron 或可脱离运行环境永久执行的守护进程。

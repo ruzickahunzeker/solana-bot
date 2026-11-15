@@ -30,6 +30,20 @@
 
 ## 已验收运行
 
+最新已验收 C3c2 `fd1c7cb8869d670cffbd3c5485744b7e8666f773` /
+[Actions 43685088919](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43685088919)
+已终态 success，artifact `14150028402` 下载核对，manifest/SDK 身份匹配，全部步骤 exit=0。
+完整并发 1398 / 132.54 秒、串行 1398 / 235.13 秒，零失败/忽略/过滤；sender 14
+包含四项真实受控 signer/原 SQLite/实际 RpcClient 的串联用例，controller 10、HTTP 200、参数 3 保持。
+当前 C3d1 新增 18 项恢复/finality 用例仅受限 check，待新快照 CI，不套用 1398。
+
+以下 C3c2 in_progress 为发布时历史，不继续等待或重新触发这个已终态任务。
+
+当前待验收：C3c2 `fd1c7cb8869d670cffbd3c5485744b7e8666f773` /
+[Actions 43685088919](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43685088919)
+已确认 in_progress。仅新增四项 journal integration 与文档，不混用父提交 1394 作本批通过证据。
+后续只跟踪这个句柄；下方 C3c1 成功为最近完整验收，不再作为运行中任务等待。
+
 - C3c1 `dd946aaa961f821a000db492fd8c74381180695f` /
   [Actions 43683583741](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43683583741)
   全部步骤成功（14 分 32 秒），artifact `14149574413` 已下载核对：身份/manifest 指纹匹配，

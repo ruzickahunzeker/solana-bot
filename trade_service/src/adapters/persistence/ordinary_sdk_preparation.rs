@@ -20,6 +20,7 @@ use sha2::{Digest, Sha256};
 use sqlx::{sqlite::SqliteRow, Row, Sqlite, Transaction, ValueRef};
 
 mod journal;
+pub(super) mod observation;
 mod submission;
 
 fn sha(message: &[u8]) -> String {
@@ -39,14 +40,10 @@ pub(super) fn validate_sdk_row(row: &SqliteRow) -> Result<Option<StoredSdkCandid
         nonce.len() == 32 && nonce.bytes().all(|byte| byte.is_ascii_hexdigit()),
         "SDK claim owner is invalid"
     );
-    for column in [
-        "bound_quote_json",
-        "preflight_json",
-        "final_observation_json",
-    ] {
+    for column in ["bound_quote_json", "preflight_json"] {
         ensure!(
             row.try_get_raw(column)?.is_null(),
-            "SDK candidate cannot reuse quote or final metadata"
+            "SDK candidate cannot reuse quote metadata"
         );
     }
     let stage = row.try_get::<&str, _>("submission_stage")?;
@@ -77,6 +74,7 @@ pub(super) fn validate_sdk_row(row: &SqliteRow) -> Result<Option<StoredSdkCandid
         _ => anyhow::bail!("SDK candidate stage or partial metadata is invalid"),
     };
     submission::validate_fields(row, stored.as_ref())?;
+    observation::validate_finality_fields(row)?;
     Ok(stored)
 }
 

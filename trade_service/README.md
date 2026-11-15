@@ -174,7 +174,7 @@ A3c 已将该 read port 接第六类共享 HTTP profile，不再持 SDK RpcClien
 
 普通 SDK 的最终无 signer 构建仍在实施。[B4b 候选 guard](docs/optimization/DAMM_FINAL_CANDIDATE_GUARD.md) 后，B4c1 已把完整不可变零签名交易接实际 DAMM 卖出的 `simulate=true` 与 Live preview，仅调用原 lane 的只读 RPC、不进入 SDK signer；模拟成功仍为 `simulated`，`signature:null`。预检失败/取消/过期不继续正式提交，原参数/hash/生命周期与 SDK 方法准入保持，未部署。正式 Live 仍 opaque SDK/原私有 guard，完整证据授权及原 owner 的签名账本/原字节发送未完成；其他方向/协议不因此无签名。详见 [不可变产物、模拟与账本接续](docs/optimization/DAMM_UNSIGNED_CANDIDATE_AND_SIMULATION.md)。
 
-原账本接续的 C3a-C3c1 已在源码接入 Durable Live 直接 DAMM v2 卖出的原 owner、prepared/签名账本、受控签名和落盘原字节发送，旧聚合 Quote journal 不接受该操作。其他 SDK 方向/协议、Memory/Shadow 与 PumpAPI 不因此获得同样保证；SDK 持续观测/恢复及真实 SDK/供应商/迁移/发布验收仍待完成。C3c1 完整离线 CI 并发/串行各 1394 通过；后续四项串联用例仅类型检查，无生产部署或迁移，详见 [实际 SDK 子路径](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)。
+原账本接续的 C3a-C3c2 已在源码接入 Durable Live 直接 DAMM v2 卖出的原 owner、prepared/签名账本、受控签名和落盘原字节发送，旧聚合 Quote journal 不接受该操作。完整离线 CI 并发/串行各 1398 通过，含四项 signer/账本/RpcClient 串联。C3d1 新增显式只读恢复/历史 replay/finality 核心，18 项新用例仅类型检查；SDK 自动扫描/索引/worker、其他方向/协议/模式及真实 SDK/供应商/迁移/发布仍未完成，无生产部署或迁移。详见 [实际 SDK 子路径](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md) 与 [SDK 恢复](docs/optimization/SDK_ORIGINAL_SIGNATURE_RECOVERY.md)。
 
 推荐切换顺序：
 

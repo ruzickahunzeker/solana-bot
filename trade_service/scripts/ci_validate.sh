@@ -79,6 +79,7 @@ PY
         step compile-tests cargo test --locked --offline --no-run
         step sdk-candidate cargo test --locked --offline sdk_candidate -- --test-threads=2
         step sdk-preparation cargo test --locked --offline ordinary_sdk_preparation -- --test-threads=2
+        step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2
         step sdk-submission-controller cargo test --locked --offline sdk_application_submission -- --test-threads=2
         step sdk-controlled-signing cargo test --locked --offline sdk_controlled_signing -- --test-threads=2

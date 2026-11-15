@@ -72,6 +72,16 @@ pub(crate) trait OrdinarySdkSubmissionJournal: Sync {
         execution: &AdmittedTrade,
         owner: &ExecutionOwner,
     ) -> impl Future<Output = anyhow::Result<TradeRecordV1>> + Send;
+
+    /// Only validated finalized failure evidence can explain a failed parent after signing.
+    fn finalized_failure(
+        &self,
+        _execution: &AdmittedTrade,
+        _owner: &ExecutionOwner,
+        _signature: &str,
+    ) -> impl Future<Output = anyhow::Result<Option<TradeRecordV1>>> + Send {
+        async { Ok(None) }
+    }
 }
 
 /// Candidate and signed artifact retain backend-owned live evidence, not a recovered DTO.

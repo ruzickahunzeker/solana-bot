@@ -9,7 +9,10 @@ use crate::{
     },
     application::{
         ordinary_claims::test_support::{admit_request_for_pubkey, fixture},
-        ports::ordinary_claims::{ExecutionClaim, OrdinaryExecutionClaimer},
+        ports::{
+            ordinary_claims::{ExecutionClaim, OrdinaryExecutionClaimer},
+            ordinary_reconciliation::RecoveredOrdinaryObservations,
+        },
         sdk_preparation::StoredSdkCandidate,
         trade_record::TradeRecordV1,
     },
@@ -26,6 +29,8 @@ use std::sync::{
     Arc, Mutex,
 };
 use tokio::sync::Notify;
+
+mod finality_tests;
 
 #[derive(Default)]
 struct Control {
@@ -170,6 +175,15 @@ impl OrdinarySdkSubmissionJournal for Journal {
         }
         Ok(value)
     }
+    async fn finalized_failure(
+        &self,
+        e: &AdmittedTrade,
+        o: &ExecutionOwner,
+        signature: &str,
+    ) -> Result<Option<TradeRecordV1>> {
+        self.control.gate("finalized-failure").await?;
+        self.store.finalized_failure(e, o, signature).await
+    }
 }
 
 struct Engine {
@@ -235,6 +249,22 @@ impl Engine {
                 "sendTransaction failed at https://rpc.invalid/private-token"
             )),
             2 => Ok("different-signature".into()),
+            outcome @ (3 | 4) => {
+                let store = SqliteOrdinaryExecutionClaims::new(self.pool.clone());
+                let captured = store.capture_observation(&self.request_id).await?;
+                store
+                    .record_captured_finality(
+                        &captured.context,
+                        &crate::domain::reconciliation::ChainObservation {
+                            signature: s.signature.clone(),
+                            slot: 42,
+                            commitment: crate::domain::reconciliation::ChainCommitment::Finalized,
+                            error: (outcome == 4).then(|| "synthetic finalized failure".into()),
+                        },
+                    )
+                    .await?;
+                Ok(s.signature.clone())
+            }
             _ => unreachable!(),
         }
     }

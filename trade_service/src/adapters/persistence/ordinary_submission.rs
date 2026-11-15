@@ -23,7 +23,7 @@ use crate::{
     persistence::row_to_record,
 };
 
-mod final_observation;
+pub(super) mod final_observation;
 mod observation_context;
 
 fn sha(bytes: &[u8]) -> String {

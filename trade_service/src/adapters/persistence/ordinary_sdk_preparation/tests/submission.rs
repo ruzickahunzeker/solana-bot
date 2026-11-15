@@ -8,14 +8,37 @@ use solana_sdk::{
     transaction::VersionedTransaction,
 };
 
-async fn signing_case(state: Option<crate::AppState>) -> (Case, Keypair) {
+pub(super) async fn signing_case(state: Option<crate::AppState>) -> (Case, Keypair) {
+    signing_case_with_defaults(state, false).await
+}
+
+pub(super) async fn signing_case_with_defaults(
+    state: Option<crate::AppState>,
+    defaults: bool,
+) -> (Case, Keypair) {
     let signer = Keypair::new();
     let candidate = candidate_fixture_for_wallet(signer.pubkey());
-    let state = match state {
+    let mut state = match state {
         Some(state) => state,
         None => fixture(TradePersistenceMode::Durable).await.state,
     };
-    let f = admit_candidate(state, &candidate).await;
+    if defaults {
+        let config = Arc::make_mut(&mut state.config);
+        config.default_slippage_percent =
+            candidate.metadata().details().slippage_bps as f64 / 100.0;
+        config.default_tip_sol = f64::from_bits(candidate.metadata().details().tip_sol_bits);
+        config.enable_simulate = false;
+    }
+    let f = admit_candidate_with(state, &candidate, |r| {
+        if defaults {
+            r.slippage_bps = None;
+            r.tip_sol = None;
+            r.quote_mint = None;
+            r.simulate = None;
+            r.execution_method = None;
+        }
+    })
+    .await;
     let ExecutionClaim::Acquired(owner) = f.claims().claim(&f.execution).await.unwrap() else {
         panic!("original SDK owner required")
     };
@@ -48,7 +71,7 @@ fn signed(c: &Case, keypair: &Keypair) -> SignedSubmission {
     }
 }
 
-async fn begin(c: &Case) -> Result<()> {
+pub(super) async fn begin(c: &Case) -> Result<()> {
     c.store
         .begin_sdk_signing(
             &c.f.execution,
@@ -59,7 +82,7 @@ async fn begin(c: &Case) -> Result<()> {
         .await
 }
 
-async fn save_signed(c: &Case, signer: &Keypair) -> SignedSubmission {
+pub(super) async fn save_signed(c: &Case, signer: &Keypair) -> SignedSubmission {
     begin(c).await.unwrap();
     let signed = signed(c, signer);
     c.store

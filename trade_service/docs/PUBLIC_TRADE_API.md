@@ -954,7 +954,9 @@ Durable Live 普通 SOL 聚合新增源码阶段签名账本（未部署）：�
 
 推荐轮询策略：前 2 秒每 100 到 200 毫秒一次，之后每 1 秒一次；得到 `submitted`、`simulated`、`failed`、`rejected` 或 `unknown` 后停止查询本服务。不要持续轮询等待 `finalized`。
 
-C3c1 源码增量（完整离线 CI 并发/串行各 1394 通过，未部署）：新 Durable Live 直接 DAMM v2 SDK 卖出已接原 owner、受控签名和广播前原签名字节账本，不调用 SDK 高层后台 worker；只发送独立读回并单次领取的原字节。Default 回执必须匹配原签名；MEV 的 SDK trait Ok 不冒充远端签名，按原签名只读观测，缺少成功证据保留 `unknown`。`MEV_SUBMIT_VERIFY_MS=0` 不授权把无可核验回执当成功，`WAIT_TX_CONFIRMED=true` 等待原签名的 confirmed/finalized。父行 `rejected/failed` 的无签名前处理与字段/hash/JSON/单位兼容，不增加 owner 或字节返回字段；同键重复/GET/列表仍不发起签名、广播或 RPC。该子路径的持续确认/跨重启只读恢复、其他方向/协议/backend/mode 和生产验收尚未完成，不能把此源码增量当全普通 SDK 已安全迁移。详见 [原 SDK 实际接线](optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)。
+C3c1/C3c2 源码增量（完整离线 CI 并发/串行各 1398 通过，未部署）：新 Durable Live 直接 DAMM v2 SDK 卖出已接原 owner、受控签名和广播前原签名字节账本，不调用 SDK 高层后台 worker；只发送独立读回并单次领取的原字节。Default 回执必须匹配原签名；MEV 的 SDK trait Ok 不冒充远端签名，按原签名只读观测，缺少成功证据保留 `unknown`。`MEV_SUBMIT_VERIFY_MS=0` 不授权把无可核验回执当成功，`WAIT_TX_CONFIRMED=true` 等待原签名的 confirmed/finalized。父行 `rejected/failed` 的无签名前处理与字段/hash/JSON/单位兼容，不增加 owner 或字节返回字段；同键重复/GET/列表仍不发起签名、广播或 RPC。该子路径的持续确认/跨重启只读恢复、其他方向/协议/backend/mode 和生产验收尚未完成，不能把此源码增量当全普通 SDK 已安全迁移。详见 [原 SDK 实际接线](optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)。
+
+C3d1 后续源码（18 项新用例仅类型检查，未部署）：显式只读恢复按原 operation/请求/hash/候选和已签 packet 校验，只有匹配原签名的 finalized 证据可使 SDK 原订单进入既有 `confirmed/failed` 状态；迟到提交回执不覆盖终态。无新 API 路径/字段/数量单位/hash/JSON 或配置，SDK 自动后台扫描仍待 C3d2，不能因本段说明认为生产已经启用恢复。详见 [只读恢复核心](optimization/SDK_ORIGINAL_SIGNATURE_RECOVERY.md)。
 
 源码阶段的普通 SDK DAMM 卖出 probe 增加固定账户快照门槛，核对 pool/mint/vault/用户 ATA 身份和 Token 扩展，用户 ATA 的 delegate/close-authority 及未审计 referral 暂时保守拒绝，输入 ATA 必须持有本笔需要的数量。这是新增操作级安全限制，尚未部署，需发布前验证调用方兼容；不是新增请求字段，也没有将该保护自动扩展到买入/其他协议。账户 snapshot 与模拟的 slot 下限绑定不等于跨 bank 的完整可信报价，仍不得把模拟失败或 `unknown` 当作换 key 重试许可。见 [DAMM 证据与剩余门槛](optimization/DAMM_PROBE_ACCOUNT_EVIDENCE.md)。
 

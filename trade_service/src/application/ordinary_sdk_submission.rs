@@ -206,7 +206,19 @@ async fn finish<J: OrdinarySdkSubmissionJournal>(
             if signature.is_none() {
                 signature = record.signature.clone();
             }
-            let signed_failure = signing_attempted && record.status == TradeStatus::Failed;
+            let mut signed_failure = signing_attempted && record.status == TradeStatus::Failed;
+            if signed_failure {
+                if let Some(signature) = signature.as_deref() {
+                    signed_failure = !matches!(
+                        journal.finalized_failure(execution, owner, signature).await,
+                        Ok(Some(ref verified))
+                            if crate::application::ordinary_claims::ensure_parent(execution, verified).is_ok()
+                                && verified.status == TradeStatus::Failed
+                                && verified.signature == record.signature
+                                && verified.error == record.error
+                    );
+                }
+            }
             if !signed_failure && !is_pending_status(record.status) && record.signature == signature
             {
                 error = error.or_else(|| record.error.clone());
