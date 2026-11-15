@@ -19,6 +19,8 @@ use anyhow::{ensure, Context, Result};
 use sha2::{Digest, Sha256};
 use sqlx::{sqlite::SqliteRow, Row, Sqlite, Transaction, ValueRef};
 
+mod submission;
+
 fn sha(message: &[u8]) -> String {
     format!("{:x}", Sha256::digest(message))
 }
@@ -39,24 +41,25 @@ pub(super) fn validate_sdk_row(row: &SqliteRow) -> Result<Option<StoredSdkCandid
     for column in [
         "bound_quote_json",
         "preflight_json",
-        "signed_signature",
-        "signed_transaction",
-        "signed_sha256",
-        "submission_error",
         "final_observation_json",
     ] {
         ensure!(
             row.try_get_raw(column)?.is_null(),
-            "SDK candidate cannot reuse quote, signed or final metadata"
+            "SDK candidate cannot reuse quote or final metadata"
         );
     }
     let stage = row.try_get::<&str, _>("submission_stage")?;
     let json: Option<&str> = row.try_get("sdk_prepared_json")?;
     let message: Option<Vec<u8>> = row.try_get("unsigned_message")?;
     let digest: Option<&str> = row.try_get("unsigned_sha256")?;
-    match (stage, json, message, digest) {
-        ("claimed", None, None, None) => Ok(None),
-        ("prepared", Some(json), Some(message), Some(digest)) => {
+    let stored = match (stage, json, message, digest) {
+        ("claimed", None, None, None) => None,
+        (
+            "prepared" | "signing" | "signed" | "broadcasting" | "submitted" | "unknown",
+            Some(json),
+            Some(message),
+            Some(digest),
+        ) => {
             ensure!(
                 digest == sha(&message),
                 "SDK candidate stored message digest mismatch"
@@ -67,10 +70,16 @@ pub(super) fn validate_sdk_row(row: &SqliteRow) -> Result<Option<StoredSdkCandid
                 "SDK candidate metadata is not the original canonical record"
             );
             validate_candidate(&metadata, &message)?;
-            Ok(Some(StoredSdkCandidate { metadata, message }))
+            Some(StoredSdkCandidate { metadata, message })
         }
         _ => anyhow::bail!("SDK candidate stage or partial metadata is invalid"),
-    }
+    };
+    submission::validate_fields(row, stored.as_ref())?;
+    Ok(stored)
+}
+
+pub(super) fn validate_sdk_parent(row: &SqliteRow, parent: &TradeRecordV1) -> Result<()> {
+    submission::validate_parent(row, parent)
 }
 
 async fn checked(
@@ -109,19 +118,19 @@ async fn checked(
             && row.try_get::<&str, _>("operation")? == "ordinary-sdk-trade"
             && row.try_get::<&str, _>("request_hash")? == a.request_hash()
             && row.try_get::<Option<&str>, _>("owner_nonce")? == Some(owner.nonce())
-            && row.try_get::<i64, _>("created_at_ms")? >= 0
-            && parent.signature.is_none(),
-        "SDK claim identity or parent signature mismatch"
+            && row.try_get::<i64, _>("created_at_ms")? >= 0,
+        "SDK claim identity mismatch"
     );
     let stored = validate_sdk_row(&row)?;
     if let Some(candidate) = &stored {
         validate_origin(execution, &candidate.metadata, &candidate.message)?;
     }
+    validate_sdk_parent(&row, &parent)?;
     Ok((row, parent, stored))
 }
 
 impl SqliteOrdinaryExecutionClaims {
-    /// Only records a nominal candidate. There is deliberately no signing transition here.
+    /// Only records a nominal candidate; it grants no business or signing authorization.
     pub(crate) async fn prepare_sdk_candidate(
         &self,
         execution: &AdmittedTrade,

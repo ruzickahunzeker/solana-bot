@@ -203,4 +203,18 @@ pub(crate) fn candidate_fixture(
 }
 
 #[cfg(test)]
+pub(crate) fn candidate_fixture_for_wallet(wallet: Pubkey) -> DammSellCandidate {
+    let f = super::tests::case_for_wallet(
+        SwqosType::Default,
+        false,
+        100,
+        WSOL_TOKEN_ACCOUNT,
+        false,
+        spl_token_interface::ID,
+        wallet,
+    );
+    DammSellCandidate::build(f.profile().unwrap(), None).unwrap()
+}
+
+#[cfg(test)]
 mod tests;

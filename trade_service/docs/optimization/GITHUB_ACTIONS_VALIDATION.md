@@ -30,12 +30,19 @@
 
 ## 已验收运行
 
-- 最新已验收为 `3f37b3e81f7af7a1fc3158e80a7088e86a640447` /
+- C3b4 编译绑定快照 `b1fbc8693d9e3da6589c15b855666703f2c9e35d` /
+  [Actions 43675181497](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43675181497)
+  成功，artifact `14145658342` 下载核对：全部步骤 exit=0；完整并发 1348 / 114.52 秒、
+  串行 1348 / 213.36 秒，零失败/忽略/过滤；compiled-binding 4、候选 54、prepared 11、
+  HTTP 200、probe 59、参数 3 通过。当前新增 C3b5 的 11 项 SDK 签名账本用例尚未运行，
+  须另发新源码快照，保留全部专项和完整两线程/串行套件；不冒用旧 1344 结果。
+
+- 前序已验收为 `3f37b3e81f7af7a1fc3158e80a7088e86a640447` /
   [Actions 43673491613](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43673491613)，
   artifact `14145199925` 已下载核对。全部步骤 exit=0，完整两线程 1344 / 112.97 秒、
   串行 1344 / 209.88 秒，零失败/忽略/过滤；输出证据 11、预览上下文 13、候选 50、
   probe 59、HTTP 200、参数 3 通过。原 384 ABI 比较与新增 128 拒绝断言实际执行。
-  当前新开发 C3b4 的四项编译绑定用例尚未运行，不计入本次通过。
+  当时不包含 C3b4 的四项编译绑定用例，已由上方 1348 接续。
 - C3b2 首轮 `80bd7c1` / Actions `43671447982` 的夹具溢出是历史失败，已由上述运行接续。
   修复与新增负例见 `DAMM_PREVIEW_CONTEXT_BINDING.md`，不是删除该失败边界。
 - [Actions 43667516925](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43667516925)，

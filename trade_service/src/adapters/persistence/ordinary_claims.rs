@@ -181,19 +181,8 @@ impl SqliteOrdinaryExecutionClaims {
                     &candidate.metadata,
                     &candidate.message,
                 )?;
-                ensure!(
-                    matches!(
-                        parent.status,
-                        crate::domain::trade::TradeStatus::BuildingTx
-                            | crate::domain::trade::TradeStatus::Unknown
-                    ),
-                    "SDK prepared parent has an inconsistent status"
-                );
             }
-            ensure!(
-                parent.signature.is_none(),
-                "SDK claim has no signed journal for the parent signature"
-            );
+            super::ordinary_sdk_preparation::validate_sdk_parent(&claimed, &parent)?;
         } else {
             ensure!(
                 claimed

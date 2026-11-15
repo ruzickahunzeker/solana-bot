@@ -43,8 +43,28 @@ pub(super) fn case(
     reversed: bool,
     program: Pubkey,
 ) -> Fixture {
+    case_for_wallet(
+        provider,
+        simulate,
+        percent,
+        quote,
+        reversed,
+        program,
+        key(1),
+    )
+}
+
+pub(super) fn case_for_wallet(
+    provider: SwqosType,
+    simulate: bool,
+    percent: u64,
+    quote: Pubkey,
+    reversed: bool,
+    program: Pubkey,
+    wallet: Pubkey,
+) -> Fixture {
     let context = DammSellContext {
-        wallet: key(1),
+        wallet,
         provider,
         version: TradeTransactionVersion::V0,
         seed_optimized: false,

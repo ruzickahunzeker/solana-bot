@@ -22,12 +22,16 @@ mod candidate;
 mod guard;
 mod instructions;
 mod metadata;
+mod signed;
 mod simulation;
 pub(crate) use candidate::DammSellCandidate;
 use guard::Invocation;
 #[cfg(test)]
 pub(crate) use metadata::candidate_fixture;
+#[cfg(test)]
+pub(crate) use metadata::candidate_fixture_for_wallet;
 pub(crate) use metadata::validate_candidate;
+pub(crate) use signed::validate_signed_candidate;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct DammSellContext {

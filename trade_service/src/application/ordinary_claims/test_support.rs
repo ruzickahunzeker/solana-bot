@@ -59,11 +59,18 @@ pub(crate) async fn admit(state: AppState) -> Fixture {
 }
 
 pub(crate) async fn admit_request(state: AppState, request: TradeRequest) -> Fixture {
+    admit_request_for_pubkey(state, request, Address::from_bytes([1; 32]).to_string()).await
+}
+
+pub(crate) async fn admit_request_for_pubkey(
+    state: AppState,
+    request: TradeRequest,
+    pubkey: String,
+) -> Fixture {
     let normalized = crate::validation::validate_trade(&request, &state.config).unwrap();
     let command = request
         .to_command("fixture-wallet".into(), &normalized, &state.config)
         .unwrap();
-    let pubkey = Address::from_bytes([1; 32]).to_string();
     let payload =
         AdmissionPayloadV1::new("fixture-wallet", &pubkey, &request, &normalized, &command);
     let decision = trade_admission::accept(

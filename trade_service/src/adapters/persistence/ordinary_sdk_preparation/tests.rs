@@ -2,7 +2,7 @@ use super::*;
 use crate::{
     adapters::sdk::damm_sell_message::{candidate_fixture, DammSellCandidate},
     application::{
-        ordinary_claims::test_support::{admit_request, fixture, Fixture},
+        ordinary_claims::test_support::{admit_request_for_pubkey, fixture, Fixture},
         ports::{
             ordinary_claims::{ExecutionClaim, OrdinaryExecutionClaimer},
             ordinary_submission::OrdinarySubmissionJournal,
@@ -13,6 +13,8 @@ use crate::{
 use sol_trade_sdk::swqos::SwqosType;
 use std::sync::Arc;
 
+mod submission;
+
 struct Case {
     f: Fixture,
     owner: ExecutionOwner,
@@ -22,8 +24,12 @@ struct Case {
 
 async fn admit_sdk(state: crate::AppState) -> Fixture {
     let c = candidate_fixture(SwqosType::Default, false, 100);
+    admit_candidate(state, &c).await
+}
+
+async fn admit_candidate(state: crate::AppState, c: &DammSellCandidate) -> Fixture {
     let d = c.metadata().details();
-    admit_request(state, serde_json::from_value(serde_json::json!({
+    admit_request_for_pubkey(state, serde_json::from_value(serde_json::json!({
         "wallet_id":"fixture-wallet", "side":"sell", "pool":"meteora-damm-v2",
         "mint": crate::domain::trade::Address::from_bytes(d.mint).to_string(),
         "quote_mint":crate::domain::trade::Address::from_bytes(d.quote_mint).to_string(),
@@ -31,7 +37,7 @@ async fn admit_sdk(state: crate::AppState) -> Fixture {
         "sell_percent":d.sell_percent, "slippage_bps":d.slippage_bps, "tip_sol":f64::from_bits(d.tip_sol_bits),
         "use_mev": d.use_mev, "mev_provider":d.requested_mev_provider,
         "simulate":false, "execution_method":"sdk", "idempotency_key":" sdk-candidate-literal "
-    })).unwrap()).await
+    })).unwrap(), crate::domain::trade::Address::from_bytes(d.wallet).to_string()).await
 }
 
 async fn setup() -> Case {
