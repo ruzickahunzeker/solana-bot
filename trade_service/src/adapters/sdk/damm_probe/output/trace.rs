@@ -24,7 +24,6 @@ pub(in crate::adapters::sdk::damm_probe) struct Transfers {
     pub output: Transfer,
     pub output_initialized: bool,
     pub input_initialized: bool,
-    pub native_deposit_units: u64,
 }
 enum Action {
     Transfer(Transfer),
@@ -69,7 +68,6 @@ pub(super) fn transfers(
             input_setup: None,
             output_setup: 0,
             swap: 1,
-            native_deposit: false,
         },
     )
 }
@@ -78,7 +76,6 @@ pub(in crate::adapters::sdk::damm_probe) struct Layout {
     pub input_setup: Option<u8>,
     pub output_setup: u8,
     pub swap: u8,
-    pub native_deposit: bool,
 }
 
 pub(in crate::adapters::sdk::damm_probe) fn transfers_for(
@@ -88,12 +85,6 @@ pub(in crate::adapters::sdk::damm_probe) fn transfers_for(
 ) -> Result<Transfers> {
     let intent = view.accounts;
     let keys = &view.message.account_keys;
-    if layout.native_deposit
-        && (intent.input_mint != sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT
-            || layout.input_setup.is_none())
-    {
-        bail!("DAMM v2 native deposit trace has inconsistent input roles");
-    }
     if groups.len() > if layout.input_setup.is_some() { 3 } else { 2 } {
         bail!("DAMM v2 simulation has too many inner instruction groups");
     }
@@ -268,11 +259,6 @@ pub(in crate::adapters::sdk::damm_probe) fn transfers_for(
         output: output.context("DAMM v2 simulation omitted the output transfer")?,
         output_initialized,
         input_initialized,
-        native_deposit_units: if layout.native_deposit {
-            intent.amount
-        } else {
-            0
-        },
     })
 }
 

@@ -1,6 +1,6 @@
 use super::*;
 use crate::adapters::sdk::damm_probe::evidence::tests::{
-    change_token, clock, extended_mint, extended_token, key, token, ui, Fixture,
+    change_token, clock, extended_mint, extended_token, key, mint, token, ui, Fixture,
 };
 use serde_json::{json, Value};
 use sol_trade_sdk::{
@@ -146,6 +146,24 @@ impl Case {
         output_exists: bool,
         kind: Encoding,
     ) -> Self {
+        Self::with_output(
+            reversed,
+            native,
+            extended,
+            input_exists,
+            (output_exists, key(4)),
+            kind,
+        )
+    }
+    fn with_output(
+        reversed: bool,
+        native: bool,
+        extended: bool,
+        input_exists: bool,
+        output: (bool, Pubkey),
+        kind: Encoding,
+    ) -> Self {
+        let (output_exists, target) = output;
         assert!(native || input_exists);
         let quote_mint = if native {
             WSOL_TOKEN_ACCOUNT
@@ -159,12 +177,24 @@ impl Case {
             spl_token_interface::ID
         };
         let (mi, vi) = if reversed { (2, 4) } else { (1, 3) };
+        if target != key(4) {
+            assert!(!native && !extended && target == WSOL_TOKEN_ACCOUNT);
+            if reversed {
+                source.pool.token_b_mint = target;
+                source.params.token_b_mint = target;
+            } else {
+                source.pool.token_a_mint = target;
+                source.params.token_a_mint = target;
+            }
+            source.update_pool();
+            source.rpc.values[mi] = mint(target_program, 9);
+        }
         if extended {
             source.rpc.values[mi] = ui(target_program, extended_mint(false, false, 300));
         }
         source.rpc.values[vi] = state(
             target_program,
-            key(4),
+            target,
             accounts::AUTHORITY,
             1_000_000,
             extended,
@@ -183,7 +213,7 @@ impl Case {
             Value::Null
         };
         source.rpc.values[7] = if output_exists {
-            state(target_program, key(4), key(5), 2000, extended)
+            state(target_program, target, key(5), 2000, extended)
         } else {
             Value::Null
         };
@@ -198,7 +228,7 @@ impl Case {
             } else {
                 USDC_TOKEN_ACCOUNT
             },
-            key(4),
+            target,
             100,
             Hash::new_from_array([6; 32]),
             false,
@@ -217,7 +247,7 @@ impl Case {
         );
         post[7] = state(
             target_program,
-            key(4),
+            target,
             key(5),
             output_before + net_output,
             extended,
@@ -231,7 +261,7 @@ impl Case {
         );
         post[vi] = state(
             target_program,
-            key(4),
+            target,
             accounts::AUTHORITY,
             999_880,
             extended,
@@ -261,7 +291,7 @@ impl Case {
             ),
             (
                 plan.accounts.output_ata,
-                key(4),
+                target,
                 target_program,
                 key(5),
                 output_before,
@@ -302,7 +332,7 @@ impl Case {
                 } else {
                     source.params.token_a_vault
                 },
-                key(4),
+                target,
                 target_program,
                 accounts::AUTHORITY,
                 1_000_000,
@@ -312,7 +342,7 @@ impl Case {
         ]) {
             let i = index(&plan, ata).unwrap();
             if exists {
-                let value = state(program, mint, owner, pre_amount, extended && mint == key(4));
+                let value = state(program, mint, owner, pre_amount, extended && mint == target);
                 before[i] = value["lamports"].as_u64().unwrap();
                 pre_tokens.push(Self::row(&plan, ata, mint, program, owner, pre_amount));
             } else {
@@ -490,7 +520,8 @@ async fn damm_buy_quote_native_input_and_vaults_require_consistent_native_reserv
                 2 => values[i]["lamports"] = json!(1),
                 3 => {
                     let old = values[i]["lamports"].as_u64().unwrap();
-                    values[i]["lamports"] = json!(old + 1);
+                    // A deficit is invalid; a positive unsynchronized deposit is legitimate.
+                    values[i]["lamports"] = json!(old - 1);
                 }
                 _ => change_token(&mut values[i], |a| a.is_native = None.into()),
             }
@@ -712,7 +743,6 @@ fn damm_buy_quote_does_not_relax_the_original_prefunded_sell_account_or_cpi_prof
             input_setup: None,
             output_setup: 0,
             swap: 1,
-            native_deposit: false,
         },
     )
     .is_err());
@@ -732,3 +762,5 @@ async fn damm_buy_quote_native_rent_overflow_cannot_produce_output_evidence() {
         .to_string()
         .contains("rent overflow"));
 }
+
+mod funding_compatibility;

@@ -86,7 +86,7 @@ fn pool_ui(pool: &Pool) -> Value {
     assert_eq!(pool_account_decode(&data).unwrap(), *pool);
     ui(accounts::METEORA_DAMM_V2, data)
 }
-fn mint(program: Pubkey, decimals: u8) -> Value {
+pub(crate) fn mint(program: Pubkey, decimals: u8) -> Value {
     let mut data = vec![0; Mint::LEN];
     Mint::pack(
         Mint {
@@ -288,7 +288,7 @@ impl Fixture {
         )
         .unwrap()
     }
-    fn update_pool(&mut self) {
+    pub(crate) fn update_pool(&mut self) {
         self.rpc.values[0] = pool_ui(&self.pool);
     }
 }

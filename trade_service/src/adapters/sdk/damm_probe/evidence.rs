@@ -166,6 +166,8 @@ pub(super) fn check_snapshot(
 pub(super) enum InputRequirement {
     Existing,
     #[cfg(test)]
+    ExistingBuy,
+    #[cfg(test)]
     NativeDeposit,
 }
 
@@ -180,7 +182,14 @@ pub(super) fn check_snapshot_for_accounts(
     if values.len() != 8 || slot == 0 {
         bail!("SDK DAMM v2 quote account count or context is invalid");
     }
-    let requires_input = input_requirement == InputRequirement::Existing || post_simulation;
+    let requires_balance = match input_requirement {
+        InputRequirement::Existing => true,
+        #[cfg(test)]
+        InputRequirement::ExistingBuy => true,
+        #[cfg(test)]
+        InputRequirement::NativeDeposit => false,
+    };
+    let requires_input = requires_balance || post_simulation;
     if requires_input && values[..7].iter().any(Option::is_none) {
         bail!("SDK DAMM v2 quote required account is missing");
     }
@@ -305,6 +314,13 @@ pub(super) fn check_snapshot_for_accounts(
     let balance = values[6]
         .as_ref()
         .map(|account| {
+            #[cfg(test)]
+            if !post_simulation
+                && input_requirement != InputRequirement::Existing
+                && prefunded_ata(account)?
+            {
+                return Ok(0);
+            }
             check_vault(
                 account,
                 intent.input_mint,
@@ -316,10 +332,7 @@ pub(super) fn check_snapshot_for_accounts(
         })
         .transpose()?
         .unwrap_or(0);
-    if !post_simulation
-        && input_requirement == InputRequirement::Existing
-        && balance < intent.amount
-    {
+    if !post_simulation && requires_balance && balance < intent.amount {
         bail!("SDK DAMM v2 quote input ATA balance is insufficient");
     }
     if post_simulation && values[7].is_none() {
@@ -328,6 +341,13 @@ pub(super) fn check_snapshot_for_accounts(
     let output_before = values[7]
         .as_ref()
         .map(|account| {
+            #[cfg(test)]
+            if !post_simulation
+                && input_requirement != InputRequirement::Existing
+                && prefunded_ata(account)?
+            {
+                return Ok(0);
+            }
             check_vault(
                 account,
                 intent.output_mint,
@@ -354,6 +374,16 @@ pub(super) fn check_snapshot_for_accounts(
         input_vault_amount,
         output_vault_amount,
     })
+}
+
+#[cfg(test)]
+fn prefunded_ata(account: &solana_account_decoder::UiAccount) -> Result<bool> {
+    let system = solana_system_interface::program::id();
+    if account.owner != system.to_string() {
+        return Ok(false);
+    }
+    decode_data(account, system, 0, "DAMM buy prefunded ATA")?;
+    Ok(true)
 }
 
 #[cfg(test)]

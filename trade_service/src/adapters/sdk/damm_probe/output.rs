@@ -101,8 +101,11 @@ pub(crate) async fn evidence_damm_probe_output(
             prepared.view(),
             &snapshot,
             &movements,
-            credited_input,
-            output,
+            NetAmounts {
+                input: credited_input,
+                output,
+            },
+            BalanceCredits::default(),
         )?,
         _ => bail!("DAMM v2 simulation returned incomplete same-bank token balances"),
     }
@@ -164,7 +167,7 @@ fn checked_rows(rows: &[UiTransactionTokenBalance], keys: &[Pubkey]) -> Result<(
     Ok(())
 }
 
-fn amount_row(
+pub(super) fn amount_row(
     rows: &[UiTransactionTokenBalance],
     index: u8,
     asset: &AssetSnapshot,
@@ -183,14 +186,25 @@ fn amount_row(
     Ok(Some(trace::integer(&row.ui_token_amount.amount)?))
 }
 
+pub(super) struct NetAmounts {
+    pub input: u64,
+    pub output: u64,
+}
+
+#[derive(Default)]
+pub(super) struct BalanceCredits {
+    pub input: u64,
+    pub output: u64,
+}
+
 pub(super) fn cross_check(
     pre: &[UiTransactionTokenBalance],
     post: &[UiTransactionTokenBalance],
     view: super::plan::ProbeView<'_>,
     snapshot: &AccountSnapshot,
     movements: &trace::Transfers,
-    credited_input: u64,
-    output: u64,
+    net: NetAmounts,
+    credits: BalanceCredits,
 ) -> Result<()> {
     let keys = &view.message.account_keys;
     checked_rows(pre, keys)?;
@@ -253,11 +267,14 @@ pub(super) fn cross_check(
         before.push(previous);
     }
     if before[0]
-        .checked_add(movements.native_deposit_units)
+        .checked_add(credits.input)
         .and_then(|units| units.checked_sub(movements.input.amount))
         != Some(snapshot.input_amount)
-        || before[1].checked_add(output) != Some(snapshot.output_amount)
-        || before[2].checked_add(credited_input) != Some(snapshot.input_vault_amount)
+        || before[1]
+            .checked_add(credits.output)
+            .and_then(|v| v.checked_add(net.output))
+            != Some(snapshot.output_amount)
+        || before[2].checked_add(net.input) != Some(snapshot.input_vault_amount)
         || before[3].checked_sub(movements.output.amount) != Some(snapshot.output_vault_amount)
     {
         bail!("DAMM v2 same-bank balances disagree with this swap's token transfers");

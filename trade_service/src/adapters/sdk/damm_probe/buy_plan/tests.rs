@@ -297,3 +297,44 @@ async fn damm_buy_sdk_minimum_operand_is_fixed_output_not_automatic_slippage() {
         }
     }
 }
+
+#[tokio::test]
+async fn damm_buy_probe_usdc_to_native_output_matches_the_actual_sdk_builder() {
+    let cases = oracle_cases().await;
+    let case = cases
+        .iter()
+        .find(|c| audited(c) && c.quote == USDC_TOKEN_ACCOUNT)
+        .unwrap();
+    let mut source = pool(USDC_TOKEN_ACCOUNT);
+    source.token_a_mint = WSOL_TOKEN_ACCOUNT;
+    source.token_a_program = spl_token_interface::ID;
+    let plan = prepare(
+        case.wallet,
+        &source,
+        USDC_TOKEN_ACCOUNT,
+        WSOL_TOKEN_ACCOUNT,
+        case.amount,
+        case.blockhash,
+        false,
+    )
+    .unwrap();
+    let mut request = buy_request(case, USDC_TOKEN_ACCOUNT);
+    request.protocol_params =
+        sol_trade_sdk::trading::core::params::DexParamEnum::MeteoraDammV2(source);
+    request.output_mint = WSOL_TOKEN_ACCOUNT;
+    request.output_token_program = Some(spl_token_interface::ID);
+    let ix = MeteoraDammV2InstructionBuilder
+        .build_buy_instructions(&request)
+        .await
+        .unwrap();
+    assert_eq!(
+        plan.transaction,
+        Transaction::new_unsigned(Message::new_with_blockhash(
+            &ix,
+            Some(&case.wallet),
+            &case.blockhash
+        ))
+    );
+    assert_eq!(plan.transaction.signatures, [Signature::default()]);
+    assert_eq!(plan.transaction.message.instructions.len(), 3);
+}

@@ -2,7 +2,7 @@ use super::{Funding, PreparedDammBuyProbe};
 use crate::adapters::sdk::{
     damm_probe::{
         evidence::{check_snapshot_for_accounts, AccountSnapshot, InputRequirement},
-        output::{cross_check, net_amount, trace},
+        output::{amount_row, cross_check, net_amount, trace, BalanceCredits, NetAmounts},
         plan::ProbeView,
         simulate_packet,
     },
@@ -70,7 +70,6 @@ fn layout(plan: &PreparedDammBuyProbe) -> trace::Layout {
         input_setup: Some(0),
         output_setup,
         swap: output_setup + 1,
-        native_deposit: plan.funding == Funding::NativeSol,
     }
 }
 
@@ -89,7 +88,13 @@ fn keys(plan: &PreparedDammBuyProbe) -> [Pubkey; 9] {
     ]
 }
 
-fn native_reserve(account: &UiAccount) -> Result<u64> {
+struct NativeState {
+    reserve: u64,
+    available: u64,
+    accounted: u64,
+}
+
+fn native_state(account: &UiAccount) -> Result<NativeState> {
     let data = decode_data(
         account,
         spl_token_interface::ID,
@@ -99,11 +104,19 @@ fn native_reserve(account: &UiAccount) -> Result<u64> {
     let token = spl_token_interface::state::Account::unpack(&data)?;
     let reserve = Option::<u64>::from(token.is_native)
         .context("DAMM buy WSOL account has no native reserve")?;
+    let available = account
+        .lamports
+        .checked_sub(reserve)
+        .context("DAMM buy WSOL lamports are below its native reserve")?;
     ensure!(
-        reserve > 0 && reserve.checked_add(token.amount) == Some(account.lamports),
-        "DAMM buy WSOL amount and native lamports disagree"
+        reserve > 0 && token.amount <= available,
+        "DAMM buy WSOL amount exceeds available native lamports"
     );
-    Ok(reserve)
+    Ok(NativeState {
+        reserve,
+        available,
+        accounted: token.amount,
+    })
 }
 
 fn snapshot(
@@ -116,7 +129,7 @@ fn snapshot(
     let input = if plan.funding == Funding::NativeSol {
         InputRequirement::NativeDeposit
     } else {
-        InputRequirement::Existing
+        InputRequirement::ExistingBuy
     };
     let assets = check_snapshot_for_accounts(&plan.accounts, slot, &values[..8], post, input)?;
     let wallet = values[8]
@@ -147,7 +160,20 @@ fn snapshot(
     ] {
         if mint == sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT {
             if let Some(account) = &values[index] {
-                native_reserve(account)?;
+                // A buy ATA may be a validated empty System account before initialization.
+                if !post
+                    && index >= 6
+                    && account.owner == solana_system_interface::program::id().to_string()
+                {
+                    continue;
+                }
+                let native = native_state(account)?;
+                if post && index == 6 && plan.funding == Funding::NativeSol {
+                    ensure!(
+                        native.accounted == native.available,
+                        "DAMM buy input did not synchronize its complete native balance"
+                    );
+                }
             }
         }
     }
@@ -166,12 +192,17 @@ fn index(plan: &PreparedDammBuyProbe, key: Pubkey) -> Result<usize> {
         .context("DAMM buy funding role is not in its discovery message")
 }
 
+struct FundingProof {
+    fee: u64,
+    credits: BalanceCredits,
+}
+
 fn check_native_budget(
     plan: &PreparedDammBuyProbe,
     result: &solana_client::rpc_response::RpcSimulateTransactionResult,
     snapshot: &BuySnapshot,
     movements: &trace::Transfers,
-) -> Result<u64> {
+) -> Result<FundingProof> {
     let before = result
         .pre_balances
         .as_ref()
@@ -191,6 +222,10 @@ fn check_native_budget(
         .as_ref()
         .context("DAMM buy simulation omitted account data")?;
     let mut rent = 0u64;
+    let mut credits = BalanceCredits::default();
+    if plan.funding == Funding::NativeSol {
+        credits.input = plan.accounts.amount;
+    }
     for (position, key, initialized, mint) in [
         (
             6,
@@ -214,18 +249,33 @@ fn check_native_budget(
             "DAMM buy post lamports differ from account data"
         );
         if initialized {
-            ensure!(
-                before[i] == 0,
-                "DAMM buy ATA initialization has pre-existing lamports"
-            );
-            let reserve = if mint == sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT {
-                native_reserve(account)?
+            let (reserve, initial_native) = if mint == sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT
+            {
+                let native = native_state(account)?;
+                (native.reserve, before[i].saturating_sub(native.reserve))
             } else {
-                account.lamports
+                (account.lamports, 0)
             };
-            rent = rent
-                .checked_add(reserve)
-                .context("DAMM buy rent overflow")?;
+            let charge = reserve.saturating_sub(before[i]);
+            let output_credit =
+                if position == 7 && mint == sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT {
+                    net_amount(&movements.output, &snapshot.assets.output)?
+                } else {
+                    0
+                };
+            ensure!(
+                before[i].max(reserve).checked_add(output_credit) == Some(after[i]),
+                "DAMM buy initialized ATA funding differs from its native budget"
+            );
+            rent = rent.checked_add(charge).context("DAMM buy rent overflow")?;
+            let credit = if position == 6 {
+                &mut credits.input
+            } else {
+                &mut credits.output
+            };
+            *credit = credit
+                .checked_add(initial_native)
+                .context("DAMM buy initial native credit overflow")?;
         } else {
             let credit = if position == 7 && mint == sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT {
                 net_amount(&movements.output, &snapshot.assets.output)?
@@ -236,6 +286,27 @@ fn check_native_budget(
                 before[i].checked_add(credit) == Some(after[i]),
                 "DAMM buy existing ATA lamports changed outside the quote profile"
             );
+            if position == 6 && plan.funding == Funding::NativeSol {
+                let native = native_state(account)?;
+                let previous = amount_row(
+                    result
+                        .pre_token_balances
+                        .as_deref()
+                        .context("DAMM buy omitted same-bank pre token balances")?,
+                    u8::try_from(i)?,
+                    &snapshot.assets.input,
+                    plan.accounts.wallet,
+                )?
+                .context("DAMM buy existing native input has no pre token balance")?;
+                let unsynchronized = before[i]
+                    .checked_sub(native.reserve)
+                    .and_then(|available| available.checked_sub(previous))
+                    .context("DAMM buy pre token balance exceeds its native backing")?;
+                credits.input = credits
+                    .input
+                    .checked_add(unsynchronized)
+                    .context("DAMM buy synchronized native credit overflow")?;
+            }
         }
     }
     ensure!(
@@ -257,7 +328,7 @@ fn check_native_budget(
             && before[wallet].checked_sub(debit) == Some(after[wallet]),
         "DAMM buy native funding, rent and fee do not match same-bank wallet balances"
     );
-    Ok(fee)
+    Ok(FundingProof { fee, credits })
 }
 
 async fn quote(
@@ -353,6 +424,7 @@ async fn quote_inner(
         credited_input > 0 && output_units > 0,
         "DAMM buy simulation returned zero net output"
     );
+    let funding = check_native_budget(plan, result, &post, &movements)?;
     cross_check(
         result
             .pre_token_balances
@@ -365,16 +437,18 @@ async fn quote_inner(
         view(plan),
         &post.assets,
         &movements,
-        credited_input,
-        output_units,
+        NetAmounts {
+            input: credited_input,
+            output: output_units,
+        },
+        funding.credits,
     )?;
-    let fee = check_native_budget(plan, result, &post, &movements)?;
     let evidence = BuyOutputEvidence {
         message_hash: fingerprint(plan)?,
         output_units,
         account_slot: response.context.slot,
         simulation_slot: simulated.context.slot,
-        probe_fee_lamports: fee,
+        probe_fee_lamports: funding.fee,
         started,
     };
     evidence.minimum(plan, 0)?;
