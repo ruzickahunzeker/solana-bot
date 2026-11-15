@@ -122,3 +122,50 @@ pub(in crate::adapters::sdk) fn tip_accounts(provider: SwqosType) -> &'static [P
         SwqosType::Default => &[],
     }
 }
+
+pub(in crate::adapters::sdk) fn relay_name(provider: SwqosType) -> &'static str {
+    match provider {
+        SwqosType::Default => "default",
+        SwqosType::Jito => "jito",
+        SwqosType::NextBlock => "next-block",
+        SwqosType::ZeroSlot => "zero-slot",
+        SwqosType::Temporal => "temporal",
+        SwqosType::Bloxroute => "bloxroute",
+        SwqosType::Node1 => "node1",
+        SwqosType::FlashBlock => "flash-block",
+        SwqosType::BlockRazor => "block-razor",
+        SwqosType::Astralane => "astralane",
+        SwqosType::Stellium => "stellium",
+        SwqosType::Lightspeed => "lightspeed",
+        SwqosType::Soyas => "soyas",
+        SwqosType::Speedlanding => "speedlanding",
+        SwqosType::Helius => "helius",
+        SwqosType::Solami => "solami",
+        SwqosType::LunarLander => "lunar-lander",
+        SwqosType::Glaive => "glaive",
+    }
+}
+
+pub(in crate::adapters::sdk) fn relay(name: &str) -> Result<SwqosType> {
+    Ok(match name {
+        "default" => SwqosType::Default,
+        "jito" => SwqosType::Jito,
+        "next-block" => SwqosType::NextBlock,
+        "zero-slot" => SwqosType::ZeroSlot,
+        "temporal" => SwqosType::Temporal,
+        "bloxroute" => SwqosType::Bloxroute,
+        "node1" => SwqosType::Node1,
+        "flash-block" => SwqosType::FlashBlock,
+        "block-razor" => SwqosType::BlockRazor,
+        "astralane" => SwqosType::Astralane,
+        "stellium" => SwqosType::Stellium,
+        "lightspeed" => SwqosType::Lightspeed,
+        "soyas" => SwqosType::Soyas,
+        "speedlanding" => SwqosType::Speedlanding,
+        "helius" => SwqosType::Helius,
+        "solami" => SwqosType::Solami,
+        "lunar-lander" => SwqosType::LunarLander,
+        "glaive" => SwqosType::Glaive,
+        _ => anyhow::bail!("unsupported SDK candidate relay"),
+    })
+}

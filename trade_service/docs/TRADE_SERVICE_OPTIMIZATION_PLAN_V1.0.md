@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 DAMM 买入净报价/min_out 准备绑定 `61af682` / Actions `43734656743` / artifact `14170038159` 已独立验收，买入专项 49、完整并发/串行各 1564，87 字段拒绝与全部 51 步骤通过。普通任务、Shadow 生命周期及买入准备绑定不再排队；其他 NP-01/03/04/05 门槛保留，不以准备参数检查冒充最终消息授权、签名字节账本或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 DAMM 买入整笔候选/回调、额外费用预留与无签名模拟 `ec1d2c9` / Actions `43773807696` / artifact `14185728930` 已独立验收，买入专项 68、完整并发/串行各 1583，93 字段拒绝与全部 51 步骤通过。普通任务、Shadow 生命周期及买入准备/回调不再排队；下一步续买入原 owner 的签名字节账本/固定 sender 与恢复，其他 NP-01/03/04/05 门槛保留，不以回调检查冒充完整原 owner 授权、可取消 worker 或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -367,10 +367,10 @@ SDK 入场后的 worker/时效、最终不可变消息/完整费用和权限授�
 固定 envelope 还需 300 lamports 优先费及按原 SDK 规则取整的小费；不足/溢出为终态
 准备拒绝，不据此换 provider。不会用更早账户 RPC 的钱包余额冒充同 bank 预留。
 
-新增十九项仅源码/受限类型检查阶段，含 64 组真实 SDK 原始指令及独立整笔编译对照、
+新增十九项已由本批源码 CI 实际运行，含 64 组真实 SDK 原始指令及独立整笔编译对照、
 资金边界、ATA 创建冻结、无签名模拟、错误/取消/过期、回调顺序/并发/权限/费用和签名
-保留。两种买入专属 adapter 类型加入现有三层类型门禁，预期 93 字段拒绝（含外部别名）；
-完整 1583、买入专项 68 与 51 步骤均须本批 CI 实际验收，不按预期值计完成。
+保留。两种买入专属 adapter 类型加入现有三层类型门禁，93 字段拒绝（含外部别名）
+已独立读原始 compiler spans 核对；原源码/恢复检查成功。
 其中一项串到原普通执行编排，核对模拟结果不带交易签名、不查询/广播；旧 SDK 模拟
 曾生成非广播签名，本子路径移除 signer 后现有可空 signature 返回 null，不伪造签名维持旧值。
 暂停前的夹具 wallet 变量遮蔽已修正，不删除用例或放宽 oracle。
@@ -378,9 +378,58 @@ SDK 入场后的 worker/时效、最终不可变消息/完整费用和权限授�
 通过，原七组生产警告保持；Python 门禁十项/workflow 七项与格式通过。本地不链接
 大型测试，以上元数据检查不是本批 Rust 运行或真实供应商验收。
 
+独立验收快照 `ec1d2c9` / Actions `43773807696` / artifact `14185728930` 已终态 success，
+日志下载核对：买入专项 68，完整并发 1583（155.62 秒）/串行 1583（274.91 秒）零失败/
+忽略/过滤，全部 51 步骤通过。原始名称集合相同、父批 1564 全保留，增量恰为上述十九项；
+identity/manifest/lock/vendor manifest 匹配，发布审计绑定 1044 文件/12,875,578 字节、
+21 路径。真实 main/索引/冻结历史不变，不重跑终态 CI 或为验收记录另发文档 CI。
+
 此子项不是完整买入授权/账本完成：最后 SDK 回调与实际签名/发送之间仍由旧 worker
 处理；原 owner、prepared/signed 原字节持久化/固定 sender 及恢复、全局 RPC 与真实节点
 门槛继续按原队列推进，不新增 nominal operation profile 或生产许可，也不扩展暂停的 PumpAPI。
+
+下一步仍在本项内，按本地实际依赖接线，不另立计划：
+
+- `domain/sdk_candidate.rs` 当前只有 SellV1 及卖出比例/余额乘法校验；买入需明确的名义
+  类型和原始 Quote 数量/native 预算，不能伪造卖出比例或放宽旧校验。旧 SellV1 的
+  JSON、消息摘要及拒绝夹具保持，新类型也不能仅凭反序列化恢复签名许可。
+- `application/ordinary_claims.rs`、`sdk_preparation.rs` 当前 scope/origin 只接受直接卖出；
+  必须由完整买入意图及原 admission/owner 绑定接入，不能先扩大 claim 再补构建授权。
+- 原 persistence 的候选校验/签名字节读回及 `replay_sdk_observation` 也绑定卖出；后续买入
+  元数据与历史 V1 request/hash 需按方向验证，未知 prepared/signing 状态不重新取得 signer。
+  010 索引本身未限制方向，但 `ordinary_observation_scan.rs::SDK_PAGE_SQL` 明确筛选
+  `t.side='sell'`；买入只读扫描必须与验证器共同接线并保持旧分页/索引与预算合同，
+  不能因复用同一表就宣称已自动恢复买入。
+- `OriginalSdkSender::send_packet` 的 provider 调用当前固定 `TradeType::Sell`；买入接入时
+  必须同时冻结并核验真实方向，不能只复用类型名或在发送前临时推断。仍从原 client
+  取得同一个 keyless sender，保留原签名字节校验、唯一发送占用与只读恢复，不新增通道。
+
+上述是对原 owner 接线剩余范围的源码核对，不代表本批已开放买入 profile/签名/发送，
+也不授权修改生产库或重提任何订单。完整故障/方向拒绝和旧兼容回归须独立验收。
+
+2026-11-16 后继先落实同一 NP-01 的记录基础：新增项目自有 `DammBuyCandidateRecord`
+及 `damm-v2-buy-v1` 数据标签，和旧 SellV1 名义记录严格区分；未修改旧
+`domain/sdk_candidate.rs` 的字段、序列化或校验。买入记录没有 sell_percent/伪造持仓比例，
+保存真实输入/净报价/min_out、账户/程序/精度、Quote slots、原模式/MEV/确认设置、
+同次模拟 native before/deposit/rent/base fee/remaining、正式优先费/小费与消息 SHA。
+
+记录已进入原 `DammBuyMessage::prepare/validate_full`：先沿原只读证据生成，纯重构核对
+规范 ATA/程序、WSOL/USDC 单位、完整指令与消息；再与原运行时 capture 逐字段比较。
+名义数据能自洽、能读回并不证明原 RPC 事实/新鲜性，不能由记录制造 Quote、owner 或
+签名许可。过期记录仍只能作历史数据；当前序列化往返方法仅在测试中启用，未接库。
+provider 名称映射按原字面值提取为买卖共用纯函数，不新增 provider/发送实例。
+
+新增十一项合同：真实候选矩阵往返、同 bank 资金、USDC→WSOL、23 组消息字段篡改、
+资金/slot/min_out/溢出拒绝、名义记录与原证据分离、过期不能续期、买卖解码隔离与
+未知版本/字段、消息/JSON 体积、2^53+1/u64::MAX 整数与模式/MEV/确认记录及 provider
+原名称合同。受限 test check 11 秒/RSS 1,377,028 KiB，production check 18 秒/
+RSS 1,056,900 KiB 通过，原七组警告保持；格式及 Python 门禁十项/workflow 七项通过。
+预期完整 1594、买入专项 79、93 字段拒绝与 51 步骤尚须独立 CI，不借用父批 1583。
+
+本步不是原订单 admission/claim、prepared/signed 落盘或发送/恢复接线完成；原
+`SdkCandidateMetadata`/claim/sender/扫描仍按旧卖出范围，下一步需把独立买入记录接回
+原单一 journal 与 origin/permit、固定方向 sender 和只读恢复，不改旧 SellV1 或伪造
+卖出数据复用。暂停的 PumpAPI、SDK 版本、API/hash/JSON、库结构及生产状态均不动。
 
 ## 4. 稳定类型和后端边界
 

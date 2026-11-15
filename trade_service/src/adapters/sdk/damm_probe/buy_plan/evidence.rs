@@ -34,6 +34,8 @@ pub(crate) struct BuyOutputEvidence {
     probe_fee_lamports: u64,
     output_initialized: bool,
     wallet_remaining_lamports: u64,
+    native: crate::domain::sdk_buy_candidate::BuyNativeBudget,
+    decimals: (u8, u8),
     started: Instant,
 }
 
@@ -61,6 +63,11 @@ impl BuyOutputEvidence {
     }
     pub(super) fn output_initialized(&self) -> bool {
         self.output_initialized
+    }
+    pub(super) fn record_funding(
+        &self,
+    ) -> (&crate::domain::sdk_buy_candidate::BuyNativeBudget, (u8, u8)) {
+        (&self.native, self.decimals)
     }
     pub(super) fn check_additional_native_budget(
         &self,
@@ -226,6 +233,7 @@ fn index(plan: &PreparedDammBuyProbe, key: Pubkey) -> Result<usize> {
 struct FundingProof {
     fee: u64,
     credits: BalanceCredits,
+    native: crate::domain::sdk_buy_candidate::BuyNativeBudget,
 }
 
 fn check_native_budget(
@@ -359,7 +367,17 @@ fn check_native_budget(
             && before[wallet].checked_sub(debit) == Some(after[wallet]),
         "DAMM buy native funding, rent and fee do not match same-bank wallet balances"
     );
-    Ok(FundingProof { fee, credits })
+    Ok(FundingProof {
+        fee,
+        credits,
+        native: crate::domain::sdk_buy_candidate::BuyNativeBudget {
+            before_lamports: before[wallet],
+            deposit_lamports: deposit,
+            rent_lamports: rent,
+            base_fee_lamports: fee,
+            remaining_lamports: after[wallet],
+        },
+    })
 }
 
 #[cfg(test)]
@@ -499,6 +517,8 @@ async fn quote_inner(
         probe_fee_lamports: funding.fee,
         output_initialized: movements.output_initialized,
         wallet_remaining_lamports: post.wallet_lamports,
+        native: funding.native,
+        decimals: (post.assets.input.decimals, post.assets.output.decimals),
         started,
     };
     evidence.minimum(plan, 0)?;

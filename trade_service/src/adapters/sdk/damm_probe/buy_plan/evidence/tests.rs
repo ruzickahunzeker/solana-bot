@@ -830,6 +830,21 @@ pub(in crate::adapters::sdk::damm_probe::buy_plan) async fn message_fixture(
     (case.plan, evidence)
 }
 
+pub(in crate::adapters::sdk::damm_probe::buy_plan) async fn native_output_record_fixture(
+    exists: bool,
+) -> (PreparedDammBuyProbe, BuyOutputEvidence) {
+    let case = Case::with_output(
+        false,
+        false,
+        false,
+        true,
+        (exists, WSOL_TOKEN_ACCOUNT),
+        Encoding::Parsed,
+    );
+    let evidence = case.run().await.unwrap();
+    (case.plan, evidence)
+}
+
 pub(in crate::adapters::sdk::damm_probe::buy_plan) fn preparation_fixture(
     native: bool,
     extended: bool,

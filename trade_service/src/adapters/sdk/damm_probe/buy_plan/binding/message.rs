@@ -14,6 +14,7 @@ use solana_sdk::{instruction::Instruction, transaction::VersionedTransaction};
 use std::{future::Future, sync::Arc};
 
 mod guard;
+mod metadata;
 
 /// Frozen buy construction. No signing authority, persisted owner or broadcast capability.
 pub(crate) struct DammBuyMessage {
@@ -26,6 +27,7 @@ struct DammBuyCandidate {
     profile: Arc<DammBuyMessage>,
     instructions: Vec<Instruction>,
     transaction: VersionedTransaction,
+    record: crate::domain::sdk_buy_candidate::DammBuyCandidateRecord,
 }
 
 impl DammBuyMessage {
@@ -109,10 +111,13 @@ impl DammBuyMessage {
             &instructions,
             quote.intent.recent_blockhash,
         )?;
+        let record = metadata::capture(self, destination, &transaction.message.serialize())?;
+        metadata::validate_record(&record, &transaction.message.serialize())?;
         Ok(DammBuyCandidate {
             profile: self.clone(),
             instructions,
             transaction,
+            record,
         })
     }
 
@@ -165,13 +170,34 @@ impl DammBuyCandidate {
                 == self.transaction.message,
             "DAMM buy compiled message changed"
         );
+        let message = self.transaction.message.serialize();
+        metadata::validate_record(&self.record, &message)?;
+        ensure!(
+            metadata::capture(
+                &self.profile,
+                self.record
+                    .details()
+                    .tip_destination
+                    .map(Pubkey::new_from_array),
+                &message
+            )? == self.record,
+            "DAMM buy record differs from its original live evidence"
+        );
         Ok(())
     }
 }
 
 fn protocol(quote: &DammBuyQuote, request: &TradeBuyParams) -> Vec<Instruction> {
-    let a = &quote.plan.accounts;
-    let mut instructions = match quote.plan.funding {
+    protocol_for(&quote.plan, quote.minimum, request.create_mint_ata)
+}
+
+fn protocol_for(
+    plan: &PreparedDammBuyProbe,
+    minimum: u64,
+    create_output: bool,
+) -> Vec<Instruction> {
+    let a = &plan.accounts;
+    let mut instructions = match plan.funding {
         Funding::NativeSol => sol_trade_sdk::trading::common::handle_wsol(&a.wallet, a.amount)
             .into_iter()
             .collect(),
@@ -182,7 +208,7 @@ fn protocol(quote: &DammBuyQuote, request: &TradeBuyParams) -> Vec<Instruction> 
             &spl_token_interface::ID,
         ),
     };
-    if request.create_mint_ata {
+    if create_output {
         let program = if a.output_mint == a.pool.token_a_mint {
             a.pool.token_a_program
         } else {
@@ -201,7 +227,7 @@ fn protocol(quote: &DammBuyQuote, request: &TradeBuyParams) -> Vec<Instruction> 
         a.input_ata,
         a.output_ata,
         a.amount,
-        quote.minimum,
+        minimum,
     ));
     instructions
 }

@@ -30,6 +30,17 @@
 
 ## 已验收运行
 
+最新原 NP-01 买入整笔候选/回调与无签名模拟 `ec1d2c9b1569802e245239d0c0437261be578a0e` /
+[Actions 43773807696](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43773807696)
+终态 success，artifact `14185728930` 下载独立核对：买入专项 68（含新增 19），完整并发
+1583（155.62 秒）/串行 1583（274.91 秒）零失败/忽略/过滤，全部 51 步骤 exit=0。
+两套原始名称集合相同，父批 1564 全保留、增量恰为源码十九项；原源码/恢复 Clippy
+成功，原始 JSON spans 确认三层 93 个不同字段拒绝，包括新增两种买入类型及外部别名。
+identity 与 manifest/lock/vendor manifest 指纹匹配，发布审计绑定 1044 文件/
+12,875,578 字节、21 路径；真实 main/索引/冻结历史保持。终态任务不重跑，后续记录
+不另触发 CI。仅源码离线验收；买入原 owner 账本/固定 sender、最后回调后 worker/
+时效及真实供应商/生产验收仍未完成，不据此扩大 Live/profile 或恢复暂停的 PumpAPI。
+
 最新原 NP-01 买入净报价/min_out 准备绑定 `61af682d81a52b69db891ebf12226095c7004cd6` /
 [Actions 43734656743](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43734656743)
 终态 success，artifact `14170038159` 下载独立核对：买入专项 49（含新增 16），完整并发

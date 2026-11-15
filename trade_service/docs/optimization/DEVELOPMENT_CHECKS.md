@@ -115,9 +115,11 @@ is performed. The temporary scope applies only to the development command.
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
 The 2026-11-16 buy-message batch adds DammBuyQuote and DammBuyMessage to the
-same policy: 30 selected types and an expected 93 scoped fields including the
-outside-alias probe. This new compiler count still needs its own isolated CI;
-the accepted 28-type/87-field parent evidence below must not be reused for it.
+same policy: 30 selected types and 93 scoped fields including the outside-alias
+probe. Commit ec1d2c9 / Actions 43773807696 / artifact 14185728930 passed the
+original/restored compiler checks, all 93 distinct field rejections and both
+complete 1,583-test suites. Raw compiler spans and test names were independently
+verified; the accepted 28-type/87-field parent evidence below was not reused.
 The adapter-specific nominal objects are not new Application signing authority.
 
 The NP-03 task-lifecycle batch added TradeTasks and DispatchTicket to the selected
