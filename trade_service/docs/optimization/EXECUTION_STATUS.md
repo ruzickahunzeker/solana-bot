@@ -8,6 +8,12 @@
 计划 3.3 的五项设计补充不新增 TS/NP 编号，RouterLeg 不引入实现或依赖。
 PumpAPI 开发暂停，SDK 升级及生产边界保持不变。
 
+首轮普通接受快照 `c58eb8c` / Actions `43705256866` / artifact `14158646075`
+已终态失败并下载核对：所有前置/原专项及 HTTP 202 通过，新专项 5/3，完整两套未执行。
+三处新测试输入/观测时机已修正，保留旧 fixture/全部断言；生产实现未因此改变。
+最终受限 test check `20261115T105239Z-204758` 9 秒/RSS 1,272,116 KiB，格式通过；
+待后继源码快照验收，不重复触发旧失败任务。资源所有权核对另补原文档，未改运行生命周期。
+
 最新完整验收：readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
 Actions `43696813225` / artifact `14154584905` 已下载核对，所有步骤 exit=0；
 完整并发 1458（143.31 秒）/串行 1458（252.76 秒），零失败/忽略/过滤，readiness-settings
@@ -17,7 +23,7 @@ Actions `43696813225` / artifact `14154584905` 已下载核对，所有步骤 ex
 受限 test/bin 类型检查；本轮补成功日志原 target 及第八项回归，原校验/钱包 lease/
 hash/JSON/保留顺序不改。test check `20261115T103713Z-198978` 9 秒/RSS 1,331,668 KiB，
 bin check `20261115T103808Z-199318` 4 秒/RSS 575,448 KiB，均 exit=0，原七组警告。
-新增七项 Application 与一项 HTTP 用例尚未运行或发布 CI；未计入上述 1458。
+新增七项 Application 与一项 HTTP 用例已发布到上述 c58eb8c；未计入已验收的 1458。
 ordinary-intake 专项已接 CI runner，policy 七项/格式通过，保留所有原专项/完整回归。
 见 `ORDINARY_TRADE_API_HANDLERS.md`；不宣称运行验收、合并 main 或部署完成。
 

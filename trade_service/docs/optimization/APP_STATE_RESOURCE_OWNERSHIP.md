@@ -43,3 +43,26 @@ git diff --check                                             # passed
 - NP-03 后续继续资源/接受入口、依赖方向与兼容桥核查；真实运行验收独立授权。
 
 持续目标保持 active，文档更新不暂停。PumpAPI 交易对接仍暂停，不停止 ZMQ，不改线上配置。
+
+## 2026-11-15 原资源所有权核对
+
+本节落实主计划 3.3 的资源所有权补充，归入原 NP-03/TS-04/09，不创建新任务或资源。
+依据当前 `bootstrap::initialize/complete`、`main`、`AppState::trade_intake/trade_queries`
+和普通 Handler；只作源码核对，不能替代真实初始化或生产退出测试。
+
+| 资源 | 创建/共享位置 | 当前退出责任与已有证据 | 尚缺的范围 |
+| --- | --- | --- | --- |
+| 钱包 Registry/Repository | initialize 创建原实例，SDK/钱包服务共享原 Arcs；main 留日志句柄 | 原资源替换/Weak 释放与 bootstrap 合成组装合同 | 真实 SDK 客户端/密钥内存清理、钱包原子激活和后台任务全部释放 |
+| SharedReadRuntime | initialize 创建，刷新/只读观测/readiness/余额与准备 reader 复用 | 六类 profile 的局部预算/冷却/取消合同，资源随原持有者释放 | 寻池/参数/ATA/模拟等剩余读路径及全服务配额 |
+| BlockhashCache/Refresher | 原缓存由 refresher、readiness、AppState 持有，main 接原 refresher owner | Drop/显式 shutdown 取消；main 的 signal 先 abort，serve 返回后 await shutdown；已有 lifecycle/bootstrap 合同 | 链上有效期/真实节点、异常进程退出和全部交易任务排空 |
+| ParamCache | complete 创建一次，PoolQueryService 与 executor writer 共享 | 同实例写入/保留键、最后服务释放后回收，见 PARAM_CACHE_RESOURCE_BOUNDARY.md | 缓存版本/全局一致性与 SDK 内部参数缓存 |
+| TradeStore/IdempotencyStore/TradePersistence | initialize 打开原持久化，complete 创建原内存资源；接受/查询/claims/执行共享 | 新接受服务仅借用原实例；原 reservation/hash/JSON 和文件恢复合同继续适用 | 普通执行具体依赖、全部 backend/mode 的 signed journal 及生产刷盘 |
+| QuoteStore/ConversionStore | complete 创建原报价缓存，initialize 按配置打开可选 conversion store | 原服务持有和 bootstrap Some/None/Arc 交接合同 | 不合并独立操作账本；真实节点/恢复与发布仍独立验收 |
+| ObservationPlan/Worker | complete 只 prepare，main 成功 bind 后按原开关 start | main 发 stop signal 并 await shutdown，Drop 有取消；已有默认关闭/局部恢复合同 | 真实部署调度、断电与全系统 RPC 预算 |
+| 普通交易后台任务 | Handler Created 后 `tokio::spawn`，返回 handle 未保存 | 新身份 lease 合同只覆盖 dispatch 和响应等待；没有新增任务 supervisor | 不能宣称全部任务可追踪/退出已排空；需在原生命周期和资金恢复任务中验收 |
+
+特别保留最后一项缺口：`axum::serve(...).with_graceful_shutdown` 及两个后台资源的
+shutdown，不会自动证明脱离 HTTP 响应的交易任务已经完成。后续仍在原 NP-01/03 内，
+先核对接单停止、已占用未签名、已签名/结果未知和超时退出的恢复责任，再设计任务跟踪。
+不能为了可取消而在未知结果时释放 owner、换 key、重签/重发，也不能把 abort SDK worker
+误当作撤销其外部副作用。本轮不修改任务启动/取消语义、线上配置或服务状态。

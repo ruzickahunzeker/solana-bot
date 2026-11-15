@@ -120,6 +120,27 @@ fn modes() -> [TradePersistenceMode; 3] {
     ]
 }
 
+async fn stored_snapshot(f: &Fixture, request_id: &str) -> (String, String) {
+    let pool = f.state.persistence.pool_for_tests();
+    // Shadow accepts into its existing queue; observe the write instead of assuming it is done.
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        loop {
+            let row: Option<(String, String)> =
+                sqlx::query_as("SELECT request_hash,request_json FROM trades WHERE request_id=?")
+                    .bind(request_id)
+                    .fetch_optional(&pool)
+                    .await
+                    .unwrap();
+            if let Some(row) = row {
+                break row;
+            }
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("the original accepted snapshot must be persisted")
+}
+
 #[tokio::test]
 async fn ordinary_intake_resolves_forced_wallet_preserving_original_v1_bytes_and_lease_across_modes(
 ) {
@@ -161,12 +182,7 @@ async fn ordinary_intake_resolves_forced_wallet_preserving_original_v1_bytes_and
         .unwrap();
         assert_eq!(execution.reservation().request_hash(), hash);
         if mode != TradePersistenceMode::Memory {
-            let row: (String, String) =
-                sqlx::query_as("SELECT request_hash,request_json FROM trades WHERE request_id=?")
-                    .bind(&outcome.record.request_id)
-                    .fetch_one(&f.state.persistence.pool_for_tests())
-                    .await
-                    .unwrap();
+            let row = stored_snapshot(&f, &outcome.record.request_id).await;
             assert_eq!(row, (hash, serde_json::to_string(&request).unwrap()));
         }
         assert_eq!(f.trace.dropped.load(Ordering::SeqCst), 0);
@@ -274,12 +290,7 @@ async fn ordinary_intake_duplicate_and_conflict_keep_original_record_without_ano
         assert_eq!(rows[0].request_id, original.record.request_id);
         assert_eq!(rows[0].status, TradeStatus::Accepted);
         if mode != TradePersistenceMode::Memory {
-            let json: String =
-                sqlx::query_scalar("SELECT request_json FROM trades WHERE request_id=?")
-                    .bind(&original.record.request_id)
-                    .fetch_one(&f.state.persistence.pool_for_tests())
-                    .await
-                    .unwrap();
+            let (_, json) = stored_snapshot(&f, &original.record.request_id).await;
             assert_eq!(
                 serde_json::from_str::<serde_json::Value>(&json).unwrap()["source"],
                 "metadata only"
@@ -359,7 +370,10 @@ async fn ordinary_intake_all_existing_normalized_samples_match_original_dto_comm
             .unwrap();
         let expected = request
             .to_command(
-                "default-wallet".into(),
+                request
+                    .wallet_id
+                    .clone()
+                    .unwrap_or_else(|| "default-wallet".into()),
                 &normalized,
                 f.state.config.trade_command_defaults(),
             )

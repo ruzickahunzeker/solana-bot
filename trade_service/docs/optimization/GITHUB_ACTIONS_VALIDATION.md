@@ -30,12 +30,20 @@
 
 ## 已验收运行
 
+首轮普通接受流程 `c58eb8cfdc68e72bb1b9a67bb34e90cae69f6c3e` /
+[Actions 43705256866](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43705256866)
+已终态 failure，artifact `14158646075` 下载核对：所有前置/原专项及 HTTP 202 通过，
+ordinary-intake 五项通过/三项失败，完整并发/串行未运行。失败为新增夹具误读 Shadow
+异步镜像、旧 command oracle 固定错误钱包；现仅修正测试输入和有界读取，原 fixture 与
+字段/字节断言保留，不改生产实现。修正已类型检查，待后继源码快照，不重跑此旧任务。
+原 1006 文件/12,497,881 字节审计只绑定 c58eb8c，真实 main/索引未变。
+
 最新完整验收 readiness `c220ba879db0b6fee766b22919cdfce6f8803f5d` /
 [Actions 43696813225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43696813225)
 已终态 success，artifact `14154584905` 下载核对：完整并发 1458（143.31 秒）/串行
 1458（252.76 秒）零失败/忽略/过滤，readiness-settings 六项和全部步骤 exit=0。
 本轮再次查询该句柄确认为 completed/success，不重复触发。后续普通接受流程及八项新合同
-只通过本地类型检查，ordinary-intake 专项已加入 runner，待新的源码快照，不能套用 1458。
+已发布到上方新快照，ordinary-intake 专项已加入 runner，不能套用本批 1458。
 
 前序完整验收 bootstrap `970d8350a6508bbebcf2ebbbbae7b09bebfa7b8c` /
 [Actions 43695116074](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43695116074)
