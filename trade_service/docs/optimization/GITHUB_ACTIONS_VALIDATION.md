@@ -30,9 +30,14 @@
 
 ## 已验收运行
 
-- 当前尚待验收源码还包含 C3b2/C3b3。C3b2 首轮 `80bd7c1` / Actions `43671447982`
-  在测试夹具反推 u64 报价时溢出失败；修复及预览 slot/blockhash 校验已类型检查，尚待重跑。
-  `DAMM_PREVIEW_CONTEXT_BINDING.md` 明确保留原 ABI 比较并增加不可能报价拒绝，不能套旧全绿。
+- 最新已验收为 `3f37b3e81f7af7a1fc3158e80a7088e86a640447` /
+  [Actions 43673491613](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43673491613)，
+  artifact `14145199925` 已下载核对。全部步骤 exit=0，完整两线程 1344 / 112.97 秒、
+  串行 1344 / 209.88 秒，零失败/忽略/过滤；输出证据 11、预览上下文 13、候选 50、
+  probe 59、HTTP 200、参数 3 通过。原 384 ABI 比较与新增 128 拒绝断言实际执行。
+  当前新开发 C3b4 的四项编译绑定用例尚未运行，不计入本次通过。
+- C3b2 首轮 `80bd7c1` / Actions `43671447982` 的夹具溢出是历史失败，已由上述运行接续。
+  修复与新增负例见 `DAMM_PREVIEW_CONTEXT_BINDING.md`，不是删除该失败边界。
 - [Actions 43667516925](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43667516925)，
   commit `35e436296cebcc2edda99bc7faa541f64217c758`，全部 job 步骤成功，约 15 分钟。
 - 已下载并核对 artifact `14143511883`：身份、白名单路径和所有 results.tsv 行 exit=0；

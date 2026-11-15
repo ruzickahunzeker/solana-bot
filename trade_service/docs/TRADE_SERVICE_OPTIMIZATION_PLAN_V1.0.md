@@ -2,10 +2,10 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，PumpAPI 交易开发仍暂停。C3b1 独立 SDK metadata/prepared/CAS/readback 的源码和隔离测试已验收；GitHub Actions `43667516925` / `35e4362` 完整并发/串行各 1321、HTTP 200、参数及专项通过，七组生产警告保留。正式 SDK 仍 opaque，prepared 读写尚未接正式编排，不代表完整独立授权/签名账本或可上线。NP-05-A 已核对固定 SDK 6.0.2 上游来源及既有 DBC 补丁，隔离重放完全一致，未改 vendor/依赖或升级；上游无签名及实际升级/协议演练仍是独立门槛。后续继续独立最终证据授权、原 owner 下签名账本/受控签名/原字节发送，以及其余方向/backend/mode/资源/协议验收。最新见 [执行状态](optimization/EXECUTION_STATUS.md)、[C3b1](optimization/SDK_CANDIDATE_PREPARATION.md)、[来源账本](optimization/SDK_PROVENANCE.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 持续目标 active，PumpAPI 交易开发仍暂停。C3b1 至 C3b3 的 SDK metadata/prepared、DAMM 输出与预览上下文子项已完成源码及离线验收；最新 `3f37b3e` / Actions `43673491613` 完整两线程/串行各 1344、HTTP 200、参数和专项通过，七组原生产警告保留。C3b4 编译消息绑定新增四项目前仅类型检查。正式 SDK 仍 opaque，原 owner 的 prepared 正式编排、完整独立授权/签名账本及原字节发送尚未完成，不代表可上线。NP-05-A 固定 SDK 6.0.2 来源和既有 DBC 补丁重放已验收，未升级；实际升级/协议/backend/mode/资源及发布演练仍需继续。最新见 [执行状态](optimization/EXECUTION_STATUS.md)、[预览验收](optimization/DAMM_PREVIEW_CONTEXT_BINDING.md)、[编译绑定](optimization/DAMM_COMPILED_MESSAGE_BINDING.md)、[来源账本](optimization/SDK_PROVENANCE.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
-当前开发为 C3b2/C3b3：实际 DAMM 输出证据及预览 slot/blockhash/quote Arc 绑定已接，原准备参数不改、不新增查询。C3b2 首轮 CI 因测试夹具反推 u64 报价溢出失败；本地已修复，保留 384 ABI 比较并补 128 拒绝断言。新增合计 23 项用例通过受限类型检查，完整运行验收待 CI。最新全绿仍是 `6397b0e` 的 1321，不套给新源码。详见 `optimization/DAMM_OUTPUT_QUOTE_BINDING.md` 与 `optimization/DAMM_PREVIEW_CONTEXT_BINDING.md`。
+当前开发为 C3b4：用标准 Solana 消息核对 SDK 编译后的完整消息与原冻结指令，四项新用例类型检查通过，运行验收待 CI。C3b2 首轮夹具溢出已修复，原 384 ABI 比较、新增 128 拒绝断言及 C3b2/C3b3 合计 23 项新用例均在 1344 全套中通过；不套给 C3b4。正式 SDK 签名前原 owner 账本仍是下一核心主线，不能以编译核对替代。
 
 ## 1. 范围与目标
 
@@ -41,7 +41,7 @@
 
 | 顺序 | 任务 | 交付与边界 |
 | --- | --- | --- |
-| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3a 原操作分型/008 兼容迁移与完整命令/钱包/字面键 owner 绑定已接；新增 15、并发/串行各 1304、HTTP 200 与专项/check/fmt/diff 通过，见 `optimization/ORDINARY_SDK_CLAIM_OPERATIONS.md`。旧 quote journal scope 保持，新 SDK 类型仅 Durable Live 直接 DAMM 卖出占用；正式入口未切换。下一独立 SDK metadata/完整证据/CAS/readback/恢复、原 owner 下受控签名及原字节发送；不伪造 Quote/恢复 owner。完整方向/协议/backend/mode 继续；原参数/hash/JSON 保持，不改 vendor/部署/生产库 |
+| NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3a/b1 原操作分型/008、SDK metadata/009 prepared/CAS/readback 及 C3b2/b3 DAMM 本笔输出/预览上下文已接源码，最新 `3f37b3e` 全套两线程/串行各 1344、HTTP 200 与专项通过；C3b4 编译消息绑定四项待运行验收。正式入口未接原 owner SDK 签名账本，完整政策、prepare 正式编排/授权 CAS、受控签名/落盘/原字节发送仍待继续；不伪造 Quote/恢复 owner，不以局部核对代替主线。全方向/协议/backend/mode 保留，原参数/hash/JSON 保持，不改 vendor/部署/生产库 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；其他资源/接受入口仍待收口，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
 | NP-03 | 基础设施与依赖方向收口 | TS-09-A 四个冗余生产字段仅测试保留；RPC-01A 配置去重，B1/B2/C1/C2/A3c 的刷新/观测/readiness/两个查询余额/准备余额共六类接 main 同一 runtime、独立容量/间隔与共享冷却。准备 reader 只持公开地址/当前 URL/runtime，raw 固定三地址，真实 HTTP 无 SDK 内部重试，流式 cap/最小 slot/时效/取消有测试。原 SDK reader/17 项用例仅 oracle，必要 Arc 注入不改钱包初始化或发送 client。寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取仍未全覆盖，资源/接受/index/journal/cache 与依赖检查继续，不新增平行框架 |
 | NP-04 | 通用 Backend 契约验收 | 用两个无 RPC/无 signer 的假后端验证金额、能力拒绝、取消和不确定结果；不新增 Router SDK 依赖或 PumpAPI 接入 |

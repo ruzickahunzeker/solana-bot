@@ -83,6 +83,7 @@ PY
         step http-contract cargo test --locked --offline http_contract_tests -- --test-threads=2
         step damm-output-evidence cargo test --locked --offline damm_output_evidence -- --test-threads=2
         step damm-preview-context cargo test --locked --offline damm_unsigned_simulation -- --test-threads=2
+        step damm-compiled-binding cargo test --locked --offline damm_compiled_binding -- --test-threads=2
         step damm-candidate cargo test --locked --offline damm_sell_message -- --test-threads=2
         step damm-probe cargo test --locked --offline damm_probe -- --test-threads=2
         step sdk-lanes cargo test --locked --offline ordinary_lanes -- --test-threads=2

@@ -5,7 +5,11 @@ use sol_trade_sdk::{
         common::extend_compute_budget_instructions, core::transaction_pool::compile_message,
     },
 };
-use solana_sdk::{message::v1, signature::Signature, transaction::VersionedTransaction};
+use solana_sdk::{
+    message::{v1, Message, VersionedMessage},
+    signature::Signature,
+    transaction::VersionedTransaction,
+};
 
 /// Owned immutable nominal transaction. It contains no signer or sending capability.
 pub(crate) struct DammSellCandidate {
@@ -123,6 +127,7 @@ pub(super) fn compile_candidate(
             && message.static_account_keys().first() == Some(&wallet),
         "DAMM final message requires an unexpected signer or payer"
     );
+    validate_compiled_message(wallet, instructions, hash, &message)?;
     let transaction = VersionedTransaction {
         signatures: vec![Signature::default()],
         message,
@@ -132,6 +137,26 @@ pub(super) fn compile_candidate(
         "DAMM final transaction exceeds the V0 wire limit"
     );
     Ok(transaction)
+}
+
+fn validate_compiled_message(
+    wallet: Pubkey,
+    instructions: &[Instruction],
+    hash: solana_sdk::hash::Hash,
+    actual: &VersionedMessage,
+) -> Result<()> {
+    // This V0-without-ALT profile is Legacy on the pinned SDK. A wire-format
+    // change needs an explicit profile migration, not an automatic fallback.
+    let expected = VersionedMessage::Legacy(Message::new_with_blockhash(
+        instructions,
+        Some(&wallet),
+        &hash,
+    ));
+    ensure!(
+        *actual == expected,
+        "DAMM compiled message differs from the canonical frozen instructions"
+    );
+    Ok(())
 }
 
 pub(super) fn tip_accounts(provider: SwqosType) -> &'static [Pubkey] {
@@ -156,3 +181,6 @@ pub(super) fn tip_accounts(provider: SwqosType) -> &'static [Pubkey] {
         SwqosType::Default => &[],
     }
 }
+
+#[cfg(test)]
+mod tests;

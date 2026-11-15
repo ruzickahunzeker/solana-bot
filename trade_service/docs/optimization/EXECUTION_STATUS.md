@@ -6,6 +6,10 @@
 
 ## 最新范围与执行指令
 
+2026-11-15 C3b2/C3b3 云端验收完成：`3f37b3e` / Actions `43673491613` / artifact `14145199925` 已下载核对，全部步骤 exit=0；完整两线程 1344（112.97 秒）/串行 1344（209.88 秒）零失败/忽略/过滤，输出证据 11、预览 13、候选 50、probe 59、HTTP 200、参数 3 通过。原 384 ABI 比较及新增 128 拒绝断言实际执行，先前夹具溢出已修复，不再等待该终态任务。当前 C3b4 编译绑定新增四项仅类型检查，不套用 1344；下一主线仍是完整政策、原 owner SDK 签名账本/受控签名/原字节发送，未完成不因本次全绿剔除。目标 active，无 SDK 升级/发布/生产数据/签名广播，PumpAPI 开发仍暂停。
+
+2026-11-15 C3b3 修复已提交独立验证分支 `3f37b3e` / Actions `43673491613` 运行中；当前还在开发 C3b4 编译消息绑定，不覆盖该 CI 的源码或把它当四项新用例通过。C3b4 将 SDK 编译结果与标准 Solana 从冻结指令构造的完整消息核对，实际接候选/full guard/模拟/metadata 重构；四项新用例覆盖 96 组和消息/权限/顺序/上下文/wire 变化。受限 test/bin check 约 8/3 秒、RSS 1,163,716/547,048 KiB、原七组警告及 fmt/diff 通过，待运行验收。原参数/准备/executor/依赖/vendor不改，无新 RPC/配置/迁移或生产操作；详见 `DAMM_COMPILED_MESSAGE_BINDING.md`。下一核心仍是完整政策与原 owner 的签名前账本/受控签名/原字节发送，不把编译器核对当完整授权；目标 active。
+
 2026-11-15 用户暂停后已明确恢复 active，继续非 PumpAPI 源码队列。当前 C3b3 补原报价 slot 到预览的 minContextSlot/响应核对、拒绝替换 blockhash/非空 loaded addresses，并要求正式/预览共享原 quote Arc；无新 RPC/SDK/配置/迁移。另修 C3b2 的 u64::MAX 合成夹具溢出，保留 384 ABI 比较、增加原 15% MAX 的 128 拒绝断言及零滑点合法对照，不改生产 min_out。新增九项用例；test/bin 类型检查通过（约 8/5 秒、RSS 1,183,732/629,056 KiB）、原七组警告与 fmt/diff/来源检查保持，尚待完整 CI。详见 `DAMM_PREVIEW_CONTEXT_BINDING.md`；正式 SDK owner 签名账本仍未接，不做生产/部署/交易操作。
 
 首轮 C3b2 CI `80bd7c1` / `43671447982` 已终态 failure，artifact `14144671626` 下载核对。类型/测试构建、candidate metadata/prepared、参数、HTTP 200 通过；DAMM candidate 46/1，失败为测试夹具 TryFromIntError，后续专项及全套未运行。下方旧“运行中”只保留历史，不再等待该终态句柄或以 1321 声称当前通过。

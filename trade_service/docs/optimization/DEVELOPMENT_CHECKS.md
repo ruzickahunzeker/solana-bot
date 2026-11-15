@@ -8,6 +8,11 @@ large test build or changing production resources.
 
 ## Observed Evidence
 
+- Later acceptance now runs in the user-authorized source-only GitHub Actions
+  job, not on this VM. Commit `3f37b3e`, run `43673491613`, passed 1,344 tests
+  both concurrently and serially; the artifact was downloaded and checked.
+  Newer source changes still need their own run. The diagnostic failures below
+  remain historical evidence and do not authorize another large local link.
 - This host has about 3.6 GiB RAM, two CPU cores, no swap, and about 18 GiB disk free.
 - Boot records show restarts at 08:48 and 09:05 on 2026-11-15. Old tool sessions
   and Cargo processes were gone when inspected; they were not still waiting on
@@ -16,9 +21,10 @@ large test build or changing production resources.
 - One resource-limited `cargo check --tests -j 1` passed in about 45 seconds with
   maximum RSS 1,612,596 KiB. This is already substantial on this VM. A missing
   session cannot be treated as a completed check.
-- SDK candidate code is an uncompleted development checkpoint. A successful
-  type check does not replace focused/full tests, production checks or rollout
-  acceptance. Do not reuse the older 1,304-test result for the current draft.
+- During diagnosis SDK candidate code was unverified. Current source acceptance
+  is recorded separately above and in GITHUB_ACTIONS_VALIDATION.md. A type check
+  never substitutes for runtime tests or rollout acceptance; do not apply an
+  earlier passing count to later source changes.
 - Two diagnostic builds exceeded an isolated 1800 MiB cgroup limit before any
   test ran. The first kernel record explicitly identifies this development
   scope, not a system-wide OOM. RSS reached approximately 1.7 GiB. Removing test
@@ -56,11 +62,11 @@ env TRADE_DEV_TIMEOUT_SECONDS=300 systemd-run --scope --quiet \
   bash scripts/dev_check.sh check
 ```
 
-After the type check succeeds, use the same scope command with
-`bash scripts/dev_check.sh focused sdk_candidate`. Replace only the test filter
-for another focused group. Full/serial suites are milestone checks; use a
-sufficient timeout or a larger development host. Do not retry a memory-killed
-compiler without the cap, remove assertions, or grant a route Live permission.
+On this VM stop after check/bin-check. Focused tests still link the entire
+large binary; use the authorized GitHub Actions job for focused/full/serial
+execution. The scope example is not permission to repeat local linking after
+the recorded resource failures. Do not remove assertions or grant Live access
+to work around a build limitation.
 
 The 2200 MiB cap was selected for a host with about 3.6 GiB physical RAM and
 roughly 2.8 GiB available before compiling; it leaves about 1.4 GiB of physical
@@ -80,9 +86,10 @@ No further automatic local compile retry was started. This does not prove that
 a fresh 2200 MiB hard-cap-only build will pass: use a larger build environment
 for the remaining acceptance rather than treating the changed command as proof.
 
-Final diagnostic evidence: type-check passed; runner shell regression tests
+Historical diagnostic evidence: type-check passed; runner shell regression tests
 passed; the focused Rust tests remain unverified (two memory-limited builds and
-one bounded timeout). The released binary and Cargo.lock hashes remain unchanged.
+one bounded timeout in that diagnostic window). Later cloud acceptance is
+recorded above. The released binary and Cargo.lock were not changed by diagnosis.
 
 ```bash
 bash scripts/dev_check.sh status

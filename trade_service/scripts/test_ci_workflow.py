@@ -56,6 +56,7 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("step sdk-preparation", script)
         self.assertIn("step damm-output-evidence", script)
         self.assertIn("step damm-preview-context", script)
+        self.assertIn("step damm-compiled-binding", script)
         self.assertNotIn("--ignored", script)
         self.assertNotIn("cargo build --release", script)
 
