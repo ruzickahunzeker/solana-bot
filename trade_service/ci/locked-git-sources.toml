@@ -1,0 +1,8 @@
+# CI-only source replacement; keep the original Git identity in Cargo.lock.
+[source."git+https://github.com/MeteoraAg/zap-program?rev=064c58b317b9a85f212c0de72caea286fc72fdb4"]
+git = "https://github.com/MeteoraAg/zap-program"
+rev = "064c58b317b9a85f212c0de72caea286fc72fdb4"
+replace-with = "ci-locked-zap"
+
+[source.ci-locked-zap]
+directory = "ci/locked-git-sources"

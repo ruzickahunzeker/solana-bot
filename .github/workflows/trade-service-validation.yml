@@ -45,7 +45,7 @@ jobs:
           rustup override set "$RUST_TOOLCHAIN"
 
       - name: Fetch locked dependencies before network isolation
-        run: cargo fetch --locked
+        run: cargo --config ci/locked-git-sources.toml fetch --locked
 
       - name: Validate offline with loopback networking only
         run: bash scripts/ci_test_namespace.sh

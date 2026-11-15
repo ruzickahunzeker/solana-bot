@@ -30,6 +30,11 @@
 
 ## 当前证据
 
+- 已推送独立分支 `ci/trade-service-validation-20261115-c3b`，首个提交 `ffc506e`。
+  首轮 [Actions 43666176316](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43666176316)
+  输入/资源检查通过，但锁定的上游 zap-program 下载返回 404/认证失败，未进入 Rust 测试。
+  后续只对 CI 使用同一提交的 Cargo vendor 三包源码与文件校验，不改变 manifest/lock/SDK；
+  来源和范围见 `../../ci/README.md`，不向 CI 注入本机 OAuth 或其他 Git 凭据。
 - 官方 checkout/upload-artifact 的固定提交已通过 GitHub API 核实。
 - 本地 workflow policy 五项通过；临时 namespace probe 确认仅回环、无外部路由。
 - 本机没有运行大 Rust 测试编译；完整验收以实际 Actions run/commit 与结果为准。

@@ -42,7 +42,7 @@ class WorkflowPolicyTests(unittest.TestCase):
     def test_no_release_or_deploy_and_network_isolation_is_mandatory(self):
         commands = "\n".join(step.get("run", "") for step in self.steps)
         self.assertNotRegex(commands, r"cargo\s+build|systemctl|scp\s|ssh\s")
-        self.assertIn("cargo fetch --locked", commands)
+        self.assertIn("cargo --config ci/locked-git-sources.toml fetch --locked", commands)
         self.assertIn("bash scripts/ci_test_namespace.sh", commands)
         wrapper = (ROOT / "trade_service/scripts/ci_test_namespace.sh").read_text()
         self.assertIn("unshare --net", wrapper)

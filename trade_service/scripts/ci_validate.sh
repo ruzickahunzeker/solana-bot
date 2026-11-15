@@ -25,6 +25,10 @@ step() {
     return "$result"
 }
 
+cargo() {
+    command cargo --config "$root/ci/locked-git-sources.toml" "$@"
+}
+
 case ${1:-} in
     preflight)
         [[ ! -e .env && ! -e .wallets.passphrase && ! -e data && ! -e wallets.json && ! -e wallets.json.enc ]] || {
@@ -65,6 +69,7 @@ PY
         printf 'step\texit_code\telapsed_seconds\n' >"$output/results.tsv"
         step formatting cargo fmt --check
         step workflow-policy python3 scripts/test_ci_workflow.py
+        step locked-git-sources python3 scripts/test_ci_git_sources.py
         step namespace-probe python3 tests/fixtures/ci/namespace_probe.py
         step shell-runner bash scripts/test_dev_check.sh
         step sqlite-ddl python3 scripts/test_sdk_candidate_migration.py

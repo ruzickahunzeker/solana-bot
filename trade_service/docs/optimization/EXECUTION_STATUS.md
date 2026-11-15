@@ -6,6 +6,8 @@
 
 ## 最新范围与执行指令
 
+2026-11-15 独立验证分支 `ci/trade-service-validation-20261115-c3b` 已推送，首个提交 `ffc506e`，Actions `43666176316`。源码/资源检查通过；在依赖下载阶段，原锁定 zap-program 返回 404/认证失败，尚未编译或测试。CI-only 源替换保留原 Git 提交，使用 Cargo vendor 三包及逐文件校验，详见 `GITHUB_ACTIONS_VALIDATION.md` 与 `../../ci/README.md`。不改 SDK/manifest/lock、不注入本机登录凭据、不改真实索引/main、不部署。
+
 2026-11-15 用户已选择 GitHub Actions 完成完整 Rust 验收，并完成设备授权读取私有仓库 CI。现准备独立源码快照分支，不合并或改写远端 main，不改变工作区 main/真实索引；只发布 Trade Service 源码/原 vendor/文档/公开 fixtures 与验证设施，排除所有运行配置/钱包/数据库/日志/产物和 Copy/Bridge/sdk9 修改。工作流固定 Rust 1.95.0，下载依赖后以仅回环网络 namespace/env-i/普通 runner 身份执行 offline 类型/专项/完整并发及串行套件，无 release/部署/交易。policy 五项和本地隔离 probe 通过；实际 CI 尚待启动/验收，见 `GITHUB_ACTIONS_VALIDATION.md`。目标 active，PumpAPI 开发仍暂停。
 
 2026-11-15 用户已明确恢复持续目标为 active。本轮接续 C3b1，补 SDK 行自身 schema/operation 检查、持久化规范编码校验及三项 Rust 恢复/拒绝用例，并新增实际 009 DDL 的六项轻量 SQLite 检查，全部 DDL 检查通过。受限 test 类型检查约 15 秒/RSS 1,169,156 KiB、正式 bin 类型检查约 11 秒/RSS 972,892 KiB 通过；bin 为七组警告（原五组 + prepared helper/方法尚未接生产的两组），未抑制。详见 `SDK_CANDIDATE_PREPARATION.md`。当前 17 项新增 Rust 用例仍未运行，不能套用旧 C3a 1304 全套结果。未再次链接大测试目标，构建环境选择已询问，继续可安全离线的源码/合同工作；正式 SDK 发送入口未切换，不伪造 Quote/恢复 owner，不升级/部署/重启、不操作生产钱包或数据库、不签名广播，PumpAPI 开发仍暂停。
