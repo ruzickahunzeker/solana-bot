@@ -29,7 +29,9 @@ pub(crate) async fn wsol_recover(
     headers: HeaderMap,
     Query(query): Query<WsolRecoveryQuery>,
 ) -> Response {
-    if let Err(response) = auth::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     let mut response = match state.wsol_queries.recover(query.input()).await {
@@ -73,7 +75,9 @@ pub(crate) async fn wsol_quote(
     headers: HeaderMap,
     Json(request): Json<WsolQuoteRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     let mut response = match state.wsol_queries.quote(request.input()).await {
@@ -92,7 +96,9 @@ pub(crate) async fn wsol_simulate(
     headers: HeaderMap,
     Json(request): Json<WsolSubmission>,
 ) -> Response {
-    if let Err(response) = auth::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     let mut response = match state.wsol_submissions.simulate(request.input()).await {
@@ -111,7 +117,9 @@ pub(crate) async fn wsol_submit(
     headers: HeaderMap,
     Json(request): Json<WsolSubmission>,
 ) -> Response {
-    if let Err(response) = auth::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     if let Err(err) = state.config.security.broadcast.ensure_allowed() {
@@ -177,7 +185,9 @@ pub(crate) async fn wsol_status(
     Path(id): Path<String>,
     Query(owner): Query<WsolOwnerQuery>,
 ) -> Response {
-    if let Err(response) = auth::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     let mut response = match state

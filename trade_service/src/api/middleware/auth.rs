@@ -1,6 +1,6 @@
 use crate::{
     auth,
-    config::{security::WalletAdminAuth, Config},
+    config::security::{ApiAccessPolicy, WalletAdminAuth},
     models::ErrorResponse,
 };
 use axum::{
@@ -11,22 +11,22 @@ use axum::{
 use std::net::SocketAddr;
 
 pub(crate) fn authorize_trade(
-    config: &Config,
+    policy: ApiAccessPolicy<'_>,
     headers: &HeaderMap,
     peer: SocketAddr,
 ) -> Result<(), Response> {
-    if !config.trade_client_ip_allowed(peer.ip()) {
+    if !policy.trade_client_ip_allowed(peer.ip()) {
         tracing::warn!(client_ip = %peer.ip(), "trade api client ip rejected");
         return Err(error(StatusCode::FORBIDDEN, "client ip not allowed"));
     }
-    if !auth::authorized(headers, &config.local_trade_api_token) {
+    if !auth::authorized(headers, policy.trade_token) {
         return Err(error(StatusCode::UNAUTHORIZED, "unauthorized"));
     }
     Ok(())
 }
 
 pub(crate) fn authorize_internal(
-    config: &Config,
+    policy: ApiAccessPolicy<'_>,
     headers: &HeaderMap,
     peer: SocketAddr,
 ) -> Result<(), Response> {
@@ -37,21 +37,21 @@ pub(crate) fn authorize_internal(
             "internal wallet API is loopback-only",
         ));
     }
-    authorize_trade(config, headers, peer)
+    authorize_trade(policy, headers, peer)
 }
 
 pub(crate) fn authorize_wallet_admin(
-    config: &Config,
+    policy: ApiAccessPolicy<'_>,
     headers: &HeaderMap,
     peer: SocketAddr,
     internal: bool,
 ) -> Result<(), Response> {
-    match &config.security.wallet_admin {
+    match policy.wallet_admin {
         WalletAdminAuth::Legacy => {
             if internal {
-                authorize_internal(config, headers, peer)
+                authorize_internal(policy, headers, peer)
             } else {
-                authorize_trade(config, headers, peer)
+                authorize_trade(policy, headers, peer)
             }
         }
         WalletAdminAuth::Separate { token } => {
@@ -81,3 +81,6 @@ fn error(status: StatusCode, message: &str) -> Response {
     )
         .into_response()
 }
+
+#[cfg(test)]
+mod tests;

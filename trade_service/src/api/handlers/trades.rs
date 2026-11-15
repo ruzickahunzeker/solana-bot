@@ -12,6 +12,7 @@ use crate::{
     api::{dto::trades::ListTradesQuery, middleware::auth, response::error},
     application::{
         trade_admission::{self, AdmissionDecision, AdmissionError},
+        trade_execution::ensure_execution_allowed,
         trade_queries::is_pending_status,
     },
     executor,
@@ -20,7 +21,7 @@ use crate::{
         TradeResponse, TradeStatus,
     },
     state::new_request_id,
-    validation::{validate_execution_policy, validate_trade},
+    validation::validate_with_settings,
     AppState,
 };
 
@@ -30,7 +31,7 @@ pub(crate) async fn create_trade(
     headers: HeaderMap,
     Json(request): Json<TradeRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
 
@@ -66,7 +67,10 @@ async fn accept_trade_for_wallet(
     };
     let wallet_pubkey = wallet.pubkey().to_string();
 
-    let normalized = match validate_trade(&request, &state.config) {
+    let normalized = match validate_with_settings(
+        &request,
+        &state.config.trade_validation_settings(),
+    ) {
         Ok(normalized) => normalized,
         Err(error) => {
             let rejection_error = error.to_string();
@@ -103,8 +107,12 @@ async fn accept_trade_for_wallet(
         }
     };
 
-    validate_execution_policy(&normalized, &state.config)
-        .map_err(|err| (StatusCode::FORBIDDEN, err.to_string()))?;
+    ensure_execution_allowed(
+        &normalized,
+        state.config.enable_simulate,
+        state.config.security.broadcast,
+    )
+    .map_err(|err| (StatusCode::FORBIDDEN, err.to_string()))?;
     let command = request
         .to_command(
             wallet_id.clone(),
@@ -194,7 +202,7 @@ pub(crate) async fn create_batch_trades(
     headers: HeaderMap,
     Json(batch): Json<BatchTradeRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     if batch.wallet_ids.is_empty() {
@@ -232,7 +240,7 @@ pub(crate) async fn list_trades(
     headers: HeaderMap,
     Query(query): Query<ListTradesQuery>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     let records: anyhow::Result<Vec<TradeRecord>> = state.trade_queries().recent(query.limit).await;
@@ -251,7 +259,7 @@ pub(crate) async fn get_trade(
     headers: HeaderMap,
     Path(request_id): Path<String>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     match state.trade_queries().get(&request_id).await {

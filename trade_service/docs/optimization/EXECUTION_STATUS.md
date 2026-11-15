@@ -4,25 +4,39 @@
 
 ## 当前续作检查点（覆盖下方历史状态）
 
-最新完整验收 `6c50aca628313a8683b84800adbba1b72e751cd3` / Actions `43690435964`
+最新完整验收：NP-03 `449731ce21b557421891d82d355a6e2a0a0f1f8a` /
+Actions `43691952757` 已终态 success，artifact `14153850007` 下载核对。完整并发 1443
+（133.72 秒）/串行 1443（236.47 秒）零失败/忽略/过滤，command-defaults 4/param-cache-port 2
+及全部步骤 exit=0，manifest/lock/vendor 指纹匹配。994 文件/12,403,750 字节审计通过，
+真实 main/索引未变，七组生产警告保留；旧成功/失败任务均不重跑。
+
+待下一批发布：NP-03 API 鉴权只接借用 access policy，31 个 Handler 调用已接；普通校验只接
+已有 TradeValidationSettings，执行政策用原 Application 函数，原 Config 兼容 helper 仅测试
+保留。五项新增合同仅受限 check，尚未纳入 449731c/43691952757。
+test check `20261115T080153Z-150488` 约 10 秒/RSS 1,338,228 KiB、bin check
+`20261115T080309Z-150888` 约 4 秒/RSS 670,156 KiB 均 exit=0；原七组生产警告。
+policy 七项通过，后批增加 api-access-policy/validation-settings 专项，保留全部回归；
+详见 `API_CONFIG_BOUNDARIES.md`。当前运行有实际失败时优先修复，不抢先重跑/触发重复 CI。
+
+前序完整验收 `6c50aca628313a8683b84800adbba1b72e751cd3` / Actions `43690435964`
 已终态 success，artifact `14152368482` 下载核对：完整并发 1437（128.56 秒）/串行 1437
 （235.46 秒）零失败/忽略/过滤，原五组生产警告。sdk-original-runtime 5、sdk-scan 16、
 observation-migration 1、HTTP 200、参数 3 与全部步骤 exit=0，manifest/lock/vendor 身份匹配。
 原 C3d2 旧夹具问题已验证修复，不重跑旧失败任务；当前真实 main/索引保持不变。
 
 等待该 CI 时继续 NP-03：普通 DTO 的命令构造只接两项项目默认值快照，不再导入 Config；
-原校验/政策/保留/序列化顺序不变，原合同仅改调用签名不改期望。四项新合同仅类型检查，
-尚未在上述快照中。test check `20261115T073633Z-140454` 35 秒/RSS 2,177,116 KiB，
+原校验/政策/保留/序列化顺序不变，原合同仅改调用签名不改期望。四项新合同现已由上述 CI 验收，
+已纳入待验的 449731c（不在旧已验收的 6c50aca）。test check `20261115T073633Z-140454` 35 秒/RSS 2,177,116 KiB，
 bin check `20261115T073740Z-140817` 13 秒/RSS 979,788 KiB 均 exit=0，原五组生产警告。
-后续单独 `command-defaults` 专项及完整回归验收，不抢先触发重复 CI；见 `COMMAND_DEFAULTS_BOUNDARY.md`。
+command-defaults 专项及完整回归已通过，不重跑；见 `COMMAND_DEFAULTS_BOUNDARY.md`。
 
 接续 NP-03 参数缓存：after_trade 复用已有 ParamCacheWriter，PoolQueryService 与 executor
 仍持同一原缓存，生产 AppState 不再有具体 params 字段（仅测试保留），原键/写入时机不变。
-新增两项 actual executor/原 fake backend/三个存储模式及服务释放合同，仅类型检查。
+新增两项 actual executor/原 fake backend/三个存储模式及服务释放合同，现已通过上述 CI。
 最终 test check `20261115T074510Z-143335` 9 秒/RSS 1,229,316 KiB、bin check
 `20261115T074419Z-143028` 5 秒/RSS 701,196 KiB 通过；生产七组警告（原五组加既有
-缓存字段/get 未读两组），不抑制、不假读取。后批增加 param-cache-port 专项；尚未在当前
-CI 快照，详见 `PARAM_CACHE_RESOURCE_BOUNDARY.md`。没有生产操作或 SDK/依赖变化。
+缓存字段/get 未读两组），不抑制、不假读取。当前 449731c/43691952757 含 param-cache-port
+专项及完整回归均已通过，详见 `PARAM_CACHE_RESOURCE_BOUNDARY.md`。没有生产操作或 SDK/依赖变化。
 
 C3d2 `57c75c5` / Actions `43688840398` 已终态 failure，artifact `14152165576`
 已下载核对：全部前置步骤通过，sdk-scan 16 通过；完整并发 1431/1（128.17 秒），串行未运行。

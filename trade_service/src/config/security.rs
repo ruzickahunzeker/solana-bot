@@ -28,6 +28,20 @@ impl WalletAdminAuth {
     }
 }
 
+/// Borrow only the values needed by HTTP access checks, not runtime resources.
+#[derive(Clone, Copy)]
+pub(crate) struct ApiAccessPolicy<'a> {
+    pub trade_token: &'a str,
+    pub allowed_client_ips: &'a [std::net::IpAddr],
+    pub wallet_admin: &'a WalletAdminAuth,
+}
+
+impl ApiAccessPolicy<'_> {
+    pub(crate) fn trade_client_ip_allowed(self, ip: std::net::IpAddr) -> bool {
+        ip.is_loopback() || self.allowed_client_ips.contains(&ip)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub(crate) struct SecurityConfig {
     pub broadcast: BroadcastPolicy,

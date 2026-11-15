@@ -103,3 +103,35 @@ fn unused_invalid_defaults_are_not_eagerly_rejected_by_the_new_settings_boundary
         "DEFAULT_SLIPPAGE_PERCENT must be between 0 and 100"
     );
 }
+
+#[tokio::test]
+async fn validation_settings_projection_copies_exact_values_without_eager_resource_or_value_checks()
+{
+    let state = crate::http_contract_tests::state().await;
+    let mut config = (*state.config).clone();
+    config.default_buy_sol = 0.123456789;
+    config.default_slippage_percent = 6.78;
+    config.default_tip_sol = -0.0;
+    config.stonkfun_via_sol.enabled = false;
+    config.stonkfun_via_sol.max_buy_sol = f64::NAN;
+    config.rpc_urls.clear();
+    config.wallets.clear();
+    let snapshot = config.trade_validation_settings();
+    config.default_buy_sol = 42.0;
+    config.default_slippage_percent = 42.0;
+    config.default_tip_sol = 42.0;
+    config.stonkfun_via_sol.enabled = true;
+    config.stonkfun_via_sol.max_buy_sol = 42.0;
+    assert_eq!(snapshot.default_buy_sol.to_bits(), 0.123456789f64.to_bits());
+    assert_eq!(
+        snapshot.default_slippage_percent.to_bits(),
+        6.78f64.to_bits()
+    );
+    assert_eq!(snapshot.default_tip_sol.to_bits(), (-0.0f64).to_bits());
+    assert!(!snapshot.via_sol_enabled);
+    assert_eq!(snapshot.via_sol_max_buy_sol.to_bits(), f64::NAN.to_bits());
+    let normalized = validate_with_settings(&request(json!({})), &snapshot).unwrap();
+    assert_eq!(normalized.amount_lamports, Some(123456789));
+    assert_eq!(normalized.slippage_bps, 678);
+    assert_eq!(normalized.tip_sol.to_bits(), (-0.0f64).to_bits());
+}

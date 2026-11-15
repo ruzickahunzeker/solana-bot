@@ -6,14 +6,19 @@
 
 ## 统计口径
 
-- 最新完整验收 `6c50aca` / Actions `43690435964` 已终态 success，artifact `14152368482`
+- 最新完整验收 NP-03 `449731c` / Actions `43691952757` 已终态 success，artifact
+  `14153850007` 核对：完整并发 1443（133.72 秒）/串行 1443（236.47 秒）零失败/忽略/过滤。
+  command-defaults 4、param-cache-port 2 及全部步骤通过，不冒用父批或重跑旧 CI。
+- 下一批 API 鉴权/普通校验配置收口已有源码及五项新合同，仅受限 test/bin check，尚未
+  进入上述快照；接口/权限/校验/金额/持久化顺序不改，见 `API_CONFIG_BOUNDARIES.md`。
+- 前序完整验收 `6c50aca` / Actions `43690435964` 已终态 success，artifact `14152368482`
   下载核对：完整并发 1437（128.56 秒）/串行 1437（235.46 秒）零失败/忽略/过滤。
   runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 及全部步骤通过；旧失败任务不重跑。
-- NP-03 普通 DTO 命令构造不再接完整 Config，仅两项默认值快照，四项新合同仅受限
-  test/bin check，通过不代表运行验收；尚未纳入上述 CI，见 `COMMAND_DEFAULTS_BOUNDARY.md`。
+- NP-03 普通 DTO 命令构造不再接完整 Config，仅两项默认值快照，四项新合同已通过
+  上述 449731c 的专项/完整回归，见 `COMMAND_DEFAULTS_BOUNDARY.md`。
 - NP-03 普通执行复用 ParamCacheWriter、生产 AppState 具体参数缓存字段仅测试保留，
-  原 PoolQueryService 与 executor 共用同一缓存；两项新合同仅受限 test/bin check。
-  生产七组警告（原五组加既有缓存字段/get 的两组），完整运行待后批，见 `PARAM_CACHE_RESOURCE_BOUNDARY.md`。
+  原 PoolQueryService 与 executor 共用同一缓存；两项新合同及完整回归已通过。
+  生产七组警告（原五组加既有缓存字段/get 的两组），见 `PARAM_CACHE_RESOURCE_BOUNDARY.md`。
 - C3d2 `57c75c5` / Actions `43688840398` 已终态 failure，artifact `14152165576`
   已下载核对：扫描专项 16 通过，所有前置步骤通过；完整并发 1431 通过/1 失败，串行未运行。
   原 005 历史结构测试未删除新 010 索引即删除其引用列；现仅修正测试基线重建，删除对应索引/

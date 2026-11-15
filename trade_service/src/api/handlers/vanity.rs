@@ -19,7 +19,9 @@ pub(crate) async fn create_vanity_job(
     headers: HeaderMap,
     Json(request): Json<CreateVanityJobRequest>,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, true) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, true)
+    {
         return response;
     }
     match state.vanity_tasks.create(request.into()).await {
@@ -35,7 +37,9 @@ pub(crate) async fn get_vanity_job(
     Path(job_id): Path<String>,
     Query(owner): Query<OwnerQuery>,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, true) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, true)
+    {
         return response;
     }
     match state
@@ -55,7 +59,9 @@ pub(crate) async fn cancel_vanity_job(
     Path(job_id): Path<String>,
     Query(owner): Query<OwnerQuery>,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, true) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, true)
+    {
         return response;
     }
     match state

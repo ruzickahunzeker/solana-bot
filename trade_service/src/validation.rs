@@ -1,6 +1,7 @@
 use crate::adapters::sdk::address_parser::SdkAddressParser;
 use crate::application::trade_settings::TradeValidationSettings;
 use crate::application::trade_validation::TradeValidator;
+#[cfg(test)]
 use crate::config::Config;
 use crate::domain::trade::Address;
 use crate::models::{TradeRequest, WarmupRequest};
@@ -11,6 +12,7 @@ mod settings_tests;
 pub use crate::application::validated_trade::ValidatedTrade as NormalizedTrade;
 pub use crate::application::validated_trade::ValidatedWarmup as NormalizedWarmup;
 
+#[cfg(test)]
 pub(crate) fn validate_execution_policy(
     trade: &NormalizedTrade,
     config: &Config,
@@ -34,17 +36,9 @@ pub(crate) fn parse_hop_quote(value: &str) -> anyhow::Result<Address> {
     TradeValidator::new(&SdkAddressParser).parse_query_address("quote_mint", value)
 }
 
+#[cfg(test)]
 pub fn validate_trade(request: &TradeRequest, config: &Config) -> anyhow::Result<NormalizedTrade> {
-    validate_with_settings(
-        request,
-        &TradeValidationSettings {
-            default_buy_sol: config.default_buy_sol,
-            default_slippage_percent: config.default_slippage_percent,
-            default_tip_sol: config.default_tip_sol,
-            via_sol_enabled: config.stonkfun_via_sol.enabled,
-            via_sol_max_buy_sol: config.stonkfun_via_sol.max_buy_sol,
-        },
-    )
+    validate_with_settings(request, &config.trade_validation_settings())
 }
 
 pub(crate) fn validate_with_settings(

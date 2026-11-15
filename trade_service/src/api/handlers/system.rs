@@ -21,7 +21,7 @@ pub(crate) async fn ready(
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     Json(ReadyResponse::from(state.readiness.inspect().await)).into_response()
@@ -32,7 +32,7 @@ pub(crate) async fn capabilities(
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     Json(crate::protocol_capabilities::current(

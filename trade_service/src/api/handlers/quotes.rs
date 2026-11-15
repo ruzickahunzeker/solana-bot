@@ -46,7 +46,7 @@ pub(crate) async fn sol_buy_quote(
     headers: HeaderMap,
     Json(request): Json<SolBuyQuoteRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     match state.quote_queries.create(request.query_input()).await {
@@ -62,7 +62,7 @@ pub(crate) async fn get_sol_buy_quote(
     Path(quote_id): Path<String>,
     Query(query): Query<QuoteWalletQuery>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     match state.quote_queries.get(&quote_id, &query.wallet_id) {
@@ -78,7 +78,7 @@ pub(crate) async fn preflight_sol_buy_quote(
     Path(quote_id): Path<String>,
     Query(query): Query<QuoteWalletQuery>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     match state
@@ -105,7 +105,7 @@ pub(crate) async fn submit_sol_buy_quote(
     Path(quote_id): Path<String>,
     Json(request): Json<SolBuySubmitRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     let request = QuoteSubmissionCommand::from(request);
@@ -124,7 +124,7 @@ pub(crate) async fn reconcile_sol_buy_submission(
     Path(quote_id): Path<String>,
     Query(query): Query<QuoteSubmissionQuery>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
         return response;
     }
     match state

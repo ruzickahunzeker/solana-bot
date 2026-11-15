@@ -23,7 +23,9 @@ pub(crate) async fn transfer_sol(
     Path(wallet_id): Path<String>,
     Json(request): Json<SolTransferRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     let policy = SolTransferPolicy {

@@ -21,7 +21,8 @@ pub(crate) async fn wallets(
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
 ) -> Response {
-    if let Err(response) = access::authorize_trade(&state.config, &headers, peer) {
+    if let Err(response) = access::authorize_trade(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     (
@@ -36,7 +37,9 @@ pub(crate) async fn managed_wallets(
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, false) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, false)
+    {
         return response;
     }
     match state.wallet_management.managed().await {
@@ -53,7 +56,9 @@ pub(crate) async fn create_wallet(
     headers: HeaderMap,
     Json(request): Json<CreateWalletRequest>,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, false) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, false)
+    {
         return response;
     }
     match state.wallet_management.create(request.into()).await {
@@ -76,7 +81,9 @@ pub(crate) async fn update_wallet(
     Path(wallet_id): Path<String>,
     Json(request): Json<UpdateWalletRequest>,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, false) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, false)
+    {
         return response;
     }
     match state
@@ -95,7 +102,9 @@ pub(crate) async fn delete_wallet(
     headers: HeaderMap,
     Path(wallet_id): Path<String>,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, false) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, false)
+    {
         return response;
     }
     match state.wallet_management.delete(&wallet_id).await {
@@ -110,7 +119,9 @@ pub(crate) async fn export_wallet(
     headers: HeaderMap,
     Path(wallet_id): Path<String>,
 ) -> Response {
-    if let Err(response) = access::authorize_wallet_admin(&state.config, &headers, peer, false) {
+    if let Err(response) =
+        access::authorize_wallet_admin(state.config.api_access_policy(), &headers, peer, false)
+    {
         return response;
     }
     match state.wallet_management.export(&wallet_id).await {

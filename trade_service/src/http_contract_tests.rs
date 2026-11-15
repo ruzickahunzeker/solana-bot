@@ -861,7 +861,7 @@ async fn admin_credential_is_not_a_trade_credential_and_can_authenticate_only_on
             None,
         );
         assert!(crate::api::middleware::auth::authorize_wallet_admin(
-            &state.config,
+            state.config.api_access_policy(),
             req.headers(),
             peer.parse().unwrap(),
             false
@@ -902,19 +902,63 @@ async fn legacy_admin_mode_keeps_original_allowlist_and_token_behavior() {
         None,
     );
     assert!(crate::api::middleware::auth::authorize_wallet_admin(
-        &state.config,
+        state.config.api_access_policy(),
         req.headers(),
         ALLOWED.parse().unwrap(),
         false
     )
     .is_ok());
     assert!(crate::api::middleware::auth::authorize_wallet_admin(
-        &state.config,
+        state.config.api_access_policy(),
         req.headers(),
         ALLOWED.parse().unwrap(),
         true
     )
     .is_err());
+}
+
+#[tokio::test]
+async fn api_access_policy_config_projection_borrows_only_original_access_values() {
+    let state = state().await;
+    let mut config = (*state.config).clone();
+    config.local_trade_api_token = "projection-trade-fixture".into();
+    config.security.wallet_admin = crate::config::security::WalletAdminAuth::Separate {
+        token: "projection-admin-fixture".into(),
+    };
+    config.rpc_urls.clear();
+    config.wallets.clear();
+    let policy = config.api_access_policy();
+    assert_eq!(
+        policy.trade_token.as_ptr(),
+        config.local_trade_api_token.as_ptr()
+    );
+    assert_eq!(policy.trade_token.len(), config.local_trade_api_token.len());
+    assert_eq!(
+        policy.allowed_client_ips.as_ptr(),
+        config.trade_allowed_client_ips.as_ptr()
+    );
+    assert_eq!(
+        policy.allowed_client_ips.len(),
+        config.trade_allowed_client_ips.len()
+    );
+    assert!(std::ptr::eq(
+        policy.wallet_admin,
+        &config.security.wallet_admin
+    ));
+    assert!(crate::api::middleware::auth::authorize_wallet_admin(
+        policy,
+        request(
+            "GET",
+            "/unused",
+            LOCAL,
+            Some("Bearer projection-admin-fixture"),
+            None
+        )
+        .headers(),
+        LOCAL.parse().unwrap(),
+        false,
+    )
+    .is_ok());
 }
 
 #[tokio::test]

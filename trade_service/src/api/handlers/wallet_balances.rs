@@ -20,7 +20,9 @@ pub(crate) async fn quote_balance(
     Path((wallet_id, mint)): Path<(String, String)>,
     Query(owner): Query<OwnerQuery>,
 ) -> Response {
-    if let Err(response) = access::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        access::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     match state
@@ -39,7 +41,9 @@ pub(crate) async fn wallet_balances(
     headers: HeaderMap,
     Query(owner): Query<OwnerQuery>,
 ) -> Response {
-    if let Err(response) = access::authorize_internal(&state.config, &headers, peer) {
+    if let Err(response) =
+        access::authorize_internal(state.config.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     match state

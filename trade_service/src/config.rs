@@ -129,6 +129,18 @@ pub struct StonkFunViaSolConfig {
 }
 
 impl Config {
+    pub(crate) fn trade_validation_settings(
+        &self,
+    ) -> crate::application::trade_settings::TradeValidationSettings {
+        crate::application::trade_settings::TradeValidationSettings {
+            default_buy_sol: self.default_buy_sol,
+            default_slippage_percent: self.default_slippage_percent,
+            default_tip_sol: self.default_tip_sol,
+            via_sol_enabled: self.stonkfun_via_sol.enabled,
+            via_sol_max_buy_sol: self.stonkfun_via_sol.max_buy_sol,
+        }
+    }
+
     pub(crate) fn trade_command_defaults(
         &self,
     ) -> crate::application::trade_settings::TradeCommandDefaults {
@@ -215,8 +227,12 @@ impl Config {
         })
     }
 
-    pub fn trade_client_ip_allowed(&self, ip: IpAddr) -> bool {
-        ip.is_loopback() || self.trade_allowed_client_ips.contains(&ip)
+    pub(crate) fn api_access_policy(&self) -> security::ApiAccessPolicy<'_> {
+        security::ApiAccessPolicy {
+            trade_token: &self.local_trade_api_token,
+            allowed_client_ips: &self.trade_allowed_client_ips,
+            wallet_admin: &self.security.wallet_admin,
+        }
     }
 }
 
