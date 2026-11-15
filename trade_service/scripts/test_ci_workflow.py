@@ -57,6 +57,13 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertNotIn("--ignored", script)
         self.assertNotIn("cargo build --release", script)
 
+    def test_shell_runner_tools_are_installed_explicitly(self):
+        commands = "\n".join(step.get("run", "") for step in self.steps)
+        install = next(line for line in commands.splitlines() if "apt-get install" in line)
+        self.assertIn("ripgrep", install.split())
+        self.assertIn("time", install.split())
+        self.assertIn("python3-yaml", install.split())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -30,6 +30,9 @@
 
 ## 当前证据
 
+- 第二轮 `ad4ea9e` / [Actions 43666705603](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43666705603)
+  锁定依赖获取、格式、policy 五项、依赖源码三项及仅回环 probe 通过；shell runner 因 runner
+  未安装 rg 而失败，仍未进入 Rust 测试。后续显式安装 ripgrep/time，并增加一项安装策略检查。
 - 已推送独立分支 `ci/trade-service-validation-20261115-c3b`，首个提交 `ffc506e`。
   首轮 [Actions 43666176316](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43666176316)
   输入/资源检查通过，但锁定的上游 zap-program 下载返回 404/认证失败，未进入 Rust 测试。
