@@ -6,11 +6,16 @@
 
 ## 统计口径
 
-- 最新完整验收 NP-03 `449731c` / Actions `43691952757` 已终态 success，artifact
+- 最新完整验收 `cb94bdd` / Actions `43693519994` 已终态 success，artifact `14153732230`
+  核对：完整并发 1448（142.77 秒）/串行 1448（251.64 秒）零失败/忽略/过滤，
+  api-access-policy 4、validation-settings 4、HTTP 201、参数 3 与全部步骤通过，旧任务不重跑。
+- 接续 bootstrap 原语句提取/资源交接已有源码，四项新合同仅受限 test/bin check，
+  尚未发布；不加载真实 SDK/钱包或部署，见 `BOOTSTRAP_ASSEMBLY_BOUNDARY.md`。
+- 前序完整验收 NP-03 `449731c` / Actions `43691952757` 已终态 success，artifact
   `14153850007` 核对：完整并发 1443（133.72 秒）/串行 1443（236.47 秒）零失败/忽略/过滤。
   command-defaults 4、param-cache-port 2 及全部步骤通过，不冒用父批或重跑旧 CI。
-- 下一批 API 鉴权/普通校验配置收口已有源码及五项新合同，仅受限 test/bin check，尚未
-  进入上述快照；接口/权限/校验/金额/持久化顺序不改，见 `API_CONFIG_BOUNDARIES.md`。
+- API 鉴权/普通校验窄配置及五项新合同已在 cb94bdd 专项/完整回归验收；接口/权限/
+  校验/金额/持久化顺序不改，见 `API_CONFIG_BOUNDARIES.md`。
 - 前序完整验收 `6c50aca` / Actions `43690435964` 已终态 success，artifact `14152368482`
   下载核对：完整并发 1437（128.56 秒）/串行 1437（235.46 秒）零失败/忽略/过滤。
   runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 及全部步骤通过；旧失败任务不重跑。

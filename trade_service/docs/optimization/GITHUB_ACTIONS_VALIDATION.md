@@ -30,7 +30,15 @@
 
 ## 已验收运行
 
-最新完整验收 `449731ce21b557421891d82d355a6e2a0a0f1f8a` /
+最新完整验收 `cb94bdd1d5b54ffd6566e722d92529e06d2f3718` /
+[Actions 43693519994](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43693519994)
+已终态 success，artifact `14153732230` 下载核对，完整并发 1448（142.77 秒）/串行 1448
+（251.64 秒）零失败/忽略/过滤，api-access-policy 4/validation-settings 4/HTTP 201/参数 3
+与全部 steps exit=0。identity/manifest/lock/vendor 指纹匹配，七组生产警告保持；996 文件/
+12,421,585 字节审计通过，真实 main/索引不变。后续 bootstrap 四项不在本批，不能套用结果。
+旧终态任务不重跑，也不在本机重试大链接。
+
+前序完整验收 `449731ce21b557421891d82d355a6e2a0a0f1f8a` /
 [Actions 43691952757](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43691952757)
 已终态 success，artifact `14153850007` 下载核对；完整并发 1443（133.72 秒）/串行 1443
 （236.47 秒）零失败/忽略/过滤，command-defaults 4/param-cache-port 2 与全部步骤 exit=0，

@@ -4,6 +4,7 @@ mod api;
 mod application;
 mod auth;
 mod blockhash_cache;
+mod bootstrap;
 mod config;
 #[cfg(test)]
 mod contract_tests;
@@ -36,52 +37,43 @@ mod wallets;
 use anyhow::Context;
 use axum::Router;
 use config::Config;
-use solana_commitment_config::CommitmentConfig;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::{info, warn};
 
-use crate::adapters::aggregator::quotes::AggregatorQuoteSource;
 use crate::adapters::persistence::trade_reads::StoredTradeReadSource;
-use crate::adapters::persistence::wallet_metadata::RepositoryWalletMetadata;
-use crate::adapters::readiness::RuntimeReadinessSource;
-use crate::adapters::sdk::address_parser::SdkAddressParser;
-use crate::adapters::sdk::ordinary_execution::SdkOrdinaryExecutionBackend;
-use crate::adapters::sdk::ordinary_sol_buy::SdkOrdinarySolBuyBackend;
-use crate::adapters::sdk::pool_queries::SdkPoolReadBackend;
-use crate::adapters::sdk::quote_preflight::SdkQuotePreflightBackend;
-use crate::adapters::sdk::quote_reconciliation::SdkQuoteReconciliationRuntime;
-use crate::adapters::sdk::quote_submit::SdkQuoteSubmissionRuntime;
-use crate::adapters::sdk::sol_transfer::SdkSolTransferRuntime;
-use crate::adapters::sdk::wallet_balances::SdkWalletBalanceRuntime;
-use crate::adapters::sdk::wallet_identity::SdkWalletIdentityDirectory;
-use crate::adapters::sdk::wallet_management::SdkWalletManagement;
+#[cfg(test)]
 use crate::aggregator_quote::QuoteStore;
-use crate::application::pool_queries::{PoolQueries, PoolQueryService};
+use crate::application::pool_queries::PoolQueries;
 use crate::application::ports::ordinary_execution::OrdinaryExecutionBackend;
 use crate::application::ports::ordinary_sol_buy::OrdinarySolBuyBackend;
 use crate::application::ports::trade_reads::TradeRecordReadSource;
 use crate::application::ports::wallet_identity::LoadedWalletDirectory;
-use crate::application::quote_preflight::{QuotePreflightService, QuotePreflights};
-use crate::application::quote_reconciliation::{QuoteReconciliationService, QuoteReconciliations};
-use crate::application::readiness::{ReadinessQuery, ReadinessService};
-use crate::application::sol_buy_quotes::{SolBuyQuoteQueries, SolBuyQuoteService};
-use crate::application::sol_buy_submit::{SolBuySubmissionService, SolBuySubmissions};
-use crate::application::sol_transfers::{SolTransferService, SolTransfers};
+use crate::application::quote_preflight::QuotePreflights;
+use crate::application::quote_reconciliation::QuoteReconciliations;
+use crate::application::readiness::ReadinessQuery;
+use crate::application::sol_buy_quotes::SolBuyQuoteQueries;
+use crate::application::sol_buy_submit::SolBuySubmissions;
+use crate::application::sol_transfers::SolTransfers;
 use crate::application::trade_queries::TradeQueryService;
-use crate::application::vanity::{VanityService, VanityTasks};
-use crate::application::wallet_balances::{WalletBalanceQueries, WalletBalanceService};
-use crate::application::wallet_management::{WalletManagement, WalletManagementService};
+use crate::application::vanity::VanityTasks;
+use crate::application::wallet_balances::WalletBalanceQueries;
+use crate::application::wallet_management::WalletManagement;
 use crate::blockhash_cache::BlockhashCache;
+#[cfg(test)]
 use crate::conversion::ConversionStore;
 use crate::idempotency::IdempotencyStore;
+#[cfg(test)]
 use crate::param_cache::ParamCache;
 use crate::persistence::TradePersistence;
 use crate::state::TradeStore;
+#[cfg(test)]
 use crate::wallet_ops::WalletOps;
+#[cfg(test)]
 use crate::wallet_repository::WalletRepository;
+#[cfg(test)]
 use crate::wallets::WalletRegistry;
 
 #[derive(Clone)]
@@ -142,180 +134,13 @@ async fn main() -> anyhow::Result<()> {
 
     load_dotenv();
     let config = Arc::new(Config::from_env()?);
-    anyhow::ensure!(
-        !config.ordinary_observation.enabled
-            || config.trade_persistence.mode == config::TradePersistenceMode::Durable,
-        "ordinary observation worker requires durable persistence"
-    );
-    let wallet_repository = Arc::new(
-        WalletRepository::new(
-            &config.wallet_storage,
-            &config.wallets,
-            &config.default_wallet_id,
-        )
-        .await
-        .context("initialize wallet repository")?,
-    );
-    let runtime_wallets = wallet_repository
-        .load_wallet_configs(&config.wallets)
-        .await
-        .context("load runtime wallets")?;
-    let wallets = Arc::new(
-        WalletRegistry::new(
-            &runtime_wallets,
-            config.default_wallet_id.clone(),
-            config.rpc_urls.clone(),
-            config.mev.clone(),
-            CommitmentConfig::processed(),
-            config.enable_sdk_log,
-            config.security.broadcast,
-        )
-        .await
-        .context("initialize wallets")?,
-    );
-    let read_rpc = Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(
-        &config.rpc_urls,
-    )?);
-    let blockhash_cache = Arc::new(BlockhashCache::default());
-    let blockhash_refresher = blockhash_cache.clone().spawn_refresher(
-        crate::adapters::rpc::blockhash::RpcBlockhashReader::new(read_rpc.clone()),
-        config.blockhash_refresh_ms,
-    );
-
-    let persistence = Arc::new(
-        TradePersistence::new(&config.trade_persistence)
-            .await
-            .context("initialize trade persistence")?,
-    );
-    let wallet_ops = Arc::new(
-        WalletOps::new(wallet_repository.clone(), wallets.clone())
-            .await
-            .context("initialize wallet operations")?,
-    );
-    let conversions = if config.conversion_quotes_enabled {
-        Some(Arc::new(
-            ConversionStore::new(&config.conversion_database_url)
-                .await
-                .context("initialize conversion database")?,
-        ))
-    } else {
-        None
-    };
-    let readiness = Arc::new(ReadinessService::new(RuntimeReadinessSource::new(
-        config.clone(),
-        wallets.clone(),
-        blockhash_cache.clone(),
-        persistence.clone(),
-        read_rpc.clone(),
-    )));
-    let params = Arc::new(ParamCache::default());
-    let pool_queries = Arc::new(PoolQueryService::new(
-        SdkPoolReadBackend::new(wallets.clone()),
-        params.clone(),
-    ));
-    let ordinary_execution = Arc::new(SdkOrdinaryExecutionBackend::new(
-        wallets.clone(),
-        config.pumpapi.clone(),
-        read_rpc.clone(),
-        persistence.clone(),
-    ));
-    let wallet_identity = Arc::new(SdkWalletIdentityDirectory::new(wallets.clone()));
-    let aggregator_quotes = Arc::new(QuoteStore::default());
-    let observation_plan = crate::adapters::ordinary_observation_worker::ObservationPlan::prepare(
-        &config.ordinary_observation,
-        persistence.as_ref(),
-        read_rpc.clone(),
-    )?;
-    let mut ordinary_sol_buy = SdkOrdinarySolBuyBackend::new(
-        wallets.clone(),
-        aggregator_quotes.clone(),
-        persistence.clone(),
-    );
-    if let Some(plan) = &observation_plan {
-        ordinary_sol_buy = ordinary_sol_buy.with_observation_reader(plan.reader());
-    }
-    let ordinary_sol_buy = Arc::new(ordinary_sol_buy);
-    let quote_queries = Arc::new(SolBuyQuoteService::new(
-        AggregatorQuoteSource,
-        wallet_identity.clone(),
-        aggregator_quotes.clone(),
-    ));
-    let quote_preflights = Arc::new(QuotePreflightService::new(
-        Arc::new(SdkQuotePreflightBackend::new(wallets.clone())),
-        aggregator_quotes.clone(),
-    ));
-    let quote_submissions = Arc::new(SolBuySubmissionService::new(
-        SdkQuoteSubmissionRuntime::new(wallets.clone(), persistence.clone()),
-        aggregator_quotes.clone(),
-    ));
-    let quote_reconciliations = Arc::new(QuoteReconciliationService::new(
-        SdkQuoteReconciliationRuntime::new(wallets.clone(), persistence.clone()),
-    ));
-    let sol_transfers = Arc::new(SolTransferService::new(
-        SdkSolTransferRuntime::new(wallets.clone(), wallet_repository.clone()),
-        SdkAddressParser,
-    ));
-    let wallet_management = SdkWalletManagement::new(wallet_repository.clone(), wallets.clone());
-    let state = AppState {
-        vanity_tasks: Arc::new(VanityService::new(wallet_ops)),
-        wallet_management: Arc::new(WalletManagementService::new(
-            wallet_management.clone(),
-            wallet_management,
-        )),
-        wallet_balance_queries: Arc::new(WalletBalanceService::new(
-            RepositoryWalletMetadata::new(wallet_repository.clone()),
-            SdkWalletBalanceRuntime::new(wallets.clone(), read_rpc.clone()),
-            SdkAddressParser,
-            crate::state::now_ms,
-        )),
-        wsol_queries: Arc::new(crate::application::wsol_queries::WsolQueryService::new(
-            crate::adapters::sdk::wsol_queries::SdkWsolQuerySource::new(
-                wallets.clone(),
-                wallet_repository.clone(),
-            ),
-            conversions
-                .clone()
-                .map(crate::adapters::persistence::wsol_conversion::SqliteWsolJournal::new),
-            SdkAddressParser,
-        )),
-        wsol_submissions: Arc::new(
-            crate::application::wsol_submission::WsolSubmissionService::new(
-                crate::adapters::sdk::wsol_conversion::SdkWsolRuntime::new(
-                    wallets.clone(),
-                    wallet_repository.clone(),
-                ),
-                conversions
-                    .clone()
-                    .map(crate::adapters::persistence::wsol_conversion::SqliteWsolJournal::new),
-            ),
-        ),
-        config: config.clone(),
-        #[cfg(test)]
-        wallets: wallets.clone(),
-        #[cfg(test)]
-        wallet_repository: wallet_repository.clone(),
-        blockhash_cache,
-        #[cfg(test)]
-        params: params.clone(),
-        param_cache_writer: params,
-        trades: Arc::new(TradeStore::default()),
-        idempotency: Arc::new(IdempotencyStore::default()),
-        persistence,
-        #[cfg(test)]
-        aggregator_quotes,
-        #[cfg(test)]
-        conversions,
-        readiness,
-        pool_queries,
-        ordinary_execution,
-        ordinary_sol_buy,
-        quote_queries,
-        quote_preflights,
-        quote_submissions,
-        quote_reconciliations,
-        sol_transfers,
-        wallet_identity,
-    };
+    let bootstrap::Bootstrapped {
+        state,
+        wallets,
+        wallet_repository,
+        blockhash_refresher,
+        observation_plan,
+    } = bootstrap::initialize(config.clone()).await?;
 
     let app: Router = http::router(state).layer(TraceLayer::new_for_http());
     let listener = TcpListener::bind(config.trade_http_addr)

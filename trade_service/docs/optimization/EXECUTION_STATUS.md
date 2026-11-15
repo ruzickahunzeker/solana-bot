@@ -4,15 +4,29 @@
 
 ## 当前续作检查点（覆盖下方历史状态）
 
-最新完整验收：NP-03 `449731ce21b557421891d82d355a6e2a0a0f1f8a` /
+最新完整验收：`cb94bdd1d5b54ffd6566e722d92529e06d2f3718` / Actions `43693519994`
+已终态 success，artifact `14153732230` 下载核对。完整并发 1448（142.77 秒）/串行 1448
+（251.64 秒）零失败/忽略/过滤，api-access-policy 4/validation-settings 4/HTTP 201/参数 3
+与全部步骤 exit=0，manifest/lock/vendor 身份匹配。996 文件/12,421,585 字节审计通过，
+真实 main/索引未变；原七组生产警告保持。五项新增已实际执行，不重跑旧终态任务。
+
+下一批 bootstrap 已有源码：原初始化/服务组装两段字节相同地移入 bootstrap.rs，main 保留
+监听/日志/任务 start/停机协调。Resources/Bootstrapped 交接原 Arcs 和 refresher owner；
+四项新合同仅受限 test/bin check，尚未纳入 cb94bdd/43693519994，不抢先触发重复 CI。
+test check `20261115T082114Z-159090` 约 14 秒/RSS 1,551,888 KiB、bin check
+`20261115T082256Z-159553` 约 4 秒/RSS 658,692 KiB 均 exit=0；原七组生产警告。
+policy 七项通过，后批保留 bootstrap-assembly 专项及全部回归。临时 runtime_wallets Vec
+在初始化函数返回时释放，不改变 SDK 身份/签名权威，不声称清零。见 `BOOTSTRAP_ASSEMBLY_BOUNDARY.md`。
+
+前序完整验收：NP-03 `449731ce21b557421891d82d355a6e2a0a0f1f8a` /
 Actions `43691952757` 已终态 success，artifact `14153850007` 下载核对。完整并发 1443
 （133.72 秒）/串行 1443（236.47 秒）零失败/忽略/过滤，command-defaults 4/param-cache-port 2
 及全部步骤 exit=0，manifest/lock/vendor 指纹匹配。994 文件/12,403,750 字节审计通过，
 真实 main/索引未变，七组生产警告保留；旧成功/失败任务均不重跑。
 
-待下一批发布：NP-03 API 鉴权只接借用 access policy，31 个 Handler 调用已接；普通校验只接
+本批已发布源码：NP-03 API 鉴权只接借用 access policy，31 个 Handler 调用已接；普通校验只接
 已有 TradeValidationSettings，执行政策用原 Application 函数，原 Config 兼容 helper 仅测试
-保留。五项新增合同仅受限 check，尚未纳入 449731c/43691952757。
+保留。五项新增合同现已由 cb94bdd/43693519994 验收，不在更旧的 449731c。
 test check `20261115T080153Z-150488` 约 10 秒/RSS 1,338,228 KiB、bin check
 `20261115T080309Z-150888` 约 4 秒/RSS 670,156 KiB 均 exit=0；原七组生产警告。
 policy 七项通过，后批增加 api-access-policy/validation-settings 专项，保留全部回归；

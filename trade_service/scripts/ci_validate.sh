@@ -96,6 +96,7 @@ PY
         step http-contract cargo test --locked --offline http_contract_tests -- --test-threads=2
         step api-access-policy cargo test --locked --offline api_access_policy -- --test-threads=2
         step validation-settings cargo test --locked --offline validation::settings_tests -- --test-threads=2
+        step bootstrap-assembly cargo test --locked --offline bootstrap::tests -- --test-threads=2
         step damm-output-evidence cargo test --locked --offline damm_output_evidence -- --test-threads=2
         step damm-preview-context cargo test --locked --offline damm_unsigned_simulation -- --test-threads=2
         step damm-compiled-binding cargo test --locked --offline damm_compiled_binding -- --test-threads=2
