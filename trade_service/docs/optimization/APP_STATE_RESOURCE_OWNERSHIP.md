@@ -54,14 +54,14 @@ git diff --check                                             # passed
 | --- | --- | --- | --- |
 | 钱包 Registry/Repository | initialize 创建原实例，SDK/钱包服务共享原 Arcs；main 留日志句柄 | 原资源替换/Weak 释放与 bootstrap 合成组装合同 | 真实 SDK 客户端/密钥内存清理、钱包原子激活和后台任务全部释放 |
 | SharedReadRuntime | initialize 创建，刷新/只读观测/readiness/余额与准备 reader 复用 | 六类 profile 的局部预算/冷却/取消合同，资源随原持有者释放 | 寻池/参数/ATA/模拟等剩余读路径及全服务配额 |
-| BlockhashCache/Refresher | 原缓存由 refresher、readiness、AppState 持有，main 接原 refresher owner | 后继普通任务生命周期源码将原资源保留到 drain 完成/超时后才停止和 await；本批运行待 CI，不借用旧 lifecycle/bootstrap 的通过结果 | 链上有效期/真实节点、异常进程退出与 SDK 内部等其他任务 |
+| BlockhashCache/Refresher | 原缓存由 refresher、readiness、AppState 持有，main 接原 refresher owner | 后继普通任务生命周期将原资源保留到 drain 完成/超时后才停止和 await；c6f2745 独立专项与完整各 1498 验收，不借用旧生命周期证据 | 链上有效期/真实节点、异常进程退出与 SDK 内部等其他任务 |
 | ParamCache | complete 创建一次，PoolQueryService 与 executor writer 共享 | 同实例写入/保留键、最后服务释放后回收，见 PARAM_CACHE_RESOURCE_BOUNDARY.md | 缓存版本/全局一致性与 SDK 内部参数缓存 |
 | TradeStore/IdempotencyStore/TradePersistence | initialize 打开原持久化，complete 创建原内存资源；接受/查询/claims/执行共享 | 接受与普通执行服务借用原实例/项目 ports；26be717、26445c5 已验收，原 reservation/hash/JSON 和文件恢复合同继续适用 | 根资源所有权/交易任务生命周期、全部 backend/mode 的 signed journal 及生产刷盘 |
 | QuoteStore/ConversionStore | complete 创建原报价缓存，initialize 按配置打开可选 conversion store | 原服务持有和 bootstrap Some/None/Arc 交接合同 | 不合并独立操作账本；真实节点/恢复与发布仍独立验收 |
-| ObservationPlan/Worker | complete 只 prepare，main 成功 bind 后按原开关 start | 后继源码在普通 drain 之后 request/await 原 worker；另一资源报错也完成 join；新顺序待本批 CI | 真实部署调度、断电与全系统 RPC 预算 |
-| 普通交易后台任务 | bootstrap 创建一个共享 TradeTasks；原 Handler 接受 await 前登记，Created 移交原 executor | 线性 ticket 仅记录任务生命周期；新关闸/等待/超时/panic/HTTP 取消合同待 CI，原 ledger/owner 不变 | SDK opaque worker、Shadow writer、其他独立操作/靓号任务与真实进程退出尚未覆盖 |
+| ObservationPlan/Worker | complete 只 prepare，main 成功 bind 后按原开关 start | 普通 drain 之后 request/await 原 worker；另一资源报错也完成 join；c6f2745 四项 helper 合同和全套已通过 | 真实部署调度、断电与全系统 RPC 预算 |
+| 普通交易后台任务 | bootstrap 创建一个共享 TradeTasks；原 Handler 接受 await 前登记，Created 移交原 executor | 线性 ticket 只记录生命周期；17 项新合同与完整各 1498 在 c6f2745 验收，原 ledger/owner 不变 | SDK opaque worker、Shadow writer、其他独立操作/靓号任务与真实进程退出尚未覆盖 |
 
 最初核对时仅有 `axum::serve(...).with_graceful_shutdown`，不能证明脱离 HTTP 的任务完成。
 后继本批源码接入原 NP-03 的普通任务登记/有界等待，但不把它当全服务/SDK worker supervisor，
 也不释放 owner 或换 key/路线/backend 重签。新关闭窗口和参数的实际边界见
-`ORDINARY_TRADE_TASK_LIFECYCLE.md`；17 项新测试待独立 CI，不改线上配置或服务状态。
+`ORDINARY_TRADE_TASK_LIFECYCLE.md`；17 项新测试已由 c6f2745 独立 CI 验收，不改线上配置或服务状态。

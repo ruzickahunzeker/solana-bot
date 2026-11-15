@@ -1,7 +1,8 @@
 # NP-03 普通后台交易任务生命周期
 
 日期：2026-11-15。沿用原 NP-03 / TS-09 资源所有权任务，不另立项目或资金权威。
-当前源码和受限类型检查完成；新增 17 项 Rust 测试仍待本批独立源码 CI 实际运行。
+当前源码、受限类型检查及独立源码 CI 验收完成；新增 17 项 Rust 测试已实际运行。
+验收提交 c6f2745 / Actions 43718342603 / artifact 14163942665；不是全服务或生产退出验收。
 
 ## 原问题与接线
 
@@ -26,6 +27,7 @@
    新的普通交易工作在原接受/写库前返回 `503 {"error":"trade service is shutting down"}`。
    这只改变停机窗口；正常运行的校验顺序、请求/响应、状态等待与鉴权不变。
    批量仍为原 202/逐项错误形状，GET 查询不增加登记闸门。
+   503 不能证明同 key 的先前请求未接受/未发送；恢复后继续使用原 key，只读原结果，不能自动换 key 补单。
 2. 信号前已取得 ticket 的接受流程仍可派发原请求；登记到派发之间计数不归零。
    `close` 不重开、不释放 owner；重复 POST 的正常幂等合同不改。
 3. `serve` 返回后 `service_shutdown::finish` 等待已登记普通工作，期间保留原刷新/观测资源。
@@ -51,10 +53,26 @@ README 已解释；不修改线上 .env、systemd 超时或服务状态。
 - 现有三层类型门禁增加 TradeTasks/DispatchTicket 两个具体运行时类型：共 28 个选定类型，
   加 outside-alias 后预期三个层 87 字段拒绝。不能因此宣称 API/全部依赖/不透明能力检查完成。
 
-本地 test check 38 秒/RSS 2,266,392 KiB，production bin-check 12 秒/RSS 994,552 KiB 通过；
+本地初次有效 test check 38 秒/RSS 2,266,392 KiB，最终 test check 9 秒/RSS 1,241,036 KiB，
+production bin-check 12 秒/RSS 994,552 KiB 通过；
 后者仍为七组既有警告，未压制或删除原兼容代码。初轮新增测试的 recent(limit) 参数错误已
 修为项目 API 所需 Option；没有改变生产 API 或缩减断言。完整 Rust 运行只在获准的源码/
 公开数据、仅回环 GitHub Actions，新专项加在原全套/门禁之前，不借用父快照 1481 的结果。
+
+### 本批验收证据
+
+- `c6f2745e2fee315d454b0c7327d1469f6c1fb441` /
+  [Actions 43718342603](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43718342603)
+  终态 success，artifact `14163942665` 下载核对；48 步骤全部 exit=0。
+- 生命周期专项 12、shutdown helper 4、配置 1 全部通过；完整并发 1498（134.03 秒）/
+  串行 1498（244.95 秒）零失败/忽略/过滤。独立比较完整原始测试名集合一致，父批 1481
+  全部保留，新增集合恰好等于三项专项的 17 个入口，不只比较通过数字。
+- 原源码/恢复 Clippy JSON 均 build-finished success；负例为预期 exit=101，独立核对
+  原始 spans 确认 87 个不同字段拒绝，包含新 TradeTasks/DispatchTicket 和 outside_alias
+  在 Application/Domain/Protocol 各一组；未把任意编译失败当作门禁通过。
+- identity 与 service manifest/lock/vendor manifest SHA 匹配；源码发布审计绑定
+  1029 文件/12,654,972 字节、25 变更路径，其他原源码和依赖不变；真实 main/索引不变。
+- 发布后只更新验收记录和 503 的原 key 说明；不为文档单独触发完整 CI，不合并或部署。
 
 ## 明确保留的缺口
 

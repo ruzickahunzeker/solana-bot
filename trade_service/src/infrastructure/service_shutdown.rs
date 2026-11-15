@@ -10,6 +10,8 @@ pub(crate) async fn finish(
     deadline: Duration,
     blockhash: BlockhashRefresher,
     observation: Option<ObservationWorker>,
+    persistence: &crate::persistence::TradePersistence,
+    shadow_deadline: Duration,
 ) -> anyhow::Result<()> {
     let report = tasks.drain(deadline).await;
     if !report.clean() {
@@ -24,12 +26,16 @@ pub(crate) async fn finish(
     if let Some(worker) = &observation {
         worker.stop_signal().request();
     }
-    // Always join both resources, including when one returns an error.
+    // Finish every original resource before propagating a cleanup error.
     let observation_result = match observation {
         Some(worker) => worker.shutdown().await,
         None => Ok(()),
     };
     let blockhash_result = blockhash.shutdown().await;
+    let shadow_result = persistence.shutdown_shadow(shadow_deadline).await;
+    if let Err(error) = &shadow_result {
+        tracing::warn!(%error, "shadow persistence did not drain cleanly; no replay or durable promotion");
+    }
     observation_result?;
     blockhash_result?;
     anyhow::ensure!(
@@ -40,6 +46,7 @@ pub(crate) async fn finish(
         report.abandoned,
         report.timed_out
     );
+    shadow_result?;
     Ok(())
 }
 

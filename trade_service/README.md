@@ -59,6 +59,7 @@ WAIT_TX_CONFIRMED=false
 ENABLE_SDK_LOG=false
 TRADE_RESPONSE_WAIT_MS=3000
 TRADE_TASK_DRAIN_TIMEOUT_MS=30000
+TRADE_SHADOW_DRAIN_TIMEOUT_MS=5000
 MEV_SUBMIT_VERIFY_MS=1200
 
 ENABLE_PUMPAPI_EXECUTOR=false
@@ -463,6 +464,15 @@ ENABLE_SIMULATE=true
 预算从 HTTP graceful shutdown 返回后开始，不是整个进程或 SDK 后台 worker 的总截止时间。
 超时、任务 panic 或异常丢弃会记录未完成情况并使退出失败，不代表交易未发送，不释放或重建原幂等/签名权威，也不自动重签补单。
 停止接单期间普通交易 POST 返回既有 `503` 错误形状；GET 查询不受该登记闸门影响。正常运行的请求字段、校验与响应等待规则不变。
+停机 503 仅说明本次请求没有进入接受流程，不能证明同 key 的先前请求未接受或未发送；恢复后仍使用原 key 查询/重复读取，不自动换新 key 补单。
+
+`TRADE_SHADOW_DRAIN_TIMEOUT_MS`
+
+Shadow 镜像队列的独立退出等待预算，单位毫秒，默认 `5000`，范围 `1` 到 `300000`。
+普通任务排空及原刷新/观测任务停止后，关闭原 1024 项队列的新写入，等待同一个 writer 完成已接受的 FIFO 写入。
+超时或取消等待不丢弃原 JoinHandle、不重建队列或重放写入；历史入队拒绝、写失败或 writer 异常都不能报告为完整排空。
+Memory/Durable 模式下该步骤不创建队列、不关闭数据库，也不改变幂等/签名权威。
+此预算不是全服务停机总截止时间；成功只说明原队列已排空及旧 SQL 调用成功，不将 Shadow 升级为 durable、`synchronous=FULL` 或断电安全保证。未修改线上配置或服务。
 
 `MEV_SUBMIT_VERIFY_MS`
 

@@ -30,6 +30,17 @@
 
 ## 已验收运行
 
+最新 NP-03 普通任务生命周期 `c6f2745e2fee315d454b0c7327d1469f6c1fb441` /
+[Actions 43718342603](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43718342603)
+终态 success，artifact `14163942665` 下载核对：专项 12/4/1 共 17；完整并发
+1498（134.03 秒）/串行 1498（244.95 秒）零失败/忽略/过滤，48 步骤 exit=0。
+两套原始测试名集合相同，父批 1481 全部保留，增量恰为 17 项；原源码/恢复 Clippy
+成功，原始 JSON spans 独立确认 87 个不同字段拒绝，含新运行时两类型与 outside_alias。
+identity/manifest/lock/vendor manifest 匹配；审计绑定 1029 文件/12,654,972 字节、
+25 个变更路径，真实 main/索引不变。未部署/启用新配置，不重跑旧任务；发布后的验收
+和 503 原 key 说明不单独触发文档 CI。普通任务生命周期不等同全服务/SDK worker/
+Shadow 落盘或生产停机验收。
+
 最新 NP-04 双假构建合同 `91b3d94037a1d557ce2b255f4eb491bc308e01ac` /
 [Actions 43714527309](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43714527309)
 已终态 success，artifact `14162686991` 下载核对：新增专项八项、完整并发

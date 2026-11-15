@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新 NP-04 双假构建合同 `91b3d94` / Actions `43714527309` / artifact `14162686991` 已验收，专项 8、完整并发/串行各 1481、81 字段拒绝与全部 45 步骤通过。下一源码续原 NP-03 普通后台交易任务生命周期，其他 NP-01/03/04/05 门槛保留。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新 NP-03 普通任务生命周期 `c6f2745` / Actions `43718342603` / artifact `14163942665` 已验收，专项 17、完整并发/串行各 1498、87 字段拒绝与全部 48 步骤通过。下一源码续原 NP-03 Shadow writer 退出/刷新边界，其他 NP-01/03/04/05 门槛保留；普通任务排空不等于全服务/SDK worker/Shadow 落盘验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -61,7 +61,7 @@ c220ba8 的专项及完整回归通过，不在前序 970d835 的 bootstrap CI�
 | --- | --- | --- |
 | NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；后继普通接受 26be717 和执行 26445c5 已验收，不重新排队。剩余资源/生命周期归原 NP-03，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
-| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取共享 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受流程已离线验收，26be717 完整回归各 1466。普通执行编排接项目 ports/四值设置，七项及完整回归已由 26445c5 验收；后继 e3be442 完整各 1473、三层 81 字段类型/别名拒绝通过，见 ORDINARY_EXECUTION_PORT.md 和 DEVELOPMENT_CHECKS.md。根入口仍持原资源及任务生命周期；寻池/参数/ATA/独立 quote/WSOL/模拟/SDK 内部读取、全局资源/依赖与退出门槛仍待续 |
+| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；六类读取共享 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受已验收。普通执行编排七项在 26445c5 验收，三层门禁在 e3be442 起验收；后继普通任务登记/关闸/排空与原资源退出顺序在 c6f2745 验收，新增 17、完整各 1498、87 字段拒绝通过，见 ORDINARY_TRADE_TASK_LIFECYCLE.md 与 DEVELOPMENT_CHECKS.md。根具体资源、Shadow writer/SDK 内部/独立操作任务、寻池/参数/ATA/独立 quote/WSOL/模拟读取、全局预算与真实退出门槛继续，不重做已验收子项 |
 | NP-04 | 通用 Backend 契约验收 | Record/Tape 独立构建/候选八项合同接现有普通 SOL Quote 控制器与原 SQLite authority，验证金额、能力拒绝、取消、未知和签后不换后端；91b3d94 / Actions 43714527309 已验收，专项 8、完整各 1481，见 optimization/BACKEND_CONSTRUCTION_CONTRACT.md。其他业务路径适用性仍待验，不新增 Router SDK 依赖、生产候选 profile 或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 

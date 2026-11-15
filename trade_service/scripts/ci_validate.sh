@@ -107,6 +107,8 @@ PY
         step trade-task-lifecycle cargo test --locked --offline trade_tasks -- --test-threads=2
         step service-shutdown cargo test --locked --offline service_shutdown -- --test-threads=2
         step task-drain-settings cargo test --locked --offline trade_task_drain_configuration -- --test-threads=2
+        step shadow-drain cargo test --locked --offline shadow_drain -- --test-threads=2
+        step shadow-shutdown cargo test --locked --offline shadow_shutdown -- --test-threads=2
         step damm-output-evidence cargo test --locked --offline damm_output_evidence -- --test-threads=2
         step damm-preview-context cargo test --locked --offline damm_unsigned_simulation -- --test-threads=2
         step damm-compiled-binding cargo test --locked --offline damm_compiled_binding -- --test-threads=2

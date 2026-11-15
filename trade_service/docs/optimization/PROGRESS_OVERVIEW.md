@@ -6,9 +6,14 @@
 
 ## 统计口径
 
-- 原 NP-03 普通后台交易生命周期本批已接登记/派发/关闸/排空与原资源退出顺序，
-  新增 17 项仅类型检查，完整运行待新 CI，不套用父批 1481；两个新资源类型纳入三层
-  门禁，预期 87 个字段拒绝。详见 `ORDINARY_TRADE_TASK_LIFECYCLE.md`。
+- 原 NP-03 Shadow writer 关闭/排空本批已接原 FIFO/pool、保留 handle 和历史失败诊断，
+  新增 17 项仅受限类型检查；实际执行待新 CI，不借用父批 1498。退出预算独立，
+  Shadow 的弱持久化和原 SQL/health 语义保留，见 `SHADOW_WRITER_LIFECYCLE.md`。
+- 原 NP-03 普通后台交易生命周期已在 c6f2745 / Actions 43718342603 验收，artifact
+  14163942665 下载核对：专项 12/4/1 共 17、完整并发/串行各 1498（134.03/244.95 秒）、
+  87 字段拒绝与全部 48 步骤通过。父批 1481 名称集合保留，新增恰为 17；不重复实施。
+  普通任务排空不等于 Shadow writer 落盘、SDK 内部/独立操作任务或生产退出已验收，
+  剩余边界见 `ORDINARY_TRADE_TASK_LIFECYCLE.md`。
 - 原 NP-04 Record/Tape 独立构建表示的八项共同合同已在 91b3d94 / Actions
   43714527309 验收，artifact 14162686991 下载核对：专项 8、完整并发/串行各
   1481（129.52/236.54 秒）、81 字段拒绝与全部 45 步骤通过。沿用原普通 SOL Quote
@@ -163,7 +168,7 @@
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
 | 普通 SDK 完整授权 | C3c1/C3c2 受控执行、C3d1 原签名恢复、C3d2 扫描及 C3e 准备串联已离线验收；后继 26445c5 完整各 1473 通过，但原 scope 之外仍 legacy | 真实 provider/节点、生产恢复/发布及其他方向/协议/backend/mode 的全部门槛 |
-| 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；旧冗余资源字段不在生产 AppState | 根入口仍持具体 index/journal/cache/Config 与任务状态；全局 RPC/SDK 资源、依赖方向与退出仍待续。普通接受/执行和 Bootstrap 不重新立项；局部通过不等于全生命周期或原子激活 |
+| 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；普通后台任务登记/关闸/排空/原资源退出顺序在 c6f2745 验收；旧冗余资源字段不在生产 AppState | 根具体 index/journal/cache/Config、Shadow writer、SDK 内部/独立操作任务及全局 RPC/依赖与真实退出仍待续。已验收接受/执行/Bootstrap/普通任务不重新立项；局部通过不等于全服务生命周期或原子激活 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
 

@@ -165,6 +165,7 @@ async fn main() -> anyhow::Result<()> {
     } = bootstrap::initialize(config.clone()).await?;
 
     let trade_tasks = state.trade_tasks.clone();
+    let persistence = state.persistence.clone();
     let intake_stop = trade_tasks.clone();
     let app: Router = http::router(state).layer(TraceLayer::new_for_http());
     let listener = TcpListener::bind(config.trade_http_addr)
@@ -200,6 +201,8 @@ async fn main() -> anyhow::Result<()> {
         std::time::Duration::from_millis(config.shutdown.trade_task_drain_timeout_ms),
         blockhash_refresher,
         observation_worker,
+        persistence.as_ref(),
+        std::time::Duration::from_millis(config.shutdown.shadow_drain_timeout_ms),
     )
     .await;
     result?;

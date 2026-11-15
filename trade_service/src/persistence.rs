@@ -41,24 +41,16 @@ const MIGRATION: &str = include_str!("../migrations/001_trade_persistence.sql");
 mod identity_tests;
 #[cfg(test)]
 mod record_contract_tests;
+mod shadow;
 #[cfg(test)]
 mod snapshot_contract_tests;
+use shadow::{ShadowWrite, ShadowWriter};
 
 pub struct TradePersistence {
     mode: TradePersistenceMode,
     pool: Option<SqlitePool>,
-    shadow_tx: Option<tokio::sync::mpsc::Sender<ShadowWrite>>,
+    shadow: Option<ShadowWriter>,
     shadow_healthy: Arc<AtomicBool>,
-}
-
-enum ShadowWrite {
-    Insert {
-        record: TradeRecord,
-        key: String,
-        hash: String,
-        request_json: String,
-    },
-    Update(TradeRecord),
 }
 
 struct StoredReservation {
@@ -81,7 +73,7 @@ impl TradePersistence {
         Self {
             mode: TradePersistenceMode::Shadow,
             pool: None,
-            shadow_tx: None,
+            shadow: None,
             shadow_healthy: Arc::new(AtomicBool::new(false)),
         }
     }
@@ -91,7 +83,7 @@ impl TradePersistence {
             return Ok(Self {
                 mode: config.mode,
                 pool: None,
-                shadow_tx: None,
+                shadow: None,
                 shadow_healthy: Arc::new(AtomicBool::new(true)),
             });
         }
@@ -123,40 +115,15 @@ impl TradePersistence {
         }
         recover_interrupted(&pool).await?;
         let shadow_healthy = Arc::new(AtomicBool::new(true));
-        let shadow_tx = if config.mode == TradePersistenceMode::Shadow {
-            let (tx, mut rx) = tokio::sync::mpsc::channel::<ShadowWrite>(1_024);
-            let writer_pool = pool.clone();
-            let writer_healthy = shadow_healthy.clone();
-            tokio::spawn(async move {
-                while let Some(write) = rx.recv().await {
-                    let result = match write {
-                        ShadowWrite::Insert {
-                            record,
-                            key,
-                            hash,
-                            request_json,
-                        } => insert_trade(&writer_pool, &record, &key, &hash, &request_json)
-                            .await
-                            .map(|_| ()),
-                        ShadowWrite::Update(record) => update_trade(&writer_pool, &record).await,
-                    };
-                    match result {
-                        Ok(()) => writer_healthy.store(true, Ordering::Relaxed),
-                        Err(error) => {
-                            writer_healthy.store(false, Ordering::Relaxed);
-                            tracing::warn!(%error, "shadow trade persistence write failed");
-                        }
-                    }
-                }
-            });
-            Some(tx)
+        let shadow = if config.mode == TradePersistenceMode::Shadow {
+            Some(ShadowWriter::start(pool.clone(), shadow_healthy.clone()))
         } else {
             None
         };
         Ok(Self {
             mode: config.mode,
             pool: Some(pool),
-            shadow_tx,
+            shadow,
             shadow_healthy,
         })
     }
@@ -166,6 +133,22 @@ impl TradePersistence {
     }
     pub fn is_durable(&self) -> bool {
         self.mode == TradePersistenceMode::Durable
+    }
+
+    pub(crate) async fn shutdown_shadow(&self, deadline: Duration) -> anyhow::Result<()> {
+        if self.mode != TradePersistenceMode::Shadow {
+            return Ok(());
+        }
+        self.shadow
+            .as_ref()
+            .context("shadow writer is unavailable")?
+            .shutdown(deadline)
+            .await
+    }
+
+    #[cfg(test)]
+    pub(crate) fn shadow_is_closed_for_tests(&self) -> bool {
+        self.shadow.as_ref().is_none_or(ShadowWriter::is_closed)
     }
 
     pub(crate) fn submission_journal(&self) -> Option<SqliteSubmissionJournal> {
@@ -277,12 +260,12 @@ impl TradePersistence {
             .context("trade database is unavailable")?;
         let (hash, request_json) = snapshot.into_parts();
         if self.mode == TradePersistenceMode::Shadow {
-            let sender = self
-                .shadow_tx
+            let writer = self
+                .shadow
                 .as_ref()
                 .context("shadow writer is unavailable")?;
-            sender
-                .try_send(ShadowWrite::Insert {
+            writer
+                .enqueue(ShadowWrite::Insert {
                     record: record.clone(),
                     key: storage_key,
                     hash,
@@ -303,12 +286,12 @@ impl TradePersistence {
             return Ok(());
         }
         if self.mode == TradePersistenceMode::Shadow {
-            let sender = self
-                .shadow_tx
+            let writer = self
+                .shadow
                 .as_ref()
                 .context("shadow writer is unavailable")?;
-            sender
-                .try_send(ShadowWrite::Update(record.clone()))
+            writer
+                .enqueue(ShadowWrite::Update(record.clone()))
                 .map_err(|error| {
                     self.shadow_healthy.store(false, Ordering::Relaxed);
                     anyhow::anyhow!("shadow persistence queue rejected update: {error}")
@@ -574,7 +557,7 @@ mod tests {
         );
     }
 
-    fn request(idempotency_key: &str, amount_lamports: u64) -> TradeRequest {
+    pub(super) fn request(idempotency_key: &str, amount_lamports: u64) -> TradeRequest {
         TradeRequest {
             wallet_id: Some("main".to_string()),
             side: Side::Buy,
@@ -604,7 +587,7 @@ mod tests {
         }
     }
 
-    fn normalized(request: &TradeRequest) -> NormalizedTrade {
+    pub(super) fn normalized(request: &TradeRequest) -> NormalizedTrade {
         let address = |value: &str| {
             crate::domain::trade::Address::from_bytes(value.parse::<Pubkey>().unwrap().to_bytes())
         };
@@ -627,7 +610,7 @@ mod tests {
         }
     }
 
-    fn record(request_id: &str, request: &TradeRequest) -> TradeRecord {
+    pub(super) fn record(request_id: &str, request: &TradeRequest) -> TradeRecord {
         TradeRecord {
             request_id: request_id.to_string(),
             wallet_id: "main".to_string(),
