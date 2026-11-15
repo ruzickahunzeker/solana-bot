@@ -8,7 +8,18 @@
 计划 3.3 的五项设计补充不新增 TS/NP 编号，RouterLeg 不引入实现或依赖。
 PumpAPI 开发暂停，SDK 升级及生产边界保持不变。
 
-最新完整验收普通接受流程 `26be71781406be7f912d53bd26e04fb549dce363` /
+最新完整验收普通执行编排 `26445c597c75d273bf7a8a7264da9cc33192fb16` /
+Actions `43707853050` 已终态 success，artifact `14159283766` 下载核对：完整并发
+1473（112.34 秒）/串行 1473（209.87 秒），零失败/忽略/过滤；ordinary-runtime 七项、
+ordinary-intake 八项与所有步骤 exit=0，源码身份/manifest/lock/vendor 匹配。不重跑旧任务。
+
+后继 NP-03/TS-09 类型门禁已接源码及 CI：三个生产层 forbid、26 类明确类型和外层别名
+解析、原源码/81 个预期负例/恢复源码检查；尚未运行本批完整验收。九项 Python 回归和
+七项 workflow 回归通过，含仅 metadata 的真实别名编译负例；开发用 syn 工具 512 MiB
+类型检查通过（5.66 秒/RSS 232,864 KiB），三项工具 Rust 测试仍待 CI。
+服务依赖/SDK/交易路径不改，门禁不在小 VM 运行，详见 `DEVELOPMENT_CHECKS.md`。
+
+前序完整验收普通接受流程 `26be71781406be7f912d53bd26e04fb549dce363` /
 Actions `43706312318` 已终态 success，artifact `14159195795` 下载核对：完整并发
 1466（129.94 秒）/串行 1466（238.29 秒），零失败/忽略/过滤；ordinary-intake 八项、
 HTTP 202 与全部步骤 exit=0，manifest/lock/vendor 身份匹配。只推独立 CI 分支，main/
@@ -16,9 +27,9 @@ HTTP 202 与全部步骤 exit=0，manifest/lock/vendor 身份匹配。只推独�
 
 后继源码 `application/ordinary_runtime.rs` 已接普通 executor 的全部编排，根入口借用
 原资源，新增状态更新/原 SDK journal 投影/cache 读 port 及四值设置，七项新合同仅受限
-类型检查；不在上述 1466。test check `20261115T110647Z-210265` 35 秒/RSS 2,195,968 KiB，
+类型检查后已由上述 26445c5 完整验收；不在父批 1466。test check `20261115T110647Z-210265` 35 秒/RSS 2,195,968 KiB，
 bin check `20261115T110752Z-210600` 14 秒/RSS 980,732 KiB，exit=0，原七组生产警告；
-格式/policy 七项通过。ordinary-runtime 专项已接 runner，待新快照完整验收。
+格式/policy 七项通过。ordinary-runtime 专项及完整回归已在 26445c5 验收。
 见 `ORDINARY_EXECUTION_PORT.md`；任务启动/取消和发送语义、原 hash/JSON/数据库/SDK 不变。
 
 首轮普通接受快照 `c58eb8c` / Actions `43705256866` / artifact `14158646075`

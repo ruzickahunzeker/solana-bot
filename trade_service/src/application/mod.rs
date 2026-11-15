@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), forbid(clippy::disallowed_types))]
+
 pub(crate) mod legacy_quote_submission;
 pub(crate) mod ordinary_claims;
 pub(crate) mod ordinary_observation_context;

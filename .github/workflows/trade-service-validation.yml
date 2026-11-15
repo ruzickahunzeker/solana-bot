@@ -41,11 +41,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes clang cmake libssl-dev pkg-config python3-yaml ripgrep time
-          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --component rustfmt --no-self-update
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --component rustfmt --component clippy --no-self-update
           rustup override set "$RUST_TOOLCHAIN"
 
       - name: Fetch locked dependencies before network isolation
-        run: cargo --config ci/locked-git-sources.toml fetch --locked
+        run: |
+          cargo --config ci/locked-git-sources.toml fetch --locked
+          cargo fetch --manifest-path tools/type-boundary-inventory/Cargo.toml --locked
 
       - name: Validate offline with loopback networking only
         run: bash scripts/ci_test_namespace.sh

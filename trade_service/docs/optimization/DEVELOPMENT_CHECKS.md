@@ -111,3 +111,47 @@ the command's original nonzero exit code.
 
 No swap file, permanent systemd configuration, service restart or disk deletion
 is performed. The temporary scope applies only to the development command.
+
+## Compiler Type Boundaries (NP-03 / TS-09)
+
+The next source-only CI batch adds development checks, not runtime behavior or a
+new task. Application, Domain and Protocol production modules forbid
+`clippy::disallowed_types`. The versioned JSON fixture lists 26 selected SDK,
+chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
+possible dependency or capability leak is covered.
+
+`scripts/check_dependency_boundaries.py` is restricted to the isolated GitHub
+job with no runtime inputs. It generates a private Clippy configuration under
+ignored target and performs three metadata checks: original source succeeds;
+controlled forbidden fields in all three layers fail specifically for the type
+boundary; restored original source succeeds. Every field needs its own compiler
+diagnostic span. An unrelated compiler error or a missing rejection fails the
+gate, rather than counting any nonzero compiler exit as proof.
+
+Clippy alone misses a `type` alias defined outside the guarded layer. The small
+`tools/type-boundary-inventory` development-only crate uses the pinned `syn`
+parser to collect outside-layer aliases from the service module tree, including
+inline modules; comments/strings are not parsed as Rust declarations. The gate
+also adds an outside alias in the CI root and repeats inventory, so the extra
+three scoped rejection assertions test the actual parser-to-compiler connection.
+The intended total is 81 negative fields, not yet runtime-verified in this batch.
+Guarded layers' own project aliases are not banned; associated trait types are
+not mistaken for module aliases. Explicit production `#[path]` modules require
+review instead of silently accepting an incorrect module inventory.
+
+All four temporarily changed CI source files are restored byte-for-byte through
+`finally`, including partial setup/validation exceptions; SIGTERM interrupts the
+owned compiler group before restoration. Nothing is mutated in the trading VM.
+Compiler logs, not source snapshots, databases or binaries, enter artifacts.
+The workflow installs Clippy for the already pinned Rust 1.95.0, never upgrades
+the SDK. The helper has its own manifest/lock and no runtime SDK dependency;
+the service manifest/lock/vendor stay unchanged.
+
+Local evidence: nine Python policy/restoration/metadata-only alias regressions
+and seven workflow tests passed. The helper's isolated 512 MiB `cargo check`
+passed in 5.66 seconds/RSS 232,864 KiB; no service test binary was linked.
+The helper's three Rust tests and the real production/81-field checks still
+require this batch's cloud run. Prior 26445c5 acceptance covers 1,473 service
+tests, not this new guard. Macro-generated interfaces, opaque capability/value
+flows, API-specific rules and remaining dependency directions retain their
+original review/acceptance requirements; this is not TS-09 completion.

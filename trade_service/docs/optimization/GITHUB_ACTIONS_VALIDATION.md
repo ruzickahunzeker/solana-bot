@@ -30,7 +30,14 @@
 
 ## 已验收运行
 
-最新完整验收普通接受快照 `26be71781406be7f912d53bd26e04fb549dce363` /
+最新完整验收普通执行编排 `26445c597c75d273bf7a8a7264da9cc33192fb16` /
+[Actions 43707853050](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43707853050)
+已终态 success，artifact `14159283766` 下载核对：完整并发 1473（112.34 秒）/串行
+1473（209.87 秒）零失败/忽略/过滤，ordinary-runtime 七项及全部步骤 exit=0。
+identity/manifest/lock/vendor 匹配，真实 main/索引不变；原审计绑定 1010 文件/12,531,337 字节。
+后继类型门禁/小型开发工具仅局部验证，须新快照，不套用本结果或重跑旧任务。
+
+前序完整验收普通接受快照 `26be71781406be7f912d53bd26e04fb549dce363` /
 [Actions 43706312318](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43706312318)
 已终态 success，artifact `14159195795` 下载核对：完整并发 1466（129.94 秒）/串行
 1466（238.29 秒），零失败/忽略/过滤，ordinary-intake 八项、HTTP 202 与全部步骤 exit=0；

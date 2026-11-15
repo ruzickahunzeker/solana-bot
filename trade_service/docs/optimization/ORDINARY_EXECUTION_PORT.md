@@ -81,8 +81,9 @@ git diff --check
 
 ## 2026-11-15 原执行编排与资源隔离
 
-本批继续原 TS-04/08/09、NP-02/03，不另立项。源码及七项新合同已类型检查，
-运行待本批独立 CI，不套用前序接受流程或 E1 的运行结果。
+本批继续原 TS-04/08/09、NP-02/03，不另立项。源码及七项新合同已在 26445c5 /
+Actions 43707853050 完整验收，artifact 14159283766 下载核对：七项专项、完整并发
+1473（112.34 秒）/串行 1473（209.87 秒）、全部步骤通过。不套用父批或 E1 的结果。
 
 - `application/ordinary_runtime.rs::OrdinaryExecutionService` 承担原 executor 编排，
   仅借用项目 ports 和四值 Settings；不依赖 AppState、Config、具体存储/缓存、SDK/RPC

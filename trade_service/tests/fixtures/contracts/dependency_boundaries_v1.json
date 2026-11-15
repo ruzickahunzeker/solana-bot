@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "guarded_modules": [
+    {"name": "application", "path": "src/application/mod.rs"},
+    {"name": "domain", "path": "src/domain/mod.rs"},
+    {"name": "protocol", "path": "src/protocol/mod.rs"}
+  ],
+  "forbidden_types": [
+    {"id": "sdk_client", "path": "sol_trade_sdk::TradingClient"},
+    {"id": "dex_params", "path": "sol_trade_sdk::trading::core::params::DexParamEnum"},
+    {"id": "pump_params", "path": "sol_trade_sdk::trading::core::params::PumpFunParams"},
+    {"id": "pump_swap_params", "path": "sol_trade_sdk::trading::core::params::PumpSwapParams"},
+    {"id": "bonk_params", "path": "sol_trade_sdk::trading::core::params::BonkParams"},
+    {"id": "stonk_params", "path": "sol_trade_sdk::trading::core::params::StonkFunParams"},
+    {"id": "cpmm_params", "path": "sol_trade_sdk::trading::core::params::RaydiumCpmmParams"},
+    {"id": "dbc_params", "path": "sol_trade_sdk::trading::core::params::MeteoraDbcParams"},
+    {"id": "damm_params", "path": "sol_trade_sdk::trading::core::params::MeteoraDammV2Params"},
+    {"id": "amm_v4_params", "path": "sol_trade_sdk::trading::core::params::RaydiumAmmV4Params"},
+    {"id": "hop_params", "path": "sol_trade_sdk::trading::core::params::StonkFunViaSolParams"},
+    {"id": "keypair", "path": "solana_sdk::signature::Keypair"},
+    {"id": "pubkey", "path": "solana_sdk::pubkey::Pubkey"},
+    {"id": "blockhash", "path": "solana_sdk::hash::Hash"},
+    {"id": "transaction", "path": "solana_sdk::transaction::VersionedTransaction"},
+    {"id": "rpc", "path": "solana_client::nonblocking::rpc_client::RpcClient"},
+    {"id": "sqlite_pool", "path": "sqlx::SqlitePool"},
+    {"id": "http_headers", "path": "axum::http::HeaderMap"},
+    {"id": "app_state", "path": "pump_trade_service::AppState", "probe": "crate::AppState"},
+    {"id": "config", "path": "pump_trade_service::config::Config", "probe": "crate::config::Config"},
+    {"id": "trade_index", "path": "pump_trade_service::state::TradeStore", "probe": "crate::state::TradeStore"},
+    {"id": "trade_storage", "path": "pump_trade_service::persistence::TradePersistence", "probe": "crate::persistence::TradePersistence"},
+    {"id": "blockhash_cache", "path": "pump_trade_service::blockhash_cache::BlockhashCache", "probe": "crate::blockhash_cache::BlockhashCache"},
+    {"id": "wallet_registry", "path": "pump_trade_service::wallets::WalletRegistry", "probe": "crate::wallets::WalletRegistry"},
+    {"id": "wallet_storage", "path": "pump_trade_service::wallet_repository::WalletRepository", "probe": "crate::wallet_repository::WalletRepository"},
+    {"id": "sdk_wallet", "path": "pump_trade_service::sdk_client::SdkTradeClient", "probe": "crate::sdk_client::SdkTradeClient"}
+  ]
+}

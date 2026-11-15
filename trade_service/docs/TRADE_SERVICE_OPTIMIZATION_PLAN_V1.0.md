@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新已验收普通接受快照 `26be717` / Actions `43706312318` / artifact `14159195795`，完整并发/串行各 1466、ordinary-intake 八项通过。后续普通执行编排已隔离 AppState/具体资源，七项新合同仅类型检查，待独立 CI。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[执行边界](optimization/ORDINARY_EXECUTION_PORT.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-15 持续目标 active，仅续非 PumpAPI 源码/离线队列。最新已验收普通执行编排 `26445c5` / Actions `43707853050` / artifact `14159283766`，完整并发/串行各 1473、ordinary-runtime 七项通过。后继类型/别名依赖门禁已接源码，仅局部验证，待独立 CI。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [执行状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，

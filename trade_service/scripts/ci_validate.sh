@@ -69,6 +69,7 @@ PY
         printf 'step\texit_code\telapsed_seconds\n' >"$output/results.tsv"
         step formatting cargo fmt --check
         step workflow-policy python3 scripts/test_ci_workflow.py
+        step dependency-boundary-policy python3 scripts/test_dependency_boundaries.py
         step sdk-provenance-tests python3 scripts/test_sdk_provenance.py
         step sdk-provenance python3 scripts/check_sdk_provenance.py
         step locked-git-sources python3 scripts/test_ci_git_sources.py
@@ -77,6 +78,8 @@ PY
         step sqlite-ddl python3 scripts/test_sdk_candidate_migration.py
         step sqlite-sdk-scan python3 scripts/test_sdk_observation_index.py
         step type-check cargo check --locked --offline --all-targets
+        step boundary-inventory-tests command cargo test --manifest-path tools/type-boundary-inventory/Cargo.toml --target-dir target/boundary-tool --locked --offline
+        step dependency-boundaries python3 scripts/check_dependency_boundaries.py
         step compile-tests cargo test --locked --offline --no-run
         step observation-migration cargo test --locked --offline ordinary_observation_005_schema_migrates_once_preserving_signed_rows_and_parent -- --test-threads=1
         step sdk-candidate cargo test --locked --offline sdk_candidate -- --test-threads=2
@@ -108,7 +111,7 @@ PY
         step sdk-lanes cargo test --locked --offline ordinary_lanes -- --test-threads=2
         step full-concurrent cargo test --locked --offline -- --test-threads=2
         step full-serial cargo test --locked --offline -- --test-threads=1
-        git diff --exit-code -- Cargo.toml Cargo.lock vendor
+        git diff --exit-code -- Cargo.toml Cargo.lock vendor src tools
         ;;
     *) printf 'Usage: ci_validate.sh {preflight|tests}\n' >&2; exit 2 ;;
 esac

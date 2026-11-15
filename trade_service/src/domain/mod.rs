@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), forbid(clippy::disallowed_types))]
+
 pub(crate) mod blockhash;
 pub(crate) mod execution_policy;
 pub(crate) mod preparation_balance;
