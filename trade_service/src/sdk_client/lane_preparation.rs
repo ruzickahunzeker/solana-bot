@@ -9,12 +9,17 @@ use crate::{
 };
 use sol_trade_sdk::trading::core::params::{DexParamEnum, MeteoraDammV2Params};
 use solana_sdk::pubkey::Pubkey;
-use std::sync::Mutex;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 
 pub(super) struct LanePreparation<'a> {
     wallet: &'a SdkTradeClient,
     lane: &'a SdkLane,
     balance: Mutex<Option<PreparationBalanceSnapshot>>,
+    output: Mutex<Option<Arc<crate::adapters::sdk::damm_probe::DammOutputEvidence>>>,
+    output_started: AtomicBool,
     read_rpc: &'a std::sync::Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 
@@ -28,6 +33,8 @@ impl<'a> LanePreparation<'a> {
             wallet,
             lane,
             balance: Mutex::new(None),
+            output: Mutex::new(None),
+            output_started: AtomicBool::new(false),
             read_rpc,
         }
     }
@@ -37,6 +44,15 @@ impl<'a> LanePreparation<'a> {
             .lock()
             .map(|mut value| value.take())
             .map_err(|_| reject_balance("preparation balance capture unavailable"))
+    }
+
+    pub(super) fn take_output(
+        &self,
+    ) -> anyhow::Result<Option<Arc<crate::adapters::sdk::damm_probe::DammOutputEvidence>>> {
+        self.output
+            .lock()
+            .map(|mut output| output.take())
+            .map_err(|_| reject_balance("DAMM output evidence capture unavailable"))
     }
 }
 
@@ -93,7 +109,23 @@ impl OrdinaryPreparationSource for LanePreparation<'_> {
         params: &MeteoraDammV2Params,
         input_amount: u64,
     ) -> anyhow::Result<u64> {
-        self.wallet
+        if self.output_started.swap(true, Ordering::AcqRel) {
+            return Err(reject_balance(
+                "DAMM output capture cannot be repeated or renewed",
+            ));
+        }
+        let min_context_slot = self
+            .balance
+            .lock()
+            .map_err(|_| reject_balance("preparation balance capture unavailable"))?
+            .as_ref()
+            .ok_or_else(|| reject_balance("DAMM quote has no captured balance evidence"))?
+            .checked_slot(
+                Address::from_bytes(self.wallet.wallet().to_bytes()),
+                Address::from_bytes(trade.mint.to_bytes()),
+            )?;
+        let evidence = self
+            .wallet
             .simulate_damm_v2_sell_output(
                 self.lane,
                 params,
@@ -101,7 +133,20 @@ impl OrdinaryPreparationSource for LanePreparation<'_> {
                 trade.quote_mint,
                 input_amount,
                 trade.recent_blockhash,
+                min_context_slot,
             )
-            .await
+            .await?;
+        let units = evidence.output_units();
+        let mut capture = self
+            .output
+            .lock()
+            .map_err(|_| reject_balance("DAMM output evidence capture unavailable"))?;
+        if capture.is_some() {
+            return Err(reject_balance(
+                "DAMM preparation attempted more than one output capture",
+            ));
+        }
+        *capture = Some(Arc::new(evidence));
+        Ok(units)
     }
 }

@@ -14,11 +14,13 @@ use solana_transaction_status_client_types::UiTransactionEncoding;
 mod evidence;
 mod output;
 mod plan;
-pub(crate) use evidence::inspect_prepared_damm_probe;
-pub(crate) use output::quote_evidenced_damm_probe;
+mod quoted_output;
+pub(crate) use evidence::inspect_prepared_damm_probe_at_slot;
+pub(crate) use output::evidence_damm_probe_output;
 pub(crate) use plan::prepare_damm_probe;
 #[cfg(test)]
 use plan::PreparedDammProbe;
+pub(crate) use quoted_output::DammOutputEvidence;
 
 fn unsigned_probe(
     wallet: Pubkey,

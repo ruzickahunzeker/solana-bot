@@ -7,17 +7,7 @@ pub(super) fn pool_snapshot(request: &TradeSellParams) -> Result<DammCandidatePo
     let DexParamEnum::MeteoraDammV2(p) = &request.extension_params else {
         anyhow::bail!("DAMM candidate pool parameters missing");
     };
-    Ok(DammCandidatePool {
-        pool: p.pool.to_bytes(),
-        token_a_vault: p.token_a_vault.to_bytes(),
-        token_b_vault: p.token_b_vault.to_bytes(),
-        token_a_mint: p.token_a_mint.to_bytes(),
-        token_b_mint: p.token_b_mint.to_bytes(),
-        token_a_program: p.token_a_program.to_bytes(),
-        token_b_program: p.token_b_program.to_bytes(),
-        referral: p.referral_token_account.map(|v| v.to_bytes()),
-        rate_limiter_sysvar: p.include_rate_limiter_sysvar,
-    })
+    Ok(crate::adapters::sdk::damm_instructions::pool_snapshot(p))
 }
 
 pub(super) fn capture(
@@ -25,40 +15,44 @@ pub(super) fn capture(
     destination: Option<Pubkey>,
     message: &[u8],
 ) -> Result<SdkCandidateMetadata> {
+    SdkCandidateMetadata::damm_sell(details(profile, destination)?, message)
+}
+
+pub(super) fn details(
+    profile: &DammSellMessageProfile,
+    destination: Option<Pubkey>,
+) -> Result<DammCandidateDetails> {
     let wallet = Address::from_bytes(profile.context.wallet.to_bytes());
     let mint = Address::from_bytes(profile.intent.mint.to_bytes());
     let input = profile.holding.checked_input(wallet, mint)?;
-    SdkCandidateMetadata::damm_sell(
-        DammCandidateDetails {
-            wallet: wallet.to_bytes(),
-            mint: mint.to_bytes(),
-            quote_mint: profile.intent.quote_mint.to_bytes(),
-            pool_hint: profile.intent.pool_id.map(|p| p.to_bytes()),
-            pool: profile
-                .pool_metadata
-                .clone()
-                .context("DAMM candidate pool snapshot missing")?,
-            balance_units: profile.balance,
-            balance_slot: profile.holding.checked_slot(wallet, mint)?,
-            input_account: input.account.to_bytes(),
-            input_program: input.program.to_bytes(),
-            input_decimals: input.decimals,
-            input_units: profile.input_amount()?,
-            sell_percent: profile.percent,
-            minimum_output_units: profile.minimum,
-            slippage_bps: profile.intent.slippage_bps,
-            tip_sol_bits: profile.intent.tip_sol.to_bits(),
-            relay: relay_name(profile.context.provider).into(),
-            tip_destination: destination.map(|v| v.to_bytes()),
-            recent_blockhash: profile.intent.recent_blockhash.to_bytes(),
-            simulate: profile.intent.simulate,
-            use_mev: profile.intent.use_mev,
-            requested_mev_provider: profile.intent.mev_provider,
-            wait_tx_confirmed: profile.intent.wait_tx_confirmed,
-            mev_submit_verify_ms: profile.intent.mev_submit_verify_ms,
-        },
-        message,
-    )
+    Ok(DammCandidateDetails {
+        wallet: wallet.to_bytes(),
+        mint: mint.to_bytes(),
+        quote_mint: profile.intent.quote_mint.to_bytes(),
+        pool_hint: profile.intent.pool_id.map(|p| p.to_bytes()),
+        pool: profile
+            .pool_metadata
+            .clone()
+            .context("DAMM candidate pool snapshot missing")?,
+        balance_units: profile.balance,
+        balance_slot: profile.holding.checked_slot(wallet, mint)?,
+        input_account: input.account.to_bytes(),
+        input_program: input.program.to_bytes(),
+        input_decimals: input.decimals,
+        input_units: profile.input_amount()?,
+        sell_percent: profile.percent,
+        minimum_output_units: profile.minimum,
+        slippage_bps: profile.intent.slippage_bps,
+        tip_sol_bits: profile.intent.tip_sol.to_bits(),
+        relay: relay_name(profile.context.provider).into(),
+        tip_destination: destination.map(|v| v.to_bytes()),
+        recent_blockhash: profile.intent.recent_blockhash.to_bytes(),
+        simulate: profile.intent.simulate,
+        use_mev: profile.intent.use_mev,
+        requested_mev_provider: profile.intent.mev_provider,
+        wait_tx_confirmed: profile.intent.wait_tx_confirmed,
+        mev_submit_verify_ms: profile.intent.mev_submit_verify_ms,
+    })
 }
 
 /// Reconstructs nominal parameters without RPC or a signer; not independent chain authorization.

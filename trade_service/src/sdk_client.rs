@@ -1354,7 +1354,8 @@ impl SdkTradeClient {
         quote_mint: Pubkey,
         input_amount: u64,
         recent_blockhash: Hash,
-    ) -> anyhow::Result<u64> {
+        min_context_slot: u64,
+    ) -> anyhow::Result<crate::adapters::sdk::damm_probe::DammOutputEvidence> {
         if quote_mint != damm.token_a_mint && quote_mint != damm.token_b_mint {
             bail!("DAMM v2 quote mint is not in the pool");
         }
@@ -1369,9 +1370,13 @@ impl SdkTradeClient {
             recent_blockhash,
             lane.client.use_seed_optimize,
         )?;
-        let evidence =
-            crate::adapters::sdk::damm_probe::inspect_prepared_damm_probe(rpc, &prepared).await?;
-        crate::adapters::sdk::damm_probe::quote_evidenced_damm_probe(&evidence).await
+        let evidence = crate::adapters::sdk::damm_probe::inspect_prepared_damm_probe_at_slot(
+            rpc,
+            &prepared,
+            min_context_slot,
+        )
+        .await?;
+        crate::adapters::sdk::damm_probe::evidence_damm_probe_output(&evidence).await
     }
 
     async fn dex_params(

@@ -40,8 +40,10 @@
   七组生产警告原样保留，其中两组说明 prepared helper/方法仍未接正式 SDK，不伪称接线完成。
 - 运行只用了源码/公开 fixtures；manifest/lock/vendor 未被 CI 修改，没有 release、部署或生产网络访问。
   本机锁文件与原 release 哈希也保持不变。
-- NP-05-A 后续新增的只读 SDK 来源 checker/八项负例与 policy 第七项已在本机通过，待下一 CI。
-  它们未改 Rust 源码、manifest/lock 或 vendor，不把本机 Python 结果冒称为本轮 CI 已执行。
+- 后续来源 gate 也已验收：[Actions 43669338197](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43669338197)，
+  commit `6397b0eb81884e134a2dcdb213a409a61045a611`、artifact `14144266219` 已下载核对。
+  source checker/八项负例、policy 七项及所有步骤 exit=0；完整两线程 1321 / 123.73 秒、
+  串行 1321 / 222.43 秒，零失败/忽略/过滤。这是 C3b2 改动之前的验收基线。
 
 ## 历史诊断与设施
 

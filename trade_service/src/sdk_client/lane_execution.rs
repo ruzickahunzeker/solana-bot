@@ -187,11 +187,15 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                     None
                 };
                 let holding = source.take_balance()?.map(Arc::new);
+                let quote = source.take_output()?;
                 let (message, preview_message) = if trade.pool == Pool::MeteoraDammV2 {
                     let holding = holding
                         .as_ref()
                         .ok_or_else(|| reject_balance("DAMM final balance evidence is missing"))?;
                     let context = damm_context(&client, self.provider());
+                    let quote = quote
+                        .as_ref()
+                        .ok_or_else(|| reject_balance("DAMM final output evidence is missing"))?;
                     let prepare_message = |intent: &ExecuteTrade, request: &TradeSellParams| {
                         DammSellMessageProfile::new(
                             context,
@@ -200,6 +204,7 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                             balance,
                             percent,
                             holding.clone(),
+                            quote.clone(),
                         )
                         .map_err(|error| {
                             reject_balance("DAMM final message profile rejected")
@@ -217,6 +222,11 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                     };
                     (Some(message), preview_message)
                 } else {
+                    if quote.is_some() {
+                        return Err(reject_balance(
+                            "non-DAMM preparation has unexpected output evidence",
+                        ));
+                    }
                     (None, None)
                 };
                 Ok(PreparedLaneRequest::Sell {

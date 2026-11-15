@@ -21,10 +21,16 @@ fn pair() -> (Arc<DammSellMessageProfile>, Arc<DammSellMessageProfile>) {
     request.simulate = true;
     request.gas_fee_strategy = simulation_fee_strategy();
     let preview = DammSellMessageProfile::new(
-        f.context, &intent, &request, f.balance, f.percent, f.holding,
+        f.context, &intent, &request, f.balance, f.percent, f.holding, f.quote,
     )
     .unwrap();
     (final_message, preview)
+}
+
+#[test]
+fn damm_sell_message_final_and_preview_share_the_same_immutable_output_evidence() {
+    let (final_message, preview) = pair();
+    assert!(Arc::ptr_eq(&final_message.quote, &preview.quote));
 }
 
 fn fake_result() -> Result<SdkLaneReport, SdkInvocationFailure> {

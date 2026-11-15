@@ -193,6 +193,14 @@ fn sdk_candidate_metadata_preserves_raw_units_above_f64_precision_and_does_not_r
         .unwrap(),
     );
     f.balance = units;
+    f.quote = crate::adapters::sdk::damm_probe::DammOutputEvidence::fixture_for_profile(
+        f.context.wallet,
+        &f.intent,
+        &f.request,
+        f.balance,
+        f.percent,
+        &f.holding,
+    );
     let value = DammSellCandidate::build(f.profile().unwrap(), None).unwrap();
     let json = value.metadata().encode(&value.message_bytes()).unwrap();
     assert!(json.contains(&units.to_string()));

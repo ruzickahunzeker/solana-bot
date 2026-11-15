@@ -6,6 +6,8 @@
 
 ## 统计口径
 
+- 当前 C3b2 实施本笔 DAMM 净输出上下文绑定，生产 source/正式及 preview profile 已接，原查询/参数不新增或改写；新增 14 项 Rust 用例仅通过受限类型检查，运行回归待 CI。正式独立授权、原 owner 签名账本/原字节发送仍未完成，不复用前序 1321 当本轮验收，详见 `DAMM_OUTPUT_QUOTE_BINDING.md`。
+- 前序 NP-05-A 新来源 gate 已在 `6397b0e` / Actions `43669338197` 验收，artifact 下载核对：八项来源负例、policy 七项及完整并发/串行各 1321 通过；不再重复询问 CI 环境或来源权限。
 - 完整 Rust 验收已按用户选择移到 GitHub-hosted Actions，设备授权完成；独立源码分支
   `ci/trade-service-validation-20261115-c3b` 的最新验证提交 `35e4362`，运行 `43667516925`。
   前三次运行暴露的上游依赖 404、缺 rg、缺原始 IDL 已作 CI-only 复现修正；当前运行已成功，

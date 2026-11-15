@@ -308,6 +308,65 @@ impl Case {
         let evidence = inspect_prepared_damm_probe(&rpc, &self.prepared).await?;
         quote_evidenced_damm_probe(&evidence).await
     }
+    async fn output_evidence(&self) -> Result<DammOutputEvidence> {
+        let mut memory = self.source.rpc.clone();
+        memory.simulation_value = Some(self.reply.clone());
+        let rpc = memory.client();
+        let evidence = crate::adapters::sdk::damm_probe::inspect_prepared_damm_probe_at_slot(
+            &rpc,
+            &self.prepared,
+            42,
+        )
+        .await?;
+        evidence_damm_probe_output(&evidence).await
+    }
+    fn candidate_details(&self) -> crate::domain::sdk_candidate::DammCandidateDetails {
+        let p = self.prepared.accounts();
+        let a = p.input_mint == p.pool.token_a_mint;
+        crate::domain::sdk_candidate::DammCandidateDetails {
+            wallet: p.wallet.to_bytes(),
+            mint: p.input_mint.to_bytes(),
+            quote_mint: p.output_mint.to_bytes(),
+            pool_hint: Some(p.pool.pool.to_bytes()),
+            pool: crate::adapters::sdk::damm_instructions::pool_snapshot(&p.pool),
+            balance_units: 1000,
+            balance_slot: self.source.rpc.bank,
+            input_account: p.input_ata.to_bytes(),
+            input_program: if a {
+                p.pool.token_a_program
+            } else {
+                p.pool.token_b_program
+            }
+            .to_bytes(),
+            input_decimals: if p.input_mint == WSOL_TOKEN_ACCOUNT {
+                9
+            } else {
+                6
+            },
+            input_units: p.amount,
+            sell_percent: 10,
+            minimum_output_units: crate::protocol::meteora_damm_v2::minimum_output(
+                self.output,
+                1500,
+            )
+            .unwrap(),
+            slippage_bps: 1500,
+            tip_sol_bits: 0.0_f64.to_bits(),
+            relay: "default".into(),
+            tip_destination: None,
+            recent_blockhash: self
+                .prepared
+                .transaction()
+                .message
+                .recent_blockhash
+                .to_bytes(),
+            simulate: false,
+            use_mev: Some(false),
+            requested_mev_provider: None,
+            wait_tx_confirmed: false,
+            mev_submit_verify_ms: 0,
+        }
+    }
     fn rows(&self, before: bool) -> Value {
         let p = self.prepared.accounts();
         let a = p.input_mint == p.pool.token_a_mint;
@@ -354,6 +413,71 @@ impl Case {
     fn add_balances(&mut self) {
         self.reply["preTokenBalances"] = self.rows(true);
         self.reply["postTokenBalances"] = self.rows(false);
+    }
+}
+
+#[tokio::test]
+async fn damm_output_evidence_retains_actual_probe_context_without_extra_rpc_for_all_directions() {
+    for reversed in [false, true] {
+        for token2022 in [false, true] {
+            for sell in [false, true] {
+                for quote in [WSOL_TOKEN_ACCOUNT, USDC_TOKEN_ACCOUNT] {
+                    let case =
+                        Case::new(reversed, token2022, sell, true, quote, Encoding::Compiled);
+                    let evidence = case.output_evidence().await.unwrap();
+                    assert_eq!(evidence.output_units(), case.output);
+                    let details = case.candidate_details();
+                    evidence.validate_details(&details).unwrap();
+                    evidence.validate_details(&details).unwrap();
+                    assert_eq!(
+                        case.source.rpc.methods(),
+                        [
+                            RpcRequest::GetMultipleAccounts,
+                            RpcRequest::SimulateTransaction
+                        ]
+                    );
+                    assert_eq!(
+                        case.source.rpc.calls.lock().unwrap()[0].1[1]["minContextSlot"],
+                        42
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn damm_output_evidence_never_uses_gross_token2022_output_to_authorize_a_minimum() {
+    let case = Case::new(
+        false,
+        true,
+        false,
+        true,
+        USDC_TOKEN_ACCOUNT,
+        Encoding::Compiled,
+    );
+    let evidence = case.output_evidence().await.unwrap();
+    assert_eq!(evidence.output_units(), 118);
+    let mut details = case.candidate_details();
+    evidence.validate_details(&details).unwrap();
+    details.minimum_output_units =
+        crate::protocol::meteora_damm_v2::minimum_output(120, 1500).unwrap();
+    assert!(evidence.validate_details(&details).is_err());
+    assert_eq!(case.source.rpc.methods().len(), 2);
+}
+
+#[tokio::test]
+async fn damm_output_evidence_is_not_released_from_failed_or_malformed_simulations() {
+    for mutation in 0..3 {
+        let mut case = Case::default();
+        match mutation {
+            0 => case.reply["err"] = json!({"InstructionError":[1,"InvalidArgument"]}),
+            1 => case.reply["innerInstructions"] = Value::Null,
+            2 => case.reply["accounts"] = json!([]),
+            _ => unreachable!(),
+        }
+        assert!(case.output_evidence().await.is_err());
+        assert_eq!(case.source.rpc.methods().len(), 2);
     }
 }
 

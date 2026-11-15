@@ -18,6 +18,7 @@ pub(super) struct Fixture {
     pub balance: u64,
     pub percent: u64,
     pub holding: Arc<PreparationBalanceSnapshot>,
+    pub quote: Arc<crate::adapters::sdk::damm_probe::DammOutputEvidence>,
 }
 
 impl Fixture {
@@ -29,6 +30,7 @@ impl Fixture {
             self.balance,
             self.percent,
             self.holding.clone(),
+            self.quote.clone(),
         )
     }
 }
@@ -100,6 +102,14 @@ pub(super) fn case(
         )
         .unwrap(),
     );
+    let quote = crate::adapters::sdk::damm_probe::DammOutputEvidence::fixture_for_profile(
+        context.wallet,
+        &intent,
+        &request,
+        balance,
+        percent,
+        &holding,
+    );
     Fixture {
         context,
         intent,
@@ -107,6 +117,7 @@ pub(super) fn case(
         balance,
         percent,
         holding,
+        quote,
     }
 }
 
@@ -119,6 +130,80 @@ pub(super) fn fixture(provider: SwqosType, simulate: bool, percent: u64) -> Fixt
         false,
         spl_token_interface::ID,
     )
+}
+
+#[test]
+fn damm_sell_message_rejects_a_rebuilt_nominal_profile_with_weakened_evidenced_minimum() {
+    let mut f = fixture(SwqosType::Default, false, 50);
+    f.request.fixed_output_token_amount = Some(1);
+    let error = f.profile().err().unwrap();
+    assert!(
+        error.to_string().contains("minimum output differs"),
+        "{error:#}"
+    );
+    assert!(!error
+        .downcast_ref::<crate::domain::preparation_balance::PreparationBalanceFailure>()
+        .unwrap()
+        .allows_lane_fallback());
+}
+
+#[test]
+fn damm_sell_message_cannot_rebuild_a_consistent_but_different_route_or_blockhash_over_old_quote() {
+    for mutation in 0..4 {
+        let mut f = fixture(SwqosType::Default, false, 50);
+        match mutation {
+            0 => {
+                let DexParamEnum::MeteoraDammV2(p) = &mut f.request.extension_params else {
+                    unreachable!()
+                };
+                p.token_a_vault = key(30);
+            }
+            1 => {
+                f.intent.recent_blockhash = Hash::new_from_array([30; 32]);
+                f.request.recent_blockhash = Some(f.intent.recent_blockhash);
+            }
+            2 => {
+                let DexParamEnum::MeteoraDammV2(p) = &mut f.request.extension_params else {
+                    unreachable!()
+                };
+                p.pool = key(30);
+                f.intent.pool_id = Some(p.pool);
+            }
+            3 => {
+                let DexParamEnum::MeteoraDammV2(p) = &mut f.request.extension_params else {
+                    unreachable!()
+                };
+                p.include_rate_limiter_sysvar = !p.include_rate_limiter_sysvar;
+            }
+            _ => unreachable!(),
+        }
+        let error = f.profile().err().unwrap();
+        assert!(
+            error.to_string().contains("actual output quote context"),
+            "{mutation}: {error:#}"
+        );
+    }
+}
+
+#[test]
+fn damm_sell_message_binds_raw_percentage_input_to_the_original_quote_not_only_new_balance() {
+    let mut f = fixture(SwqosType::Default, false, 50);
+    let wallet = Address::from_bytes(f.context.wallet.to_bytes());
+    let mint = Address::from_bytes(f.intent.mint.to_bytes());
+    let input = f.holding.checked_input(wallet, mint).unwrap();
+    f.balance = 9000;
+    f.holding = Arc::new(
+        PreparationBalanceSnapshot::from_account(
+            wallet,
+            mint,
+            f.balance,
+            input,
+            123,
+            Instant::now(),
+        )
+        .unwrap(),
+    );
+    assert!(f.profile().is_err());
 }
 
 #[test]

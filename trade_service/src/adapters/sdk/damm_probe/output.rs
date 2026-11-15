@@ -8,12 +8,14 @@ use std::collections::HashSet;
 
 use super::{
     evidence::{check_snapshot, AccountSnapshot, AssetSnapshot, DammProbeEvidence},
-    simulate_packet,
+    simulate_packet, DammOutputEvidence,
 };
 mod trace;
 
 /// Output of this unsigned simulation, never a delta against an earlier RPC bank.
-pub(crate) async fn quote_evidenced_damm_probe(evidence: &DammProbeEvidence<'_>) -> Result<u64> {
+pub(crate) async fn evidence_damm_probe_output(
+    evidence: &DammProbeEvidence<'_>,
+) -> Result<DammOutputEvidence> {
     let prepared = evidence.prepared;
     let intent = prepared.accounts();
     if intent.pool.swap_mode != SWAP_MODE_EXACT_IN {
@@ -104,7 +106,19 @@ pub(crate) async fn quote_evidenced_damm_probe(evidence: &DammProbeEvidence<'_>)
         )?,
         _ => bail!("DAMM v2 simulation returned incomplete same-bank token balances"),
     }
-    Ok(output)
+    DammOutputEvidence::checked(
+        prepared,
+        &snapshot,
+        output,
+        evidence.slot,
+        response.context.slot,
+        evidence.started,
+    )
+}
+
+#[cfg(test)]
+pub(crate) async fn quote_evidenced_damm_probe(evidence: &DammProbeEvidence<'_>) -> Result<u64> {
+    Ok(evidence_damm_probe_output(evidence).await?.output_units())
 }
 
 fn net_amount(transfer: &trace::Transfer, asset: &AssetSnapshot) -> Result<u64> {

@@ -11,7 +11,10 @@ use solana_client::rpc_response::{Response, RpcSimulateTransactionResult};
 use solana_client::{nonblocking::rpc_client::RpcClient, rpc_config::RpcAccountInfoConfig};
 use solana_commitment_config::CommitmentConfig;
 use solana_sdk::clock::Clock;
-use std::{collections::HashSet, time::Duration};
+use std::{
+    collections::HashSet,
+    time::{Duration, Instant},
+};
 
 use super::plan::PreparedDammProbe;
 #[cfg(test)]
@@ -27,6 +30,7 @@ pub(crate) struct DammProbeEvidence<'a> {
     pub(super) rpc: &'a RpcClient,
     pub(super) prepared: &'a PreparedDammProbe,
     pub(super) slot: u64,
+    pub(super) started: Instant,
     #[cfg(test)]
     output_before: u64,
 }
@@ -38,18 +42,45 @@ impl DammProbeEvidence<'_> {
     }
 }
 
+pub(crate) async fn inspect_prepared_damm_probe_at_slot<'a>(
+    rpc: &'a RpcClient,
+    prepared: &'a PreparedDammProbe,
+    min_context_slot: u64,
+) -> Result<DammProbeEvidence<'a>> {
+    if min_context_slot == 0 {
+        return Err(crate::domain::preparation_balance::reject_balance(
+            "DAMM quote requires a captured nonzero balance slot",
+        ));
+    }
+    inspect_with_deadline(rpc, prepared, Some(min_context_slot)).await
+}
+
+#[cfg(test)]
 pub(crate) async fn inspect_prepared_damm_probe<'a>(
     rpc: &'a RpcClient,
     prepared: &'a PreparedDammProbe,
 ) -> Result<DammProbeEvidence<'a>> {
-    tokio::time::timeout(Duration::from_secs(5), inspect(rpc, prepared))
-        .await
-        .context("SDK DAMM v2 quote account evidence timed out")?
+    inspect_with_deadline(rpc, prepared, None).await
+}
+
+async fn inspect_with_deadline<'a>(
+    rpc: &'a RpcClient,
+    prepared: &'a PreparedDammProbe,
+    min_context_slot: Option<u64>,
+) -> Result<DammProbeEvidence<'a>> {
+    tokio::time::timeout(
+        Duration::from_secs(5),
+        inspect(rpc, prepared, Instant::now(), min_context_slot),
+    )
+    .await
+    .context("SDK DAMM v2 quote account evidence timed out")?
 }
 
 async fn inspect<'a>(
     rpc: &'a RpcClient,
     prepared: &'a PreparedDammProbe,
+    started: Instant,
+    min_context_slot: Option<u64>,
 ) -> Result<DammProbeEvidence<'a>> {
     let intent = prepared.accounts();
     let expected = &intent.pool;
@@ -76,7 +107,7 @@ async fn inspect<'a>(
                 encoding: Some(UiAccountEncoding::Base64),
                 commitment: Some(CommitmentConfig::processed()),
                 data_slice: None,
-                min_context_slot: None,
+                min_context_slot,
             },
         )
         .await
@@ -85,11 +116,17 @@ async fn inspect<'a>(
         bail!("SDK DAMM v2 quote account count or context is invalid");
     }
     let slot = response.context.slot;
+    if min_context_slot.is_some_and(|minimum| slot < minimum) {
+        return Err(crate::domain::preparation_balance::reject_balance(
+            "DAMM quote account context precedes the captured balance slot",
+        ));
+    }
     let _snapshot = check_snapshot(prepared, slot, &response.value, false)?;
     Ok(DammProbeEvidence {
         rpc,
         prepared,
         slot,
+        started,
         #[cfg(test)]
         output_before: _snapshot.output_amount,
     })

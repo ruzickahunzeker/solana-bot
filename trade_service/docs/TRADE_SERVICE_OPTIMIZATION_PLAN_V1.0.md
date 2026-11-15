@@ -5,6 +5,8 @@
 - 状态：2026-11-15 持续目标 active，PumpAPI 交易开发仍暂停。C3b1 独立 SDK metadata/prepared/CAS/readback 的源码和隔离测试已验收；GitHub Actions `43667516925` / `35e4362` 完整并发/串行各 1321、HTTP 200、参数及专项通过，七组生产警告保留。正式 SDK 仍 opaque，prepared 读写尚未接正式编排，不代表完整独立授权/签名账本或可上线。NP-05-A 已核对固定 SDK 6.0.2 上游来源及既有 DBC 补丁，隔离重放完全一致，未改 vendor/依赖或升级；上游无签名及实际升级/协议演练仍是独立门槛。后续继续独立最终证据授权、原 owner 下签名账本/受控签名/原字节发送，以及其余方向/backend/mode/资源/协议验收。最新见 [执行状态](optimization/EXECUTION_STATUS.md)、[C3b1](optimization/SDK_CANDIDATE_PREPARATION.md)、[来源账本](optimization/SDK_PROVENANCE.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
+当前开发接续 C3b2：保留实际 DAMM 输出检查/模拟的上下文，绑定原余额 slot、池/资产/输入与整数 min_out；不新增查询或修改原准备参数。新增 14 项用例通过受限类型检查，运行验收待 CI。前序 NP-05-A 来源 gate 已通过 Actions `43669338197`，不能套用其 1321 到新源码。详见 `optimization/DAMM_OUTPUT_QUOTE_BINDING.md`。
+
 ## 1. 范围与目标
 
 本计划只针对 Trade Service，保留一个服务、一个交易 API 和现有签名权威。

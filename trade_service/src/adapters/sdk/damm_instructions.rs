@@ -7,6 +7,22 @@ use solana_sdk::{
     pubkey::Pubkey,
 };
 
+pub(super) fn pool_snapshot(
+    pool: &MeteoraDammV2Params,
+) -> crate::domain::sdk_candidate::DammCandidatePool {
+    crate::domain::sdk_candidate::DammCandidatePool {
+        pool: pool.pool.to_bytes(),
+        token_a_vault: pool.token_a_vault.to_bytes(),
+        token_b_vault: pool.token_b_vault.to_bytes(),
+        token_a_mint: pool.token_a_mint.to_bytes(),
+        token_b_mint: pool.token_b_mint.to_bytes(),
+        token_a_program: pool.token_a_program.to_bytes(),
+        token_b_program: pool.token_b_program.to_bytes(),
+        referral: pool.referral_token_account.map(|key| key.to_bytes()),
+        rate_limiter_sysvar: pool.include_rate_limiter_sysvar,
+    }
+}
+
 /// ABI projection only; callers must bind accounts, amounts and mode before signing.
 pub(super) fn swap_instruction(
     wallet: Pubkey,

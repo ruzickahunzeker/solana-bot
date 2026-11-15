@@ -212,6 +212,14 @@ async fn damm_sell_message_final_profile_matches_actual_sdk_instruction_builder(
                     )
                     .unwrap(),
                 );
+                let quote = super::DammOutputEvidence::fixture_for_profile(
+                    case.wallet,
+                    &intent,
+                    &request,
+                    balance,
+                    percent,
+                    &holding,
+                );
                 let profile = DammSellMessageProfile::new(
                     DammSellContext {
                         wallet: case.wallet,
@@ -224,6 +232,7 @@ async fn damm_sell_message_final_profile_matches_actual_sdk_instruction_builder(
                     balance,
                     percent,
                     holding,
+                    quote,
                 )
                 .unwrap();
                 // Reuse the existing unfunded oracle payer only for SDK instruction assembly.

@@ -45,6 +45,7 @@ pub(crate) struct DammSellMessageProfile {
     balance: u64,
     percent: u64,
     minimum: u64,
+    quote: Arc<super::damm_probe::DammOutputEvidence>,
     protocol: Vec<Instruction>,
     pool_metadata: Option<crate::domain::sdk_candidate::DammCandidatePool>,
 }
@@ -102,6 +103,7 @@ impl DammSellMessageProfile {
         balance: u64,
         percent: u64,
         holding: Arc<PreparationBalanceSnapshot>,
+        quote: Arc<super::damm_probe::DammOutputEvidence>,
     ) -> Result<Arc<Self>> {
         let minimum = request
             .fixed_output_token_amount
@@ -114,6 +116,7 @@ impl DammSellMessageProfile {
             balance,
             percent,
             minimum,
+            quote,
             protocol: vec![],
             pool_metadata: None,
         };
@@ -121,6 +124,9 @@ impl DammSellMessageProfile {
         profile.pool_metadata = Some(metadata::pool_snapshot(request)?);
         profile.protocol =
             instructions::protocol(context.wallet, request, profile.input_amount()?, minimum)?;
+        profile
+            .quote
+            .validate_details(&metadata::details(&profile, None)?)?;
         Ok(Arc::new(profile))
     }
 
@@ -136,7 +142,8 @@ impl DammSellMessageProfile {
 
     fn recheck(&self) -> Result<()> {
         self.holding
-            .recheck(Address::from_bytes(self.context.wallet.to_bytes()))
+            .recheck(Address::from_bytes(self.context.wallet.to_bytes()))?;
+        self.quote.validate_details(&metadata::details(self, None)?)
     }
 
     fn validate_fields(
@@ -253,6 +260,7 @@ impl DammSellMessageProfile {
         percent: u64,
     ) -> Result<()> {
         self.validate_fields(context, request, balance, percent)?;
+        self.recheck()?;
         ensure!(
             self.protocol
                 == instructions::protocol(

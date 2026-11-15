@@ -6,6 +6,12 @@
 
 ## 最新范围与执行指令
 
+2026-11-15 当前 C3b2 开发已接本笔 DAMM 净输出证据至原准备/profile/candidate：保留原检查/模拟的上下文，沿余额 slot 指定 minContextSlot，正式/preview 共用不可续期 Arc，精确绑定池/资产/输入/blockhash 与整数 min_out；无新 RPC/依赖/迁移/配置。新增 14 项 Rust 用例待云端运行；受限 test check 约 9 秒/RSS 1,234,780 KiB，bin-check 约 5 秒/RSS 673,900 KiB、原七组警告及 fmt/diff/来源检查通过。原准备/参数/executor/vendor/manifest/lock/release 不改，不自动接 signer 或宣称原 owner 签名账本已完成；详见 `DAMM_OUTPUT_QUOTE_BINDING.md`。目标 active，PumpAPI 开发暂停，无生产/部署/交易操作。
+
+前序 NP-05-A 来源 gate 已云端验收：`6397b0e` / Actions `43669338197` / artifact `14144266219` 已下载核对；源码 checker/八项负例、policy 七项与完整两线程 1321（123.73 秒）/串行 1321（222.43 秒）均通过。后续旧“运行中”是历史记录，不重复执行来源调查或把旧结果套给当前 C3b2。
+
+来源 gate 已推送同一独立分支：commit `6397b0e` / Actions `43669338197` 运行中。其 Rust 源码/迁移/manifest/lock/vendor 与已验收 `35e4362` 相同；新增 checker/八项负例及 policy 第七项的云端结果仍须核实。后续只汇总文档的变更不应无限触发同一源码的大构建；任何源码/脚本/来源清单或 CI 行为变更仍需真实验证。
+
 2026-11-15 C3b1 云端验收完成：commit `35e4362` / Actions `43667516925`、artifact `14143511883` 已实际下载核对，所有步骤 exit=0。完整两线程 1321（123.08 秒）/串行 1321（221.71 秒）零失败/忽略/过滤；prepared 11、candidate 15、DAMM candidate 43/probe 48、HTTP 200、参数 3、lanes 19 通过，七组原生产警告保留。新增 17 项不再是“仅类型检查”，但正式 SDK prepared/signing/签名落盘/原字节发送仍未接，009 生产演练未完成。前述三次失败是设施诊断，不重复实现 C3b1；见 `GITHUB_ACTIONS_VALIDATION.md`。
 
 同轮 NP-05-A 取得固定公开 SDK 6.0.2 commit `dc97b56c602a13d8967973c6eadcf79ab1fcddaa`（tag/commit 均 unsigned），完整比较上游 372/本地 375 文件：364 相同、8 修改、3 新增，全属既有 DBC 扩展，486 行补丁隔离重放后完全一致。新增只读来源 checker、八项负例及 CI 步骤，本机通过，尚未声称这些新增 Python 项已在上述旧 CI 执行。未改 vendor/manifest/lock/Rust 生产代码、release 或其他服务，无生产/签名/部署操作；目标 active，PumpAPI 开发仍暂停。来源/补丁账本及后续门槛见 `SDK_PROVENANCE.md`。
