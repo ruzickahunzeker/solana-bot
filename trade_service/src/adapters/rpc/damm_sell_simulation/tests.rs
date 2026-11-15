@@ -207,7 +207,7 @@ async fn damm_unsigned_simulation_rejects_zero_context_and_malformed_responses()
 async fn damm_unsigned_simulation_rpc_failure_is_redacted_without_fallback() {
     let mut source = MemorySimulation::new();
     source.fail = true;
-    let error = simulate_unsigned(&source.client(), &transaction())
+    let error = simulate_unsigned_at_slot(&source.client(), &transaction(), 123)
         .await
         .err()
         .unwrap()
@@ -222,7 +222,7 @@ async fn damm_unsigned_simulation_real_four_second_timeout_cancels_the_logical_r
     let mut source = MemorySimulation::new();
     source.block = true;
     let start = std::time::Instant::now();
-    let error = simulate_unsigned(&source.client(), &transaction())
+    let error = simulate_unsigned_at_slot(&source.client(), &transaction(), 123)
         .await
         .err()
         .unwrap();
@@ -237,10 +237,113 @@ async fn damm_unsigned_simulation_cancellation_does_not_start_another_rpc() {
     let mut source = MemorySimulation::new();
     source.block = true;
     let rpc = source.client();
-    let task = tokio::spawn(async move { simulate_unsigned(&rpc, &transaction()).await });
+    let task =
+        tokio::spawn(async move { simulate_unsigned_at_slot(&rpc, &transaction(), 123).await });
     source.entered.notified().await;
     task.abort();
     assert!(task.await.err().unwrap().is_cancelled());
     assert!(source.dropped.load(Ordering::SeqCst));
     assert_eq!(source.calls.lock().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn damm_unsigned_simulation_quote_slot_keeps_exact_bytes_without_blockhash_replacement() {
+    use base64::{engine::general_purpose::STANDARD, Engine};
+    let mut source = MemorySimulation::new();
+    source.response["context"]["slot"] = json!(124);
+    let tx = transaction();
+    let original = bincode::serialize(&tx).unwrap();
+    let result = simulate_unsigned_at_slot(&source.client(), &tx, 123)
+        .await
+        .unwrap();
+    assert!(result.error.is_none());
+    let calls = source.calls.lock().unwrap();
+    assert_eq!(calls.len(), 1);
+    assert_eq!(
+        calls[0][1],
+        serde_json::to_value(RpcSimulateTransactionConfig {
+            sig_verify: false,
+            replace_recent_blockhash: false,
+            commitment: Some(CommitmentConfig::processed()),
+            encoding: Some(UiTransactionEncoding::Base64),
+            accounts: None,
+            min_context_slot: Some(123),
+            inner_instructions: true,
+        })
+        .unwrap()
+    );
+    assert_eq!(
+        STANDARD.decode(calls[0][0].as_str().unwrap()).unwrap(),
+        original
+    );
+    assert_eq!(tx.signatures, [Signature::default()]);
+}
+
+#[tokio::test]
+async fn damm_unsigned_simulation_zero_quote_slot_is_rejected_before_rpc() {
+    let source = MemorySimulation::new();
+    assert!(
+        simulate_unsigned_at_slot(&source.client(), &transaction(), 0)
+            .await
+            .is_err()
+    );
+    assert!(source.calls.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn damm_unsigned_simulation_cannot_validate_against_a_bank_before_its_quote() {
+    let source = MemorySimulation::new();
+    let error = simulate_unsigned_at_slot(&source.client(), &transaction(), 124)
+        .await
+        .err()
+        .unwrap();
+    assert!(error.to_string().contains("precedes"));
+    assert_eq!(source.calls.lock().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn damm_unsigned_simulation_rejects_substituted_hash_or_loaded_account_context() {
+    for change in 0..3 {
+        let mut source = MemorySimulation::new();
+        match change {
+            0 => {
+                source.response["value"]["replacementBlockhash"] = json!({
+                    "blockhash":Hash::new_from_array([8;32]).to_string(),"lastValidBlockHeight":999,
+                })
+            }
+            1 => {
+                source.response["value"]["loadedAddresses"] = json!({
+                    "writable":[Pubkey::new_from_array([8;32]).to_string()],"readonly":[],
+                })
+            }
+            2 => {
+                source.response["value"]["loadedAddresses"] = json!({
+                    "writable":[],"readonly":[Pubkey::new_from_array([8;32]).to_string()],
+                })
+            }
+            _ => unreachable!(),
+        }
+        let error = simulate_unsigned_at_slot(&source.client(), &transaction(), 123)
+            .await
+            .err()
+            .unwrap();
+        assert!(
+            error.to_string().contains("fixed candidate context"),
+            "{change}: {error:#}"
+        );
+        assert_eq!(source.calls.lock().unwrap().len(), 1);
+    }
+}
+
+#[tokio::test]
+async fn damm_unsigned_simulation_accepts_absent_or_empty_optional_loaded_addresses() {
+    for loaded in [Value::Null, json!({"writable":[],"readonly":[]})] {
+        let mut source = MemorySimulation::new();
+        source.response["value"]["loadedAddresses"] = loaded;
+        let result = simulate_unsigned_at_slot(&source.client(), &transaction(), 123)
+            .await
+            .unwrap();
+        assert!(result.error.is_none());
+        assert_eq!(source.calls.lock().unwrap().len(), 1);
+    }
 }

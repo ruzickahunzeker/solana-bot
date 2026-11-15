@@ -6,6 +6,12 @@
 
 ## 最新范围与执行指令
 
+2026-11-15 用户暂停后已明确恢复 active，继续非 PumpAPI 源码队列。当前 C3b3 补原报价 slot 到预览的 minContextSlot/响应核对、拒绝替换 blockhash/非空 loaded addresses，并要求正式/预览共享原 quote Arc；无新 RPC/SDK/配置/迁移。另修 C3b2 的 u64::MAX 合成夹具溢出，保留 384 ABI 比较、增加原 15% MAX 的 128 拒绝断言及零滑点合法对照，不改生产 min_out。新增九项用例；test/bin 类型检查通过（约 8/5 秒、RSS 1,183,732/629,056 KiB）、原七组警告与 fmt/diff/来源检查保持，尚待完整 CI。详见 `DAMM_PREVIEW_CONTEXT_BINDING.md`；正式 SDK owner 签名账本仍未接，不做生产/部署/交易操作。
+
+首轮 C3b2 CI `80bd7c1` / `43671447982` 已终态 failure，artifact `14144671626` 下载核对。类型/测试构建、candidate metadata/prepared、参数、HTTP 200 通过；DAMM candidate 46/1，失败为测试夹具 TryFromIntError，后续专项及全套未运行。下方旧“运行中”只保留历史，不再等待该终态句柄或以 1321 声称当前通过。
+
+C3b2 已推送独立验证分支，commit `80bd7c1` / Actions `43671447982` 运行中，新增输出证据专项及原完整回归保留；这是当前须读取的 CI 句柄，不重复触发或在小 VM 链接测试。真实 main/索引与生产数据/服务未改动。
+
 2026-11-15 当前 C3b2 开发已接本笔 DAMM 净输出证据至原准备/profile/candidate：保留原检查/模拟的上下文，沿余额 slot 指定 minContextSlot，正式/preview 共用不可续期 Arc，精确绑定池/资产/输入/blockhash 与整数 min_out；无新 RPC/依赖/迁移/配置。新增 14 项 Rust 用例待云端运行；受限 test check 约 9 秒/RSS 1,234,780 KiB，bin-check 约 5 秒/RSS 673,900 KiB、原七组警告及 fmt/diff/来源检查通过。原准备/参数/executor/vendor/manifest/lock/release 不改，不自动接 signer 或宣称原 owner 签名账本已完成；详见 `DAMM_OUTPUT_QUOTE_BINDING.md`。目标 active，PumpAPI 开发暂停，无生产/部署/交易操作。
 
 前序 NP-05-A 来源 gate 已云端验收：`6397b0e` / Actions `43669338197` / artifact `14144266219` 已下载核对；源码 checker/八项负例、policy 七项与完整两线程 1321（123.73 秒）/串行 1321（222.43 秒）均通过。后续旧“运行中”是历史记录，不重复执行来源调查或把旧结果套给当前 C3b2。

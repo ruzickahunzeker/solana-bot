@@ -148,6 +148,7 @@ async fn damm_sell_message_final_profile_matches_actual_sdk_instruction_builder(
     };
 
     let mut count = 0;
+    let mut impossible_maximums_rejected = 0;
     for case in oracle_cases().await {
         let a_in = case.mint == case.damm.token_a_mint;
         let (input_program, output_program) = if a_in {
@@ -212,23 +213,59 @@ async fn damm_sell_message_final_profile_matches_actual_sdk_instruction_builder(
                     )
                     .unwrap(),
                 );
+                let context = DammSellContext {
+                    wallet: case.wallet,
+                    provider: SwqosType::Temporal,
+                    version: TradeTransactionVersion::V0,
+                    seed_optimized: false,
+                };
+                if minimum == u64::MAX {
+                    let largest = super::DammOutputEvidence::fixture_with_output(
+                        case.wallet,
+                        &intent,
+                        &request,
+                        balance,
+                        percent,
+                        &holding,
+                        u64::MAX,
+                    );
+                    let error = DammSellMessageProfile::new(
+                        context,
+                        &intent,
+                        &request,
+                        balance,
+                        percent,
+                        holding.clone(),
+                        largest,
+                    )
+                    .err()
+                    .unwrap();
+                    assert!(
+                        error.to_string().contains("minimum output differs"),
+                        "{error:#}"
+                    );
+                    impossible_maximums_rejected += 1;
+                }
+                // Preserve the original 15% ABI case below. A separate zero-slippage
+                // control makes u64::MAX a possible net quote for the full guard.
+                let mut executable_intent = intent.clone();
+                let mut executable_request = request.clone();
+                if minimum == u64::MAX {
+                    executable_intent.slippage_bps = 0;
+                    executable_request.slippage_basis_points = Some(0);
+                }
                 let quote = super::DammOutputEvidence::fixture_for_profile(
                     case.wallet,
-                    &intent,
-                    &request,
+                    &executable_intent,
+                    &executable_request,
                     balance,
                     percent,
                     &holding,
                 );
                 let profile = DammSellMessageProfile::new(
-                    DammSellContext {
-                        wallet: case.wallet,
-                        provider: SwqosType::Temporal,
-                        version: TradeTransactionVersion::V0,
-                        seed_optimized: false,
-                    },
-                    &intent,
-                    &request,
+                    context,
+                    &executable_intent,
+                    &executable_request,
                     balance,
                     percent,
                     holding,
@@ -243,6 +280,16 @@ async fn damm_sell_message_final_profile_matches_actual_sdk_instruction_builder(
                     .build_sell_instructions(&sdk)
                     .await
                     .unwrap();
+                assert_eq!(
+                    crate::adapters::sdk::damm_sell_message::nominal_protocol_for_test(
+                        case.wallet,
+                        &request,
+                        case.amount,
+                        minimum,
+                    )
+                    .unwrap(),
+                    instructions,
+                );
                 let returned = profile
                     .invoke(|manager| async move {
                         let checked = manager
@@ -286,6 +333,7 @@ async fn damm_sell_message_final_profile_matches_actual_sdk_instruction_builder(
         }
     }
     assert_eq!(count, 384);
+    assert_eq!(impossible_maximums_rejected, 128);
 }
 
 #[tokio::test]

@@ -6,6 +6,7 @@
 
 ## 统计口径
 
+- 当前 C3b3 源码补预览上下文绑定并修复 C3b2 边界夹具，新增九项用例通过类型检查，运行验收待 CI。C3b2 首轮 Actions `43671447982` 已失败于合成报价 u64 溢出，修复保留全部 384 ABI 比较并补 128 拒绝断言，不放宽生产校验。用户已恢复 active；最新全绿仍是 `6397b0e` 的 1321，详见 `DAMM_PREVIEW_CONTEXT_BINDING.md`。
 - 当前 C3b2 实施本笔 DAMM 净输出上下文绑定，生产 source/正式及 preview profile 已接，原查询/参数不新增或改写；新增 14 项 Rust 用例仅通过受限类型检查，运行回归待 CI。正式独立授权、原 owner 签名账本/原字节发送仍未完成，不复用前序 1321 当本轮验收，详见 `DAMM_OUTPUT_QUOTE_BINDING.md`。
 - 前序 NP-05-A 新来源 gate 已在 `6397b0e` / Actions `43669338197` 验收，artifact 下载核对：八项来源负例、policy 七项及完整并发/串行各 1321 通过；不再重复询问 CI 环境或来源权限。
 - 完整 Rust 验收已按用户选择移到 GitHub-hosted Actions，设备授权完成；独立源码分支

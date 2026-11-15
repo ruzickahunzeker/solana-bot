@@ -12,9 +12,30 @@ pub(crate) struct DammSimulationResult {
 }
 
 /// Fixed read-only RPC method. No signed transaction or broadcast method is accepted.
-pub(crate) async fn simulate_unsigned(
+pub(crate) async fn simulate_unsigned_at_slot(
     rpc: &RpcClient,
     transaction: &VersionedTransaction,
+    min_context_slot: u64,
+) -> Result<DammSimulationResult> {
+    ensure!(
+        min_context_slot > 0,
+        "DAMM simulation requires its output quote slot"
+    );
+    simulate(rpc, transaction, Some(min_context_slot)).await
+}
+
+#[cfg(test)]
+async fn simulate_unsigned(
+    rpc: &RpcClient,
+    transaction: &VersionedTransaction,
+) -> Result<DammSimulationResult> {
+    simulate(rpc, transaction, None).await
+}
+
+async fn simulate(
+    rpc: &RpcClient,
+    transaction: &VersionedTransaction,
+    min_context_slot: Option<u64>,
 ) -> Result<DammSimulationResult> {
     ensure!(
         transaction.signatures == [Signature::default()]
@@ -39,7 +60,7 @@ pub(crate) async fn simulate_unsigned(
                 commitment: Some(CommitmentConfig::processed()),
                 encoding: Some(UiTransactionEncoding::Base64),
                 accounts: None,
-                min_context_slot: None,
+                min_context_slot,
                 inner_instructions: true,
             },
         ),
@@ -53,8 +74,18 @@ pub(crate) async fn simulate_unsigned(
         )
     })?;
     ensure!(
-        result.context.slot > 0,
-        "DAMM unsigned simulation returned a zero slot"
+        result.context.slot > 0
+            && min_context_slot.is_none_or(|minimum| result.context.slot >= minimum),
+        "DAMM unsigned simulation returned a zero slot or precedes its output quote"
+    );
+    ensure!(
+        result.value.replacement_blockhash.is_none()
+            && result
+                .value
+                .loaded_addresses
+                .as_ref()
+                .is_none_or(|loaded| { loaded.writable.is_empty() && loaded.readonly.is_empty() }),
+        "DAMM unsigned simulation changed the fixed candidate context"
     );
     Ok(DammSimulationResult {
         error: result.value.err.map(|error| format!("{error:?}")),

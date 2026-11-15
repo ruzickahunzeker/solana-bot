@@ -41,6 +41,67 @@ fn fake_result() -> Result<SdkLaneReport, SdkInvocationFailure> {
     })
 }
 
+#[tokio::test]
+async fn damm_sell_message_preview_cannot_release_sdk_from_a_bank_before_its_output_quote() {
+    let (submit, preview) = pair();
+    let mut source = MemorySimulation::new();
+    source.response["context"]["slot"] = serde_json::json!(122);
+    let error = submit
+        .after_unsigned_preview(&preview, &source.client(), || async {
+            panic!("older preview bank must not release SDK execution")
+        })
+        .await
+        .err()
+        .unwrap();
+    assert!(error.signatures.is_empty());
+    assert!(error.message.contains("precedes"));
+    let calls = source.calls.lock().unwrap();
+    assert_eq!(calls.len(), 1);
+    assert_eq!(calls[0][1]["minContextSlot"], 123);
+}
+
+#[tokio::test]
+async fn damm_sell_message_replaced_hash_or_account_context_never_releases_sdk() {
+    for replacement_hash in [false, true] {
+        let (submit, preview) = pair();
+        let mut source = MemorySimulation::new();
+        if replacement_hash {
+            source.response["value"]["replacementBlockhash"] = serde_json::json!({
+                "blockhash":solana_sdk::hash::Hash::new_from_array([8;32]).to_string(),"lastValidBlockHeight":999,
+            });
+        } else {
+            source.response["value"]["loadedAddresses"] =
+                serde_json::json!({"writable":[],"readonly":[key(8).to_string()]});
+        }
+        let error = submit
+            .after_unsigned_preview(&preview, &source.client(), || async {
+                panic!("changed preview context must not release SDK execution")
+            })
+            .await
+            .err()
+            .unwrap();
+        assert!(error.signatures.is_empty());
+        assert!(error.message.contains("fixed candidate context"));
+        assert_eq!(source.calls.lock().unwrap().len(), 1);
+    }
+}
+
+#[tokio::test]
+async fn damm_sell_message_distinct_quote_instance_cannot_replace_the_original_before_preview() {
+    let (submit, mut preview) = pair();
+    Arc::get_mut(&mut preview).unwrap().quote = fixture(SwqosType::Temporal, true, 50).quote;
+    let source = MemorySimulation::new();
+    let error = submit
+        .after_unsigned_preview(&preview, &source.client(), || async {
+            panic!("a different quote instance must not release SDK execution")
+        })
+        .await
+        .err()
+        .unwrap();
+    assert!(error.signatures.is_empty());
+    assert!(source.calls.lock().unwrap().is_empty());
+}
+
 #[test]
 fn damm_sell_message_unsigned_candidate_owns_original_message_and_only_a_zero_signature() {
     for provider in [SwqosType::Default, SwqosType::Temporal] {

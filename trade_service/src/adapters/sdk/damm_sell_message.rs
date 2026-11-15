@@ -309,4 +309,14 @@ fn output_mint(asset: TradeTokenType) -> Pubkey {
 }
 
 #[cfg(test)]
+pub(crate) fn nominal_protocol_for_test(
+    wallet: Pubkey,
+    request: &TradeSellParams,
+    input: u64,
+    minimum: u64,
+) -> Result<Vec<Instruction>> {
+    instructions::protocol(wallet, request, input, minimum)
+}
+
+#[cfg(test)]
 mod tests;

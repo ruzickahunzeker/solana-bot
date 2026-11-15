@@ -1,5 +1,5 @@
 use super::*;
-use crate::adapters::rpc::damm_sell_simulation::simulate_unsigned;
+use crate::adapters::rpc::damm_sell_simulation::simulate_unsigned_at_slot;
 use solana_client::nonblocking::rpc_client::RpcClient;
 
 fn failure(error: anyhow::Error) -> SdkInvocationFailure {
@@ -16,7 +16,12 @@ impl DammSellCandidate {
             "DAMM simulation requires its own unsigned profile"
         );
         self.profile.recheck()?;
-        let result = simulate_unsigned(rpc, self.transaction()).await?;
+        let result = simulate_unsigned_at_slot(
+            rpc,
+            self.transaction(),
+            self.profile.quote.simulation_slot()?,
+        )
+        .await?;
         self.profile.recheck()?;
         Ok(SdkLaneReport {
             success: result.error.is_none(),
@@ -71,6 +76,7 @@ impl DammSellMessageProfile {
                     && preview.intent.simulate
                     && self.context == preview.context
                     && Arc::ptr_eq(&self.holding, &preview.holding)
+                    && Arc::ptr_eq(&self.quote, &preview.quote)
                     && self.protocol == preview.protocol,
                 "DAMM preview is not bound to this final candidate and balance evidence"
             );

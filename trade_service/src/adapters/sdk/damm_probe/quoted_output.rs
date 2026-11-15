@@ -65,6 +65,11 @@ impl DammOutputEvidence {
         self.output_units
     }
 
+    pub(crate) fn simulation_slot(&self) -> Result<u64> {
+        self.recheck()?;
+        Ok(self.simulation_slot)
+    }
+
     pub(crate) fn recheck(&self) -> Result<()> {
         if Instant::now()
             .checked_duration_since(self.started)
@@ -139,6 +144,29 @@ impl DammOutputEvidence {
         percent: u64,
         holding: &crate::domain::preparation_balance::PreparationBalanceSnapshot,
     ) -> std::sync::Arc<Self> {
+        let minimum = request.fixed_output_token_amount.unwrap();
+        let quoted =
+            (u128::from(minimum) * 10_000).div_ceil(u128::from(10_000 - intent.slippage_bps));
+        Self::fixture_with_output(
+            wallet,
+            intent,
+            request,
+            balance,
+            percent,
+            holding,
+            u64::try_from(quoted).expect("fixture minimum has no possible u64 net quote"),
+        )
+    }
+
+    pub(crate) fn fixture_with_output(
+        wallet: solana_sdk::pubkey::Pubkey,
+        intent: &crate::adapters::sdk::trade_command::ExecuteTrade,
+        request: &sol_trade_sdk::TradeSellParams,
+        balance: u64,
+        percent: u64,
+        holding: &crate::domain::preparation_balance::PreparationBalanceSnapshot,
+        output_units: u64,
+    ) -> std::sync::Arc<Self> {
         use crate::domain::trade::Address;
         let sol_trade_sdk::trading::core::params::DexParamEnum::MeteoraDammV2(pool) =
             &request.extension_params
@@ -157,9 +185,6 @@ impl DammOutputEvidence {
                 Address::from_bytes(intent.mint.to_bytes()),
             )
             .unwrap();
-        let minimum = request.fixed_output_token_amount.unwrap();
-        let quoted =
-            (u128::from(minimum) * 10_000).div_ceil(u128::from(10_000 - intent.slippage_bps));
         std::sync::Arc::new(Self {
             wallet: wallet.to_bytes(),
             pool: pool_snapshot(pool),
@@ -169,7 +194,7 @@ impl DammOutputEvidence {
             input_program: input.program.to_bytes(),
             input_decimals: input.decimals,
             input_units: balance.checked_mul(percent).unwrap() / 100,
-            output_units: u64::try_from(quoted).unwrap(),
+            output_units,
             blockhash: intent.recent_blockhash.to_bytes(),
             account_slot: slot,
             simulation_slot: slot,

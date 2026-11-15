@@ -91,6 +91,7 @@ fn damm_output_evidence_binds_context_without_restarting_its_age() {
         evidence.validate_details(&details).unwrap();
         assert_eq!(evidence.started, started);
         assert_eq!(evidence.output_units(), 915);
+        assert_eq!(evidence.simulation_slot().unwrap(), 43);
     }
 }
 
@@ -140,6 +141,7 @@ fn damm_output_evidence_expired_or_future_start_is_not_renewed_or_allowed_to_fal
         evidence.started = started;
         let error = evidence.validate_details(&details).unwrap_err();
         assert!(error.to_string().contains("expired"));
+        assert!(evidence.simulation_slot().is_err());
         assert!(!error
             .downcast_ref::<PreparationBalanceFailure>()
             .unwrap()
@@ -162,6 +164,19 @@ fn damm_output_evidence_recomputes_each_valid_slippage_minimum_from_the_same_net
         details.slippage_bps = bps;
         assert!(evidence.validate_details(&details).is_err());
     }
+}
+
+#[test]
+fn damm_output_evidence_maximum_net_quote_does_not_justify_an_impossible_slippage_minimum() {
+    let (mut evidence, mut details) = fixture();
+    evidence.output_units = u64::MAX;
+    details.minimum_output_units = u64::MAX;
+    assert!(evidence.validate_details(&details).is_err());
+    details.minimum_output_units = minimum_output(u64::MAX, 1500).unwrap();
+    evidence.validate_details(&details).unwrap();
+    details.slippage_bps = 0;
+    details.minimum_output_units = u64::MAX;
+    evidence.validate_details(&details).unwrap();
 }
 
 #[test]
