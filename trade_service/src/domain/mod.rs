@@ -9,6 +9,7 @@ pub(crate) mod reconciliation;
 pub(crate) mod route;
 pub(crate) mod sdk_buy_candidate;
 pub(crate) mod sdk_candidate;
+pub(crate) mod sdk_prepared_record;
 pub(crate) mod sol_transfer;
 pub(crate) mod submission;
 pub(crate) mod trade;

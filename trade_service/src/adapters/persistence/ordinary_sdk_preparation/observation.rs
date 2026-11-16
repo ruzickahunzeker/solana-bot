@@ -71,8 +71,9 @@ pub(in crate::adapters::persistence) async fn capture_checked(
         "SDK observation requires already-persisted original signed bytes"
     );
     let request: TradeRequest = serde_json::from_str(&request_json)?;
+    let details = candidate.metadata.sell()?.details();
     let normalized = TradeValidator::new(&SdkAddressParser)
-        .replay_sdk_observation(&request.validation_input(), candidate.metadata.details())?;
+        .replay_sdk_observation(&request.validation_input(), details)?;
     ensure!(
         verify_stored_identity(&parent, &request_json, &key, false)?
             && parent.pool == request.pool
@@ -82,7 +83,7 @@ pub(in crate::adapters::persistence) async fn capture_checked(
             && parent.pool_id.as_deref().map(str::trim)
                 == normalized.pool_id.map(|v| v.to_string()).as_deref()
             && SdkAddressParser.parse(&parent.wallet_pubkey)?
-                == Address::from_bytes(candidate.metadata.details().wallet)
+                == Address::from_bytes(details.wallet)
             && request_hash(&parent.wallet_id, &request, &normalized)? == hash,
         "SDK observation historical intent or original V1 hash mismatch"
     );

@@ -3,7 +3,7 @@ use crate::{
         ports::ordinary_claims::ExecutionOwner, sdk_preparation::StoredSdkCandidate,
         trade_admission::AdmittedTrade, trade_record::TradeRecordV1,
     },
-    domain::{sdk_candidate::SdkCandidateMetadata, submission::SignedSubmission},
+    domain::{sdk_prepared_record::SdkPreparedRecord, submission::SignedSubmission},
 };
 use std::future::Future;
 
@@ -21,7 +21,7 @@ pub(crate) trait OrdinarySdkSubmissionJournal: Sync {
         &self,
         execution: &AdmittedTrade,
         owner: &ExecutionOwner,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
     fn read_prepared(
@@ -33,7 +33,7 @@ pub(crate) trait OrdinarySdkSubmissionJournal: Sync {
         &self,
         execution: &AdmittedTrade,
         owner: &ExecutionOwner,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
     fn record_signed(
@@ -91,7 +91,7 @@ pub(crate) trait OrdinarySdkCandidateBackend: Sync {
     type Signed: Send + Sync;
 
     fn ensure_live_allowed(&self) -> anyhow::Result<()>;
-    fn metadata<'a>(&self, candidate: &'a Self::Candidate) -> &'a SdkCandidateMetadata;
+    fn metadata<'a>(&self, candidate: &'a Self::Candidate) -> &'a SdkPreparedRecord;
     fn unsigned_message(&self, candidate: &Self::Candidate) -> anyhow::Result<Vec<u8>>;
     fn authorize(
         &self,
@@ -107,7 +107,7 @@ pub(crate) trait OrdinarySdkCandidateBackend: Sync {
     fn verify_signed(
         &self,
         signed: &Self::Signed,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> anyhow::Result<()>;
     fn authorize_broadcast(&self, signed: &Self::Signed) -> anyhow::Result<()>;

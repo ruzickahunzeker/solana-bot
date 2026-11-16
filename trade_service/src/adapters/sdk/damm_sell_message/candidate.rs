@@ -16,7 +16,7 @@ pub(crate) struct DammSellCandidate {
     pub(super) profile: Arc<DammSellMessageProfile>,
     transaction: VersionedTransaction,
     pub(super) instructions: Vec<Instruction>,
-    metadata: crate::domain::sdk_candidate::SdkCandidateMetadata,
+    metadata: crate::domain::sdk_prepared_record::SdkPreparedRecord,
 }
 
 impl DammSellCandidate {
@@ -55,7 +55,7 @@ impl DammSellCandidate {
         })
     }
 
-    pub(crate) fn metadata(&self) -> &crate::domain::sdk_candidate::SdkCandidateMetadata {
+    pub(crate) fn metadata(&self) -> &crate::domain::sdk_prepared_record::SdkPreparedRecord {
         &self.metadata
     }
 

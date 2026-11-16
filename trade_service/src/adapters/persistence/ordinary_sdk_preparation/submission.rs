@@ -107,7 +107,7 @@ async fn write_lock(tx: &mut Transaction<'_, Sqlite>) -> Result<()> {
 
 fn same_candidate(
     stored: Option<StoredSdkCandidate>,
-    metadata: &SdkCandidateMetadata,
+    metadata: &SdkPreparedRecord,
     message: &[u8],
 ) -> Result<()> {
     let stored = stored.context("SDK prepared candidate missing")?;
@@ -204,9 +204,12 @@ impl SqliteOrdinaryExecutionClaims {
         &self,
         execution: &AdmittedTrade,
         owner: &ExecutionOwner,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> Result<()> {
+        owner.ensure_binding(execution)?;
+        validate_origin(execution, metadata, message)?;
+        validate_candidate(metadata, message)?;
         let mut tx = self.pool.begin().await?;
         write_lock(&mut tx).await?;
         let (row, parent, candidate) = checked(&mut tx, execution, owner).await?;

@@ -35,15 +35,16 @@ pub(super) async fn good() {
     assert_eq!(simulations[1].message, tx.message);
     let row=sqlx::query("SELECT sdk_prepared_json,unsigned_message FROM ordinary_execution_claims WHERE request_id=?")
         .bind(&c.f.record.request_id).fetch_one(&c.pool).await.unwrap();
-    let metadata = SdkCandidateMetadata::decode(
+    let metadata = SdkPreparedRecord::decode(
         row.get("sdk_prepared_json"),
         &row.get::<Vec<u8>, _>("unsigned_message"),
     )
     .unwrap();
-    assert_eq!(metadata.details().balance_units, 1000);
-    assert_eq!(metadata.details().balance_slot, 123);
-    assert_eq!(metadata.details().input_units, 100);
-    assert_eq!(metadata.details().minimum_output_units, 102);
+    let details = metadata.sell().unwrap().details();
+    assert_eq!(details.balance_units, 1000);
+    assert_eq!(details.balance_slot, 123);
+    assert_eq!(details.input_units, 100);
+    assert_eq!(details.minimum_output_units, 102);
     c.unchanged_request().await;
     c.finish().await;
 }

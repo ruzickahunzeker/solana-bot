@@ -25,8 +25,9 @@ pub(super) async fn signing_case_with_defaults(
     if defaults {
         let config = Arc::make_mut(&mut state.config);
         config.default_slippage_percent =
-            candidate.metadata().details().slippage_bps as f64 / 100.0;
-        config.default_tip_sol = f64::from_bits(candidate.metadata().details().tip_sol_bits);
+            candidate.metadata().sell().unwrap().details().slippage_bps as f64 / 100.0;
+        config.default_tip_sol =
+            f64::from_bits(candidate.metadata().sell().unwrap().details().tip_sol_bits);
         config.enable_simulate = false;
     }
     let f = admit_candidate_with(state, &candidate, |r| {

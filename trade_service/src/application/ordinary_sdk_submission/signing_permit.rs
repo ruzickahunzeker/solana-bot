@@ -1,12 +1,12 @@
 use super::*;
-use crate::domain::sdk_candidate::SdkCandidateMetadata;
+use crate::domain::sdk_prepared_record::SdkPreparedRecord;
 
 /// Linear in-memory permission from the original owner's completed signing CAS.
 /// It cannot be cloned, deserialized, or recovered from nominal database metadata.
 pub(crate) struct SdkSigningPermit<'a> {
     execution: &'a AdmittedTrade,
     owner: &'a ExecutionOwner,
-    metadata: &'a SdkCandidateMetadata,
+    metadata: &'a SdkPreparedRecord,
     message: &'a [u8],
 }
 
@@ -14,7 +14,7 @@ impl<'a> SdkSigningPermit<'a> {
     pub(super) fn new(
         execution: &'a AdmittedTrade,
         owner: &'a ExecutionOwner,
-        metadata: &'a SdkCandidateMetadata,
+        metadata: &'a SdkPreparedRecord,
         message: &'a [u8],
     ) -> Result<Self> {
         owner.ensure_binding(execution)?;
@@ -35,7 +35,7 @@ impl<'a> SdkSigningPermit<'a> {
         self.execution
     }
 
-    pub(crate) fn validate(&self, metadata: &SdkCandidateMetadata, message: &[u8]) -> Result<()> {
+    pub(crate) fn validate(&self, metadata: &SdkPreparedRecord, message: &[u8]) -> Result<()> {
         self.owner.ensure_binding(self.execution)?;
         ensure!(
             *self.metadata == *metadata && self.message == message,

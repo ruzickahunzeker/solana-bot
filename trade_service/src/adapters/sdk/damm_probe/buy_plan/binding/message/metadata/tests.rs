@@ -27,6 +27,12 @@ async fn damm_buy_record_round_trips_real_candidates_for_both_assets_modes_and_a
                     let encoded = c.record.encode(&message).unwrap();
                     let decoded = DammBuyCandidateRecord::decode(&encoded, &message).unwrap();
                     assert_eq!(decoded, c.record);
+                    let common = crate::domain::sdk_prepared_record::SdkPreparedRecord::decode(
+                        &encoded, &message,
+                    )
+                    .unwrap();
+                    assert!(common.sell().is_err());
+                    assert_eq!(common.encode(&message).unwrap(), encoded);
                     validate_record(&decoded, &message).unwrap();
                     c.validate_full(&c.instructions).unwrap();
                     assert!(SdkCandidateMetadata::decode(&encoded, &message).is_err());

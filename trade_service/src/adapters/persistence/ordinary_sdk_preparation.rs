@@ -12,7 +12,7 @@ use crate::{
         trade_admission::AdmittedTrade,
         trade_record::TradeRecordV1,
     },
-    domain::{sdk_candidate::SdkCandidateMetadata, trade::TradeStatus},
+    domain::{sdk_prepared_record::SdkPreparedRecord, trade::TradeStatus},
     persistence::row_to_record,
 };
 use anyhow::{ensure, Context, Result};
@@ -63,7 +63,7 @@ pub(super) fn validate_sdk_row(row: &SqliteRow) -> Result<Option<StoredSdkCandid
                 digest == sha(&message),
                 "SDK candidate stored message digest mismatch"
             );
-            let metadata = SdkCandidateMetadata::decode(json, &message)?;
+            let metadata = SdkPreparedRecord::decode(json, &message)?;
             ensure!(
                 metadata.encode(&message)? == json,
                 "SDK candidate metadata is not the original canonical record"
@@ -135,7 +135,7 @@ impl SqliteOrdinaryExecutionClaims {
         &self,
         execution: &AdmittedTrade,
         owner: &ExecutionOwner,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> Result<()> {
         owner.ensure_binding(execution)?;

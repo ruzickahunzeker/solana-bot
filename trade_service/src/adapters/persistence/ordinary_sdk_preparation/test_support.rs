@@ -33,7 +33,7 @@ pub(crate) async fn signed_observation(
     state.persistence = persistence;
     let key = Keypair::new();
     let candidate = candidate_fixture_for_wallet(key.pubkey());
-    let d = candidate.metadata().details();
+    let d = candidate.metadata().sell().unwrap().details();
     let address = |bytes| solana_sdk::pubkey::Pubkey::new_from_array(bytes).to_string();
     let request = serde_json::from_value(json!({
         "wallet_id":"fixture-wallet", "side":"sell", "pool":"meteora-damm-v2",

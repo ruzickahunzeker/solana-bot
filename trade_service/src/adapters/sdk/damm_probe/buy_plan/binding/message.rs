@@ -241,3 +241,14 @@ fn failure(error: anyhow::Error) -> SdkInvocationFailure {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+pub(crate) async fn buy_record_fixture() -> (
+    crate::domain::sdk_buy_candidate::DammBuyCandidateRecord,
+    Vec<u8>,
+) {
+    let profile = tests::profile(SwqosType::Default, false, true, false).await;
+    let candidate = profile.prepare(None).unwrap();
+    let message = candidate.transaction.message.serialize();
+    (candidate.record, message)
+}

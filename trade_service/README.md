@@ -170,7 +170,9 @@ Quote 余额查询仍只用原首个 Default RPC：依次 supply、token scan/�
 
 未部署，不是新的 Live 准入或完整签名权威迁移。买入原 owner 的签名字节账本/固定 sender、最后回调之后 SDK worker 的时效及副作用、其他协议/模式与真实节点仍有门槛，不得据此自动重发或宣称全链路安全，见 [原 NP-01 范围](docs/TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
 
-后继源码已增加独立的 `damm-v2-buy-v1` 名义记录：保存原始整数金额、净报价/min_out、资产/池/账户、slot、同次模拟资金预算和消息摘要，并接现有买入候选的生成/整笔复核。它不是新的 Live profile 或数据库 authority；往返编码仍仅在离线测试中使用，尚未接原 owner/账本/发送/恢复。记录重构不产生 fresh Quote，不恢复签名许可；旧卖出格式保持。此后继完整运行待独立 CI。
+后继源码已增加独立的 `damm-v2-buy-v1` 名义记录：保存原始整数金额、净报价/min_out、资产/池/账户、slot、同次模拟资金预算和消息摘要，并接现有买入候选的生成/整笔复核。它不是新的 Live profile 或数据库 authority，记录重构不产生 fresh Quote 或恢复签名许可。该记录基础已在 `19f80cb` 独立 CI 验收，完整并发/串行各 1594 项通过，仍未部署。
+
+本轮共同 `SdkPreparedRecord` 已接原账本/签名许可/回读的类型接口：按 version/profile 严格区分买卖，不增加 JSON 外壳，旧 SellV1 字节保持。买入 codec 已被共同 decoder 使用，但原 claim/origin、签名及恢复仍拒绝买入，不等于买入正式落盘或发送已完成。新增方向拒绝/旧数据兼容合同的独立运行验收见 [原账本记录边界](docs/optimization/SDK_PREPARED_RECORD_BOUNDARY.md) 和当前执行记录，不套用前批 1594。
 
 ### 交易准备余额（源码阶段，未部署）
 

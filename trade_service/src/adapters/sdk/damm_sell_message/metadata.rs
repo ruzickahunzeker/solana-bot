@@ -1,6 +1,7 @@
 use super::*;
 use crate::adapters::sdk::damm_instructions::{relay, relay_name};
 use crate::domain::sdk_candidate::{DammCandidateDetails, DammCandidatePool, SdkCandidateMetadata};
+use crate::domain::sdk_prepared_record::SdkPreparedRecord;
 use sol_trade_sdk::trading::core::params::MeteoraDammV2Params;
 use solana_sdk::hash::Hash;
 
@@ -15,8 +16,8 @@ pub(super) fn capture(
     profile: &DammSellMessageProfile,
     destination: Option<Pubkey>,
     message: &[u8],
-) -> Result<SdkCandidateMetadata> {
-    SdkCandidateMetadata::damm_sell(details(profile, destination)?, message)
+) -> Result<SdkPreparedRecord> {
+    Ok(SdkCandidateMetadata::damm_sell(details(profile, destination)?, message)?.into())
 }
 
 pub(super) fn details(
@@ -57,9 +58,9 @@ pub(super) fn details(
 }
 
 /// Reconstructs nominal parameters without RPC or a signer; not independent chain authorization.
-pub(crate) fn validate_candidate(metadata: &SdkCandidateMetadata, message: &[u8]) -> Result<()> {
+pub(crate) fn validate_candidate(metadata: &SdkPreparedRecord, message: &[u8]) -> Result<()> {
     metadata.validate(message)?;
-    let d = metadata.details();
+    let d = metadata.sell()?.details();
     let key = Pubkey::new_from_array;
     let provider = relay(&d.relay)?;
     let p = &d.pool;

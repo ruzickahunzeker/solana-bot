@@ -150,7 +150,6 @@ impl DammBuyCandidateRecord {
         Ok(())
     }
 
-    #[cfg(test)]
     pub(crate) fn encode(&self, message: &[u8]) -> Result<String> {
         self.validate(message)?;
         let json = serde_json::to_string(self)?;
@@ -161,7 +160,6 @@ impl DammBuyCandidateRecord {
         Ok(json)
     }
 
-    #[cfg(test)]
     pub(crate) fn decode(json: &str, message: &[u8]) -> Result<Self> {
         ensure!(
             json.len() <= 65_536,

@@ -18,7 +18,7 @@ fn sdk_candidate_metadata_round_trips_formal_and_simulation_message_matrix_witho
                                 .unwrap();
                             let message = value.message_bytes();
                             let json = value.metadata().encode(&message).unwrap();
-                            let decoded = SdkCandidateMetadata::decode(&json, &message).unwrap();
+                            let decoded = SdkPreparedRecord::decode(&json, &message).unwrap();
                             validate_candidate(&decoded, &message).unwrap();
                             assert_eq!(&decoded, value.metadata());
                             assert!(value
@@ -26,7 +26,7 @@ fn sdk_candidate_metadata_round_trips_formal_and_simulation_message_matrix_witho
                                 .signatures
                                 .iter()
                                 .all(|s| *s == solana_sdk::signature::Signature::default()));
-                            assert_eq!(decoded.details().balance_slot, 123);
+                            assert_eq!(decoded.sell().unwrap().details().balance_slot, 123);
                             count += 1;
                         }
                     }
@@ -63,7 +63,7 @@ fn sdk_candidate_metadata_reconstructs_accounts_amounts_fees_and_fixed_tip_recip
         "hash",
         "simulate",
     ] {
-        let mut d = value.metadata().details().clone();
+        let mut d = value.metadata().sell().unwrap().details().clone();
         match field {
             "wallet" => d.wallet = [30; 32],
             "mint" => d.mint = [30; 32],
@@ -97,7 +97,7 @@ fn sdk_candidate_metadata_reconstructs_accounts_amounts_fees_and_fixed_tip_recip
             "simulate" => d.simulate = true,
             _ => unreachable!(),
         }
-        let modified = SdkCandidateMetadata::damm_sell(d, &message).unwrap();
+        let modified = SdkCandidateMetadata::damm_sell(d, &message).unwrap().into();
         assert!(validate_candidate(&modified, &message).is_err(), "{field}");
     }
 }
@@ -154,7 +154,7 @@ fn sdk_candidate_metadata_rejects_zero_output_overflow_bad_balance_and_nonfinite
         "negative",
         "pool_hint",
     ] {
-        let mut d = c.metadata().details().clone();
+        let mut d = c.metadata().sell().unwrap().details().clone();
         match field {
             "zero_minimum" => d.minimum_output_units = 0,
             "zero_input" => d.input_units = 0,

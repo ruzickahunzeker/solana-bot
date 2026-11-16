@@ -17,7 +17,7 @@ impl OrdinarySdkSubmissionJournal for SqliteOrdinaryExecutionClaims {
         &self,
         execution: &AdmittedTrade,
         owner: &ExecutionOwner,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> Result<()> {
         self.prepare_sdk_candidate(execution, owner, metadata, message)
@@ -34,7 +34,7 @@ impl OrdinarySdkSubmissionJournal for SqliteOrdinaryExecutionClaims {
         &self,
         execution: &AdmittedTrade,
         owner: &ExecutionOwner,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> Result<()> {
         self.begin_sdk_signing(execution, owner, metadata, message)

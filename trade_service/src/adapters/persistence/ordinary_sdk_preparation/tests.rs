@@ -9,11 +9,13 @@ use crate::{
         },
     },
     config::TradePersistenceMode,
+    domain::sdk_candidate::SdkCandidateMetadata,
 };
 use sol_trade_sdk::swqos::SwqosType;
 use std::sync::Arc;
 
 mod observation;
+mod prepared_record;
 mod submission;
 
 struct Case {
@@ -37,7 +39,7 @@ async fn admit_candidate_with(
     c: &DammSellCandidate,
     edit: impl FnOnce(&mut crate::models::TradeRequest),
 ) -> Fixture {
-    let d = c.metadata().details();
+    let d = c.metadata().sell().unwrap().details();
     let mut request = serde_json::from_value(serde_json::json!({
         "wallet_id":"fixture-wallet", "side":"sell", "pool":"meteora-damm-v2",
         "mint": crate::domain::trade::Address::from_bytes(d.mint).to_string(),
@@ -177,7 +179,7 @@ async fn sdk_candidate_prepare_binds_every_reserved_command_field_and_original_w
         "requested_provider",
         "simulate",
     ] {
-        let mut d = c.candidate.metadata().details().clone();
+        let mut d = c.candidate.metadata().sell().unwrap().details().clone();
         match field {
             "wallet" => d.wallet = [30; 32],
             "mint" => d.mint = [30; 32],
@@ -198,7 +200,9 @@ async fn sdk_candidate_prepare_binds_every_reserved_command_field_and_original_w
             "simulate" => d.simulate = true,
             _ => unreachable!(),
         }
-        let metadata = SdkCandidateMetadata::damm_sell(d, &c.candidate.message_bytes()).unwrap();
+        let metadata = SdkCandidateMetadata::damm_sell(d, &c.candidate.message_bytes())
+            .unwrap()
+            .into();
         assert!(
             c.store
                 .prepare_sdk_candidate(

@@ -24,7 +24,7 @@ use crate::{
         trade_execution::JournaledTradeOutcome,
     },
     domain::{
-        preparation_balance::PreparationBalanceFailure, sdk_candidate::SdkCandidateMetadata,
+        preparation_balance::PreparationBalanceFailure, sdk_prepared_record::SdkPreparedRecord,
         submission::SignedSubmission, trade::Side,
     },
 };
@@ -50,7 +50,7 @@ impl OrdinarySdkCandidateBackend for OriginalDammBackend<'_> {
     fn ensure_live_allowed(&self) -> Result<()> {
         self.wallet.ensure_broadcast_allowed()
     }
-    fn metadata<'a>(&self, candidate: &'a DammSellCandidate) -> &'a SdkCandidateMetadata {
+    fn metadata<'a>(&self, candidate: &'a DammSellCandidate) -> &'a SdkPreparedRecord {
         candidate.metadata()
     }
     fn unsigned_message(&self, candidate: &DammSellCandidate) -> Result<Vec<u8>> {
@@ -81,7 +81,7 @@ impl OrdinarySdkCandidateBackend for OriginalDammBackend<'_> {
     fn verify_signed(
         &self,
         signed: &DammSignedCandidate,
-        metadata: &SdkCandidateMetadata,
+        metadata: &SdkPreparedRecord,
         message: &[u8],
     ) -> Result<()> {
         signed.check_submission(self.execution, self.context, signed.submission())?;

@@ -13,7 +13,7 @@ use crate::{
         },
     },
     config::TradePersistenceMode,
-    domain::{sdk_candidate::SdkCandidateMetadata, trade::TradeStatus},
+    domain::{sdk_prepared_record::SdkPreparedRecord, trade::TradeStatus},
 };
 use sol_trade_sdk::common::TradeTransactionVersion;
 use sqlx::{Row, SqlitePool};
@@ -90,7 +90,7 @@ impl OrdinarySdkCandidateBackend for JournalBackend {
     fn ensure_live_allowed(&self) -> Result<()> {
         Ok(())
     }
-    fn metadata<'a>(&self, c: &'a DammSellCandidate) -> &'a SdkCandidateMetadata {
+    fn metadata<'a>(&self, c: &'a DammSellCandidate) -> &'a SdkPreparedRecord {
         c.metadata()
     }
     fn unsigned_message(&self, c: &DammSellCandidate) -> Result<Vec<u8>> {
@@ -115,7 +115,7 @@ impl OrdinarySdkCandidateBackend for JournalBackend {
     fn verify_signed(
         &self,
         s: &DammSignedCandidate,
-        m: &SdkCandidateMetadata,
+        m: &SdkPreparedRecord,
         b: &[u8],
     ) -> Result<()> {
         crate::adapters::sdk::damm_sell_message::validate_signed_candidate(m, b, s.submission())
@@ -148,7 +148,7 @@ async fn setup(mismatch: bool, block: bool) -> IntegrationCase {
     let state = fixture(TradePersistenceMode::Durable).await.state;
     let signer = Arc::new(Keypair::new());
     let candidate = candidate_fixture_for_wallet(signer.pubkey());
-    let d = candidate.metadata().details();
+    let d = candidate.metadata().sell().unwrap().details();
     let address = |bytes| Pubkey::new_from_array(bytes).to_string();
     let request = serde_json::from_value(json!({
         "wallet_id":"fixture-wallet", "side":"sell", "pool":"meteora-damm-v2",

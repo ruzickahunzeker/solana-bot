@@ -17,7 +17,9 @@ use crate::{
         trade_record::TradeRecordV1,
     },
     config::TradePersistenceMode,
-    domain::{sdk_candidate::SdkCandidateMetadata, submission::SignedSubmission, trade::Address},
+    domain::{
+        sdk_prepared_record::SdkPreparedRecord, submission::SignedSubmission, trade::Address,
+    },
 };
 use solana_sdk::{
     signature::{Keypair, Signer},
@@ -31,6 +33,7 @@ use std::sync::{
 use tokio::sync::Notify;
 
 mod finality_tests;
+mod prepared_record_tests;
 
 #[derive(Default)]
 struct Control {
@@ -81,7 +84,7 @@ impl OrdinarySdkSubmissionJournal for Journal {
         &self,
         e: &AdmittedTrade,
         o: &ExecutionOwner,
-        m: &SdkCandidateMetadata,
+        m: &SdkPreparedRecord,
         b: &[u8],
     ) -> Result<()> {
         self.control.gate("prepare").await?;
@@ -104,7 +107,7 @@ impl OrdinarySdkSubmissionJournal for Journal {
         &self,
         e: &AdmittedTrade,
         o: &ExecutionOwner,
-        m: &SdkCandidateMetadata,
+        m: &SdkPreparedRecord,
         b: &[u8],
     ) -> Result<()> {
         self.control.gate("begin-signing").await?;
@@ -199,7 +202,7 @@ impl Engine {
         let n = self.control.live.fetch_add(1, Ordering::SeqCst) + 1;
         self.control.event(&format!("live-{n}"))
     }
-    fn authorize(&self, e: &AdmittedTrade, m: &SdkCandidateMetadata, message: &[u8]) -> Result<()> {
+    fn authorize(&self, e: &AdmittedTrade, m: &SdkPreparedRecord, message: &[u8]) -> Result<()> {
         let n = self.control.authorize.fetch_add(1, Ordering::SeqCst) + 1;
         self.control.event(&format!("authorize-{n}"))?;
         validate_origin(e, m, message)
@@ -219,7 +222,7 @@ impl Engine {
             bytes: bincode::serialize(&transaction)?,
         })
     }
-    fn verify(&self, s: &SignedSubmission, m: &SdkCandidateMetadata, message: &[u8]) -> Result<()> {
+    fn verify(&self, s: &SignedSubmission, m: &SdkPreparedRecord, message: &[u8]) -> Result<()> {
         self.control.event("verify-signed")?;
         validate_signed_candidate(m, message, s)
     }
@@ -286,7 +289,7 @@ impl OrdinarySdkCandidateBackend for First {
     fn ensure_live_allowed(&self) -> Result<()> {
         self.0.live()
     }
-    fn metadata<'a>(&self, c: &'a DammSellCandidate) -> &'a SdkCandidateMetadata {
+    fn metadata<'a>(&self, c: &'a DammSellCandidate) -> &'a SdkPreparedRecord {
         c.metadata()
     }
     fn unsigned_message(&self, c: &DammSellCandidate) -> Result<Vec<u8>> {
@@ -344,7 +347,7 @@ impl OrdinarySdkCandidateBackend for First {
     fn verify_signed(
         &self,
         s: &DammSignedCandidate,
-        m: &SdkCandidateMetadata,
+        m: &SdkPreparedRecord,
         message: &[u8],
     ) -> Result<()> {
         self.0.verify(s.submission(), m, message)
@@ -371,7 +374,7 @@ impl OrdinarySdkCandidateBackend for First {
 
 // The second backend uses a different project-only candidate representation.
 struct PlainCandidate {
-    metadata: SdkCandidateMetadata,
+    metadata: SdkPreparedRecord,
     message: Vec<u8>,
 }
 struct Second(Engine);
@@ -385,7 +388,7 @@ impl OrdinarySdkCandidateBackend for Second {
     fn ensure_live_allowed(&self) -> Result<()> {
         self.0.live()
     }
-    fn metadata<'a>(&self, c: &'a PlainCandidate) -> &'a SdkCandidateMetadata {
+    fn metadata<'a>(&self, c: &'a PlainCandidate) -> &'a SdkPreparedRecord {
         &c.metadata
     }
     fn unsigned_message(&self, c: &PlainCandidate) -> Result<Vec<u8>> {
@@ -406,12 +409,7 @@ impl OrdinarySdkCandidateBackend for Second {
     fn signed_submission<'a>(&self, s: &'a SecondSigned) -> &'a SignedSubmission {
         &s.signed
     }
-    fn verify_signed(
-        &self,
-        s: &SecondSigned,
-        m: &SdkCandidateMetadata,
-        message: &[u8],
-    ) -> Result<()> {
+    fn verify_signed(&self, s: &SecondSigned, m: &SdkPreparedRecord, message: &[u8]) -> Result<()> {
         self.0.verify(&s.signed, m, message)
     }
     fn authorize_broadcast(&self, s: &SecondSigned) -> Result<()> {
@@ -512,7 +510,7 @@ async fn setup_mev(
 ) -> Harness {
     let signer = Keypair::new();
     let candidate = candidate_fixture_for_wallet_with_mev(signer.pubkey(), use_mev, requested);
-    let d = candidate.metadata().details();
+    let d = candidate.metadata().sell().unwrap().details();
     let state = fixture(TradePersistenceMode::Durable).await.state;
     let request = serde_json::from_value(serde_json::json!({
         "wallet_id":"fixture-wallet", "side":"sell", "pool":"meteora-damm-v2",
@@ -570,7 +568,7 @@ async fn sdk_application_submission_two_candidate_backends_obey_the_same_origina
         let outcome = if second {
             let message = h.candidate.message_bytes();
             let candidate = PlainCandidate {
-                metadata: SdkCandidateMetadata::decode(
+                metadata: SdkPreparedRecord::decode(
                     &h.candidate.metadata().encode(&message).unwrap(),
                     &message,
                 )

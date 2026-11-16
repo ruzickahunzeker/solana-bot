@@ -2,7 +2,7 @@ use super::{DammSellCandidate, DammSellContext};
 use crate::application::{
     ordinary_sdk_submission::SdkSigningPermit, trade_admission::AdmittedTrade,
 };
-use crate::domain::{sdk_candidate::SdkCandidateMetadata, submission::SignedSubmission};
+use crate::domain::{sdk_prepared_record::SdkPreparedRecord, submission::SignedSubmission};
 use anyhow::{ensure, Context, Result};
 use bincode::Options;
 use solana_sdk::signature::{Keypair, Signer};
@@ -57,6 +57,7 @@ impl DammSellCandidate {
             super::metadata::capture(
                 &self.profile,
                 self.metadata()
+                    .sell()?
                     .details()
                     .tip_destination
                     .map(solana_sdk::pubkey::Pubkey::new_from_array),
@@ -158,7 +159,7 @@ impl DammSignedCandidate {
 
 /// Evidence validation only: never signs, refreshes a quote, or authorizes execution.
 pub(crate) fn validate_signed_candidate(
-    metadata: &SdkCandidateMetadata,
+    metadata: &SdkPreparedRecord,
     message: &[u8],
     signed: &SignedSubmission,
 ) -> Result<()> {
@@ -185,7 +186,7 @@ pub(crate) fn validate_signed_candidate(
                 .static_account_keys()
                 .first()
                 .map(|p| p.to_bytes())
-                == Some(metadata.details().wallet)
+                == Some(metadata.sell()?.details().wallet)
             && transaction.signatures.len() == 1,
         "SDK signed packet differs from the original candidate"
     );
@@ -193,7 +194,7 @@ pub(crate) fn validate_signed_candidate(
     ensure!(
         signature != Signature::default()
             && signature.to_string() == signed.signature
-            && signature.verify(&metadata.details().wallet, message),
+            && signature.verify(&metadata.sell()?.details().wallet, message),
         "SDK signature does not verify the original wallet and message"
     );
     Ok(())

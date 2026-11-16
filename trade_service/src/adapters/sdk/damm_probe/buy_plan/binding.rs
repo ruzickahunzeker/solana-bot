@@ -13,6 +13,8 @@ use sol_trade_sdk::{
 use solana_sdk::pubkey::Pubkey;
 
 mod message;
+#[cfg(test)]
+pub(crate) use message::buy_record_fixture;
 pub(crate) use message::DammBuyMessage;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

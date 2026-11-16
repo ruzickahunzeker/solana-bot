@@ -5,7 +5,7 @@ use crate::{
         trade_admission::AdmittedTrade,
     },
     domain::{
-        sdk_candidate::SdkCandidateMetadata,
+        sdk_prepared_record::SdkPreparedRecord,
         trade::{Address, TradeAmount},
     },
 };
@@ -14,7 +14,7 @@ use anyhow::{ensure, Result};
 /// Intent binding only. Persisted nominal metadata never grants signing authority.
 pub(crate) fn validate_origin(
     execution: &AdmittedTrade,
-    metadata: &SdkCandidateMetadata,
+    metadata: &SdkPreparedRecord,
     message: &[u8],
 ) -> Result<()> {
     ensure!(
@@ -22,7 +22,7 @@ pub(crate) fn validate_origin(
         "SDK preparation requires its original durable operation"
     );
     metadata.validate(message)?;
-    let d = metadata.details();
+    let d = metadata.sell()?.details();
     let c = execution.command();
     let TradeAmount::SellPercent { percent } = c.amount else {
         anyhow::bail!("SDK sell amount missing")
@@ -44,6 +44,6 @@ pub(crate) fn validate_origin(
 }
 
 pub(crate) struct StoredSdkCandidate {
-    pub(crate) metadata: SdkCandidateMetadata,
+    pub(crate) metadata: SdkPreparedRecord,
     pub(crate) message: Vec<u8>,
 }
