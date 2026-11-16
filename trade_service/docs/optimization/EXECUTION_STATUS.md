@@ -6,17 +6,39 @@
 
 ## 当前任务
 
-- 本轮续原 NP-01 的原 journal 类型边界：`SdkPreparedRecord` 明确持有旧 SellV1 或独立
+- 本轮续原 NP-01 的买入历史证据和原意图绑定：共同 adapter 已按记录方向重构原完整
+  消息并校验有界 canonical 签名字节/钱包；卖出入口仍有专用方向闸门。原 journal
+  行及签名回读接此校验器，历史请求按方向重放原 V1 整数/费用默认值及 hash，原
+  ownerless capture/finality 已可核对买入历史。`validate_candidate_intent` 支持买入
+  原 admission 的资产/数量/钱包/执行意图绑定，但 validate_origin 前置原 operation
+  classifier 未改，买入 claim/实际 signer/sender/自动扫描仍未开放。详见
+  [买入历史证据](SDK_BUY_HISTORY_EVIDENCE.md)。
+- 新增十六项源码合同覆盖真实买入消息/临时 key 的历史签名、坏包/匹配摘要的指令
+  篡改、买卖隔离、原意图突变及 claim 继续拒绝、V1 显式金额/原整数和费用默认值/
+  精度、临时 SQLite 两资产四 signed stages、身份/签名破坏、finality CAS/原 nonce/
+  上下文替换和原扫描继续排除买入。受限 test check 12 秒/RSS 1,472,072 KiB、
+  production check 5 秒/RSS 672,372 KiB 通过，原七组警告；独立 CI 尚待本批提交，
+  不套用父批 1605，不把合成历史 fixture 签名当作生产受控 signer 验收。
+- 前批原 NP-01 的原 journal 类型边界：`SdkPreparedRecord` 明确持有旧 SellV1 或独立
   BuyV1，原 Application/backend/journal/permit、候选及回读接口已改为此项目类型。
   按 version/profile 严格分派，不试探式回退，不增加 JSON 外壳；旧 SellV1 源码原字节
-  保持。买入 codec 现在被共同 decoder 使用，但原 claim/origin、重构/签名及恢复仍
+  保持。当批买入 codec 被共同 decoder 使用，但原 claim/origin、重构/签名及恢复仍
   显式限制卖出；买入不能由名义记录获得 owner/permit。prepare/signing 在 SQL 之前
   拒绝错误方向，见 [原账本记录边界](SDK_PREPARED_RECORD_BOUNDARY.md)。
 - 本批新增十一项合同覆盖旧 JSON/实际落库原字节、真实买入往返、严格标签/重复字段/
   大小和摘要、关闭临时 pool 的 SQL 前拒绝、损坏行/原 owner 与只读恢复、原控制器
-  零 signer/send 和线性 permit 方向绑定；既有买入矩阵补共同 codec 检查。受限 test
-  check 与 production check 已通过，原七组生产警告保持；独立 CI 尚未提交/执行，
-  不把下方父批 1594 当作本批运行验收。不升级 SDK、不修改 schema 或放开买入 claim。
+  零 signer/send 和线性 permit 方向绑定；既有买入矩阵补共同 codec 检查。本批
+  `2fe436dff1326b5ce0d069804df2e4ba3ad6b07b` /
+  [Actions 43781625542](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43781625542)
+  已终态 success，artifact `14189296618` 下载独立核对。完整并发 1605（142.55 秒）/
+  串行 1605（261.47 秒），零失败/忽略/过滤；两套原始名称集合相同，父批 1594 全保留，
+  增量恰为源码十一项。共同记录专项 9、买入专项 79、原源码/恢复 Clippy 成功，原始
+  spans 的 93 个不同字段拒绝及全部 52 步骤通过。identity/manifest/lock/vendor manifest
+  匹配，发布审计绑定 1052 文件/12,938,550 字节、35 白名单路径；真实 main/索引、
+  旧 SellV1、claim/sender/扫描 SQL、迁移与冻结历史保持。本地最终受限 test check
+  10 秒/RSS 1,319,604 KiB、production check 13 秒/RSS 1,004,024 KiB，原七组警告；
+  fmt、Python 门禁十项/workflow 七项通过。不升级 SDK、不修改 schema 或放开买入
+  claim，不部署/重启或触碰生产数据。不重跑终态 CI，验收记录不另触发文档 CI。
 - 本批记录快照 `19f80cb00f2816341791a359d4504bc5fe83ea1d` 已独立验收；[Actions 43777721549](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43777721549) 终态 success，artifact `14187333877` 下载核对。完整并发 1594（140.68 秒）/串行 1594（257.60 秒），零失败/忽略/过滤；两套原始名称集合相同、父批 1583 全保留，增量恰为十一项新合同。买入专项 79、原源码/恢复成功、原始 compiler spans 的 93 字段拒绝及全部 51 步骤通过。发布审计绑定 1047 文件/12,913,244 字节、16 白名单路径，全树哈希一致，旧 SellV1/Application/claim/journal/sender/迁移及 manifest/lock/vendor/冻结历史/main/真实索引保持。终态任务不重跑，验收记录不另发文档 CI。
 - 当前续原 NP-01 的买入记录基础：独立 `DammBuyCandidateRecord`/`damm-v2-buy-v1` 名义数据已接原候选生成和整笔复核；旧 SellV1 类/JSON/校验未改，不伪造卖出比例。保存原始整数、账户/精度/slot、同 bank 资金、费用和消息摘要，纯重构后再与原运行时证据比较；名义记录不能恢复 fresh Quote/owner/签名许可，往返编码方法仍仅测试启用，未接库。
 - 十一项新增合同含真实矩阵往返、USDC→WSOL、消息/资金篡改、名义与原证据分离、过期/买卖隔离/未知字段、体积/大整数、模式与 provider 原名称，已在本批专项和完整 CI 实际执行；原始测试名增量独立核对，不借用父批 1583。
@@ -47,6 +69,7 @@
 
 | 范围 | 提交 / CI / artifact | 已核对结果 |
 | --- | --- | --- |
+| 原 SDK journal 的买卖类型化记录边界 | `2fe436d` / `43781625542` / `14189296618` | 共同记录专项 9、新增 11、买入 79；完整并发 1605（142.55 秒）/串行 1605（261.47 秒）；93 字段拒绝，52 步骤通过 |
 | 买入独立名义记录与原候选数据绑定 | `19f80cb` / `43777721549` / `14187333877` | 买入专项 79（含新增 11）；完整并发 1594（140.68 秒）/串行 1594（257.60 秒）；93 字段拒绝，51 步骤通过 |
 | 买入整笔候选/回调与无签名模拟 | `ec1d2c9` / `43773807696` / `14185728930` | 买入专项 68（含新增 19）；完整并发 1583（155.62 秒）/串行 1583（274.91 秒）；93 字段拒绝，51 步骤通过 |
 | 买入净报价/min_out 准备绑定 | `61af682` / `43734656743` / `14170038159` | 买入专项 49（含新增 16）；完整并发 1564（152.42 秒）/串行 1564（268.72 秒）；87 字段拒绝，51 步骤通过 |
@@ -73,7 +96,7 @@
 
 ## 续作顺序
 
-1. 普通任务生命周期、Shadow writer 生命周期、Record/Tape 与买入只读取证/兼容/准备绑定/整笔回调/独立名义记录均已按各自源码验收，不重跑终态 CI 或重复实施。本批原单一 journal 的买卖类型边界已接源码，先独立验收，再续原 owner 的买入 origin/permit、prepared/signed 原字节落盘/固定 sender 与恢复；不先扩大 claim，再补授权。名义重构和回调检查不等于完整原 owner 授权或 SDK worker 可取消。主计划 3.3 已列明旧 SellV1、claim/origin、恢复/扫描 sell 筛选及 sender 固定 Sell 方向，需共同接线，不伪造比例或另建账本/通道。不另立任务，也不核对/修改线上版本。
+1. 普通任务生命周期、Shadow writer 生命周期、Record/Tape、买入只读取证/兼容/准备绑定/整笔回调/独立名义记录与原单一 journal 的买卖类型边界均已按各自源码验收，不重跑终态 CI 或重复实施。本批买入消息/签名字节证据、原意图绑定和历史回放/capture 先独立验收，再续原 owner 的受控买入候选/signer、prepared/signing CAS 与 signed 原字节回读、固定 Buy sender、runtime 及 claim/扫描一致接线；共同类型、纯意图绑定或历史签名均不开放执行授权。不先扩大 claim，再补授权，不由历史恢复 owner/重签/重发。不另立任务，也不核对/修改线上版本。
 2. 原 NP-03 的其他依赖方向、具体资源所有权、SDK 内部/独立操作任务与全局 RPC/cache 收口继续保留；不能把 87 字段门禁当作 API/全部依赖/不透明能力流检查完成，也不能把 Shadow FIFO 的原 SQL 调用完成当作额外刷盘/断电或全服务退出证明。任务取消不代表 SDK 副作用取消，不恢复 owner 或重签/重发。
 3. 原 NP-01 的其他方向/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接卖出子路径不重做，也不冒充全量。
 4. NP-04 本批只证明原 Durable SOL Quote 买入控制器的共同合同，其他业务路径适用性、真实 Router/SDK 不由 fake 证明；NP-05 来源/升级准备和主计划的真实环境/迁移/回滚门槛继续。当前不授权实际 SDK 升级或生产动作。

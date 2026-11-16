@@ -20,7 +20,7 @@ pub(super) async fn profile(
     DammBuyMessage::new(Arc::new(quote), context, &command, &request).unwrap()
 }
 
-async fn evidenced(
+pub(super) async fn evidenced(
     wallet: Pubkey,
     native: bool,
     extended: bool,

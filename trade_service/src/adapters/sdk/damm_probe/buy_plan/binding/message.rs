@@ -15,6 +15,7 @@ use std::{future::Future, sync::Arc};
 
 mod guard;
 mod metadata;
+pub(crate) use metadata::validate_record as validate_buy_record;
 
 /// Frozen buy construction. No signing authority, persisted owner or broadcast capability.
 pub(crate) struct DammBuyMessage {
@@ -248,6 +249,31 @@ pub(crate) async fn buy_record_fixture() -> (
     Vec<u8>,
 ) {
     let profile = tests::profile(SwqosType::Default, false, true, false).await;
+    let candidate = profile.prepare(None).unwrap();
+    let message = candidate.transaction.message.serialize();
+    (candidate.record, message)
+}
+
+#[cfg(test)]
+pub(crate) async fn buy_record_fixture_for_wallet(
+    wallet: Pubkey,
+    native: bool,
+) -> (
+    crate::domain::sdk_buy_candidate::DammBuyCandidateRecord,
+    Vec<u8>,
+) {
+    let profile = tests::evidenced(
+        wallet,
+        native,
+        false,
+        false,
+        false,
+        None,
+        false,
+        SwqosType::Default,
+    )
+    .await
+    .unwrap();
     let candidate = profile.prepare(None).unwrap();
     let message = candidate.transaction.message.serialize();
     (candidate.record, message)

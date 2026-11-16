@@ -72,7 +72,7 @@ pub(super) fn capture(
 }
 
 /// Nominal reconstruction only. It performs no RPC and cannot recreate fresh quote/signing authority.
-pub(super) fn validate_record(record: &DammBuyCandidateRecord, message: &[u8]) -> Result<()> {
+pub(crate) fn validate_record(record: &DammBuyCandidateRecord, message: &[u8]) -> Result<()> {
     record.validate(message)?;
     let d = record.details();
     let key = Pubkey::new_from_array;

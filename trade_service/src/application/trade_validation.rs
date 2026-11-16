@@ -88,8 +88,12 @@ impl<'a> TradeValidator<'a> {
 
         let (amount_lamports, sell_percent) = match request.side {
             Side::Buy => {
-                let amount =
-                    self.normalize_amount_units(request, settings, &quote_mint, settlement_asset)?;
+                let amount = self.normalize_amount_units(
+                    request,
+                    || self.token_to_units("DEFAULT_BUY_SOL", settings.default_buy_sol, 9),
+                    &quote_mint,
+                    settlement_asset,
+                )?;
                 if amount == 0 {
                     bail!("buy amount must be greater than 0");
                 }
@@ -269,7 +273,7 @@ impl<'a> TradeValidator<'a> {
     fn normalize_amount_units(
         &self,
         request: &TradeInput<'_>,
-        settings: &TradeValidationSettings,
+        default_amount: impl FnOnce() -> anyhow::Result<u64>,
         quote_mint: &Address,
         settlement_asset: SettlementAsset,
     ) -> anyhow::Result<u64> {
@@ -286,7 +290,7 @@ impl<'a> TradeValidator<'a> {
             if let Some(amount_lamports) = request.amount_lamports {
                 return Ok(amount_lamports);
             }
-            return self.token_to_units("DEFAULT_BUY_SOL", settings.default_buy_sol, 9);
+            return default_amount();
         }
         if let Some(units) = request.amount_quote_units {
             return Ok(units);
@@ -343,7 +347,7 @@ impl<'a> TradeValidator<'a> {
         if let Some(amount_lamports) = request.amount_lamports {
             return Ok(amount_lamports);
         }
-        self.token_to_units("DEFAULT_BUY_SOL", settings.default_buy_sol, 9)
+        default_amount()
     }
 
     fn validate_via_sol(

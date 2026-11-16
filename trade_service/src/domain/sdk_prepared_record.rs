@@ -10,6 +10,20 @@ pub(crate) enum SdkPreparedRecord {
 }
 
 impl SdkPreparedRecord {
+    pub(crate) fn buy(&self) -> Result<&DammBuyCandidateRecord> {
+        match self {
+            Self::DammBuy(value) => Ok(value),
+            Self::DammSell(_) => anyhow::bail!("SDK prepared record is not DAMM buy"),
+        }
+    }
+
+    pub(crate) fn wallet(&self) -> [u8; 32] {
+        match self {
+            Self::DammSell(value) => value.details().wallet,
+            Self::DammBuy(value) => value.details().wallet,
+        }
+    }
+
     pub(crate) fn sell(&self) -> Result<&SdkCandidateMetadata> {
         match self {
             Self::DammSell(value) => Ok(value),

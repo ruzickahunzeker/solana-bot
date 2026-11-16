@@ -14,6 +14,7 @@ use crate::{
 use sol_trade_sdk::swqos::SwqosType;
 use std::sync::Arc;
 
+mod buy_evidence;
 mod observation;
 mod prepared_record;
 mod submission;

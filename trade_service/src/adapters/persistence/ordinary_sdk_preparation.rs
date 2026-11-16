@@ -3,7 +3,7 @@ use crate::{
         persistence::{
             ordinary_claims::SqliteOrdinaryExecutionClaims, trade_snapshot::verify_stored_identity,
         },
-        sdk::damm_sell_message::validate_candidate,
+        sdk::prepared_candidate::validate_candidate,
     },
     application::{
         ordinary_claims::{ensure_parent, ClaimOperation},

@@ -30,6 +30,18 @@
 
 ## 已验收运行
 
+最新原 NP-01 原 journal 的买卖记录类型边界 `2fe436dff1326b5ce0d069804df2e4ba3ad6b07b` /
+[Actions 43781625542](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43781625542)
+终态 success，artifact `14189296618` 下载独立核对：共同记录专项 9、买入专项 79，
+完整并发 1605（142.55 秒）/串行 1605（261.47 秒）零失败/忽略/过滤，全部 52 步骤
+exit=0。两套原始名称集合相同，父批 1594 全保留、增量恰为源码十一项；原源码/恢复
+Clippy 成功，原始 JSON spans 独立确认三层 93 个不同字段拒绝。identity 与 manifest/
+lock/vendor manifest 指纹匹配，发布审计绑定 1052 文件/12,938,550 字节、35 路径。
+旧 SellV1 原字节、claim/sender/扫描 SQL、迁移、SDK/vendor、冻结历史、真实 main/
+索引不变。本批只证明共同记录/原 journal 类型接口及方向拒绝，不等于买入实际 owner
+授权、落盘签名/发送或恢复完成，不扩大 Live；不部署、不重跑终态任务，验收记录
+不另发文档 CI。固定 actions 的 Node 20→24 平台提示与父批相同，任务实际成功。
+
 最新原 NP-01 买入独立名义记录 `19f80cb00f2816341791a359d4504bc5fe83ea1d` /
 [Actions 43777721549](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43777721549)
 终态 success，artifact `14187333877` 下载独立核对：买入专项 79（含新增 11），完整并发

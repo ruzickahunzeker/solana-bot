@@ -28,9 +28,11 @@ percentage, and no panic or default metadata is used to select a direction.
 
 `prepare_sdk_candidate` and `begin_sdk_signing` reject unsupported direction before
 opening a SQL transaction. Existing signing CAS, owner binding and independent
-readback remain required. Seller reconstruction, signed-evidence validation and
-recovery also reject BuyV1 explicitly. A corrupt nominal buy row is not a recovered
-execution owner or signer permission.
+readback remain required. At the `2fe436d` acceptance point, reconstruction,
+signed-evidence validation and recovery also rejected BuyV1 explicitly. The next
+NP-01 batch extends shared historical evidence validation, not claim admission;
+see `SDK_BUY_HISTORY_EVIDENCE.md`. A corrupt nominal buy row cannot bind to a sell
+parent, recover an execution owner or obtain signer permission.
 
 ## Verification Scope
 

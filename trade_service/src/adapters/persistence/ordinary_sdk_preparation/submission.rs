@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    adapters::sdk::damm_sell_message::validate_signed_candidate,
+    adapters::sdk::prepared_candidate::validate_signed_candidate,
     domain::submission::SignedSubmission,
 };
 

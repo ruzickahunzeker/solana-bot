@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 买入独立名义记录与原候选绑定 `19f80cb` / Actions `43777721549` / artifact `14187333877` 已独立验收，买入专项 79、完整并发/串行各 1594，93 字段拒绝与全部 51 步骤通过。普通任务、Shadow 生命周期及买入准备/回调/记录基础不再排队；下一步续原 journal 的买卖类型化记录边界、买入原 owner 的 origin/permit/签名字节账本/固定 sender 与恢复，其他 NP-01/03/04/05 门槛保留，不以名义记录或回调检查冒充完整授权、可取消 worker 或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 原 journal 买卖记录类型边界 `2fe436d` / Actions `43781625542` / artifact `14189296618` 已独立验收：共同记录专项 9、买入 79、完整并发/串行各 1605，93 字段拒绝与全部 52 步骤通过。普通任务、Shadow 生命周期及买入准备/回调/记录基础和共同记录类型不再排队；下一步续买入原 owner 的实际 origin/permit 授权、签名字节账本/固定 sender 与恢复，其他 NP-01/03/04/05 门槛保留，不以名义记录或类型迁移冒充完整授权、可取消 worker 或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -442,10 +442,37 @@ sender/迁移与真实 main/索引/冻结历史保持。终态 CI 不重跑，�
 没有 enum JSON 外壳、宽松解码回退或假卖出比例。旧 `domain/sdk_candidate.rs` 原字节
 保持；买入 codec 被共同 decoder 使用，但原 claim/origin、具体重构/签名及恢复明确
 限制 SellV1。prepare/signing 的错误方向在 SQL 之前拒绝，不扩大原 owner/Live 范围。
-新增十一项合同和真实买入矩阵的共同 codec 检查，受限 test/production check 已通过，
-独立 CI 尚待本批运行，不能复用父批 1594。详见
+新增十一项合同和真实买入矩阵的共同 codec 检查，最终受限 test check 10 秒/
+RSS 1,319,604 KiB、production check 13 秒/RSS 1,004,024 KiB 通过，原七组警告。
+独立 `2fe436d` / Actions `43781625542` / artifact `14189296618` 已终态 success，
+日志下载核对：完整并发 1605（142.55 秒）/串行 1605（261.47 秒）零失败/忽略/过滤，
+名称相同、父批 1594 全保留且增量恰为十一项。共同记录专项 9、买入 79、原源码/
+恢复成功、原始 spans 的 93 字段拒绝及全部 52 步骤通过。identity/manifest/lock/
+vendor manifest 匹配，审计 1052 文件/12,938,550 字节、35 路径，真实 main/索引/
+冻结历史保持。不重跑终态 CI，也不为验收记录另发文档 CI。详见
 [原账本记录边界](optimization/SDK_PREPARED_RECORD_BOUNDARY.md)。下步继续原买入
 owner/origin、受控签名/落盘、固定方向 sender 与恢复/扫描接线，不另建 authority。
+
+2026-11-16 后继同项落实原 owner 接线的校验前置：共同 adapter 按原 record 方向重构
+整笔消息，再验有界 canonical 签名字节、单 signer/payer/钱包签名与原回执。原卖出
+signed 验证实现提取复用，卖出专用入口仍拒绝买入；原 journal 行/签名回读使用共同
+校验器，不仅验证 JSON/hash。原 admission 的买入意图绑定已支持 Native SOL/WSOL 与
+既有 USDC 的整数输入/资产/钱包、路线、模式、费用/MEV，但原 claim classifier 保持
+卖出范围，纯绑定和历史签名都不授予 owner/permit。
+
+原 V1 历史回放按记录方向分派，显式金额复用同一个旧 parser；仅把默认金额提供者
+变为惰性闭包，正常验证仍在原位置转换当前默认，历史省略的 WSOL 数量使用原 raw
+整数，不经 f64 或 Config，USDC 仍须显式金额。请求/hash 编码不改。原 ownerless
+capture/finality 已能核对买入历史的原 parent/key/hash/签名/上下文；没有 signer、发送
+或新 authority，原自动扫描仍排除买入。旧“损坏买入行关联卖出”合同只更新 nominal
+重构能力断言，保留全部原 parent/owner/读回拒绝和零变更断言。
+
+新增十六项真实构建/历史临时 key/原意图/V1 精度/临时库与 finality 合同；受限
+test check 12 秒/RSS 1,472,072 KiB、production check 5 秒/RSS 672,372 KiB 通过，
+原七组警告。独立 CI 尚待运行，不复用父批 1605，不把合成历史行/签名当作受控买入
+signer 或生产恢复验收。详见 [买入历史证据](optimization/SDK_BUY_HISTORY_EVIDENCE.md)。
+后继继续受控买入候选/signer、原 owner 的 CAS/签名字节落盘、固定 Buy sender/runtime
+与 claim/扫描共同接线；不先扩大 claim，不由历史记录恢复执行许可或重签/重发。
 
 ## 4. 稳定类型和后端边界
 

@@ -172,7 +172,9 @@ Quote 余额查询仍只用原首个 Default RPC：依次 supply、token scan/�
 
 后继源码已增加独立的 `damm-v2-buy-v1` 名义记录：保存原始整数金额、净报价/min_out、资产/池/账户、slot、同次模拟资金预算和消息摘要，并接现有买入候选的生成/整笔复核。它不是新的 Live profile 或数据库 authority，记录重构不产生 fresh Quote 或恢复签名许可。该记录基础已在 `19f80cb` 独立 CI 验收，完整并发/串行各 1594 项通过，仍未部署。
 
-本轮共同 `SdkPreparedRecord` 已接原账本/签名许可/回读的类型接口：按 version/profile 严格区分买卖，不增加 JSON 外壳，旧 SellV1 字节保持。买入 codec 已被共同 decoder 使用，但原 claim/origin、签名及恢复仍拒绝买入，不等于买入正式落盘或发送已完成。新增方向拒绝/旧数据兼容合同的独立运行验收见 [原账本记录边界](docs/optimization/SDK_PREPARED_RECORD_BOUNDARY.md) 和当前执行记录，不套用前批 1594。
+共同 `SdkPreparedRecord` 已接原账本/签名许可/回读的类型接口：按 version/profile 严格区分买卖，不增加 JSON 外壳，旧 SellV1 字节保持。该类型边界已在 `2fe436d` 独立 CI 验收，完整并发/串行各 1605 项通过，原 1594 项保留、新增恰为十一项；共同记录专项 9、93 字段拒绝及全部 52 步骤通过，不重跑或部署。详见 [原账本记录边界](docs/optimization/SDK_PREPARED_RECORD_BOUNDARY.md)。
+
+本轮原账本的共同消息重构/签名字节证据、买入原意图绑定、V1 历史回放及 ownerless 观测已接源码。它只能核对已有历史签名/原始整数和上下文，不能刷新 Quote、恢复 owner、重新签名或发送。原买入 claim、受控 signer/sender 和自动扫描仍未开放；新增十六项合同的独立运行验收见 [买入历史证据](docs/optimization/SDK_BUY_HISTORY_EVIDENCE.md) 及当前执行记录，不套用前批 1605。
 
 ### 交易准备余额（源码阶段，未部署）
 

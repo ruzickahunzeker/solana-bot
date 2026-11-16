@@ -69,11 +69,14 @@ async fn sdk_prepared_record_corrupt_buy_row_does_not_become_sell_recovery_or_ow
         .fetch_one(&c.store.pool)
         .await
         .unwrap();
-    assert!(validate_sdk_row(&row)
-        .err()
-        .unwrap()
-        .to_string()
-        .contains("not DAMM sell"));
+    // A valid nominal buy can now reconstruct, but cannot bind to this sell parent or owner.
+    assert!(validate_sdk_row(&row).unwrap().is_some());
+    assert!(validate_origin(
+        &c.f.execution,
+        &SdkPreparedRecord::decode(row.get("sdk_prepared_json"), &message).unwrap(),
+        &message
+    )
+    .is_err());
     assert!(c
         .store
         .read_sdk_candidate(&c.f.execution, &c.owner)
