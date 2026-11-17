@@ -474,7 +474,7 @@ async fn sdk_runtime_dispatch_buy_uses_the_original_owner_once_for_native_and_us
 }
 
 #[tokio::test]
-async fn sdk_runtime_dispatch_buy_disabled_policy_and_stale_hash_never_resolve_or_fallback() {
+async fn sdk_runtime_dispatch_buy_disabled_policy_and_stale_hash_never_enter_sdk_or_fallback() {
     for native in [false, true] {
         for disabled in [false, true] {
             let (mut f, trace) = setup_payment(
@@ -491,7 +491,11 @@ async fn sdk_runtime_dispatch_buy_disabled_policy_and_stale_hash_never_resolve_o
                 f.state.blockhash_cache = Arc::new(crate::BlockhashCache::default());
             }
             run(&f).await;
-            assert_eq!(trace.resolves.load(Ordering::SeqCst), 0);
+            // Preserve the original order: policy precedes resolution, hash follows resolution.
+            assert_eq!(
+                trace.resolves.load(Ordering::SeqCst),
+                usize::from(!disabled)
+            );
             assert_eq!(trace.sdk.load(Ordering::SeqCst), 0);
             assert_eq!(trace.legacy.load(Ordering::SeqCst), 0);
             let record = f
@@ -511,6 +515,13 @@ async fn sdk_runtime_dispatch_buy_disabled_policy_and_stale_hash_never_resolve_o
             .await
             .unwrap();
             assert_eq!(count, i64::from(!disabled));
+            run(&f).await;
+            assert_eq!(
+                trace.resolves.load(Ordering::SeqCst),
+                usize::from(!disabled)
+            );
+            assert_eq!(trace.sdk.load(Ordering::SeqCst), 0);
+            assert_eq!(trace.legacy.load(Ordering::SeqCst), 0);
         }
     }
 }
