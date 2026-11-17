@@ -206,13 +206,10 @@ pub(crate) async fn execute<L: OrdinarySdkLane>(
         let prepared = match lane.prepare(trade).await {
             Ok(prepared) => prepared,
             Err(error) => {
-                if error
-                    .downcast_ref::<crate::domain::preparation_balance::PreparationBalanceFailure>()
-                    .is_some_and(|failure| !failure.allows_lane_fallback())
-                {
+                if let Some(kind) = preparation_rejection(&error) {
                     let reason = redact_urls(&error.to_string());
                     return Err(
-                        error.context(format!("{label} preparation balance rejected: {reason}"))
+                        error.context(format!("{label} preparation {kind} rejected: {reason}"))
                     );
                 }
                 let error = redact_urls(&error.to_string());
@@ -349,4 +346,20 @@ pub(crate) fn ensure_requested_provider(
         "DAMM selected provider differs from the original MEV policy"
     );
     Ok(())
+}
+
+pub(crate) fn preparation_rejection(error: &anyhow::Error) -> Option<&'static str> {
+    if error
+        .downcast_ref::<crate::domain::preparation_balance::PreparationBalanceFailure>()
+        .is_some_and(|failure| !failure.allows_lane_fallback())
+    {
+        Some("balance")
+    } else if error
+        .downcast_ref::<crate::domain::parameter_read::ParameterReadFailure>()
+        .is_some_and(|failure| !failure.allows_lane_fallback())
+    {
+        Some("parameters")
+    } else {
+        None
+    }
 }

@@ -8,6 +8,8 @@ const FLAG: &str = "SOL_BOT_SHARED_READ_WIRE_CASE";
 const CHILD: &str = "adapters::rpc::read_runtime::tests::wire_tests::shared_read_wire_child";
 const DONE: &str = "SHARED_READ_WIRE_DONE";
 
+#[path = "parameter_wire.rs"]
+mod parameter_wire;
 #[path = "preparation_wire.rs"]
 mod preparation_wire;
 #[path = "presence_wire.rs"]
@@ -752,6 +754,10 @@ async fn shared_read_wire_child() {
             "presence_limits" => presence_wire::limits().await,
             "presence_timeouts" => presence_wire::timeouts().await,
             "presence_rate_cancel" => presence_wire::rate_cancel().await,
+            "parameter_success" => parameter_wire::success().await,
+            "parameter_errors" => parameter_wire::errors().await,
+            "parameter_timeouts" => parameter_wire::timeouts().await,
+            "parameter_rate_cancel" => parameter_wire::rate_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -763,6 +769,22 @@ fn run(case: &str) {
     let child = IsolatedTestProcess::spawn(CHILD, FLAG, case);
     child.await_line(DONE);
     child.finish();
+}
+#[test]
+fn parameter_wire_real_sdk_read_methods_use_one_keyless_fixed_http_transport() {
+    run("parameter_success");
+}
+#[test]
+fn parameter_wire_bad_envelopes_body_limits_and_disconnects_have_no_hidden_retry() {
+    run("parameter_errors");
+}
+#[test]
+fn parameter_wire_headers_body_deadline_and_redirect_are_bounded() {
+    run("parameter_timeouts");
+}
+#[test]
+fn parameter_wire_cooldown_and_cancellation_retain_separate_hash_capacity() {
+    run("parameter_rate_cancel");
 }
 #[test]
 fn preparation_presence_wire_original_sdk_request_and_boolean_parity() {

@@ -70,7 +70,7 @@ impl ReadHttpTransport for Fake {
             });
         }
         let (id,value) = match request {
-            ReadRequest::PreparationAccounts { .. } => panic!("quote fixture must not read preparation accounts"),
+            ReadRequest::PreparationAccounts { .. } | ReadRequest::Parameters { .. } => panic!("quote fixture must not read preparation accounts or protocol parameters"),
             ReadRequest::TokenSupply{id,..} => (*id,token_amount(u64::MAX,6)),
             ReadRequest::TokenAccounts{id,..} => {
                 if matches!(self.mode,Mode::Hold) { std::future::pending::<()>().await; }

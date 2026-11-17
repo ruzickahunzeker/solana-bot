@@ -157,7 +157,7 @@ fn complete(
     )));
     let params = Arc::new(ParamCache::default());
     let pool_queries = Arc::new(PoolQueryService::new(
-        SdkPoolReadBackend::new(wallets.clone()),
+        SdkPoolReadBackend::new(wallets.clone(), read_rpc.clone()),
         params.clone(),
     ));
     let ordinary_execution = Arc::new(SdkOrdinaryExecutionBackend::new(

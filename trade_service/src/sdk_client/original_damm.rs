@@ -24,10 +24,7 @@ use crate::{
         trade_admission::AdmittedTrade,
         trade_execution::JournaledTradeOutcome,
     },
-    domain::{
-        preparation_balance::PreparationBalanceFailure, sdk_prepared_record::SdkPreparedRecord,
-        submission::SignedSubmission,
-    },
+    domain::{sdk_prepared_record::SdkPreparedRecord, submission::SignedSubmission},
 };
 use anyhow::{ensure, Context, Result};
 use solana_sdk::signature::Signer;
@@ -225,9 +222,7 @@ impl SdkTradeClient {
             let prepared = match source.prepare(trade).await {
                 Ok(prepared) => prepared,
                 Err(error) => {
-                    if error
-                        .downcast_ref::<PreparationBalanceFailure>()
-                        .is_some_and(|failure| !failure.allows_lane_fallback())
+                    if crate::adapters::sdk::ordinary_lanes::preparation_rejection(&error).is_some()
                     {
                         return Err(error);
                     }

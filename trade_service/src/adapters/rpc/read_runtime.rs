@@ -24,6 +24,7 @@ enum Class {
     NativeBalances,
     QuoteBalance,
     PreparationBalance,
+    Parameters,
 }
 impl Class {
     fn index(self) -> usize {
@@ -34,6 +35,7 @@ impl Class {
             Self::NativeBalances => 3,
             Self::QuoteBalance => 4,
             Self::PreparationBalance => 5,
+            Self::Parameters => 6,
         }
     }
     fn interval(self) -> Duration {
@@ -44,12 +46,13 @@ impl Class {
             Self::NativeBalances => Duration::from_millis(250),
             Self::QuoteBalance => Duration::from_millis(250),
             Self::PreparationBalance => Duration::from_millis(250),
+            Self::Parameters => Duration::from_millis(250),
         }
     }
 }
 
 struct Budget {
-    next_start: [Instant; 6],
+    next_start: [Instant; 7],
     cooldowns: Vec<Option<Instant>>,
 }
 
@@ -58,7 +61,7 @@ pub(crate) struct SharedReadRuntime<T = ReqwestReadTransport> {
     urls: Vec<String>,
     endpoints: Vec<Option<Url>>,
     transport: T,
-    slots: [Arc<Semaphore>; 6],
+    slots: [Arc<Semaphore>; 7],
     budget: Mutex<Budget>,
     hash_id: AtomicU64,
 }
@@ -70,6 +73,14 @@ impl SharedReadRuntime {
 }
 
 impl<T: ReadHttpTransport> SharedReadRuntime<T> {
+    #[cfg(test)]
+    pub(crate) fn with_test_transport(urls: &[String], transport: T) -> Self {
+        Self::with_transport(urls, transport)
+    }
+    #[cfg(test)]
+    pub(crate) fn test_transport(&self) -> &T {
+        &self.transport
+    }
     fn with_transport(urls: &[String], transport: T) -> Self {
         let mut unique = Vec::new();
         let mut endpoints = Vec::new();
@@ -90,7 +101,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         }
         Self {
             budget: Mutex::new(Budget {
-                next_start: [Instant::now(); 6],
+                next_start: [Instant::now(); 7],
                 cooldowns: vec![None; unique.len()],
             }),
             urls: unique,
@@ -167,6 +178,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
                     Class::NativeBalances => "native balances",
                     Class::QuoteBalance => "quote balance",
                     Class::PreparationBalance => "preparation balance",
+                    Class::Parameters => "protocol parameters",
                 },
                 "read RPC rate limited; shared endpoint cooling down"
             );
@@ -356,4 +368,5 @@ mod tests;
 mod native_balances;
 mod quote_balance;
 pub(crate) use quote_balance::preparation_scan;
+mod parameters;
 mod preparation_balance;

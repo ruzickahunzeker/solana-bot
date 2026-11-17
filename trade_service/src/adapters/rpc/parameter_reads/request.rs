@@ -1,0 +1,279 @@
+use super::{invalid, ParameterReadScope};
+use anyhow::{ensure, Result};
+use base64::Engine;
+use serde_json::{json, Value};
+use solana_account_decoder::{UiAccount, UiAccountData, UiAccountEncoding};
+use solana_client::{
+    rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+    rpc_filter::{Memcmp, RpcFilterType},
+    rpc_request::RpcRequest,
+    rpc_response::{RpcKeyedAccount, RpcResponseContext},
+};
+use solana_sdk::pubkey::Pubkey;
+use std::str::FromStr;
+
+#[derive(Clone, Copy)]
+enum Kind {
+    Account,
+    Accounts(usize),
+    Epoch,
+    PumpScan,
+}
+
+#[derive(Clone)]
+pub(crate) struct ParameterQuery {
+    kind: Kind,
+    params: Value,
+}
+
+fn key(value: &Value) -> Result<()> {
+    let value = value
+        .as_str()
+        .ok_or_else(|| invalid("invalid parameter account address"))?;
+    ensure!(
+        value.len() <= 44,
+        invalid("invalid parameter account address")
+    );
+    Pubkey::from_str(value).map_err(|_| invalid("invalid parameter account address"))?;
+    Ok(())
+}
+
+fn account_config(value: &mut Value) -> Result<()> {
+    let config: RpcAccountInfoConfig = serde_json::from_value(value.clone())
+        .map_err(|_| invalid("invalid parameter account configuration"))?;
+    ensure!(
+        matches!(
+            config.encoding,
+            Some(UiAccountEncoding::Base64 | UiAccountEncoding::Base64Zstd)
+        ) && config.data_slice.is_none()
+            && config.min_context_slot.is_none(),
+        invalid("unsupported parameter account configuration")
+    );
+    ensure!(
+        value
+            .as_object()
+            .is_some_and(|object| object.keys().all(|name| matches!(
+                name.as_str(),
+                "encoding" | "dataSlice" | "commitment" | "minContextSlot"
+            ))),
+        invalid("unsupported parameter account configuration")
+    );
+    // Bound decoded data without accepting compressed-response expansion or changing SDK codecs.
+    value["encoding"] = json!("base64");
+    Ok(())
+}
+
+impl ParameterQuery {
+    pub(super) fn parse(
+        method: RpcRequest,
+        mut params: Value,
+        scope: ParameterReadScope,
+    ) -> Result<Self> {
+        let length = params
+            .as_array()
+            .map(Vec::len)
+            .ok_or_else(|| invalid("invalid parameter RPC arguments"))?;
+        let kind = match method {
+            RpcRequest::GetAccountInfo if length == 2 => {
+                key(&params[0])?;
+                account_config(&mut params[1])?;
+                Kind::Account
+            }
+            RpcRequest::GetMultipleAccounts if length == 2 => {
+                let accounts = params[0]
+                    .as_array()
+                    .ok_or_else(|| invalid("invalid parameter account list"))?;
+                ensure!(
+                    (1..=100).contains(&accounts.len()),
+                    invalid("parameter account list exceeds limit")
+                );
+                for account in accounts {
+                    key(account)?;
+                }
+                let count = accounts.len();
+                account_config(&mut params[1])?;
+                Kind::Accounts(count)
+            }
+            RpcRequest::GetEpochInfo if length == 1 => {
+                serde_json::from_value::<solana_commitment_config::CommitmentConfig>(
+                    params[0].clone(),
+                )
+                .map_err(|_| invalid("invalid parameter epoch configuration"))?;
+                ensure!(
+                    params[0].as_object().is_some_and(
+                        |object| object.len() == 1 && object.contains_key("commitment")
+                    ),
+                    invalid("invalid parameter epoch configuration")
+                );
+                Kind::Epoch
+            }
+            RpcRequest::GetProgramAccounts if length == 2 => {
+                let Some(mint) = scope.pump_scan_mint() else {
+                    return Err(invalid(
+                        "parameter program scan is not permitted for this loader",
+                    ));
+                };
+                use sol_trade_sdk::instruction::utils::{
+                    pumpswap::accounts::AMM_PROGRAM, pumpswap_types::POOL_DISCRIMINATOR,
+                };
+                ensure!(
+                    params[0] == AMM_PROGRAM.to_string(),
+                    invalid("parameter program scan has wrong program")
+                );
+                let config: RpcProgramAccountsConfig = serde_json::from_value(params[1].clone())
+                    .map_err(|_| invalid("invalid parameter program scan configuration"))?;
+                ensure!(
+                    config.account_config.encoding == Some(UiAccountEncoding::Base64)
+                        && config.account_config.data_slice.is_none()
+                        && config.account_config.min_context_slot.is_none()
+                        && config.with_context != Some(true)
+                        && config.sort_results.is_none(),
+                    invalid("unsupported parameter program scan configuration")
+                );
+                ensure!(
+                    params[1]
+                        .as_object()
+                        .is_some_and(|object| object.keys().all(|name| matches!(
+                            name.as_str(),
+                            "filters"
+                                | "encoding"
+                                | "dataSlice"
+                                | "commitment"
+                                | "minContextSlot"
+                                | "withContext"
+                                | "sortResults"
+                        ))),
+                    invalid("unsupported parameter program scan configuration")
+                );
+                let allowed = [252u64, 261, 270, 271, 300, 643].into_iter().any(|size| {
+                    [43usize, 75].into_iter().any(|offset| {
+                        let filters = vec![
+                            RpcFilterType::DataSize(size),
+                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                0,
+                                &POOL_DISCRIMINATOR,
+                            )),
+                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                offset,
+                                &mint.to_bytes(),
+                            )),
+                        ];
+                        serde_json::to_value(filters)
+                            .is_ok_and(|filters| params[1]["filters"] == filters)
+                    })
+                });
+                ensure!(
+                    allowed,
+                    invalid("parameter program scan filters are not audited")
+                );
+                Kind::PumpScan
+            }
+            _ => return Err(invalid("parameter RPC method is not permitted")),
+        };
+        Ok(Self { kind, params })
+    }
+
+    pub(crate) fn body(&self, id: u64) -> Value {
+        let method = match self.kind {
+            Kind::Account => "getAccountInfo",
+            Kind::Accounts(_) => "getMultipleAccounts",
+            Kind::Epoch => "getEpochInfo",
+            Kind::PumpScan => "getProgramAccounts",
+        };
+        json!({"jsonrpc":"2.0","id":id,"method":method,"params":self.params})
+    }
+
+    pub(crate) fn max_body(&self) -> usize {
+        if matches!(self.kind, Kind::PumpScan) {
+            1_048_576
+        } else {
+            524_288
+        }
+    }
+
+    pub(crate) fn validate_result(&self, result: &Value) -> Result<()> {
+        match self.kind {
+            Kind::Account | Kind::Accounts(_) => {
+                let context: RpcResponseContext = serde_json::from_value(result["context"].clone())
+                    .map_err(|_| invalid("parameter account context is invalid"))?;
+                ensure!(
+                    context.slot > 0,
+                    invalid("parameter account context is invalid")
+                );
+                if let Kind::Accounts(count) = self.kind {
+                    let accounts = result["value"]
+                        .as_array()
+                        .ok_or_else(|| invalid("parameter account result is invalid"))?;
+                    ensure!(
+                        accounts.len() == count,
+                        invalid("parameter account result count is invalid")
+                    );
+                    for account in accounts {
+                        validate_account(account)?;
+                    }
+                } else {
+                    ensure!(
+                        result
+                            .as_object()
+                            .is_some_and(|object| object.contains_key("value")),
+                        invalid("parameter account result is invalid")
+                    );
+                    validate_account(&result["value"])?;
+                }
+            }
+            Kind::Epoch => {
+                serde_json::from_value::<solana_sdk::epoch_info::EpochInfo>(result.clone())
+                    .map_err(|_| invalid("parameter epoch result is invalid"))?;
+            }
+            Kind::PumpScan => {
+                let rows = result
+                    .as_array()
+                    .ok_or_else(|| invalid("parameter program scan result is invalid"))?;
+                ensure!(
+                    rows.len() <= 1000,
+                    invalid("parameter program scan exceeds account limit")
+                );
+                for row in rows {
+                    let _: RpcKeyedAccount = serde_json::from_value(row.clone())
+                        .map_err(|_| invalid("parameter program scan metadata is invalid"))?;
+                    key(&row["pubkey"])?;
+                    ensure!(
+                        !row["account"].is_null(),
+                        invalid("parameter program scan account is missing")
+                    );
+                    validate_account(&row["account"])?;
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+fn validate_account(value: &Value) -> Result<()> {
+    if value.is_null() {
+        return Ok(());
+    }
+    let account: UiAccount = serde_json::from_value(value.clone())
+        .map_err(|_| invalid("parameter account metadata is invalid"))?;
+    key(&json!(account.owner))?;
+    let UiAccountData::Binary(data, UiAccountEncoding::Base64) = account.data else {
+        return Err(invalid(
+            "parameter account requires uncompressed binary data",
+        ));
+    };
+    ensure!(
+        data.len() <= 87_384,
+        invalid("parameter decoded account exceeds limit")
+    );
+    let decoded = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|_| invalid("parameter account encoding is invalid"))?;
+    ensure!(
+        decoded.len() <= 65_536
+            && account
+                .space
+                .is_none_or(|space| space == decoded.len() as u64),
+        invalid("parameter decoded account size is invalid")
+    );
+    Ok(())
+}

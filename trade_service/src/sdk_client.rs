@@ -8,8 +8,7 @@ use sol_trade_sdk::swqos::{
     AstralaneTransport, SwqosConfig, SwqosRegion, SwqosTransport, SwqosType,
 };
 use sol_trade_sdk::trading::core::params::{
-    DexParamEnum, MeteoraDammV2Params, MeteoraDbcParams, PumpFunParams, PumpSwapParams,
-    RaydiumCpmmParams,
+    MeteoraDammV2Params, MeteoraDbcParams, PumpFunParams, PumpSwapParams, RaydiumCpmmParams,
 };
 use sol_trade_sdk::trading::factory::DexType;
 use sol_trade_sdk::{find_pool_by_mint, TradingClient};
@@ -1286,26 +1285,29 @@ impl SdkTradeClient {
         }
     }
 
-    pub async fn warmup_params(
+    pub(crate) async fn warmup_params(
         &self,
-        pool: Pool,
-        mint: &Pubkey,
-        quote_mint: &Pubkey,
-        pool_id: Option<&Pubkey>,
+        hint: &PoolRouteHint,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
     ) -> anyhow::Result<()> {
         let mut last_error = None;
         for lane in self.execution_lanes() {
-            let result = protocol_params::warmup_on_rpc(
-                lane.client.get_rpc(),
-                pool,
-                mint,
-                quote_mint,
-                pool_id,
+            let result = protocol_params::warmup_scoped(
+                read_rpc.clone(),
+                lane.client.get_rpc().url(),
+                lane.client.get_rpc().commitment(),
+                hint,
             )
             .await;
             match result {
                 Ok(()) => return Ok(()),
                 Err(error) => {
+                    if ordinary_lanes::preparation_rejection(&error).is_some() {
+                        return Err(error.context(format!(
+                            "{} parameter read rejected",
+                            lane.swqos_type.as_str()
+                        )));
+                    }
                     let error = redact_urls(&error.to_string());
                     last_error = Some(anyhow!("{}: {}", lane.swqos_type.as_str(), error));
                 }
@@ -1377,28 +1379,6 @@ impl SdkTradeClient {
         )
         .await?;
         crate::adapters::sdk::damm_probe::evidence_damm_probe_output(&evidence).await
-    }
-
-    async fn dex_params(
-        &self,
-        client: &TradingClient,
-        pool: Pool,
-        mint: &Pubkey,
-        quote_mint: &Pubkey,
-        pool_id: Option<&Pubkey>,
-        sol_hop_pool: Option<Pool>,
-        sol_hop_pool_id: Option<&Pubkey>,
-    ) -> anyhow::Result<DexParamEnum> {
-        protocol_params::dex_params(
-            client.get_rpc(),
-            pool,
-            mint,
-            quote_mint,
-            pool_id,
-            sol_hop_pool,
-            sol_hop_pool_id,
-        )
-        .await
     }
 
     pub async fn resolve_pool(&self, mint: &Pubkey) -> anyhow::Result<PoolRouteHint> {

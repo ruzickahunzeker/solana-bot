@@ -18,7 +18,7 @@ fn pool_account(pool: &AmmInfo) -> solana_sdk::account::Account {
     account(RAYDIUM_AMM_V4, bytes)
 }
 
-fn fixture() -> (ReadRpc, Pubkey, AmmInfo, MarketState, Pubkey) {
+pub(super) fn fixture() -> (ReadRpc, Pubkey, AmmInfo, MarketState, Pubkey) {
     let id = address(71);
     let pool = AmmInfo {
         status: 6,

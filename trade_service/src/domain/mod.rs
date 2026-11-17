@@ -2,6 +2,7 @@
 
 pub(crate) mod blockhash;
 pub(crate) mod execution_policy;
+pub(crate) mod parameter_read;
 pub(crate) mod preparation_balance;
 pub(crate) mod quote;
 pub(crate) mod readiness;

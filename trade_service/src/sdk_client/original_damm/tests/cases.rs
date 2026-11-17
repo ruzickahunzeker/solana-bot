@@ -18,15 +18,13 @@ pub(super) async fn good() {
     assert_eq!(
         methods,
         [
-            RpcRequest::GetAccountInfo,
-            RpcRequest::GetMultipleAccounts,
             RpcRequest::GetMultipleAccounts,
             RpcRequest::SimulateTransaction,
             RpcRequest::SimulateTransaction,
             RpcRequest::SendTransaction
         ]
     );
-    assert_eq!(c.server.requests.lock().unwrap().len(), 2);
+    assert_eq!(c.server.requests.lock().unwrap().len(), 4);
     let sends = c.trace.sent.lock().unwrap().clone();
     assert_eq!(sends.len(), 1);
     let tx: VersionedTransaction = bincode::deserialize(&sends[0]).unwrap();

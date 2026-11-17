@@ -22,6 +22,10 @@ pub(crate) struct HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    Parameters {
+        id: u64,
+        query: super::parameter_reads::request::ParameterQuery,
+    },
     SignatureStatus {
         id: u64,
         signature: String,
@@ -60,6 +64,7 @@ pub(crate) enum ReadRequest {
 impl ReadRequest {
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::Parameters { id, query } => query.body(*id),
             Self::SignatureStatus { id, signature } => {
                 json!({"jsonrpc":"2.0","id":id,"method":"getSignatureStatuses","params":[[signature],{"searchTransactionHistory":true}]})
             }
@@ -94,6 +99,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::Parameters { .. } => "protocol parameters",
             Self::SignatureStatus { .. } => "observation",
             Self::LatestBlockhash { .. } => "blockhash",
             Self::NativeBalances { .. } => "native balances",
@@ -106,6 +112,9 @@ impl ReadRequest {
     }
 
     pub(super) fn max_body(&self) -> usize {
+        if let Self::Parameters { query, .. } = self {
+            return query.max_body();
+        }
         if matches!(self, Self::TokenAccounts { .. }) {
             MAX_TOKEN_BODY
         } else {

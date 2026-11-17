@@ -145,6 +145,11 @@ async fn dbc_real_loader_preserves_curve_state_programs_and_instructions_sysvar(
     }
 }
 
+pub(super) fn shared_fixture() -> (ReadRpc, Pubkey, Pubkey, Pubkey) {
+    let (read, expected) = fixture(spl_token_2022_interface::ID);
+    (read, expected.id, expected.base, expected.quote)
+}
+
 #[tokio::test]
 async fn dbc_migrated_pool_fails_before_reading_config_or_mints() {
     let (mut fixture, mut expected) = fixture(spl_token_interface::ID);

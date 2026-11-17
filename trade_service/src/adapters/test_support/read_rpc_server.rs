@@ -21,6 +21,11 @@ fn response(id: u64) -> Value {
 }
 #[derive(Clone)]
 pub(crate) enum Reply {
+    Parameters {
+        accounts: std::collections::HashMap<String, Value>,
+        epoch: Option<u64>,
+        other: Box<Reply>,
+    },
     Success,
     ObservedSignature(String),
     AtLimit,
@@ -186,16 +191,55 @@ async fn serve(
 ) {
     let payload = read_request(&mut stream).await;
     let id = payload["id"].as_u64().unwrap();
+    let (reply, parameter_value) = match reply {
+        Reply::Parameters {
+            accounts,
+            epoch,
+            other,
+        } => {
+            let value = match payload["method"].as_str() {
+                Some("getAccountInfo") => Some(
+                    json!({"context":{"slot":123},"value":accounts.get(payload["params"][0].as_str().unwrap()).expect("unscripted parameter account")}),
+                ),
+                Some("getMultipleAccounts")
+                    if payload["params"][0]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .all(|address| accounts.contains_key(address.as_str().unwrap())) =>
+                {
+                    Some(
+                        json!({"context":{"slot":123},"value":payload["params"][0].as_array().unwrap().iter().map(|address| accounts.get(address.as_str().unwrap()).unwrap()).collect::<Vec<_>>()}),
+                    )
+                }
+                Some("getEpochInfo") => {
+                    let epoch = epoch.expect("unscripted parameter epoch");
+                    Some(
+                        json!({"epoch":epoch,"slotIndex":1,"slotsInEpoch":432000,"absoluteSlot":epoch*432000+1,"blockHeight":42,"transactionCount":100}),
+                    )
+                }
+                _ => None,
+            };
+            (*other, value)
+        }
+        other => (other, None),
+    };
     let is_blockhash = payload["method"] == "getLatestBlockhash";
-    let is_preparation =
-        payload["method"] == "getMultipleAccounts" && payload["params"][1]["dataSlice"].is_null();
-    let is_balances = payload["method"] == "getMultipleAccounts" && !is_preparation;
+    let is_preparation = parameter_value.is_none()
+        && payload["method"] == "getMultipleAccounts"
+        && payload["params"][1]["dataSlice"].is_null();
+    let is_balances =
+        parameter_value.is_none() && payload["method"] == "getMultipleAccounts" && !is_preparation;
     let is_scan = payload["method"] == "getTokenAccountsByOwner";
     let is_quote_scalar = matches!(
         payload["method"].as_str(),
         Some("getTokenSupply" | "getTokenAccountBalance" | "getBalance")
     );
-    let body_limit = if is_scan { 524_288 } else { MAX_BODY };
+    let body_limit = if is_scan || parameter_value.is_some() {
+        524_288
+    } else {
+        MAX_BODY
+    };
     let mut preparation_value = None;
     let reply = match reply {
         Reply::Preparation {
@@ -251,7 +295,18 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if is_blockhash {
+    if parameter_value.is_some() {
+        if payload["method"] == "getEpochInfo" {
+            assert!(matches!(
+                payload["params"][0]["commitment"].as_str(),
+                Some("processed" | "confirmed" | "finalized")
+            ));
+        } else {
+            assert_eq!(payload["params"][1]["encoding"], "base64");
+            assert!(payload["params"][1]["dataSlice"].is_null());
+            assert!(payload["params"][1]["minContextSlot"].is_null());
+        }
+    } else if is_blockhash {
         assert_eq!(
             payload,
             json!({"jsonrpc":"2.0","id":id,"method":"getLatestBlockhash","params":[{"commitment":"processed"}]})
@@ -359,7 +414,9 @@ async fn serve(
     } else {
         id
     };
-    let mut body = serde_json::to_vec(&if let Some(value)=preparation_value {
+    let mut body = serde_json::to_vec(&if let Some(value)=parameter_value {
+        json!({"jsonrpc":"2.0","id":response_id,"result":value})
+    } else if let Some(value)=preparation_value {
         json!({"jsonrpc":"2.0","id":response_id,"result":{"context":{"slot":123},"value":value}})
     } else if is_blockhash {
         json!({"jsonrpc":"2.0","id":response_id,"result":{"context":{"slot":123},"value":{"blockhash":bs58::encode([7u8;32]).into_string(),"lastValidBlockHeight":456}}})

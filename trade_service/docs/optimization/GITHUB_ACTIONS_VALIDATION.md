@@ -30,17 +30,31 @@
 
 ## 当前批次
 
+2026-11-18 原 NP-03 参数读取 scope：源码23项新增测试（含1隔离 helper）、三项新
+专项与102字段门禁待独立CI。小 VM受限metadata检查触及内存上限，不再本地重试；
+导入/可见性警告已修，最终类型/运行须本批CI。要求保留父批1652名称，增量恰为23，
+完整并发/串行与所有门禁独立核对。见 `PROTOCOL_PARAMETER_SHARED_READS.md`。
+下方presence批次为已验收历史，不套用给当前源码。
+
 2026-11-17 续原 NP-03 的普通买入 presence 接原 preparation 预算，十四项新增合同
-及新 `preparation-presence` 步骤待本批独立 CI。必须保留父批 1638 名称且增量恰为
-十四项，完整并发/串行、原源码/99 字段拒绝/恢复和全部专项均需核对；不重复旧运行。
+及新 `preparation-presence` 步骤已独立验收。父批 1638 名称全保留且增量恰为十四项，
+完整并发/串行原始名称相同；原源码/99 字段拒绝/恢复及全部专项已核对，不重复旧运行。
 详见 `PREPARATION_PRESENCE_SHARED_RPC.md`；下方 882e514 是已验收父批，不套用给当前。
+本批 `27bd9969a5a725547ae22a0c97701030be9b30aa` /
+[Actions 44115951258](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44115951258)
+终态 success，artifact `14343274443` 已下载：全部 57 步骤 exit=0；完整并发 1652
+（168.50 秒）/串行 1652（296.55 秒）零失败/忽略/过滤。presence 13、实际买入 runtime
+5 通过；原始 compiler spans 的 99 个独立字段拒绝、原源码/恢复成功及 identity/
+manifest/lock/vendor manifest 均独立核对。不覆盖真实节点/供应商或生产验收。
+审计绑定 1066 文件/13,089,071 字节、20 白名单路径，保留真实 main/索引、冻结历史、
+manifest/lock/vendor/迁移；记录本身不再触发文档 CI。
 
 2026-11-17 原 NP-01 受控买入执行接线：十七项新合同，新增 controlled-buy、buy-claims
 和 original-buy-runtime 专项；同一 Clippy 策略增两个私有买入产物，32 类型/99 scoped
 字段（含外部 alias），不借用父批 93。完整并发/串行及原始诊断已按本批身份独立
 下载核对，不重跑任何终态任务。
 
-最新已验收 `882e514a499df01c68c704671ecdf335755e8ea9` /
+前批已验收 `882e514a499df01c68c704671ecdf335755e8ea9` /
 [Actions 44109233896](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44109233896)
 终态 success，artifact `14340653473` 下载独立核对：全部 56 步骤 exit=0；完整并发
 1638（149.17 秒）/串行 1638（275.68 秒），零失败/忽略/过滤，名称集合相同、父批

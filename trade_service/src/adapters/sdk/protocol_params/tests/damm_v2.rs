@@ -59,7 +59,7 @@ fn pool_account(pool: &DammPool) -> solana_sdk::account::Account {
     account(METEORA_DAMM_V2, data)
 }
 
-fn fixture() -> (ReadRpc, Pubkey, DammPool) {
+pub(super) fn fixture() -> (ReadRpc, Pubkey, DammPool) {
     let id = Pubkey::new_from_array([51; 32]);
     let pool = DammPool {
         token_a_mint: Pubkey::new_from_array([52; 32]),

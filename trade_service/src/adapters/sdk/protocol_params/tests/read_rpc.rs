@@ -20,6 +20,7 @@ use std::{
 pub(super) struct ReadRpc {
     accounts: HashMap<String, Option<Account>>,
     epoch: Option<u64>,
+    program_scan: Option<(Pubkey, Vec<(Pubkey, Account)>)>,
     calls: Arc<Mutex<Vec<(RpcRequest, Value)>>>,
     violations: Arc<Mutex<Vec<String>>>,
 }
@@ -36,6 +37,24 @@ impl ReadRpc {
     pub(super) fn epoch(&mut self, epoch: u64) {
         self.epoch = Some(epoch);
     }
+    pub(super) fn program_scan(&mut self, program: Pubkey, addresses: &[Pubkey]) {
+        self.program_scan = Some((
+            program,
+            addresses
+                .iter()
+                .map(|address| {
+                    (
+                        *address,
+                        self.accounts
+                            .get(&address.to_string())
+                            .unwrap()
+                            .clone()
+                            .unwrap(),
+                    )
+                })
+                .collect(),
+        ));
+    }
 
     pub(super) fn client(&self) -> RpcClient {
         RpcClient::new_sender(self.clone(), RpcClientConfig::default())
@@ -50,7 +69,9 @@ impl ReadRpc {
         assert!(self.calls().iter().all(|(method, _)| matches!(
             method,
             RpcRequest::GetAccountInfo | RpcRequest::GetMultipleAccounts | RpcRequest::GetEpochInfo
-        )));
+        ) || (*method
+            == RpcRequest::GetProgramAccounts
+            && self.program_scan.is_some())));
     }
 
     fn reject(&self, message: String) -> Error {
@@ -78,7 +99,7 @@ impl ReadRpc {
         }))
     }
 
-    fn respond(&self, request: RpcRequest, params: Value) -> Result<Value> {
+    pub(super) fn respond(&self, request: RpcRequest, params: Value) -> Result<Value> {
         self.calls.lock().unwrap().push((request, params.clone()));
         let value = match request {
             RpcRequest::GetAccountInfo => self.lookup(&params[0])?,
@@ -96,6 +117,23 @@ impl ReadRpc {
                     .ok_or_else(|| self.reject("unscripted fixture epoch".into()))?;
                 return Ok(json!({"epoch":epoch,"slotIndex":1,"slotsInEpoch":432000,
                     "absoluteSlot":epoch * 432000 + 1,"blockHeight":42,"transactionCount":100}));
+            }
+            RpcRequest::GetProgramAccounts if self.program_scan.is_some() => {
+                let (program, accounts) = self.program_scan.as_ref().unwrap();
+                if params[0] != program.to_string() {
+                    return Err(self.reject("wrong scripted program".into()));
+                }
+                let config: solana_client::rpc_config::RpcProgramAccountsConfig =
+                    serde_json::from_value(params[1].clone()).unwrap();
+                let filters = config.filters.unwrap();
+                let matches = accounts.iter().filter(|(_, account)| filters.iter().all(|filter| match filter {
+                    solana_client::rpc_filter::RpcFilterType::DataSize(size) => *size == account.data.len() as u64,
+                    solana_client::rpc_filter::RpcFilterType::Memcmp(filter) => filter.bytes_match(&account.data),
+                    _ => false,
+                })).map(|(address, account)| json!({"pubkey":address.to_string(),"account":{
+                    "lamports":account.lamports,"owner":account.owner.to_string(),"data":[base64::engine::general_purpose::STANDARD.encode(&account.data),"base64"],"executable":account.executable,"rentEpoch":account.rent_epoch,"space":account.data.len()
+                }})).collect::<Vec<_>>();
+                return Ok(json!(matches));
             }
             _ => return Err(self.reject(format!("forbidden fixture RPC method: {request}"))),
         };

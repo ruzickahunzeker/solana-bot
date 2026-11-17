@@ -2,7 +2,10 @@
 
 Date: 2026-11-17. Continues the existing NP-03 / TS-07/09 RPC and SDK-facade
 boundary, without a new task, execution profile, dependency or production change.
-Source is implemented; independent Rust runtime acceptance is still required.
+Source and isolated acceptance passed in 27bd996 / Actions 44115951258 /
+artifact 14343274443. This does not authorize deployment or real-node testing.
+Acceptance record updated 2026-11-18, Asia/Shanghai; implementation and CI ran
+on 2026-11-17. Historical snapshot dates are not rewritten.
 
 ## Actual Call Path
 
@@ -48,9 +51,9 @@ signed journal/CAS, sender, migration files and wallet storage are unchanged.
 Legacy behavior in other protocols is not upgraded to full account authorization
 by moving this hint; later protocol evidence remains mandatory where implemented.
 
-## Evidence Required
+## Accepted Evidence
 
-Fourteen new Rust contracts are present: nine deterministic runtime tests, four
+Fourteen new Rust contracts ran successfully: nine deterministic runtime tests, four
 isolated real HTTP/1.1 tests, and one real original-buy runtime fault/cancel test
 covering both payment assets. HTTP parity uses the original SDK RPC method and
 predicate without constructing a TradingClient or signer. Tests cover the original
@@ -62,14 +65,21 @@ The existing original-buy success test now expects one exact HTTP presence read;
 the SDK mock explicitly panics if that read bypasses SharedReadRuntime. Original
 sell traces/assertions are unchanged. A new `preparation-presence` CI step selects
 all thirteen runtime/wire tests; the original-buy runtime step covers the new
-fourteenth test. Full concurrent/serial suites must retain all 1638 parent names
-and add exactly these fourteen; 99 field rejections remain required.
+fourteenth test. Artifact identity/manifest/lock/vendor-manifest hashes match.
+Both complete suites passed: concurrent 1652 in 168.50 seconds; serial 1652 in
+296.55 seconds, zero failed/ignored/filtered. Their raw name sets are identical,
+retain all 1638 parent names and add exactly the fourteen source test names above.
+All 57 steps exited zero; focused presence 13 and original-buy runtime 5 passed.
+Original/restored Clippy checks succeeded, and raw compiler spans independently
+confirm all 99 distinct field rejections. No earlier count was reused.
 
 Local final bounded test metadata check passed (11 seconds / RSS 1,342,232 KiB),
 production metadata check passed (10 seconds / RSS 772,052 KiB; original seven
 warnings). Python policy 10, workflow 7 and SDK provenance checks pass. An initial
 test-only temporary-borrow error was fixed before publication. Metadata checks do
-not execute Rust tests; isolated CI must supply its own identity and raw logs.
+not execute Rust tests; the separate isolated CI supplied its own identity and
+raw logs as audited above. Do not rerun the terminal job or trigger docs-only CI
+for this acceptance record.
 
 SDK stays 6.0.2. No local service test link, release build, deployment/restart,
 production configuration/wallet/database access, real RPC call or transaction.

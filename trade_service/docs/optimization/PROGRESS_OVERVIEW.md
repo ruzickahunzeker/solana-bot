@@ -1,14 +1,21 @@
 # Trade Service 已完成与未完成盘点
 
-日期：2026-11-17。依据：当前源码路径、主计划与执行记录。用户已恢复持续目标，本轮续非 PumpAPI 普通交易源码/离线验收；历史暂停及运维记录保留。修改计划本身不触发暂停或恢复。不再用缺少权重的百分比表达完成度。
+日期：2026-11-18（Asia/Shanghai）。依据：当前源码路径、主计划与执行记录。用户已恢复持续目标，本轮续非 PumpAPI 普通交易源码/离线验收；历史暂停及运维记录保留。修改计划本身不触发暂停或恢复。不再用缺少权重的百分比表达完成度。
 
 恢复前的总体审查及获准 RPC 运维见 [历史审查](../../../docs/optimization/PROJECT_REVIEW_2026-11-14.md)：当时源码全套 1038 项通过、优化未部署，仅更换失效 RPC 并重启同一旧 release。本轮不做生产运维；当前唯一任务和已验收基线见 [当前执行状态](EXECUTION_STATUS.md)，全部旧发布记录原字节保留到 [执行历史](EXECUTION_HISTORY_20261115.md)。下方历史检查点不是重新等待或重复执行的任务。外部 Copy/Bridge 已有兼容规则集中见 [对接边界](SERVICE_INTEGRATION_BOUNDARIES.md)，不是新增协议或对接功能完成声明。
 
 ## 统计口径
 
+- 当前续原NP-03参数读取：准备/预热接原HTTP/runtime/冷却和有界只读scope，九类参数/
+  扫描/hop/可选错误/取消等23项新测试与102字段门禁待独立CI。本机metadata触及内存
+  限额后不重试，不套用父批1652。不是全RPC/全协议授权或生产完成；详见
+  `PROTOCOL_PARAMETER_SHARED_READS.md`。不新增任务或完成度分母。
 - 当前续原 NP-03 普通买入存在性读取：接原 preparation 容量/起点与共享冷却，删除
-  根 SDK 唯一 helper 调用；十四项新合同待独立 CI，不把 882e514 的完整各 1638 当作
-  本批结果。它仍只是原 V1 构建提示，不是账户授权；不改变 SDK、API 或生产状态。
+  根 SDK 该 helper 的唯一调用与旧实现。`27bd996` / Actions `44115951258` / artifact
+  `14343274443` 独立验收：完整并发 1652（168.50 秒）/串行 1652（296.55 秒），名称
+  相同、父批 1638 全保留且新增恰为十四项；presence 13、实际买入 runtime 5、99 字段
+  拒绝及全部 57 步骤通过，identity/manifest/lock/vendor manifest 匹配。不重跑终态
+  CI。它仍只是原 V1 构建提示，不是账户授权；不改变 SDK、API 或生产状态。
   其他参数/寻池/模拟/独立读取及全局预算保留，见 `PREPARATION_PRESENCE_SHARED_RPC.md`。
 - 当前原 NP-01 买入受控 signer/私有签后产物、原 owner/CAS/落盘回读、固定 Buy sender、
   runtime 与 claim/扫描一致接线已在 `882e514` / Actions `44109233896` / artifact
@@ -211,7 +218,7 @@
 | 聚合签名前时效 | B3a 共享 prepared 保存原到期快照并在取出待签消息前重查，过期拒绝先于 signer 获取，未过期 Legacy/V0 消息原字节保持 | 完整协议/费用/权限授权、真实节点或检查之后永不跨过期限；不自动重建、重签或重发 |
 | 普通聚合观测/恢复基础 | D1A/D1B1 原观测/恢复核心；D1B2 默认关闭的扫描与局部预算/文件/信号恢复；D1B3 生产 transport 的本地 HTTP/1.1 请求/响应/超时/取消证据通过 | 全部 backend/mode、无签名 signing 中断、真实供应商/TLS/HTTP2/生产调度与全服务 RPC 预算验收；不是新的执行许可 |
 | 协议与参数 | 中央 Registry、SDK 参数映射集中、九类基础 loader fixture、Pool query/warmup/hop 边界 | 九类完整报价/账户扩展/迁移/多跳或全协议实盘验收 |
-| 只读基础边界 | RPC-01A 配置去重；B1 刷新/观测、B2 readiness、C1 原生余额、C2 Quote 查询、A3c 准备余额六类共享 HTTP/冷却，各有独立容量/间隔、真实 wire/体积/错误/取消合同；准备仅当前 URL，旧 oracle 独立保留 | 全服务 RPC/signer 已收口或供应商额度/真实节点验收；参数/ATA/寻池、独立 quote/WSOL、模拟与 SDK 内部读仍待续 |
+| 只读基础边界 | RPC-01A 配置去重；B1 刷新/观测、B2 readiness、C1 原生余额、C2 Quote 查询、A3c 准备余额六类共享 HTTP/冷却；27bd996 普通买入 presence 复用原 preparation 容量/间隔，各有 wire/体积/错误/取消合同；仅当前 URL，旧 oracle 独立保留 | 全服务 RPC/signer 已收口或供应商额度/真实节点验收；存在性提示不是 ATA 完整证据，参数/寻池、独立 quote/WSOL、模拟与 SDK 内部读仍待续 |
 | 普通准备余额入口 | A3a/B1/B2 的 raw/SDK 输入/模式与 A3c 实际 HTTP 预算，保留时效、整数/比例、原顺序/参数 oracle；坏/过期证据停止，SDK 入口后不回退 | 全方向/费用/min_out/全部账户权限与最终不可变消息授权、实际 signer/SDK 路径/真实节点或已部署 |
 | 普通 SDK 构建入口 | B4a 实际调用链审查、九项无 Keypair/RPC 编译/费用合同，明确版本/ALT/权限提升/字节绑定与编译不提供的保证 | 无 signer 最终协议构建/不可变授权已接真实路径，或签名/广播前账本完成 |
 | DAMM 卖出候选 | B4b 正式/preview nominal profile 接实际 SDK protocol/full callback、原请求/费用/消息/返回签名、取消/单次/时效核对；25 新测试含 384 SDK 指令对照 | 已隔离 SDK 签名能力、全量可信协议授权/全方向已覆盖，或 ordinary signed journal 已实现 |

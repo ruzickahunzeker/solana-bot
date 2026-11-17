@@ -114,6 +114,13 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The 2026-11-18 protocol-parameter batch adds ParameterReadSession to the same
+policy: 33 selected types / 102 scoped fields including the outside alias.
+These are pending independent CI evidence, not accepted by the older 99-field
+run. The bounded local check reached MemoryMax=2200M (SIGKILL, 50 seconds,
+RSS 2,273,960 KiB; target/dev-checks/20261117T162617Z-1019411). Do not retry
+local Cargo or raise the cap; use the authorized source-only CI for this batch.
+
 The 2026-11-17 controlled-buy batch adds the private DammBuyCandidate and
 DammBuySignedCandidate: 32 selected types and 99 scoped fields including the
 outside-alias probe. Source 882e514 / Actions 44109233896 / artifact 14340653473
@@ -141,7 +148,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The versioned JSON fixture now lists 32 selected SDK,
+`clippy::disallowed_types`. The accepted parent JSON fixture lists 32 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

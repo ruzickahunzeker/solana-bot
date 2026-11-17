@@ -85,17 +85,13 @@ impl<'a> LanePreparation<'a> {
 
 impl OrdinaryPreparationSource for LanePreparation<'_> {
     async fn load_params(&self, trade: &ExecuteTrade) -> anyhow::Result<DexParamEnum> {
-        self.wallet
-            .dex_params(
-                &self.lane.client,
-                trade.pool,
-                &trade.mint,
-                &trade.quote_mint,
-                trade.pool_id.as_ref(),
-                trade.sol_hop_pool,
-                trade.sol_hop_pool_id.as_ref(),
-            )
-            .await
+        crate::adapters::sdk::protocol_params::load_for_trade(
+            self.read_rpc.clone(),
+            self.lane.client.get_rpc().url(),
+            self.lane.client.get_rpc().commitment(),
+            trade,
+        )
+        .await
     }
 
     async fn token_balance(&self, mint: Pubkey) -> anyhow::Result<u64> {

@@ -70,6 +70,8 @@ enum Mode {
     PresenceRate,
     PresenceInvalid,
     PresenceHold,
+    ParameterRate,
+    ParameterInvalid,
 }
 #[derive(Default)]
 struct Trace {
@@ -222,8 +224,7 @@ impl RpcSender for MemoryRpc {
                 .push((request, params.clone()));
             match request {
                 RpcRequest::GetAccountInfo => {
-                    assert_eq!(params[0], key(1).to_string());
-                    Ok(json!({"context":{"slot":123},"value":self.values[0]}))
+                    panic!("parameter accounts must use the shared HTTP runtime")
                 }
                 RpcRequest::GetTokenAccountsByOwner if self.buy_result.is_some() => {
                     panic!("buy presence must use the shared HTTP runtime, not the SDK RPC")
@@ -238,13 +239,6 @@ impl RpcSender for MemoryRpc {
                             .parse()
                             .unwrap();
                         let values = match addresses.len() {
-                            2 => {
-                                assert_eq!(
-                                    params[0],
-                                    json!([key(4).to_string(), quote.to_string()])
-                                );
-                                self.values[1..3].to_vec()
-                            }
                             9 => {
                                 let ata = |mint| {
                                     sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(&self.wallet,&mint,&spl_token_interface::ID).to_string()
@@ -271,16 +265,6 @@ impl RpcSender for MemoryRpc {
                         return Ok(json!({"context":{"slot":42},"value":values}));
                     }
                     let values = match addresses.len() {
-                        2 => {
-                            assert_eq!(
-                                *addresses,
-                                vec![
-                                    json!(key(4).to_string()),
-                                    json!(USDC_TOKEN_ACCOUNT.to_string())
-                                ]
-                            );
-                            self.values[1..3].to_vec()
-                        }
                         8 => {
                             let input=sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(&self.wallet,&key(4),&spl_token_interface::ID);
                             let output=sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(&self.wallet,&USDC_TOKEN_ACCOUNT,&spl_token_interface::ID);
@@ -450,16 +434,36 @@ impl Case {
         if mode == Mode::BadRaw {
             raw[0]["owner"] = json!(key(99).to_string());
         }
-        let server = LocalServer::new(Reply::Preparation {
-            scan: Box::new(match mode {
-                Mode::PresenceRate => Reply::RateLimited(Some("60")),
-                Mode::PresenceInvalid => Reply::WrongId,
-                Mode::PresenceHold => Reply::SlowHeaders,
-                _ => Reply::Success,
+        let server = LocalServer::new(Reply::Parameters {
+            accounts: HashMap::from([
+                (key(1).to_string(), values[0].clone()),
+                (key(4).to_string(), values[1].clone()),
+                (
+                    if native == Some(true) {
+                        WSOL_TOKEN_ACCOUNT
+                    } else {
+                        USDC_TOKEN_ACCOUNT
+                    }
+                    .to_string(),
+                    values[2].clone(),
+                ),
+            ]),
+            epoch: None,
+            other: Box::new(match mode {
+                Mode::ParameterRate => Reply::RateLimited(Some("60")),
+                Mode::ParameterInvalid => Reply::WrongId,
+                _ => Reply::Preparation {
+                    scan: Box::new(match mode {
+                        Mode::PresenceRate => Reply::RateLimited(Some("60")),
+                        Mode::PresenceInvalid => Reply::WrongId,
+                        Mode::PresenceHold => Reply::SlowHeaders,
+                        _ => Reply::Success,
+                    }),
+                    raw: Box::new(Reply::Success),
+                    scan_value: parsed,
+                    raw_value: json!(raw),
+                },
             }),
-            raw: Box::new(Reply::Success),
-            scan_value: parsed,
-            raw_value: json!(raw),
         })
         .await;
         let trace = Arc::new(Trace::default());
@@ -638,6 +642,7 @@ async fn sdk_original_runtime_child() {
         "buy-post-sign" => buy::post_sign().await,
         "buy-cancel" => buy::cancel().await,
         "buy-presence" => buy::presence_gate().await,
+        "buy-parameters" => buy::parameter_gate().await,
         _ => panic!("unknown synthetic SDK runtime case"),
     }
     println!("{DONE}");

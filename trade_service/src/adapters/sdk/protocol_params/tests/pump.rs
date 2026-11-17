@@ -4,7 +4,7 @@ use sol_trade_sdk::{
     instruction::utils::pumpfun::{self, accounts, global_constants},
 };
 
-fn fixture(complete: bool, sharing: bool) -> (ReadRpc, Pubkey, Pubkey, Pubkey) {
+pub(super) fn fixture(complete: bool, sharing: bool) -> (ReadRpc, Pubkey, Pubkey, Pubkey) {
     let mint = Pubkey::new_from_array([101; 32]);
     let creator = Pubkey::new_from_array([102; 32]);
     let fee_recipient = Pubkey::new_from_array([103; 32]);

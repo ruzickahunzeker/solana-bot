@@ -37,7 +37,7 @@ fn pool_account(pool: &SwapPool) -> solana_sdk::account::Account {
     account(accounts::AMM_PROGRAM, data)
 }
 
-fn fixture(mayhem: bool, virtual_quote_reserves: i128) -> (ReadRpc, Pubkey, SwapPool) {
+pub(super) fn fixture(mayhem: bool, virtual_quote_reserves: i128) -> (ReadRpc, Pubkey, SwapPool) {
     let id = address(111);
     let base_mint = address(112);
     let pool = SwapPool {

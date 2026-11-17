@@ -9,11 +9,15 @@ use std::sync::Arc;
 
 pub(crate) struct SdkPoolReadBackend {
     wallets: Arc<WalletRegistry>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 
 impl SdkPoolReadBackend {
-    pub fn new(wallets: Arc<WalletRegistry>) -> Self {
-        Self { wallets }
+    pub fn new(
+        wallets: Arc<WalletRegistry>,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    ) -> Self {
+        Self { wallets, read_rpc }
     }
 }
 
@@ -26,12 +30,9 @@ impl PoolReadBackend for SdkPoolReadBackend {
     }
 
     async fn warmup(&self, hint: &PoolRouteHint) -> Result<()> {
-        let mint = Pubkey::new_from_array(hint.mint.to_bytes());
-        let quote_mint = Pubkey::new_from_array(hint.quote_mint.to_bytes());
-        let pool_id = hint.pool_id.map(|id| Pubkey::new_from_array(id.to_bytes()));
         self.wallets
             .default()
-            .warmup_params(hint.pool, &mint, &quote_mint, pool_id.as_ref())
+            .warmup_params(hint, self.read_rpc.clone())
             .await
     }
 

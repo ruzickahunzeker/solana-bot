@@ -16,6 +16,63 @@ use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 
+pub(crate) async fn load_for_trade<
+    T: crate::adapters::rpc::read_http::ReadHttpTransport + 'static,
+>(
+    runtime: std::sync::Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime<T>>,
+    url: String,
+    commitment: solana_commitment_config::CommitmentConfig,
+    trade: &super::trade_command::ExecuteTrade,
+) -> anyhow::Result<DexParamEnum> {
+    use crate::{
+        adapters::rpc::parameter_reads::{ParameterReadScope, ParameterReadSession},
+        domain::trade::Address,
+    };
+    let session = ParameterReadSession::new(
+        runtime,
+        url,
+        commitment,
+        ParameterReadScope::new(
+            trade.pool,
+            Address::from_bytes(trade.mint.to_bytes()),
+            trade.pool_id.map(|id| Address::from_bytes(id.to_bytes())),
+        ),
+    );
+    let result = dex_params(
+        session.rpc(),
+        trade.pool,
+        &trade.mint,
+        &trade.quote_mint,
+        trade.pool_id.as_ref(),
+        trade.sol_hop_pool,
+        trade.sol_hop_pool_id.as_ref(),
+    )
+    .await;
+    session.finish(result)
+}
+
+pub(crate) async fn warmup_scoped<
+    T: crate::adapters::rpc::read_http::ReadHttpTransport + 'static,
+>(
+    runtime: std::sync::Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime<T>>,
+    url: String,
+    commitment: solana_commitment_config::CommitmentConfig,
+    hint: &crate::domain::route::PoolRouteHint,
+) -> anyhow::Result<()> {
+    use crate::adapters::rpc::parameter_reads::{ParameterReadScope, ParameterReadSession};
+    let session = ParameterReadSession::new(
+        runtime,
+        url,
+        commitment,
+        ParameterReadScope::new(hint.pool, hint.mint, hint.pool_id),
+    );
+    let mint = Pubkey::new_from_array(hint.mint.to_bytes());
+    let quote = Pubkey::new_from_array(hint.quote_mint.to_bytes());
+    let pool_id = hint.pool_id.map(|id| Pubkey::new_from_array(id.to_bytes()));
+    let result = warmup_on_rpc(session.rpc(), hint.pool, &mint, &quote, pool_id.as_ref()).await;
+    session.finish(result)
+}
+
 pub(crate) async fn warmup_on_rpc(
     rpc: &RpcClient,
     pool: Pool,

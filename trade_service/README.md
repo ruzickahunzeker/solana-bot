@@ -16,6 +16,8 @@
 - PumpAPI 只会收到钱包公钥、mint、quote、金额、滑点和 priority fee，不会收到私钥。
 - 服务默认只监听 `127.0.0.1:18787`。
 
+普通买入的账户存在性提示已接同一个共享读取 runtime，复用 preparation 容量、250 ms 起点间隔与跨类别冷却；2 秒总期限、512 KiB/1000 账户上限，错误不当作不存在。原 SDK program-label 布尔含义保留，不冒充 ATA/余额证据。`27bd996` / Actions `44115951258` 独立验收完整并发/串行各 1652、57 步骤和 99 字段拒绝通过；不代表参数/寻池/模拟等剩余读取已完成迁移或已经部署，见 [账户存在性读取](docs/optimization/PREPARATION_PRESENCE_SHARED_RPC.md)。
+
 ## 配置
 
 开发验证入口及小内存机器的资源限制见 [开发检查说明](docs/optimization/DEVELOPMENT_CHECKS.md)。该机器不应直接反复运行无资源限制的全量测试编译；先类型检查，再受限专项验证。此说明不改变生产配置或 release 构建。
@@ -199,6 +201,8 @@ memory -> shadow（完成对账）-> durable + ENABLE_SIMULATE=true（完成验�
 ```
 
 持久化模式本身不替换钱包加载、SDK/PumpAPI 交易构造或 MEV 路径；后续源码的只读 RPC 改造见上节，不改变发送 client。durable 数据库连接使用 `synchronous=FULL`，影响同库写入的刷盘成本，发布前需测量目标磁盘上的延迟；`ENABLE_SIMULATE=true` 仍只是默认值，不是不可绕过的全局禁止广播开关。
+
+普通 SDK 参数加载和预热新增共享只读 scope：复用原 runtime/HTTP/cooldown，8 秒总期限、单步 2 秒、最多 32 次请求；SDK 可选配置不能吞掉读取失败。当前新增 23 项测试源码仍待独立 CI，不能复用上批结果，不代表寻池/模拟等全部读取已统一或已部署。详见 [参数读取边界](docs/optimization/PROTOCOL_PARAMETER_SHARED_READS.md)。
 
 ## 参数说明
 

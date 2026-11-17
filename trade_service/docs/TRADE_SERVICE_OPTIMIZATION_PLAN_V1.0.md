@@ -4,8 +4,15 @@
 - 日期：2026-11-12
 - 状态：2026-11-17 按用户续原非 PumpAPI 队列。原 NP-01 受控买入 signer/签后产物、原 owner/CAS/签名字节落盘回读、固定 Buy sender、runtime 与 claim/扫描已在 `882e514` / Actions `44109233896` 独立验收：完整并发/串行各 1638 项、99 字段门禁及全部 56 步骤通过，父批 1621 全保留且新增恰为十七项。不重复原任务或增加分母；仅覆盖原 Durable Live SDK 直接 DAMM 的 Native SOL/WSOL 与既有 USDC。其他 NP-01/03/04/05 和真实节点/发布门槛保留；SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 同日续原 NP-03 的普通买入账户存在性读取：源码接原 preparation 容量/起点与共享
-  冷却，保留原布尔提示语义；十四项新合同待独立 CI，不套用上批结果。参数/寻池/
+  冷却，保留原布尔提示语义；`27bd996` / Actions `44115951258` / artifact `14343274443`
+  独立验收完整并发/串行各 1652、57 步骤及 99 字段拒绝通过，父批 1638 保留且新增
+  恰为十四项，不套用上批结果。参数/寻池/
   模拟和全局额度仍在原队列，不重复立项，见 [读取接线](optimization/PREPARATION_PRESENCE_SHARED_RPC.md)。
+- 2026-11-18 续原 NP-03 / TS-07/09 参数读取：普通交易 loader 与预热已接同一
+  SharedReadRuntime 的有界只读 scope，原 SDK decoder、lane 顺序及提交权威不变。
+  新增 23 项测试源码（含一项隔离 helper），待本批独立 CI 验收，不套用父批结果。
+  本机类型检查触及 2200 MiB 限制后停止，后续只用已授权源码 CI，不重试本地大编译。
+  见 [参数读取边界](optimization/PROTOCOL_PARAMETER_SHARED_READS.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
