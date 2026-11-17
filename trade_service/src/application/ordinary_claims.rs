@@ -3,7 +3,7 @@ use crate::{
         ports::ordinary_journal::TradeJournalMode, trade_admission::AdmittedTrade,
         trade_record::TradeRecordV1,
     },
-    domain::trade::{ExecutionMethod, Pool, TradeAmount, TradeStatus},
+    domain::trade::{ExecutionMethod, Pool, TradeAmount, TradeStatus, USDC_MINT, WSOL_MINT},
 };
 
 #[cfg(test)]
@@ -54,6 +54,16 @@ pub(crate) fn operation_for_claim(
         return Ok(ClaimOperation::SolBuy);
     }
     let command = execution.command();
+    let amount_allowed = match command.amount {
+        TradeAmount::SellPercent { percent: 1..=100 } => true,
+        TradeAmount::BuySol { lamports } => {
+            lamports > 0 && command.route.quote_mint.to_string() == WSOL_MINT
+        }
+        TradeAmount::BuyQuote { mint, units } => {
+            units > 0 && mint == command.route.quote_mint && mint.to_string() == USDC_MINT
+        }
+        _ => false,
+    };
     anyhow::ensure!(
         execution.reservation().mode() == mode
             && mode == TradeJournalMode::Durable
@@ -63,10 +73,7 @@ pub(crate) fn operation_for_claim(
             && command.route.pool == Pool::MeteoraDammV2
             && command.route.sol_hop_pool.is_none()
             && command.route.sol_hop_pool_id.is_none()
-            && matches!(
-                command.amount,
-                TradeAmount::SellPercent { percent: 1..=100 }
-            ),
+            && amount_allowed,
         "ordinary execution claim mode or operation mismatch"
     );
     Ok(ClaimOperation::SdkTrade)

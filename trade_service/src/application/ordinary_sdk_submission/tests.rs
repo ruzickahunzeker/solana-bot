@@ -32,6 +32,7 @@ use std::sync::{
 };
 use tokio::sync::Notify;
 
+mod buy_tests;
 mod finality_tests;
 mod prepared_record_tests;
 

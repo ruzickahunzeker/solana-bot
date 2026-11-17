@@ -2,7 +2,7 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-16 持续目标 active，仅续非 PumpAPI 源码/离线队列。原 NP-01 原 journal 买卖记录类型边界 `2fe436d` / Actions `43781625542` / artifact `14189296618` 已独立验收：共同记录专项 9、买入 79、完整并发/串行各 1605，93 字段拒绝与全部 52 步骤通过。普通任务、Shadow 生命周期及买入准备/回调/记录基础和共同记录类型不再排队；下一步续买入原 owner 的实际 origin/permit 授权、签名字节账本/固定 sender 与恢复，其他 NP-01/03/04/05 门槛保留，不以名义记录或类型迁移冒充完整授权、可取消 worker 或生产验收。SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-17 按用户续原非 PumpAPI 队列。原 NP-01 买入历史证据 `f029d55` 已独立验收（完整并发/串行各 1621）；后继原 owner 的受控买入 signer/签后产物、原 CAS/签名字节落盘回读、固定 Buy sender、runtime 与 claim/扫描已接源码，十七项新合同/99 字段门禁待本批隔离 CI。验收前不套用父批结果，不重复原任务或增加分母。其他 NP-01/03/04/05 和真实节点/发布门槛保留；SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -467,12 +467,27 @@ capture/finality 已能核对买入历史的原 parent/key/hash/签名/上下文
 或新 authority，原自动扫描仍排除买入。旧“损坏买入行关联卖出”合同只更新 nominal
 重构能力断言，保留全部原 parent/owner/读回拒绝和零变更断言。
 
-新增十六项真实构建/历史临时 key/原意图/V1 精度/临时库与 finality 合同；受限
-test check 12 秒/RSS 1,472,072 KiB、production check 5 秒/RSS 672,372 KiB 通过，
-原七组警告。独立 CI 尚待运行，不复用父批 1605，不把合成历史行/签名当作受控买入
-signer 或生产恢复验收。详见 [买入历史证据](optimization/SDK_BUY_HISTORY_EVIDENCE.md)。
+新增十六项真实构建/历史临时 key/原意图/V1 精度/临时库与 finality 合同；最终受限
+test check 11 秒/RSS 1,365,552 KiB、production check 5 秒/RSS 672,372 KiB 通过，
+原七组警告。独立 `f029d55` / Actions `43785820055` / artifact `14190956041` 已终态
+success，日志下载核对：完整并发 1621（120.77 秒）/串行 1621（227.60 秒）零失败/
+忽略/过滤，两套名称相同、父批 1605 全保留且增量恰为十六项。新专项 18、共同记录
+9、买入 79、原源码/恢复 Clippy 成功、原始 spans 的 93 字段拒绝及全部 53 步骤通过。
+identity/manifest/lock/vendor manifest 匹配，发布审计 1059 文件/12,989,654 字节、
+30 路径，真实 main/索引/冻结历史保持。终态 CI 不重跑，后续验收记录不另发文档 CI。
+不把合成历史行/签名当作受控买入 signer 或生产恢复验收。详见
+[买入历史证据](optimization/SDK_BUY_HISTORY_EVIDENCE.md)。
 后继继续受控买入候选/signer、原 owner 的 CAS/签名字节落盘、固定 Buy sender/runtime
 与 claim/扫描共同接线；不先扩大 claim，不由历史记录恢复执行许可或重签/重发。
+
+2026-11-17 同项后继：原不可变买入候选、live 整笔零签名预览、线性 permit 受控签名
+及私有签后 artifact 已接同一个 `OriginalDammBackend`、journal 与固定 Buy sender。
+只有原 Durable Live SDK 直接 DAMM 的正整数 Native SOL/WSOL 或既有 USDC claim
+同步准入，同一个 SDK 索引页包含 buy/sell；未改 DDL、旧 SellV1、hash/API 或生产配置。
+十七项新增合同待独立运行，不用历史签名恢复 owner，不扩大到其他协议/模式；
+原高层买入 SDK worker 不参与该新子路径。详见 [原执行接线](optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)。
+后继未完成范围仍为其他协议/模式的完整授权/账本、共享 RPC、资源/依赖边界及真实
+环境/迁移/回滚，不由本批局部接线宣称整体优化完成。
 
 ## 4. 稳定类型和后端边界
 

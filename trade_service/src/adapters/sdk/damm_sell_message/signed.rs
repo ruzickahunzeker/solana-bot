@@ -27,28 +27,11 @@ impl DammSellCandidate {
             "DAMM original live context is missing or changed"
         );
         let intent = &self.profile.intent;
-        use crate::domain::trade::MevProvider;
-        use sol_trade_sdk::swqos::SwqosType;
-        let provider_allowed = match (intent.use_mev, intent.mev_provider) {
-            (Some(false), Some(requested))
-                if !matches!(requested, MevProvider::Auto | MevProvider::Default) =>
-            {
-                false
-            }
-            (Some(true), Some(MevProvider::Default)) => false,
-            (Some(false), _) | (_, Some(MevProvider::Default)) => {
-                context.provider == SwqosType::Default
-            }
-            (_, Some(requested)) if requested != MevProvider::Auto => {
-                crate::sdk_client::provider_swqos_type(requested) == Some(context.provider)
-            }
-            (Some(true), _) => context.provider != SwqosType::Default,
-            _ => true,
-        };
-        ensure!(
-            provider_allowed,
-            "DAMM selected provider differs from the original MEV policy"
-        );
+        super::super::ordinary_lanes::ensure_requested_provider(
+            intent.use_mev,
+            intent.mev_provider,
+            context.provider,
+        )?;
         let message = self.message_bytes();
         crate::application::sdk_preparation::validate_origin(execution, self.metadata(), &message)?;
         self.profile.recheck()?;

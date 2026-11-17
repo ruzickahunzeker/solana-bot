@@ -26,7 +26,7 @@ async fn damm_buy_record_round_trips_real_candidates_for_both_assets_modes_and_a
                     let message = c.transaction.message.serialize();
                     let encoded = c.record.encode(&message).unwrap();
                     let decoded = DammBuyCandidateRecord::decode(&encoded, &message).unwrap();
-                    assert_eq!(decoded, c.record);
+                    assert_eq!(&decoded, c.record.buy().unwrap());
                     let common = crate::domain::sdk_prepared_record::SdkPreparedRecord::decode(
                         &encoded, &message,
                     )
@@ -53,7 +53,7 @@ async fn damm_buy_record_captures_only_actual_same_bank_funding_and_raw_asset_un
     for native in [false, true] {
         let p = profile(SwqosType::Default, false, native, false).await;
         let c = p.prepare(None).unwrap();
-        let d = c.record.details();
+        let d = c.record.buy().unwrap().details();
         assert_eq!(d.input_units, 100);
         assert_eq!(
             d.funding,
@@ -83,7 +83,7 @@ async fn damm_buy_record_captures_only_actual_same_bank_funding_and_raw_asset_un
             (d.quoted_net_output_units, d.minimum_output_units),
             (120, 102)
         );
-        let value = serde_json::to_value(&c.record).unwrap();
+        let value = serde_json::to_value(c.record.buy().unwrap()).unwrap();
         assert!(value["details"].get("sell_percent").is_none());
         assert!(value["details"].get("balance_units").is_none());
     }
@@ -116,8 +116,8 @@ async fn damm_buy_record_usdc_to_wsol_binds_canonical_output_program_and_decimal
     let p = DammBuyMessage::new(Arc::new(quote), context, &intent, &request).unwrap();
     let c = p.prepare(None).unwrap();
     let message = c.transaction.message.serialize();
-    validate_record(&c.record, &message).unwrap();
-    let d = c.record.details();
+    validate_record(c.record.buy().unwrap(), &message).unwrap();
+    let d = c.record.buy().unwrap().details();
     assert_eq!(d.output_decimals, 9);
     assert_eq!(d.mint, WSOL_TOKEN_ACCOUNT.to_bytes());
     assert_eq!(d.native.deposit_lamports, 0);
@@ -140,7 +140,7 @@ async fn damm_buy_record_reconstructs_all_transaction_accounts_amounts_fees_and_
     let c = candidate().await;
     let message = c.transaction.message.serialize();
     for change in 0..23 {
-        let mut d = c.record.details().clone();
+        let mut d = c.record.buy().unwrap().details().clone();
         match change {
             0 => d.wallet = [99; 32],
             1 => d.mint = [99; 32],
@@ -200,7 +200,7 @@ async fn damm_buy_record_rejects_inconsistent_native_math_slots_minimum_and_crea
     let c = candidate().await;
     let message = c.transaction.message.serialize();
     for change in 0..15 {
-        let mut d = c.record.details().clone();
+        let mut d = c.record.buy().unwrap().details().clone();
         match change {
             0 => d.native.before_lamports -= 1,
             1 => d.native.remaining_lamports += 1,
@@ -229,14 +229,14 @@ async fn damm_buy_record_rejects_inconsistent_native_math_slots_minimum_and_crea
 async fn damm_buy_record_distinguishes_nominal_reconstruction_from_original_live_quote_evidence() {
     let mut c = candidate().await;
     let message = c.transaction.message.serialize();
-    let mut d = c.record.details().clone();
+    let mut d = c.record.buy().unwrap().details().clone();
     d.native.before_lamports += 1;
     d.native.remaining_lamports += 1;
     d.quoted_net_output_units += 1;
     // These claims do not alter the signed message. Only the original runtime quote can attest them.
     let claimed = DammBuyCandidateRecord::new(d, &message).unwrap();
     validate_record(&claimed, &message).unwrap();
-    c.record = claimed;
+    c.record = SdkPreparedRecord::DammBuy(claimed);
     let error = c.validate_full(&c.instructions).unwrap_err();
     assert!(error.to_string().contains("original live evidence"));
 }
@@ -303,11 +303,14 @@ async fn damm_buy_record_digest_size_and_integer_minimum_are_bounded_without_flo
     let message = c.transaction.message.serialize();
     let encoded = c.record.encode(&message).unwrap();
     assert!(DammBuyCandidateRecord::decode(&" ".repeat(65_537), &message).is_err());
-    assert!(DammBuyCandidateRecord::new(c.record.details().clone(), &[]).is_err());
-    assert!(DammBuyCandidateRecord::new(c.record.details().clone(), &vec![1; 1233]).is_err());
+    assert!(DammBuyCandidateRecord::new(c.record.buy().unwrap().details().clone(), &[]).is_err());
+    assert!(
+        DammBuyCandidateRecord::new(c.record.buy().unwrap().details().clone(), &vec![1; 1233])
+            .is_err()
+    );
     assert!(DammBuyCandidateRecord::decode(&encoded, b"different-message").is_err());
     for output in [1, 1_000_000, 9_007_199_254_740_993, u64::MAX] {
-        let mut d = c.record.details().clone();
+        let mut d = c.record.buy().unwrap().details().clone();
         d.slippage_bps = 0;
         d.quoted_net_output_units = output;
         d.minimum_output_units = output;
@@ -324,7 +327,7 @@ async fn damm_buy_record_preserves_mode_mev_and_confirmation_context_but_never_t
 ) {
     let c = candidate().await;
     let message = c.transaction.message.serialize();
-    let mut d = c.record.details().clone();
+    let mut d = c.record.buy().unwrap().details().clone();
     d.use_mev = Some(true);
     d.requested_mev_provider = Some(crate::domain::trade::MevProvider::Temporal);
     d.wait_tx_confirmed = true;
@@ -335,7 +338,7 @@ async fn damm_buy_record_preserves_mode_mev_and_confirmation_context_but_never_t
     assert_eq!(decoded, record);
     validate_record(&decoded, &message).unwrap();
     let mut c = c;
-    c.record = decoded;
+    c.record = SdkPreparedRecord::DammBuy(decoded);
     assert!(c.validate_full(&c.instructions).is_err());
 }
 

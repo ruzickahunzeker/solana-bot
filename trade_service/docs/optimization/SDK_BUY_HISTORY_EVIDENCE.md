@@ -3,6 +3,12 @@
 Date: 2026-11-16. Continues the existing NP-01/main plan section 3.3, after the
 accepted common-record boundary `2fe436d`. It does not open a buy execution claim.
 
+The statements below describe the accepted f029d55 snapshot, not later working
+source. The 2026-11-17 continuation connects the original buy signer/journal/sender
+and coherent claim/scan scope; its new tests require separate CI acceptance.
+See `SDK_ORIGINAL_DAMM_RUNTIME.md`. Historical records still cannot restore a
+signing permit, owner, freshness or permission to replay a submission.
+
 ## Actual Boundary Changes
 
 - `adapters/sdk/prepared_candidate.rs` selects the existing sell reconstruction
@@ -31,7 +37,7 @@ accepted common-record boundary `2fe436d`. It does not open a buy execution clai
   owner nor returns signing/sending capability. No second table or authority is
   introduced. The existing automatic scan still excludes buy rows.
 
-## Test Evidence To Obtain
+## Test Evidence
 
 Sixteen new tests cover both assets' real message reconstruction and temporary-key
 signature evidence, malformed/zero/wrong-wallet/trailing packets, matching-digest
@@ -48,8 +54,14 @@ assertions. Its raw row assertion now accepts nominal buy reconstruction, becaus
 that is the deliberate new capability; original-intent binding must still reject
 the seller association. Parent fixture names are retained for regression auditing.
 
-Independent results belong in `EXECUTION_STATUS.md`; an earlier 1605-test success
-does not validate this batch. No local service test binary is linked on the small VM.
+Source `f029d55` / Actions `43785820055` / artifact `14190956041` passed independently:
+full concurrent/serial suites each ran 1621 tests with zero failures/ignored/filtered;
+the original 1605 names remain, and the delta is exactly the sixteen tests above.
+The focused evidence suite ran 18 (including two existing tests), all 53 steps passed,
+and raw compiler spans independently confirm 93 distinct forbidden fields rejected.
+Identity/manifest/lock/vendor-manifest hashes match. See `EXECUTION_STATUS.md` for
+timing and publication audit. No local service test binary was linked. Do not rerun
+the terminal job or publish a docs-only CI for this acceptance note.
 
 ## Remaining Work, Not New Tasks
 

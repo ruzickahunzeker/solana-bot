@@ -15,6 +15,19 @@ const RESERVE: u64 = 2_039_280;
 const FEE: u64 = 5_000;
 const SAME_BANK_WALLET: u64 = 100_000_000;
 
+pub(crate) fn buy_runtime_fixture(wallet: Pubkey, native: bool) -> (Vec<Value>, Value) {
+    let case = Case::with_wallet(
+        false,
+        native,
+        false,
+        true,
+        (true, key(4)),
+        Encoding::Parsed,
+        wallet,
+    );
+    (case.source.rpc.values, case.result)
+}
+
 #[derive(Clone, Copy)]
 enum Encoding {
     Parsed,

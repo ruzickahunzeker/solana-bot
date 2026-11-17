@@ -1,6 +1,7 @@
 use crate::{
     adapters::{
         rpc::{ordinary_observation::SingleShotStatusReader, read_runtime::SharedReadRuntime},
+        sdk::damm_probe::{DammBuyContext, DammBuySignedCandidate},
         sdk::damm_sell_message::{DammSellContext, DammSignedCandidate},
     },
     application::{ports::reconciliation::SignatureStatusReader, trade_admission::AdmittedTrade},
@@ -115,6 +116,35 @@ impl<R: SignatureStatusReader> OriginalSdkSender<R> {
         wait_confirmed: bool,
         verification_ms: u64,
     ) -> Result<String> {
+        self.send_packet_for(TradeType::Sell, signed, wait_confirmed, verification_ms)
+            .await
+    }
+
+    pub(crate) async fn broadcast_buy(
+        &self,
+        execution: &AdmittedTrade,
+        context: DammBuyContext,
+        artifact: &DammBuySignedCandidate,
+        signed: &SignedSubmission,
+        wait_confirmed: bool,
+        verification_ms: u64,
+    ) -> Result<String> {
+        ensure!(
+            context.provider == self.provider && self.sender.get_swqos_type() == self.provider,
+            "SDK original buy sender provider changed"
+        );
+        artifact.check_submission(execution, context, signed)?;
+        self.send_packet_for(TradeType::Buy, signed, wait_confirmed, verification_ms)
+            .await
+    }
+
+    async fn send_packet_for(
+        &self,
+        direction: TradeType,
+        signed: &SignedSubmission,
+        wait_confirmed: bool,
+        verification_ms: u64,
+    ) -> Result<String> {
         let transaction = decode_packet(signed)?;
         if self.provider == SwqosType::Default {
             let receipt = tokio::time::timeout(
@@ -145,8 +175,7 @@ impl<R: SignatureStatusReader> OriginalSdkSender<R> {
         // Provider APIs erase the receipt. Their Ok alone is not signature evidence.
         let sent = tokio::time::timeout(
             Duration::from_secs(3),
-            self.sender
-                .send_transaction(TradeType::Sell, &transaction, false),
+            self.sender.send_transaction(direction, &transaction, false),
         )
         .await;
         let send_error = match sent {

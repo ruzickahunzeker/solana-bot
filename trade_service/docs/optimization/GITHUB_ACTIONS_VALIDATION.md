@@ -28,7 +28,28 @@
 云端是独立冷构建环境，关闭依赖的 debug/incremental 以控制空间，与本机复用缓存的规则不同；
 不改变 SDK 版本或 release 行为。新旧参数/消息/合同必须真正运行通过，不能因构建地点变化更新 oracle。
 
+## 当前待验批次
+
+2026-11-17 原 NP-01 受控买入执行接线：十七项新合同，新增 controlled-buy、buy-claims
+和 original-buy-runtime 专项；同一 Clippy 策略增两个私有买入产物，32 类型/99 scoped
+字段（含外部 alias），不借用父批 93。完整并发/串行及原始诊断必须按本批身份独立
+下载核对。未发布/运行前，最新已验收仍是下方 f029d55；不重跑任何终态任务。
+
 ## 已验收运行
+
+最新原 NP-01 买入消息/签名字节证据、原意图绑定及历史回放
+`f029d55c1778f0688015d85d29dab7562146ee39` /
+[Actions 43785820055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43785820055)
+终态 success，artifact `14190956041` 下载独立核对：新专项 18（新增十六项及原两项）、
+共同记录 9、买入 79，完整并发 1621（120.77 秒）/串行 1621（227.60 秒）零失败/
+忽略/过滤，全部 53 步骤 exit=0。两套原始名称集合相同，父批 1605 全保留且增量
+恰为源码十六项；原源码/恢复 Clippy 成功，原始 JSON spans 独立确认三层 93 个不同
+字段拒绝。identity 与 manifest/lock/vendor manifest 匹配，发布审计绑定 1059 文件/
+12,989,654 字节、30 路径。旧 SellV1、claim/sender/扫描 SQL、迁移、SDK/vendor、冻结
+历史、真实 main/索引保持。只证明对应源码的原意图及历史证据校验，不等于生产受控
+买入 signer、owner/CAS/落盘发送或自动扫描已接完；原 claim 仍闭，不部署、不重跑
+终态任务，后续验收文档不单独触发 CI。平台 Node 20→24 的固定 action 提示与父批相同，
+任务实际成功，不顺带调整 SDK 或依赖。
 
 最新原 NP-01 原 journal 的买卖记录类型边界 `2fe436dff1326b5ce0d069804df2e4ba3ad6b07b` /
 [Actions 43781625542](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43781625542)

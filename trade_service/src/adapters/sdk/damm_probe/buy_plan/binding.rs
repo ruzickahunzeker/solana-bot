@@ -14,8 +14,12 @@ use solana_sdk::pubkey::Pubkey;
 
 mod message;
 #[cfg(test)]
-pub(crate) use message::{buy_record_fixture, buy_record_fixture_for_wallet};
-pub(crate) use message::{validate_buy_record, DammBuyMessage};
+pub(crate) use message::{
+    buy_candidate_fixture, buy_record_fixture, buy_record_fixture_for_wallet,
+};
+pub(crate) use message::{
+    validate_buy_record, DammBuyCandidate, DammBuyMessage, DammBuySignedCandidate,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct DammBuyContext {

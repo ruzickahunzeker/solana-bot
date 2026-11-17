@@ -6,7 +6,7 @@ use crate::{
         ordinary_submission::OrdinarySubmissionJournal,
     },
     config::TradePersistenceMode,
-    domain::trade::{Address, Pool, WSOL_MINT},
+    domain::trade::{Address, Pool, USDC_MINT, WSOL_MINT},
 };
 
 fn sdk_request() -> crate::models::TradeRequest {
@@ -23,6 +23,191 @@ fn sdk_request() -> crate::models::TradeRequest {
 async fn sdk_fixture(mode: TradePersistenceMode) -> Fixture {
     let f = fixture(mode).await;
     admit_request(f.state, sdk_request()).await
+}
+
+fn sdk_buy_request(native: bool) -> crate::models::TradeRequest {
+    let mut request = serde_json::to_value(sdk_request()).unwrap();
+    request["side"] = serde_json::json!("buy");
+    request["sell_percent"] = serde_json::Value::Null;
+    request["quote_mint"] = serde_json::json!(if native { WSOL_MINT } else { USDC_MINT });
+    request[if native {
+        "amount_lamports"
+    } else {
+        "amount_quote_units"
+    }] = serde_json::json!(100);
+    serde_json::from_value(request).unwrap()
+}
+
+#[tokio::test]
+async fn sdk_buy_claim_uses_only_the_original_durable_owner_for_both_integer_payment_assets() {
+    for native in [false, true] {
+        let f = admit_request(
+            fixture(TradePersistenceMode::Durable).await.state,
+            sdk_buy_request(native),
+        )
+        .await;
+        assert_eq!(
+            operation_for_claim(&f.execution, TradeJournalMode::Durable).unwrap(),
+            ClaimOperation::SdkTrade
+        );
+        let ExecutionClaim::Acquired(owner) = f.claims().claim(&f.execution).await.unwrap() else {
+            panic!("original buyer owner required")
+        };
+        owner.ensure_binding(&f.execution).unwrap();
+        let row:(String,String,Option<String>,Option<String>)=sqlx::query_as("SELECT operation,owner_nonce,bound_quote_json,sdk_prepared_json FROM ordinary_execution_claims WHERE request_id=?").bind(&f.record.request_id).fetch_one(&f.state.persistence.pool_for_tests()).await.unwrap();
+        assert_eq!(
+            row,
+            (
+                "ordinary-sdk-trade".into(),
+                owner.nonce().into(),
+                None,
+                None
+            )
+        );
+        assert_eq!(
+            f.claims().claim(&f.execution).await.unwrap(),
+            ExecutionClaim::AlreadyHeld
+        );
+    }
+}
+
+#[tokio::test]
+async fn sdk_buy_claim_scope_rejects_other_units_assets_backends_modes_protocols_and_hops() {
+    for native in [false, true] {
+        for mode in [TradePersistenceMode::Memory, TradePersistenceMode::Shadow] {
+            let f = admit_request(fixture(mode).await.state, sdk_buy_request(native)).await;
+            assert!(f.claims().claim(&f.execution).await.is_err());
+        }
+        let f = admit_request(
+            fixture(TradePersistenceMode::Durable).await.state,
+            sdk_buy_request(native),
+        )
+        .await;
+        for mutation in [
+            "zero",
+            "wrong-asset",
+            "wrong-units",
+            "pumpapi",
+            "simulate",
+            "pool",
+            "hop",
+            "hop-id",
+            "aggregate",
+        ] {
+            let mut command = f.execution.command().clone();
+            match mutation {
+                "zero" => {
+                    command.amount = if native {
+                        TradeAmount::BuySol { lamports: 0 }
+                    } else {
+                        TradeAmount::BuyQuote {
+                            mint: command.route.quote_mint,
+                            units: 0,
+                        }
+                    }
+                }
+                "wrong-asset" => command.route.quote_mint = Address::from_bytes([99; 32]),
+                "wrong-units" => {
+                    command.amount = if native {
+                        TradeAmount::BuyQuote {
+                            mint: command.route.quote_mint,
+                            units: 100,
+                        }
+                    } else {
+                        TradeAmount::BuySol { lamports: 100 }
+                    }
+                }
+                "pumpapi" => command.execution.method = ExecutionMethod::Pumpapi,
+                "simulate" => {
+                    command.execution.mode = crate::domain::trade::ExecutionMode::Simulate
+                }
+                "pool" => command.route.pool = Pool::RaydiumCpmm,
+                "hop" => command.route.sol_hop_pool = Some(Pool::RaydiumCpmm),
+                "hop-id" => command.route.sol_hop_pool_id = Some(Address::from_bytes([4; 32])),
+                "aggregate" => command.aggregator_sol = true,
+                _ => unreachable!(),
+            }
+            let ex = f.execution.with_command_for_test(command);
+            assert_ne!(
+                operation_for_claim(&ex, TradeJournalMode::Durable).ok(),
+                Some(ClaimOperation::SdkTrade),
+                "{native} {mutation}"
+            );
+        }
+        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM ordinary_execution_claims")
+            .fetch_one(&f.state.persistence.pool_for_tests())
+            .await
+            .unwrap();
+        assert_eq!(count, 0);
+    }
+}
+
+#[tokio::test]
+async fn sdk_buy_claim_two_pools_compete_once_and_file_reopen_cannot_reissue_either_asset_owner() {
+    use crate::{config::TradePersistenceConfig, persistence::TradePersistence};
+    use std::sync::Arc;
+    for native in [false, true] {
+        let dir = std::env::temp_dir().join(format!("sdk-buy-owner-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&dir).unwrap();
+        let config = TradePersistenceConfig {
+            mode: TradePersistenceMode::Durable,
+            database_url: format!("sqlite://{}", dir.join("test.sqlite").display()),
+            busy_timeout_ms: 2000,
+        };
+        let mut state = crate::http_contract_tests::state().await;
+        state.persistence = Arc::new(TradePersistence::new(&config).await.unwrap());
+        let f = admit_request(state, sdk_buy_request(native)).await;
+        let first = f.state.persistence.pool_for_tests();
+        let second = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect(&config.database_url)
+            .await
+            .unwrap();
+        let mut tasks = Vec::new();
+        for i in 0..16 {
+            let pool = if i % 2 == 0 {
+                first.clone()
+            } else {
+                second.clone()
+            };
+            let ex = f.execution.clone();
+            tasks.push(tokio::spawn(async move {
+                SqliteOrdinaryExecutionClaims::new(pool)
+                    .claim(&ex)
+                    .await
+                    .unwrap()
+            }));
+        }
+        let mut owner = None;
+        for task in tasks {
+            if let ExecutionClaim::Acquired(o) = task.await.unwrap() {
+                assert!(owner.replace(o).is_none());
+            }
+        }
+        let owner = owner.unwrap();
+        first.close().await;
+        second.close().await;
+        let restored = TradePersistence::new(&config).await.unwrap();
+        assert_eq!(
+            restored
+                .ordinary_execution_claims()
+                .unwrap()
+                .claim(&f.execution)
+                .await
+                .unwrap(),
+            ExecutionClaim::AlreadyHeld
+        );
+        let nonce: String = sqlx::query_scalar(
+            "SELECT owner_nonce FROM ordinary_execution_claims WHERE request_id=?",
+        )
+        .bind(&f.record.request_id)
+        .fetch_one(&restored.pool_for_tests())
+        .await
+        .unwrap();
+        assert_eq!(nonce, owner.nonce());
+        restored.pool_for_tests().close().await;
+        std::fs::remove_dir_all(dir).unwrap();
+    }
 }
 
 #[tokio::test]
@@ -90,7 +275,7 @@ async fn sdk_claims_remain_closed_for_memory_shadow_simulation_other_protocols_a
         "pool",
         "hop",
         "hop_id",
-        "buy",
+        "zero_buy",
         "zero_percent",
         "large_percent",
         "aggregate",
@@ -102,7 +287,7 @@ async fn sdk_claims_remain_closed_for_memory_shadow_simulation_other_protocols_a
             "pool" => command.route.pool = Pool::PumpAmm,
             "hop" => command.route.sol_hop_pool = Some(Pool::RaydiumCpmm),
             "hop_id" => command.route.sol_hop_pool_id = Some(Address::from_bytes([4; 32])),
-            "buy" => command.amount = TradeAmount::BuySol { lamports: 1 },
+            "zero_buy" => command.amount = TradeAmount::BuySol { lamports: 0 },
             "zero_percent" => command.amount = TradeAmount::SellPercent { percent: 0 },
             "large_percent" => command.amount = TradeAmount::SellPercent { percent: 101 },
             "aggregate" => command.aggregator_sol = true,

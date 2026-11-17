@@ -1,5 +1,8 @@
 # C3c1 原 SDK owner 的实际 DAMM 执行接线
 
+2026-11-17 受控买入后继源码见文末；以下 C3c1 关闭买入的描述为对应历史快照。
+本次新批完整 CI 未验收前，不将下方已通过卖出结果套用于买入接线。
+
 日期：2026-11-15。C3c1 源码及完整离线 CI 已通过；C3c2 四项串联后于 `fd1c7cb` /
 Actions `43685088919` 验收（完整并发/串行各 1398），C3d1 显式恢复也已验收（各 1416）。
 当前 C3d2 扫描及 C3e 完整准备串联已于 `6c50aca` / Actions `43690435964` 验收，
@@ -100,3 +103,35 @@ RSS 1,315,280 KiB），尚未运行，不冒用先前 CI 结果；不改生产�
 先完成本批 CI，再接 SDK 原签名的只读观测/恢复与端到端故障注入，覆盖其他方向/协议/backend/mode，
 并完成剩余资源边界、升级/新协议演练及发布前备份/迁移/回滚验证。实际生产动作另需明确授权。
 只读恢复的源码缺口、实施顺序和验收门槛见 `SDK_ORIGINAL_SIGNATURE_RECOVERY_PLAN.md`。
+
+## 2026-11-17 原买入受控执行接线
+
+这是同一 NP-01 的后继范围，不新增任务、journal、authority、钱包库或 SDK 依赖。
+原 f029d55 历史签名字节验证不替代下面的新执行链路。
+
+1. 同一 `LaneExecution` 获取九账户同 bank 买入净输出；原整数 min_out/三秒期限保持。
+2. 原 `DammBuyMessage` 冻结完整候选和 provider tip，以零签名模拟最终完整消息，
+   在 await 前后复核原证据；RPC/模拟错误或过期在 signer 之前拒绝，不进入 SDK worker。
+3. 同一 `OriginalDammBackend` 按私有 Buy/Sell 枚举实现原端口；原 Application 控制器
+   先保存/独立读回 prepared，再用原 owner signing CAS 创建不可复制的线性 permit。
+4. `DammBuyCandidate::sign_original` 核对原订单、资产整数、费用/provider、消息及
+   时效后才调用同一钱包 getter；公钥必须匹配，且在实际签名前再核对证据。
+   签后私有 artifact 同时保留原候选、原 request ID/hash 和 signed packet。
+5. 原库 signed 原子落盘/独立读回/broadcast CAS 保持；固定 `broadcast_buy` 只接该
+   artifact 与逐字节相同 packet。provider 使用 Buy，卖出仍固定 Sell；不重建/重签/换路。
+6. 原 Durable Live SDK 直接 DAMM classifier 同步接正整数 Native SOL/WSOL 或既有
+   USDC；Memory/Shadow、模拟、其他资产/协议、多跳与聚合不因此获得 SDK owner。
+   原 SDK 索引页合并 buy/sell，010/index/分页预算/截止时间不改；capture 仍完整验原
+   parent/hash/身份/指令/签名。扫描提示本身不能授予 owner 或执行权。
+
+新增十七项原范围合同：controller 六项、原实际 runtime 四项、claim 三项、executor
+两项、sender 方向一项、混合扫描一项。实际 runtime 使用临时 key/SQLite、原 SDK
+准备与签名实现、内存 RPC 和仅回环 fixture server，egress 核对已落盘原 packet。
+两资产均覆盖成功、坏 raw/净输出/最终预览、错回执/receipt 写失败和取消；另核对
+故障点精确 key/send 次数、owner 竞争/文件恢复、篡改/过期/错订单及 finality。
+
+本地受限 test check 17 秒/RSS 1,597,132 KiB、production metadata check 已通过，
+Python policy 十项和 workflow 七项通过。Rust 实际运行与扩大后的 99 字段门禁仍待
+本批源码隔离 CI；不升级 SDK、不构建 release、不部署/重启、不读生产钱包/数据库，
+不发送真实交易。Default 的完整离线调用链不证明真实 provider/TLS/节点字段兼容；
+其他协议/模式、全局 RPC 资源与生产恢复/迁移/回滚仍保留原门槛。

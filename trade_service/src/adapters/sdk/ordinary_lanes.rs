@@ -323,3 +323,30 @@ pub(crate) async fn execute<L: OrdinarySdkLane>(
 
 #[cfg(test)]
 mod tests;
+
+pub(crate) fn ensure_requested_provider(
+    use_mev: Option<bool>,
+    requested: Option<crate::domain::trade::MevProvider>,
+    actual: SwqosType,
+) -> Result<()> {
+    use crate::domain::trade::MevProvider;
+    let allowed = match (use_mev, requested) {
+        (Some(false), Some(provider))
+            if !matches!(provider, MevProvider::Auto | MevProvider::Default) =>
+        {
+            false
+        }
+        (Some(true), Some(MevProvider::Default)) => false,
+        (Some(false), _) | (_, Some(MevProvider::Default)) => actual == SwqosType::Default,
+        (_, Some(provider)) if provider != MevProvider::Auto => {
+            crate::sdk_client::provider_swqos_type(provider) == Some(actual)
+        }
+        (Some(true), _) => actual != SwqosType::Default,
+        _ => true,
+    };
+    anyhow::ensure!(
+        allowed,
+        "DAMM selected provider differs from the original MEV policy"
+    );
+    Ok(())
+}

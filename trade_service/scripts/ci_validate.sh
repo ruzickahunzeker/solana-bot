@@ -91,9 +91,12 @@ PY
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2
         step sdk-submission-controller cargo test --locked --offline sdk_application_submission -- --test-threads=2
         step sdk-controlled-signing cargo test --locked --offline sdk_controlled_signing -- --test-threads=2
+        step sdk-controlled-buy cargo test --locked --offline sdk_controlled_buy -- --test-threads=2
+        step sdk-buy-claims cargo test --locked --offline sdk_buy_claim -- --test-threads=2
         step sdk-original-sender cargo test --locked --offline sdk_original_sender -- --test-threads=2
         step sdk-runtime-dispatch cargo test --locked --offline sdk_runtime_dispatch -- --test-threads=2
         step sdk-original-runtime cargo test --locked --offline sdk_original_runtime -- --test-threads=2
+        step sdk-original-buy-runtime cargo test --locked --offline sdk_original_buy_runtime -- --test-threads=2
         step sdk-selected-observer cargo test --locked --offline sdk_selected_observer -- --test-threads=2
         step parameter-contract cargo test --locked --offline ordinary_param_contract_tests -- --test-threads=2
         step command-defaults cargo test --locked --offline command_defaults -- --test-threads=2

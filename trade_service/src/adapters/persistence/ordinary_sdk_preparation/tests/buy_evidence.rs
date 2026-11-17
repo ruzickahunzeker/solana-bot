@@ -24,7 +24,6 @@ async fn historical(native: bool, stage: &str) -> BuyCase {
         source.key.pubkey().to_string(),
     )
     .await;
-    assert!(f.claims().claim(&f.execution).await.is_err());
     let signed = source.signed();
     let parent_status = match stage {
         "signed" | "broadcasting" => TradeStatus::Submitting,
@@ -93,14 +92,22 @@ async fn sdk_buy_evidence_history_captures_both_assets_in_four_signed_stages_wit
                 c.f.execution.reservation().wallet_pubkey()
             );
             c.store.read_observation(&captured.context).await.unwrap();
-            assert!(c
+            let page = c
                 .store
                 .pending_observations(None, i64::MAX, 64)
                 .await
-                .unwrap()
-                .entries
-                .is_empty());
-            assert!(c.f.claims().claim(&c.f.execution).await.is_err());
+                .unwrap();
+            assert_eq!(
+                page.entries
+                    .iter()
+                    .map(|v| v.request_id())
+                    .collect::<Vec<_>>(),
+                [c.f.record.request_id.as_str()]
+            );
+            assert_eq!(
+                c.f.claims().claim(&c.f.execution).await.unwrap(),
+                ExecutionClaim::AlreadyHeld
+            );
             assert_eq!(snapshot(&c).await, before);
         }
     }
@@ -230,7 +237,10 @@ async fn sdk_buy_evidence_history_finality_keeps_original_nonce_and_signed_bytes
         let after = snapshot(&c).await;
         assert_eq!(&after.0[..11], &before.0[..11]);
         assert!(after.0[11].is_some());
-        assert!(c.f.claims().claim(&c.f.execution).await.is_err());
+        assert_eq!(
+            c.f.claims().claim(&c.f.execution).await.unwrap(),
+            ExecutionClaim::AlreadyHeld
+        );
         assert_eq!(snapshot(&c).await, after);
     }
 }

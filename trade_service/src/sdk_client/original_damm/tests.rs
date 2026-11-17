@@ -2,7 +2,9 @@ use super::*;
 use crate::{
     adapters::{
         persistence::ordinary_claims::SqliteOrdinaryExecutionClaims,
-        sdk::damm_probe::test_support::{change_token, clock, key, Fixture as ProbeFixture},
+        sdk::damm_probe::test_support::{
+            buy_runtime_fixture, change_token, clock, key, Fixture as ProbeFixture,
+        },
         test_support::{
             read_rpc_server::{LocalServer, Reply},
             IsolatedTestProcess,
@@ -22,7 +24,7 @@ use serde_json::{json, Value};
 use sol_trade_sdk::{
     client::TradingInfrastructure,
     common::InfrastructureConfig,
-    constants::USDC_TOKEN_ACCOUNT,
+    constants::{USDC_TOKEN_ACCOUNT, WSOL_TOKEN_ACCOUNT},
     instruction::utils::meteora_damm_v2::accounts,
     swqos::{SwqosClientTrait, SwqosType, TradeType},
     TradingClient,
@@ -124,6 +126,7 @@ struct MemoryRpc {
     url: String,
     wallet: Pubkey,
     values: Vec<Value>,
+    buy_result: Option<Value>,
     mode: Mode,
     trace: Arc<Trace>,
 }
@@ -204,8 +207,61 @@ impl RpcSender for MemoryRpc {
                     assert_eq!(params[0], key(1).to_string());
                     Ok(json!({"context":{"slot":123},"value":self.values[0]}))
                 }
+                RpcRequest::GetTokenAccountsByOwner if self.buy_result.is_some() => {
+                    assert_eq!(params[0], self.wallet.to_string());
+                    assert_eq!(params[1]["mint"], key(4).to_string());
+                    let output = sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(
+                        &self.wallet, &key(4), &spl_token_interface::ID,
+                    );
+                    Ok(
+                        json!({"context":{"slot":42},"value":[{"pubkey":output.to_string(),"account":{
+                            "owner":spl_token_interface::ID.to_string(),"lamports":2039280,"rentEpoch":0,"executable":false,"space":165,
+                            "data":{"program":"spl-token","space":165,"parsed":{"type":"account","info":{"owner":self.wallet.to_string(),"mint":key(4).to_string(),"state":"initialized","tokenAmount":{"amount":"2000","decimals":6,"uiAmount":null,"uiAmountString":"0.002"}}}}
+                        }}]}),
+                    )
+                }
                 RpcRequest::GetMultipleAccounts => {
                     let addresses = params[0].as_array().unwrap();
+                    if self.buy_result.is_some() {
+                        let quote: Pubkey = self.buy_result.as_ref().unwrap()["preTokenBalances"]
+                            [0]["mint"]
+                            .as_str()
+                            .unwrap()
+                            .parse()
+                            .unwrap();
+                        let values = match addresses.len() {
+                            2 => {
+                                assert_eq!(
+                                    params[0],
+                                    json!([key(4).to_string(), quote.to_string()])
+                                );
+                                self.values[1..3].to_vec()
+                            }
+                            9 => {
+                                let ata = |mint| {
+                                    sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(&self.wallet,&mint,&spl_token_interface::ID).to_string()
+                                };
+                                assert_eq!(
+                                    params[0],
+                                    json!([
+                                        key(1).to_string(),
+                                        key(4).to_string(),
+                                        quote.to_string(),
+                                        key(2).to_string(),
+                                        key(3).to_string(),
+                                        solana_sdk::sysvar::clock::id().to_string(),
+                                        ata(quote),
+                                        ata(key(4)),
+                                        self.wallet.to_string()
+                                    ])
+                                );
+                                assert!(params[1]["minContextSlot"].is_null());
+                                self.values.clone()
+                            }
+                            _ => panic!("unexpected original buy account query"),
+                        };
+                        return Ok(json!({"context":{"slot":42},"value":values}));
+                    }
                     let values = match addresses.len() {
                         2 => {
                             assert_eq!(
@@ -259,24 +315,37 @@ impl RpcSender for MemoryRpc {
                     if !params[1]["accounts"].is_null() {
                         assert_eq!(
                             params[1]["accounts"]["addresses"].as_array().unwrap().len(),
-                            8
+                            if self.buy_result.is_some() { 9 } else { 8 }
                         );
-                        assert_eq!(params[1]["minContextSlot"], 123);
+                        assert_eq!(
+                            params[1]["minContextSlot"],
+                            if self.buy_result.is_some() { 42 } else { 123 }
+                        );
                         if self.mode == Mode::CancelProbe {
                             let _drop = Dropped(self.trace.clone());
                             self.trace.entered.notify_one();
                             std::future::pending::<()>().await;
                         }
-                        Ok(json!({"context":{"slot":124},"value":self.simulation(&tx)}))
+                        if let Some(result) = &self.buy_result {
+                            let mut result = result.clone();
+                            if self.mode == Mode::ZeroOutput {
+                                result["innerInstructions"][0]["instructions"][1]["parsed"]
+                                    ["info"]["tokenAmount"]["amount"] = json!("0");
+                            }
+                            Ok(json!({"context":{"slot":43},"value":result}))
+                        } else {
+                            Ok(json!({"context":{"slot":124},"value":self.simulation(&tx)}))
+                        }
                     } else {
-                        assert_eq!(params[1]["minContextSlot"], 124);
+                        let slot = if self.buy_result.is_some() { 43 } else { 124 };
+                        assert_eq!(params[1]["minContextSlot"], slot);
                         let err = if self.mode == Mode::BadPreview {
                             json!("AccountNotFound")
                         } else {
                             Value::Null
                         };
                         Ok(
-                            json!({"context":{"slot":124},"value":{"err":err,"logs":[],"accounts":null,"unitsConsumed":123}}),
+                            json!({"context":{"slot":slot},"value":{"err":err,"logs":[],"accounts":null,"unitsConsumed":123}}),
                         )
                     }
                 }
@@ -340,12 +409,27 @@ struct Case {
 }
 impl Case {
     async fn new(mode: Mode) -> Self {
+        Self::with_payment(mode, None).await
+    }
+    async fn new_buy(mode: Mode, native: bool) -> Self {
+        Self::with_payment(mode, Some(native)).await
+    }
+    async fn with_payment(mode: Mode, native: Option<bool>) -> Self {
         let keypair = Arc::new(Keypair::new());
         let wallet = keypair.pubkey();
         let mut source = ProbeFixture::new(false, false, USDC_TOKEN_ACCOUNT, true);
         change_token(&mut source.rpc.values[6], |a| a.owner = wallet);
         change_token(&mut source.rpc.values[7], |a| a.owner = wallet);
         source.rpc.values[5] = clock(123, 17);
+        let (mut values, buy_result) = if let Some(native) = native {
+            let (values, result) = buy_runtime_fixture(wallet, native);
+            (values, Some(result))
+        } else {
+            (source.rpc.values.clone(), None)
+        };
+        if native.is_some() && mode == Mode::BadRaw {
+            values[1]["owner"] = json!(key(99).to_string());
+        }
         let input =
             sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(
                 &wallet,
@@ -374,7 +458,8 @@ impl Case {
             MemoryRpc {
                 url: server.url.clone(),
                 wallet,
-                values: source.rpc.values,
+                values,
+                buy_result,
                 mode,
                 trace: trace.clone(),
             },
@@ -415,7 +500,23 @@ impl Case {
             .await
             .unwrap(),
         );
-        let request=serde_json::from_value(json!({"wallet_id":"fixture-wallet","side":"sell","pool":"meteora-damm-v2","mint":key(4).to_string(),"quote_mint":USDC_TOKEN_ACCOUNT.to_string(),"pool_id":key(1).to_string(),"sell_percent":10,"slippage_bps":1500,"tip_sol":0.0,"use_mev":false,"simulate":false,"execution_method":"sdk","idempotency_key":" sdk-original-runtime "})).unwrap();
+        let mut request = json!({"wallet_id":"fixture-wallet","side":"sell","pool":"meteora-damm-v2","mint":key(4).to_string(),"quote_mint":USDC_TOKEN_ACCOUNT.to_string(),"pool_id":key(1).to_string(),"sell_percent":10,"slippage_bps":1500,"tip_sol":0.0,"use_mev":false,"simulate":false,"execution_method":"sdk","idempotency_key":" sdk-original-runtime "});
+        if let Some(native) = native {
+            request["side"] = json!("buy");
+            request.as_object_mut().unwrap().remove("sell_percent");
+            request["quote_mint"] = json!(if native {
+                WSOL_TOKEN_ACCOUNT
+            } else {
+                USDC_TOKEN_ACCOUNT
+            }
+            .to_string());
+            request[if native {
+                "amount_lamports"
+            } else {
+                "amount_quote_units"
+            }] = json!(100);
+        }
+        let request = serde_json::from_value(request).unwrap();
         let f = admit_request_for_pubkey(state, request, wallet.to_string()).await;
         let ExecutionClaim::Acquired(owner) = f.claims().claim(&f.execution).await.unwrap() else {
             panic!("original temporary owner required")
@@ -485,6 +586,7 @@ impl Case {
     }
 }
 
+mod buy;
 mod cases;
 
 const FLAG: &str = "SOL_BOT_SDK_ORIGINAL_RUNTIME_CASE";
@@ -521,6 +623,10 @@ async fn sdk_original_runtime_child() {
         "pre-sign" => cases::pre_sign().await,
         "post-sign" => cases::post_sign().await,
         "cancel" => cases::cancel().await,
+        "buy-good" => buy::good().await,
+        "buy-pre-sign" => buy::pre_sign().await,
+        "buy-post-sign" => buy::post_sign().await,
+        "buy-cancel" => buy::cancel().await,
         _ => panic!("unknown synthetic SDK runtime case"),
     }
     println!("{DONE}");

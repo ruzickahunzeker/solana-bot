@@ -526,4 +526,4 @@ async fn quote_inner(
 }
 
 #[cfg(test)]
-pub(super) mod tests;
+pub(in crate::adapters::sdk::damm_probe) mod tests;

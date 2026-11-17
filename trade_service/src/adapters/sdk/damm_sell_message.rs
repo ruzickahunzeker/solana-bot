@@ -33,6 +33,7 @@ pub(crate) use metadata::candidate_fixture_for_wallet;
 #[cfg(test)]
 pub(crate) use metadata::candidate_fixture_for_wallet_with_mev;
 pub(crate) use metadata::validate_candidate;
+#[cfg(test)]
 pub(crate) use signed::validate_signed_candidate;
 pub(crate) use signed::DammSignedCandidate;
 

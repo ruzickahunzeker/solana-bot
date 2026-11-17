@@ -1,11 +1,24 @@
 # Trade Service 当前执行状态
 
-更新日期：2026-11-16。唯一主计划：[Trade Service 优化计划](../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
+更新日期：2026-11-17。唯一主计划：[Trade Service 优化计划](../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
 本页只保留当前检查点；[完整历史](EXECUTION_HISTORY_20261115.md) 是冻结证据，不是待执行队列。
 目标由用户明确恢复为 active；计划或历史记录不能自行暂停/恢复目标。
 
 ## 当前任务
 
+- 本次续同一个 NP-01：原买入候选增加 live 只读整笔预览、线性 permit 的受控签名及
+  私有签后 artifact；原 `OriginalDammBackend` 按方向分派，同一 journal/CAS/独立
+  回读后接固定 Buy sender，不走高层 SDK worker。原 Durable Live 直接 DAMM classifier
+  同步接正整数 Native SOL/WSOL 和既有 USDC；同一个 SDK 索引页纳入 buy/sell，不改
+  DDL、旧 SellV1 或 hash/API。源码已接，不代表已部署或实际节点验收。
+- 新增十七项合同覆盖实际准备 RPC→零签名报价/整笔预览→原 signer→临时 SQLite
+  落盘/读回→固定发送器、两资产、错回执/丢写/取消；另有 owner 双连接竞争/重开、
+  资产/模式/方向范围、原 executor 分流/禁播/过期、混合扫描，以及精确 key/send 次数。
+  本地受限 test metadata check 已通过；完整 Rust 运行和 99 字段门禁待本批隔离 CI。
+  最新独立已验收基线仍是下方 f029d55，不将父批 1621 套用于本批。
+  详见 [原执行接线](SDK_ORIGINAL_DAMM_RUNTIME.md#2026-11-17-原买入受控执行接线)。
+- 以下为已完成批次的历史证据，关于“买入 claim 仍闭”的描述仅适用于对应快照；
+  不据此重做已完成工作，也不把本批未运行测试当作通过。不新增任务或完成度分母。
 - 本轮续原 NP-01 的买入历史证据和原意图绑定：共同 adapter 已按记录方向重构原完整
   消息并校验有界 canonical 签名字节/钱包；卖出入口仍有专用方向闸门。原 journal
   行及签名回读接此校验器，历史请求按方向重放原 V1 整数/费用默认值及 hash，原
@@ -16,9 +29,18 @@
 - 新增十六项源码合同覆盖真实买入消息/临时 key 的历史签名、坏包/匹配摘要的指令
   篡改、买卖隔离、原意图突变及 claim 继续拒绝、V1 显式金额/原整数和费用默认值/
   精度、临时 SQLite 两资产四 signed stages、身份/签名破坏、finality CAS/原 nonce/
-  上下文替换和原扫描继续排除买入。受限 test check 12 秒/RSS 1,472,072 KiB、
-  production check 5 秒/RSS 672,372 KiB 通过，原七组警告；独立 CI 尚待本批提交，
-  不套用父批 1605，不把合成历史 fixture 签名当作生产受控 signer 验收。
+  上下文替换和原扫描继续排除买入。本批 `f029d55c1778f0688015d85d29dab7562146ee39` /
+  [Actions 43785820055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43785820055)
+  已终态 success，artifact `14190956041` 下载独立核对：完整并发 1621（120.77 秒）/
+  串行 1621（227.60 秒）零失败/忽略/过滤，两套原始名称相同、父批 1605 全保留，
+  增量恰为源码十六项。买入历史/意图专项 18（含原两项）、共同记录 9、买入 79、
+  原源码/恢复 Clippy 成功、原始 spans 的 93 个不同字段拒绝及全部 53 步骤通过。
+  identity/manifest/lock/vendor manifest 匹配，发布审计绑定 1059 文件/12,989,654
+  字节、30 白名单路径；原 claim/sender/扫描 SQL/迁移、旧 SellV1、冻结历史、真实
+  main/索引保持。最终受限 test check 11 秒/RSS 1,365,552 KiB，production check
+  5 秒/RSS 672,372 KiB，原七组警告；fmt、Python 十项/workflow 七项通过。不把
+  合成历史 fixture 的签名当作生产受控 signer 验收；不部署或扩大买入 claim。
+  终态 CI 不重跑，验收记录不单独触发文档 CI。
 - 前批原 NP-01 的原 journal 类型边界：`SdkPreparedRecord` 明确持有旧 SellV1 或独立
   BuyV1，原 Application/backend/journal/permit、候选及回读接口已改为此项目类型。
   按 version/profile 严格分派，不试探式回退，不增加 JSON 外壳；旧 SellV1 源码原字节
@@ -69,6 +91,7 @@
 
 | 范围 | 提交 / CI / artifact | 已核对结果 |
 | --- | --- | --- |
+| 买入原意图/消息签名证据与 V1 历史回放 | `f029d55` / `43785820055` / `14190956041` | 新专项 18（新增 16）；完整并发 1621（120.77 秒）/串行 1621（227.60 秒）；93 字段拒绝，53 步骤通过 |
 | 原 SDK journal 的买卖类型化记录边界 | `2fe436d` / `43781625542` / `14189296618` | 共同记录专项 9、新增 11、买入 79；完整并发 1605（142.55 秒）/串行 1605（261.47 秒）；93 字段拒绝，52 步骤通过 |
 | 买入独立名义记录与原候选数据绑定 | `19f80cb` / `43777721549` / `14187333877` | 买入专项 79（含新增 11）；完整并发 1594（140.68 秒）/串行 1594（257.60 秒）；93 字段拒绝，51 步骤通过 |
 | 买入整笔候选/回调与无签名模拟 | `ec1d2c9` / `43773807696` / `14185728930` | 买入专项 68（含新增 19）；完整并发 1583（155.62 秒）/串行 1583（274.91 秒）；93 字段拒绝，51 步骤通过 |
@@ -96,7 +119,7 @@
 
 ## 续作顺序
 
-1. 普通任务生命周期、Shadow writer 生命周期、Record/Tape、买入只读取证/兼容/准备绑定/整笔回调/独立名义记录与原单一 journal 的买卖类型边界均已按各自源码验收，不重跑终态 CI 或重复实施。本批买入消息/签名字节证据、原意图绑定和历史回放/capture 先独立验收，再续原 owner 的受控买入候选/signer、prepared/signing CAS 与 signed 原字节回读、固定 Buy sender、runtime 及 claim/扫描一致接线；共同类型、纯意图绑定或历史签名均不开放执行授权。不先扩大 claim，再补授权，不由历史恢复 owner/重签/重发。不另立任务，也不核对/修改线上版本。
+1. 普通任务生命周期、Shadow writer 生命周期、Record/Tape、买入只读取证/兼容/准备绑定/整笔回调/独立名义记录、原单一 journal 的买卖类型边界，以及本批买入消息/签名字节证据、原意图绑定和历史回放/capture 均已按各自源码独立验收，不重跑终态 CI 或重复实施。下一步续原 owner 的受控买入候选/signer、prepared/signing CAS 与 signed 原字节回读、固定 Buy sender、runtime 及 claim/扫描一致接线；共同类型、纯意图绑定或历史签名均不开放执行授权。不先扩大 claim，再补授权，不由历史恢复 owner/重签/重发。不另立任务，也不核对/修改线上版本。
 2. 原 NP-03 的其他依赖方向、具体资源所有权、SDK 内部/独立操作任务与全局 RPC/cache 收口继续保留；不能把 87 字段门禁当作 API/全部依赖/不透明能力流检查完成，也不能把 Shadow FIFO 的原 SQL 调用完成当作额外刷盘/断电或全服务退出证明。任务取消不代表 SDK 副作用取消，不恢复 owner 或重签/重发。
 3. 原 NP-01 的其他方向/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接卖出子路径不重做，也不冒充全量。
 4. NP-04 本批只证明原 Durable SOL Quote 买入控制器的共同合同，其他业务路径适用性、真实 Router/SDK 不由 fake 证明；NP-05 来源/升级准备和主计划的真实环境/迁移/回滚门槛继续。当前不授权实际 SDK 升级或生产动作。

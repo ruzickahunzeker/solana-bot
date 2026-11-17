@@ -21,8 +21,7 @@ async fn sdk_buy_intent_binds_both_integer_payment_assets_but_does_not_grant_an_
         let admitted =
             admit_request_for_pubkey(state, f.request.clone(), f.key.pubkey().to_string()).await;
         validate_candidate_intent(&admitted.execution, &f.record, &f.message).unwrap();
-        assert!(validate_origin(&admitted.execution, &f.record, &f.message).is_err());
-        assert!(admitted.claims().claim(&admitted.execution).await.is_err());
+        validate_origin(&admitted.execution, &f.record, &f.message).unwrap();
         let count: i64 =
             sqlx::query_scalar("SELECT COUNT(*) FROM ordinary_execution_claims WHERE request_id=?")
                 .bind(&admitted.record.request_id)
@@ -30,6 +29,12 @@ async fn sdk_buy_intent_binds_both_integer_payment_assets_but_does_not_grant_an_
                 .await
                 .unwrap();
         assert_eq!(count, 0);
+        assert!(admitted
+            .claims()
+            .claim(&admitted.execution)
+            .await
+            .unwrap()
+            .is_acquired());
     }
 }
 

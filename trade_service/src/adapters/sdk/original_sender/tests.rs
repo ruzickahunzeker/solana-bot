@@ -30,6 +30,7 @@ struct Trace {
     rpc: Mutex<Vec<(RpcRequest, Value)>>,
     packets: Mutex<Vec<Vec<u8>>>,
     waits: Mutex<Vec<bool>>,
+    directions: Mutex<Vec<bool>>,
     observations: Mutex<Vec<String>>,
     tips: AtomicUsize,
     dropped: AtomicBool,
@@ -103,7 +104,12 @@ impl SwqosClientTrait for Relay {
         Self: 'f,
     {
         Box::pin(async move {
-            assert!(matches!(trade, TradeType::Sell));
+            assert!(matches!(trade, TradeType::Sell | TradeType::Buy));
+            self.trace
+                .directions
+                .lock()
+                .unwrap()
+                .push(matches!(trade, TradeType::Buy));
             self.trace
                 .packets
                 .lock()
@@ -291,6 +297,7 @@ async fn sdk_original_sender_provider_ok_without_receipt_or_observation_is_unkno
         assert!(trace.rpc.lock().unwrap().is_empty());
         assert_eq!(trace.observations.lock().unwrap().is_empty(), budget == 0);
         assert_eq!(*trace.waits.lock().unwrap(), vec![false]);
+        assert_eq!(*trace.directions.lock().unwrap(), vec![false]);
     }
 }
 
@@ -430,4 +437,40 @@ async fn sdk_original_sender_cancellation_drops_the_single_send_without_backgrou
     assert!(trace.dropped.load(Ordering::SeqCst));
     assert_eq!(trace.packets.lock().unwrap().len(), 1);
     assert!(trace.observations.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn sdk_original_sender_buy_and_sell_keep_their_fixed_direction_and_original_packet() {
+    for buy in [false, true] {
+        for provider in [SwqosType::Default, SwqosType::Temporal] {
+            let s = packet();
+            let (sender, trace) = sender(
+                provider,
+                &s,
+                vec![observed(&s, ChainCommitment::Processed)],
+                false,
+                false,
+            );
+            assert_eq!(
+                sender
+                    .send_packet_for(
+                        if buy { TradeType::Buy } else { TradeType::Sell },
+                        &s,
+                        false,
+                        200
+                    )
+                    .await
+                    .unwrap(),
+                s.signature
+            );
+            if provider == SwqosType::Default {
+                assert_eq!(trace.rpc.lock().unwrap().len(), 1);
+                assert!(trace.directions.lock().unwrap().is_empty());
+            } else {
+                assert_eq!(*trace.directions.lock().unwrap(), vec![buy]);
+                assert_eq!(*trace.packets.lock().unwrap(), vec![s.bytes]);
+                assert!(trace.rpc.lock().unwrap().is_empty());
+            }
+        }
+    }
 }

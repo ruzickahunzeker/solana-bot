@@ -139,3 +139,49 @@ async fn sdk_scan_sql_missing_new_index_fails_even_when_legacy_rows_exist_withou
         0
     );
 }
+
+#[tokio::test]
+async fn sdk_scan_buy_sell_and_aggregate_share_the_same_cursor_cutoff_and_original_indexes() {
+    let (store, pool) = setup().await;
+    for (id, buy, created) in [
+        ("tr_a", true, 99),
+        ("tr_b", false, 100),
+        ("tr_d", true, 100),
+        ("tr_e", false, 101),
+        ("tr_f", true, 101),
+    ] {
+        insert_sdk(&pool, id, created, 100).await;
+        if buy {
+            sqlx::query("UPDATE trades SET side='buy' WHERE request_id=?")
+                .bind(id)
+                .execute(&pool)
+                .await
+                .unwrap();
+        }
+    }
+    insert(&pool, "tr_c", 100, 100).await;
+    insert_sdk(&pool, "tr_fresh", 100, 201).await;
+    sqlx::query("UPDATE trades SET side='buy' WHERE request_id='tr_fresh'")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let mut after = None;
+    let mut seen = Vec::new();
+    for more in [true, true, false] {
+        let page = store
+            .pending_observations(after.as_ref(), 200, 2)
+            .await
+            .unwrap();
+        assert_eq!(page.has_more, more);
+        assert_eq!(page.entries.len(), 2);
+        seen.extend(page.entries.iter().map(|v| v.request_id().to_owned()));
+        after = page.entries.last().cloned();
+    }
+    assert_eq!(seen, ["tr_a", "tr_b", "tr_c", "tr_d", "tr_e", "tr_f"]);
+    for id in seen {
+        assert!(
+            store.capture_observation(&id).await.is_err(),
+            "hint must not authorize {id}"
+        );
+    }
+}

@@ -174,7 +174,7 @@ Quote 余额查询仍只用原首个 Default RPC：依次 supply、token scan/�
 
 共同 `SdkPreparedRecord` 已接原账本/签名许可/回读的类型接口：按 version/profile 严格区分买卖，不增加 JSON 外壳，旧 SellV1 字节保持。该类型边界已在 `2fe436d` 独立 CI 验收，完整并发/串行各 1605 项通过，原 1594 项保留、新增恰为十一项；共同记录专项 9、93 字段拒绝及全部 52 步骤通过，不重跑或部署。详见 [原账本记录边界](docs/optimization/SDK_PREPARED_RECORD_BOUNDARY.md)。
 
-本轮原账本的共同消息重构/签名字节证据、买入原意图绑定、V1 历史回放及 ownerless 观测已接源码。它只能核对已有历史签名/原始整数和上下文，不能刷新 Quote、恢复 owner、重新签名或发送。原买入 claim、受控 signer/sender 和自动扫描仍未开放；新增十六项合同的独立运行验收见 [买入历史证据](docs/optimization/SDK_BUY_HISTORY_EVIDENCE.md) 及当前执行记录，不套用前批 1605。
+原账本的共同消息重构/签名字节证据、买入原意图绑定、V1 历史回放及 ownerless 观测已在 `f029d55` 独立 CI 验收：完整并发/串行各 1621 项通过。历史记录不能刷新 Quote、恢复 owner、重新签名或发送。2026-11-17 同项后继源码已接原 owner 的受控买入 signer/签后产物、原 CAS/落盘回读、固定 Buy sender、runtime 和 claim/扫描；仅 Durable Live SDK 直接 DAMM 的正整数 Native SOL/WSOL、既有 USDC，不扩展其他协议/模式。十七项新合同尚待本批隔离 CI，不套用父批结果，不部署。详见 [实际接线](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md) 和 [当前记录](docs/optimization/EXECUTION_STATUS.md)。
 
 ### 交易准备余额（源码阶段，未部署）
 

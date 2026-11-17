@@ -15,7 +15,10 @@ use std::{future::Future, sync::Arc};
 
 mod guard;
 mod metadata;
+mod signed;
+use crate::domain::sdk_prepared_record::SdkPreparedRecord;
 pub(crate) use metadata::validate_record as validate_buy_record;
+pub(crate) use signed::DammBuySignedCandidate;
 
 /// Frozen buy construction. No signing authority, persisted owner or broadcast capability.
 pub(crate) struct DammBuyMessage {
@@ -24,11 +27,11 @@ pub(crate) struct DammBuyMessage {
     protocol: Vec<Instruction>,
 }
 
-struct DammBuyCandidate {
+pub(crate) struct DammBuyCandidate {
     profile: Arc<DammBuyMessage>,
     instructions: Vec<Instruction>,
     transaction: VersionedTransaction,
-    record: crate::domain::sdk_buy_candidate::DammBuyCandidateRecord,
+    record: SdkPreparedRecord,
 }
 
 impl DammBuyMessage {
@@ -118,7 +121,7 @@ impl DammBuyMessage {
             profile: self.clone(),
             instructions,
             transaction,
-            record,
+            record: SdkPreparedRecord::DammBuy(record),
         })
     }
 
@@ -155,6 +158,42 @@ impl DammBuyMessage {
 }
 
 impl DammBuyCandidate {
+    #[cfg(test)]
+    pub(crate) fn expire_for_test(&mut self) {
+        Arc::get_mut(&mut Arc::get_mut(&mut self.profile).unwrap().quote)
+            .unwrap()
+            .evidence
+            .expire_for_tests();
+    }
+    pub(crate) fn metadata(&self) -> &SdkPreparedRecord {
+        &self.record
+    }
+
+    pub(crate) fn message_bytes(&self) -> Vec<u8> {
+        self.transaction.message.serialize()
+    }
+
+    pub(crate) async fn validate_unsigned_live(&self, rpc: &RpcClient) -> Result<()> {
+        ensure!(
+            !self.profile.quote.intent.simulate,
+            "DAMM buy live preview requires its original live profile"
+        );
+        self.validate_full(&self.instructions)?;
+        let result = simulate_unsigned_at_slot(
+            rpc,
+            &self.transaction,
+            self.profile.quote.evidence.context().1,
+        )
+        .await?;
+        self.validate_full(&self.instructions)?;
+        ensure!(
+            result.error.is_none(),
+            "DAMM v2 final buy transaction simulation failed: {}",
+            result.error.unwrap_or_default()
+        );
+        Ok(())
+    }
+
     fn validate_full(&self, actual: &[Instruction]) -> Result<()> {
         self.profile.recheck()?;
         ensure!(
@@ -172,19 +211,30 @@ impl DammBuyCandidate {
             "DAMM buy compiled message changed"
         );
         let message = self.transaction.message.serialize();
-        metadata::validate_record(&self.record, &message)?;
+        metadata::validate_record(self.record.buy()?, &message)?;
         ensure!(
             metadata::capture(
                 &self.profile,
                 self.record
+                    .buy()?
                     .details()
                     .tip_destination
                     .map(Pubkey::new_from_array),
                 &message
-            )? == self.record,
+            )? == *self.record.buy()?,
             "DAMM buy record differs from its original live evidence"
         );
         Ok(())
+    }
+}
+
+impl DammBuyMessage {
+    pub(crate) fn prepare_live(self: &Arc<Self>, tip: Option<Pubkey>) -> Result<DammBuyCandidate> {
+        ensure!(
+            !self.quote.intent.simulate,
+            "DAMM buy live candidate requires its original live profile"
+        );
+        self.prepare(tip)
     }
 }
 
@@ -251,7 +301,14 @@ pub(crate) async fn buy_record_fixture() -> (
     let profile = tests::profile(SwqosType::Default, false, true, false).await;
     let candidate = profile.prepare(None).unwrap();
     let message = candidate.transaction.message.serialize();
-    (candidate.record, message)
+    (
+        crate::domain::sdk_buy_candidate::DammBuyCandidateRecord::decode(
+            &candidate.record.encode(&message).unwrap(),
+            &message,
+        )
+        .unwrap(),
+        message,
+    )
 }
 
 #[cfg(test)]
@@ -276,5 +333,27 @@ pub(crate) async fn buy_record_fixture_for_wallet(
     .unwrap();
     let candidate = profile.prepare(None).unwrap();
     let message = candidate.transaction.message.serialize();
-    (candidate.record, message)
+    (
+        crate::domain::sdk_buy_candidate::DammBuyCandidateRecord::decode(
+            &candidate.record.encode(&message).unwrap(),
+            &message,
+        )
+        .unwrap(),
+        message,
+    )
+}
+
+#[cfg(test)]
+pub(crate) async fn buy_candidate_fixture(
+    wallet: Pubkey,
+    native: bool,
+    provider: SwqosType,
+) -> (DammBuyCandidate, DammBuyContext) {
+    let profile = tests::evidenced(wallet, native, false, false, false, None, false, provider)
+        .await
+        .unwrap();
+    let context = profile.quote.context;
+    let tip = (provider != SwqosType::Default)
+        .then(|| crate::adapters::sdk::damm_instructions::tip_accounts(provider)[0]);
+    (profile.prepare_live(tip).unwrap(), context)
 }

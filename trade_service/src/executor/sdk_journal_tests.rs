@@ -122,12 +122,21 @@ async fn setup(
     buy: bool,
     pool: Pool,
 ) -> (Fixture, Arc<Trace>) {
+    setup_payment(mode, simulate, buy, pool, true).await
+}
+async fn setup_payment(
+    mode: TradePersistenceMode,
+    simulate: bool,
+    buy: bool,
+    pool: Pool,
+    native: bool,
+) -> (Fixture, Arc<Trace>) {
     let state = fixture(mode).await.state;
     let request = serde_json::from_value(serde_json::json!({
         "wallet_id":"fixture-wallet", "side":if buy {"buy"} else {"sell"}, "pool":pool,
-        "mint":Address::from_bytes([2;32]).to_string(), "quote_mint":crate::domain::trade::WSOL_MINT,
+        "mint":Address::from_bytes([2;32]).to_string(), "quote_mint":if native {crate::domain::trade::WSOL_MINT} else {crate::domain::trade::USDC_MINT},
         "pool_id":(pool != Pool::Pump).then(|| Address::from_bytes([3;32]).to_string()),
-        "amount_sol":buy.then_some(0.001), "sell_percent":(!buy).then_some(100),
+        "amount_sol":(buy&&native).then_some(0.001), "amount_quote_units":(buy&&!native).then_some(100), "sell_percent":(!buy).then_some(100),
         "simulate":simulate, "execution_method":"sdk", "use_mev":false,
         "idempotency_key":" original-sdk-runtime-literal "
     })).unwrap();
@@ -212,12 +221,7 @@ async fn sdk_runtime_dispatch_does_not_divert_memory_shadow_simulation_buy_or_ot
             false,
             Pool::MeteoraDammV2,
         ),
-        (
-            TradePersistenceMode::Durable,
-            false,
-            true,
-            Pool::MeteoraDammV2,
-        ),
+        (TradePersistenceMode::Durable, false, true, Pool::Pump),
         (TradePersistenceMode::Durable, false, false, Pool::Pump),
     ] {
         let (f, trace) = setup(mode, simulate, buy, pool).await;
@@ -433,4 +437,80 @@ async fn sdk_runtime_dispatch_cancellation_does_not_reclaim_or_restart_the_same_
             .status,
         TradeStatus::BuildingTx
     );
+}
+
+#[tokio::test]
+async fn sdk_runtime_dispatch_buy_uses_the_original_owner_once_for_native_and_usdc_without_legacy()
+{
+    for native in [false, true] {
+        let (f, trace) = setup_payment(
+            TradePersistenceMode::Durable,
+            false,
+            true,
+            Pool::MeteoraDammV2,
+            native,
+        )
+        .await;
+        run(&f).await;
+        run(&f).await;
+        assert_eq!(trace.sdk.load(Ordering::SeqCst), 1);
+        assert_eq!(trace.resolves.load(Ordering::SeqCst), 1);
+        assert_eq!(trace.legacy.load(Ordering::SeqCst), 0);
+        let record = f
+            .state
+            .persistence
+            .get(&f.record.request_id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(record.status, TradeStatus::Failed);
+        assert!(record.signature.is_none());
+        assert!(record.error.as_deref().unwrap().contains("no signer used"));
+        assert_eq!(
+            f.claims().claim(&f.execution).await.unwrap(),
+            ExecutionClaim::AlreadyHeld
+        );
+    }
+}
+
+#[tokio::test]
+async fn sdk_runtime_dispatch_buy_disabled_policy_and_stale_hash_never_resolve_or_fallback() {
+    for native in [false, true] {
+        for disabled in [false, true] {
+            let (mut f, trace) = setup_payment(
+                TradePersistenceMode::Durable,
+                false,
+                true,
+                Pool::MeteoraDammV2,
+                native,
+            )
+            .await;
+            if disabled {
+                Arc::make_mut(&mut f.state.config).security.broadcast = BroadcastPolicy::Disabled;
+            } else {
+                f.state.blockhash_cache = Arc::new(crate::BlockhashCache::default());
+            }
+            run(&f).await;
+            assert_eq!(trace.resolves.load(Ordering::SeqCst), 0);
+            assert_eq!(trace.sdk.load(Ordering::SeqCst), 0);
+            assert_eq!(trace.legacy.load(Ordering::SeqCst), 0);
+            let record = f
+                .state
+                .persistence
+                .get(&f.record.request_id)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(record.status, TradeStatus::Rejected);
+            assert!(record.signature.is_none());
+            let count: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM ordinary_execution_claims WHERE request_id=?",
+            )
+            .bind(&f.record.request_id)
+            .fetch_one(&f.state.persistence.pool_for_tests())
+            .await
+            .unwrap();
+            assert_eq!(count, i64::from(!disabled));
+        }
+    }
 }
