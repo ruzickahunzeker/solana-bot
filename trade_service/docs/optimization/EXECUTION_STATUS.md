@@ -115,10 +115,14 @@
 
 - `ebc51d4` / Actions `44104753013` / artifact `14339127559`：前 29 步通过，
   executor 十项及原卖出 runtime 三项通过。新增买入 runtime 四项未通过：夹具的
-  同 bank 余额/token/CPI 索引绑定旧 discovery 消息，未适配真实路径加入的 Compute
-  Budget 指令。仅修正测试映射，按实际消息公钥重排余额/token 索引，按完整指令绑定
-  CPI 位置；不放宽生产 evidence 校验。受限 metadata check 13 秒通过，RSS
-  1,435,568 KiB；完整买入与两套回归仍待后继独立 CI，不重跑该终态失败。
+  同 bank 余额/token/CPI 索引绑定未开启 rate-limiter sysvar 的旧 discovery 消息。
+  源码复核确认原参数工厂开启该 sysvar，不是最终消息的 Compute Budget 差异；
+  测试夹具现使用相同配置并逐字核对完整 discovery 消息，不以重排索引掩盖差异。
+  受限 metadata check 13 秒通过，RSS 1,427,180 KiB；完整买入与两套回归仍待后继
+  独立 CI，不重跑该终态失败。
+- `76f898d` / Actions `44107876296`：源码复核发现其索引映射修正未匹配实际
+  rate-limiter profile，主动取消已被取代的运行；不计为验收、不重跑。后继只更正
+  夹具 profile 和完整消息断言，生产校验/准备行为不改。
 - `b572b7a` / Actions `44102178151` / artifact `14336409343`：前 27 步通过，
   controlled-buy 六项、buy-claims 三项、sender 十五项及 99 字段门禁通过；executor
   专项 9/10。新增测试误把原“解析钱包后检查 blockhash”断言为先检查 blockhash，

@@ -133,68 +133,12 @@ struct MemoryRpc {
 }
 impl MemoryRpc {
     fn buy_simulation(&self, tx: &VersionedTransaction) -> Value {
-        let template = self.buy_message.as_ref().unwrap();
-        let VersionedMessage::Legacy(message) = &tx.message else {
-            panic!("fixed Legacy buy simulation required")
-        };
-        let index = |old: usize| {
-            message
-                .account_keys
-                .iter()
-                .position(|key| *key == template.account_keys[old])
-                .unwrap()
-        };
+        let mut expected = self.buy_message.as_ref().unwrap().clone();
+        expected.recent_blockhash = Hash::new_from_array([9; 32]);
+        // The fixture must match the real factory's rate-limiter profile and
+        // complete discovery message, not repair indices after a mismatch.
+        assert_eq!(tx.message, VersionedMessage::Legacy(expected));
         let mut result = self.buy_result.as_ref().unwrap().clone();
-        // RPC balance/token indices belong to the actual discovery packet, not
-        // the fixture's pre-Compute-Budget message.
-        for field in ["preBalances", "postBalances"] {
-            let old = result[field].as_array().unwrap();
-            assert_eq!(old.len(), template.account_keys.len());
-            let mut mapped = vec![json!(1_000_000u64); message.account_keys.len()];
-            for (i, value) in old.iter().enumerate() {
-                mapped[index(i)] = value.clone();
-            }
-            result[field] = json!(mapped);
-        }
-        for field in ["preTokenBalances", "postTokenBalances"] {
-            for row in result[field].as_array_mut().unwrap() {
-                row["accountIndex"] = json!(index(row["accountIndex"].as_u64().unwrap() as usize));
-            }
-        }
-        let normalized = |m: &solana_sdk::message::Message, i: usize| {
-            let ix = &m.instructions[i];
-            (
-                m.account_keys[usize::from(ix.program_id_index)],
-                ix.accounts
-                    .iter()
-                    .map(|i| m.account_keys[usize::from(*i)])
-                    .collect::<Vec<_>>(),
-                ix.data.clone(),
-            )
-        };
-        for group in result["innerInstructions"].as_array_mut().unwrap() {
-            let old = group["index"].as_u64().unwrap() as usize;
-            let expected = normalized(template, old);
-            let actual = (0..message.instructions.len())
-                .filter(|i| normalized(message, *i) == expected)
-                .collect::<Vec<_>>();
-            assert_eq!(
-                actual.len(),
-                1,
-                "fixture CPI must bind one exact instruction"
-            );
-            group["index"] = json!(actual[0]);
-        }
-        for key in &message.account_keys {
-            if !template.account_keys.contains(key) {
-                assert_eq!(
-                    *key,
-                    "ComputeBudget111111111111111111111111111111"
-                        .parse::<Pubkey>()
-                        .unwrap()
-                );
-            }
-        }
         if self.mode == Mode::ZeroOutput {
             result["innerInstructions"][0]["instructions"][1]["parsed"]["info"]["tokenAmount"]
                 ["amount"] = json!("0");

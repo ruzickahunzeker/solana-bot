@@ -43,9 +43,11 @@
 
 后继 `ebc51d4` / Actions `44104753013` 已终态 failure，artifact `14339127559`
 下载核对：前 29 步通过，executor 十项/原卖出 runtime 三项通过；新增买入 runtime
-四项失败于夹具旧消息索引。实际路径加入 Compute Budget 后，旧余额数组长度/token
-索引及 CPI 位置必须按公钥/完整指令映射到真实 discovery 消息。仅改测试，保留生产
-同 bank 余额、输出及权限检查；受限 metadata check 13 秒/RSS 1,435,568 KiB 通过。
+四项失败于夹具旧消息索引。源码复核确认原参数工厂开启 rate-limiter sysvar，旧夹具
+未开启；不是完整消息才加入的 Compute Budget 差异。`76f898d` / Actions `44107876296`
+的索引映射尝试在本地复核后主动取消，不计验收、不重跑。后继夹具使用相同 profile，
+逐字核对实际 discovery 消息而非重排索引，保留生产同 bank 余额、输出及权限检查；
+受限 metadata check 13 秒/RSS 1,427,180 KiB 通过。
 完整回归仍须后继快照独立验收，不重跑失败任务，不套用父批。
 
 ## 已验收运行

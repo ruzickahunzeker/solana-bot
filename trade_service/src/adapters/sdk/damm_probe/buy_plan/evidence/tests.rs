@@ -19,14 +19,14 @@ pub(crate) fn buy_runtime_fixture(
     wallet: Pubkey,
     native: bool,
 ) -> (Vec<Value>, Value, solana_sdk::message::Message) {
-    let case = Case::with_wallet(
+    let case = Case::with_wallet_profile(
         false,
         native,
         false,
         true,
         (true, key(4)),
         Encoding::Parsed,
-        wallet,
+        (wallet, true),
     );
     (
         case.source.rpc.values,
@@ -202,6 +202,26 @@ impl Case {
         kind: Encoding,
         wallet: Pubkey,
     ) -> Self {
+        Self::with_wallet_profile(
+            reversed,
+            native,
+            extended,
+            input_exists,
+            output,
+            kind,
+            (wallet, false),
+        )
+    }
+    fn with_wallet_profile(
+        reversed: bool,
+        native: bool,
+        extended: bool,
+        input_exists: bool,
+        output: (bool, Pubkey),
+        kind: Encoding,
+        profile: (Pubkey, bool),
+    ) -> Self {
+        let (wallet, rate_limiter_sysvar) = profile;
         let (output_exists, target) = output;
         assert!(native || input_exists);
         let quote_mint = if native {
@@ -210,6 +230,7 @@ impl Case {
             USDC_TOKEN_ACCOUNT
         };
         let mut source = Fixture::new(reversed, extended, quote_mint, output_exists);
+        source.params.include_rate_limiter_sysvar = rate_limiter_sysvar;
         let target_program = if extended {
             spl_token_2022_interface::ID
         } else {
