@@ -15,7 +15,10 @@ const RESERVE: u64 = 2_039_280;
 const FEE: u64 = 5_000;
 const SAME_BANK_WALLET: u64 = 100_000_000;
 
-pub(crate) fn buy_runtime_fixture(wallet: Pubkey, native: bool) -> (Vec<Value>, Value) {
+pub(crate) fn buy_runtime_fixture(
+    wallet: Pubkey,
+    native: bool,
+) -> (Vec<Value>, Value, solana_sdk::message::Message) {
     let case = Case::with_wallet(
         false,
         native,
@@ -25,7 +28,11 @@ pub(crate) fn buy_runtime_fixture(wallet: Pubkey, native: bool) -> (Vec<Value>, 
         Encoding::Parsed,
         wallet,
     );
-    (case.source.rpc.values, case.result)
+    (
+        case.source.rpc.values,
+        case.result,
+        case.plan.transaction.message,
+    )
 }
 
 #[derive(Clone, Copy)]

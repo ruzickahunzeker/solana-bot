@@ -127,10 +127,81 @@ struct MemoryRpc {
     wallet: Pubkey,
     values: Vec<Value>,
     buy_result: Option<Value>,
+    buy_message: Option<solana_sdk::message::Message>,
     mode: Mode,
     trace: Arc<Trace>,
 }
 impl MemoryRpc {
+    fn buy_simulation(&self, tx: &VersionedTransaction) -> Value {
+        let template = self.buy_message.as_ref().unwrap();
+        let VersionedMessage::Legacy(message) = &tx.message else {
+            panic!("fixed Legacy buy simulation required")
+        };
+        let index = |old: usize| {
+            message
+                .account_keys
+                .iter()
+                .position(|key| *key == template.account_keys[old])
+                .unwrap()
+        };
+        let mut result = self.buy_result.as_ref().unwrap().clone();
+        // RPC balance/token indices belong to the actual discovery packet, not
+        // the fixture's pre-Compute-Budget message.
+        for field in ["preBalances", "postBalances"] {
+            let old = result[field].as_array().unwrap();
+            assert_eq!(old.len(), template.account_keys.len());
+            let mut mapped = vec![json!(1_000_000u64); message.account_keys.len()];
+            for (i, value) in old.iter().enumerate() {
+                mapped[index(i)] = value.clone();
+            }
+            result[field] = json!(mapped);
+        }
+        for field in ["preTokenBalances", "postTokenBalances"] {
+            for row in result[field].as_array_mut().unwrap() {
+                row["accountIndex"] = json!(index(row["accountIndex"].as_u64().unwrap() as usize));
+            }
+        }
+        let normalized = |m: &solana_sdk::message::Message, i: usize| {
+            let ix = &m.instructions[i];
+            (
+                m.account_keys[usize::from(ix.program_id_index)],
+                ix.accounts
+                    .iter()
+                    .map(|i| m.account_keys[usize::from(*i)])
+                    .collect::<Vec<_>>(),
+                ix.data.clone(),
+            )
+        };
+        for group in result["innerInstructions"].as_array_mut().unwrap() {
+            let old = group["index"].as_u64().unwrap() as usize;
+            let expected = normalized(template, old);
+            let actual = (0..message.instructions.len())
+                .filter(|i| normalized(message, *i) == expected)
+                .collect::<Vec<_>>();
+            assert_eq!(
+                actual.len(),
+                1,
+                "fixture CPI must bind one exact instruction"
+            );
+            group["index"] = json!(actual[0]);
+        }
+        for key in &message.account_keys {
+            if !template.account_keys.contains(key) {
+                assert_eq!(
+                    *key,
+                    "ComputeBudget111111111111111111111111111111"
+                        .parse::<Pubkey>()
+                        .unwrap()
+                );
+            }
+        }
+        if self.mode == Mode::ZeroOutput {
+            result["innerInstructions"][0]["instructions"][1]["parsed"]["info"]["tokenAmount"]
+                ["amount"] = json!("0");
+        }
+        result
+    }
+
     fn simulation(&self, tx: &VersionedTransaction) -> Value {
         let VersionedMessage::Legacy(message) = &tx.message else {
             panic!("fixed Legacy simulation required")
@@ -326,12 +397,8 @@ impl RpcSender for MemoryRpc {
                             self.trace.entered.notify_one();
                             std::future::pending::<()>().await;
                         }
-                        if let Some(result) = &self.buy_result {
-                            let mut result = result.clone();
-                            if self.mode == Mode::ZeroOutput {
-                                result["innerInstructions"][0]["instructions"][1]["parsed"]
-                                    ["info"]["tokenAmount"]["amount"] = json!("0");
-                            }
+                        if self.buy_result.is_some() {
+                            let result = self.buy_simulation(&tx);
                             Ok(json!({"context":{"slot":43},"value":result}))
                         } else {
                             Ok(json!({"context":{"slot":124},"value":self.simulation(&tx)}))
@@ -421,11 +488,11 @@ impl Case {
         change_token(&mut source.rpc.values[6], |a| a.owner = wallet);
         change_token(&mut source.rpc.values[7], |a| a.owner = wallet);
         source.rpc.values[5] = clock(123, 17);
-        let (mut values, buy_result) = if let Some(native) = native {
-            let (values, result) = buy_runtime_fixture(wallet, native);
-            (values, Some(result))
+        let (mut values, buy_result, buy_message) = if let Some(native) = native {
+            let (values, result, message) = buy_runtime_fixture(wallet, native);
+            (values, Some(result), Some(message))
         } else {
-            (source.rpc.values.clone(), None)
+            (source.rpc.values.clone(), None, None)
         };
         if native.is_some() && mode == Mode::BadRaw {
             values[1]["owner"] = json!(key(99).to_string());
@@ -460,6 +527,7 @@ impl Case {
                 wallet,
                 values,
                 buy_result,
+                buy_message,
                 mode,
                 trace: trace.clone(),
             },

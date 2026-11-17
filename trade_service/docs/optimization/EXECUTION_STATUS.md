@@ -113,6 +113,12 @@
 
 ## 已结束的失败
 
+- `ebc51d4` / Actions `44104753013` / artifact `14339127559`：前 29 步通过，
+  executor 十项及原卖出 runtime 三项通过。新增买入 runtime 四项未通过：夹具的
+  同 bank 余额/token/CPI 索引绑定旧 discovery 消息，未适配真实路径加入的 Compute
+  Budget 指令。仅修正测试映射，按实际消息公钥重排余额/token 索引，按完整指令绑定
+  CPI 位置；不放宽生产 evidence 校验。受限 metadata check 13 秒通过，RSS
+  1,435,568 KiB；完整买入与两套回归仍待后继独立 CI，不重跑该终态失败。
 - `b572b7a` / Actions `44102178151` / artifact `14336409343`：前 27 步通过，
   controlled-buy 六项、buy-claims 三项、sender 十五项及 99 字段门禁通过；executor
   专项 9/10。新增测试误把原“解析钱包后检查 blockhash”断言为先检查 blockhash，
