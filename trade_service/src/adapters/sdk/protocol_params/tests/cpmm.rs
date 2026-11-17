@@ -45,7 +45,7 @@ pub(super) fn vault(mint: Pubkey, amount: u64) -> Vec<u8> {
     data
 }
 
-fn pool_account(pool: &PoolState) -> solana_sdk::account::Account {
+pub(super) fn pool_account(pool: &PoolState) -> solana_sdk::account::Account {
     let bytes = bincode::serialize(pool).unwrap();
     assert_eq!(bytes.len(), POOL_STATE_SIZE);
     assert_eq!(
@@ -138,6 +138,47 @@ fn assert_params(params: &RaydiumCpmmParams, id: Pubkey, pool: &PoolState, confi
     assert_eq!(params.base_transfer_fee.maximum_fee, 0);
     assert_eq!(params.quote_transfer_fee.basis_points, 0);
     assert_eq!(params.quote_transfer_fee.maximum_fee, 0);
+}
+
+pub(super) fn hop_fixture(reverse: bool, zero: bool) -> (ReadRpc, Pubkey, PoolState) {
+    let (mut read, id, mut pool, _) = fixture();
+    if reverse {
+        std::mem::swap(&mut pool.token0_mint, &mut pool.token1_mint);
+        std::mem::swap(&mut pool.mint0_decimals, &mut pool.mint1_decimals);
+    }
+    read.account(id, pool_account(&pool));
+    read.account(
+        pool.token0_vault,
+        account(pool.token0_program, vault(pool.token0_mint, 1_000_041)),
+    );
+    read.account(
+        pool.token1_vault,
+        account(pool.token1_program, vault(pool.token1_mint, 2_000_071)),
+    );
+    read.token_balance(pool.token0_vault, if zero { 0 } else { 1_000_041 });
+    read.token_balance(pool.token1_vault, 2_000_071);
+    read.program_scan(RAYDIUM_CPMM, &[id]);
+    (read, id, pool)
+}
+
+pub(super) fn hop_policy_fixture(hook: bool) -> (ReadRpc, Pubkey, PoolState) {
+    let (mut read, id, mut pool) = hop_fixture(false, false);
+    if hook {
+        pool.token0_program = spl_token_2022_interface::ID;
+        read.account(
+            pool.token0_mint,
+            account(pool.token0_program, extension_mint(true)),
+        );
+        read.account(
+            pool.token0_vault,
+            account(pool.token0_program, vault(pool.token0_mint, 1_000_041)),
+        );
+    } else {
+        pool.protocol_fees_token0 = 1_000_042;
+    }
+    read.account(id, pool_account(&pool));
+    read.program_scan(RAYDIUM_CPMM, &[id]);
+    (read, id, pool)
 }
 
 #[tokio::test]

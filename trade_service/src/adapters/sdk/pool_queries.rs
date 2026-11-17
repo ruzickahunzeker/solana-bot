@@ -44,7 +44,7 @@ impl PoolReadBackend for SdkPoolReadBackend {
         Ok(Address::from_bytes(
             self.wallets
                 .default()
-                .resolve_stonkfun_sol_hop(&quote)
+                .resolve_stonkfun_sol_hop(&quote, self.read_rpc.clone())
                 .await?
                 .to_bytes(),
         ))

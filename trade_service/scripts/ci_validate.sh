@@ -93,6 +93,9 @@ PY
         step pool-discovery-session cargo test --locked --offline pool_discovery_session -- --test-threads=2
         step pool-discovery-loaders cargo test --locked --offline pool_discovery_loader -- --test-threads=2
         step pool-discovery-wire cargo test --locked --offline pool_discovery_wire -- --test-threads=2
+        step sol-hop-session cargo test --locked --offline sol_hop_session -- --test-threads=2
+        step sol-hop-loaders cargo test --locked --offline sol_hop_loader -- --test-threads=2
+        step sol-hop-wire cargo test --locked --offline sol_hop_wire -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

@@ -18,6 +18,7 @@ enum Kind {
     Accounts(usize),
     Epoch,
     ProgramScan,
+    TokenBalance,
 }
 
 #[derive(Clone)]
@@ -163,26 +164,101 @@ impl ParameterQuery {
                 );
                 Kind::Epoch
             }
+            RpcRequest::GetTokenAccountBalance if length == 2 && scope.hop_quote.is_some() => {
+                key(&params[0])?;
+                serde_json::from_value::<solana_commitment_config::CommitmentConfig>(
+                    params[1].clone(),
+                )
+                .map_err(|_| invalid("invalid hop balance configuration"))?;
+                ensure!(
+                    params[1].as_object().is_some_and(
+                        |object| object.len() == 1 && object.contains_key("commitment")
+                    ),
+                    invalid("invalid hop balance configuration")
+                );
+                Kind::TokenBalance
+            }
             RpcRequest::GetProgramAccounts if length == 2 => {
                 let pump = scope.pump_scan_mint();
                 let dbc = scope.dbc_scan_mint();
-                let Some(mint) = pump.or(dbc) else {
-                    return Err(invalid(
-                        "parameter program scan is not permitted for this loader",
-                    ));
-                };
                 use sol_trade_sdk::instruction::utils::{
                     meteora_dbc, pumpswap::accounts::AMM_PROGRAM,
                     pumpswap_types::POOL_DISCRIMINATOR,
                 };
-                ensure!(
-                    params[0]
-                        == if pump.is_some() {
+                let (program, profiles) = if let Some(quote) = scope.hop_quote {
+                    use sol_trade_sdk::instruction::utils::{
+                        raydium_cpmm::accounts::RAYDIUM_CPMM,
+                        raydium_cpmm_types::POOL_STATE_DISCRIMINATOR,
+                    };
+                    let wsol = sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT;
+                    ensure!(
+                        quote.to_bytes() != wsol.to_bytes(),
+                        invalid("SOL hop quote is already WSOL")
+                    );
+                    let profiles = [(168usize, 200usize), (200, 168)]
+                        .map(|(quote_offset, wsol_offset)| {
+                            vec![
+                                RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                    0,
+                                    &POOL_STATE_DISCRIMINATOR,
+                                )),
+                                RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                    quote_offset,
+                                    &quote.to_bytes(),
+                                )),
+                                RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                    wsol_offset,
+                                    wsol.as_ref(),
+                                )),
+                            ]
+                        })
+                        .to_vec();
+                    (RAYDIUM_CPMM, profiles)
+                } else {
+                    let mint = pump.or(dbc).ok_or_else(|| {
+                        invalid("parameter program scan is not permitted for this loader")
+                    })?;
+                    let profiles = if pump.is_some() {
+                        [252u64, 261, 270, 271, 300, 643]
+                            .into_iter()
+                            .flat_map(|size| {
+                                [43usize, 75].map(|offset| (size, offset, POOL_DISCRIMINATOR))
+                            })
+                            .collect::<Vec<_>>()
+                    } else {
+                        vec![(
+                            meteora_dbc::VIRTUAL_POOL_ACCOUNT_SIZE,
+                            meteora_dbc::BASE_MINT_OFFSET,
+                            meteora_dbc::VIRTUAL_POOL_DISCRIMINATOR,
+                        )]
+                    };
+                    let filters = profiles
+                        .into_iter()
+                        .map(|(size, offset, discriminator)| {
+                            vec![
+                                RpcFilterType::DataSize(size),
+                                RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                    0,
+                                    &discriminator,
+                                )),
+                                RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                                    offset,
+                                    &mint.to_bytes(),
+                                )),
+                            ]
+                        })
+                        .collect();
+                    (
+                        if pump.is_some() {
                             AMM_PROGRAM
                         } else {
                             meteora_dbc::accounts::PROGRAM
-                        }
-                        .to_string(),
+                        },
+                        filters,
+                    )
+                };
+                ensure!(
+                    params[0] == program.to_string(),
                     invalid("parameter program scan has wrong program")
                 );
                 let config: RpcProgramAccountsConfig = serde_json::from_value(params[1].clone())
@@ -210,26 +286,7 @@ impl ParameterQuery {
                         ))),
                     invalid("unsupported parameter program scan configuration")
                 );
-                let profiles = if pump.is_some() {
-                    [252u64, 261, 270, 271, 300, 643]
-                        .into_iter()
-                        .flat_map(|size| {
-                            [43usize, 75].map(|offset| (size, offset, POOL_DISCRIMINATOR))
-                        })
-                        .collect::<Vec<_>>()
-                } else {
-                    vec![(
-                        meteora_dbc::VIRTUAL_POOL_ACCOUNT_SIZE,
-                        meteora_dbc::BASE_MINT_OFFSET,
-                        meteora_dbc::VIRTUAL_POOL_DISCRIMINATOR,
-                    )]
-                };
-                let allowed = profiles.into_iter().any(|(size, offset, discriminator)| {
-                    let filters = vec![
-                        RpcFilterType::DataSize(size),
-                        RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &discriminator)),
-                        RpcFilterType::Memcmp(Memcmp::new_base58_encoded(offset, &mint.to_bytes())),
-                    ];
+                let allowed = profiles.into_iter().any(|filters| {
                     serde_json::to_value(filters)
                         .is_ok_and(|filters| params[1]["filters"] == filters)
                 });
@@ -250,6 +307,7 @@ impl ParameterQuery {
             Kind::Accounts(_) => "getMultipleAccounts",
             Kind::Epoch => "getEpochInfo",
             Kind::ProgramScan => "getProgramAccounts",
+            Kind::TokenBalance => "getTokenAccountBalance",
         };
         json!({"jsonrpc":"2.0","id":id,"method":method,"params":self.params})
     }
@@ -295,6 +353,18 @@ impl ParameterQuery {
             Kind::Epoch => {
                 serde_json::from_value::<solana_sdk::epoch_info::EpochInfo>(result.clone())
                     .map_err(|_| invalid("parameter epoch result is invalid"))?;
+            }
+            Kind::TokenBalance => {
+                let context: RpcResponseContext = serde_json::from_value(result["context"].clone())
+                    .map_err(|_| invalid("invalid hop balance context"))?;
+                ensure!(context.slot > 0, invalid("invalid hop balance context"));
+                let amount: solana_account_decoder::parse_token::UiTokenAmount =
+                    serde_json::from_value(result["value"].clone())
+                        .map_err(|_| invalid("invalid hop balance metadata"))?;
+                amount
+                    .amount
+                    .parse::<u64>()
+                    .map_err(|_| invalid("invalid hop balance units"))?;
             }
             Kind::ProgramScan => {
                 let rows = result

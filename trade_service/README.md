@@ -206,7 +206,9 @@ memory -> shadow（完成对账）-> durable + ENABLE_SIMULATE=true（完成验�
 
 ## 参数说明
 
-普通寻池算法新增只读 SDK adapter，使用原共享 runtime 的两分支/100 ms 专用预算，保留原 Default/Helius 顺序和每节点三秒期限；Pump/DBC 分支故障独立，DBC 扫描只开放固定布局。十八项新测试源码待独立 CI，不套用参数批结果；两跳等其他读取仍待收口，尚未部署。见 [寻池读取边界](docs/optimization/POOL_DISCOVERY_SHARED_READS.md)。
+既有 WSOL/Quote CPMM 两跳寻池新增专用只读 scope，共用原 runtime/HTTP/冷却，保留原缓存与 TTL；五秒总期限、单在途/100 ms、最多 32 次请求。20 项新测试源码待独立 CI，不代表 SOL 路线已实网验收或部署。见 [两跳读取边界](docs/optimization/SOL_HOP_SHARED_READS.md)。
+
+普通寻池算法已接只读 SDK adapter 和原共享 runtime 的两分支/100 ms 专用预算，保留原 Default/Helius 顺序及每节点三秒期限；Pump/DBC 分支故障独立，DBC 扫描只开放固定布局。`cde04bd` / Actions `44146511097` 独立验收完整并发/串行各 1693，新增 18、105 字段及 63 步骤通过；两跳等其他读取仍待收口，尚未部署。见 [寻池读取边界](docs/optimization/POOL_DISCOVERY_SHARED_READS.md)。
 
 `RPC_URL`
 

@@ -39,6 +39,7 @@
     {"id": "damm_buy_candidate", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuyCandidate", "probe": "crate::adapters::sdk::damm_probe::DammBuyCandidate"},
     {"id": "damm_buy_signed", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuySignedCandidate", "probe": "crate::adapters::sdk::damm_probe::DammBuySignedCandidate"},
     {"id": "parameter_session", "path": "pump_trade_service::adapters::rpc::parameter_reads::ParameterReadSession", "probe": "crate::adapters::rpc::parameter_reads::ParameterReadSession"},
-    {"id": "discovery_session", "path": "pump_trade_service::adapters::rpc::discovery_reads::DiscoveryReadSession", "probe": "crate::adapters::rpc::discovery_reads::DiscoveryReadSession"}
+    {"id": "discovery_session", "path": "pump_trade_service::adapters::rpc::discovery_reads::DiscoveryReadSession", "probe": "crate::adapters::rpc::discovery_reads::DiscoveryReadSession"},
+    {"id": "sol_hop_session", "path": "pump_trade_service::adapters::rpc::sol_hop_reads::SolHopReadSession", "probe": "crate::adapters::rpc::sol_hop_reads::SolHopReadSession"}
   ]
 }

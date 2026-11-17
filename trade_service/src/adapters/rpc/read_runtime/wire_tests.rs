@@ -760,6 +760,8 @@ async fn shared_read_wire_child() {
             "parameter_rate_cancel" => parameter_wire::rate_cancel().await,
             "pool-discovery-success" => parameter_wire::discovery_success().await,
             "pool-discovery-errors" => parameter_wire::discovery_errors().await,
+            "sol-hop-success" => parameter_wire::sol_hop_success().await,
+            "sol-hop-errors" => parameter_wire::sol_hop_errors_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -928,4 +930,13 @@ fn pool_discovery_wire_real_sdk_account_and_filtered_scan_use_fixed_transport() 
 #[test]
 fn pool_discovery_wire_scan_body_identity_cooldown_and_redirects_fail_without_retry() {
     run("pool-discovery-errors");
+}
+
+#[test]
+fn sol_hop_wire_real_sdk_pair_scans_and_vault_balance_share_fixed_http_transport() {
+    run("sol-hop-success");
+}
+#[test]
+fn sol_hop_wire_bad_ids_bodies_429_redirect_and_cancel_do_not_retry_or_leak_capacity() {
+    run("sol-hop-errors");
 }

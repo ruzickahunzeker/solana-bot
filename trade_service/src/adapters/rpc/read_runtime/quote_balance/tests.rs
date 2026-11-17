@@ -506,7 +506,7 @@ async fn quote_balance_shared_read_busy_cancel_and_other_four_reservations_are_i
             .slots
             .each_ref()
             .map(|slot| slot.available_permits()),
-        [1, 1, 1, 1, 1, 1, 1, 2]
+        [1, 1, 1, 1, 1, 1, 1, 2, 1]
     );
     assert_eq!(methods(&runtime).len(), 6);
     assert_eq!(runtime.transport.dropped.load(Ordering::SeqCst), 6);

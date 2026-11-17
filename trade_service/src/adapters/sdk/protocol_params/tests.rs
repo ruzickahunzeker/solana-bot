@@ -17,6 +17,7 @@ mod pump;
 mod pump_swap;
 mod read_rpc;
 mod shared;
+mod sol_hop;
 mod stonkfun;
 
 fn state() -> PoolState {

@@ -9,6 +9,18 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
     pub(crate) fn discovery_slot(&self) -> Result<OwnedSemaphorePermit> {
         self.scoped_slot(Class::Discovery)
     }
+    pub(crate) fn sol_hop_slot(&self) -> Result<OwnedSemaphorePermit> {
+        self.scoped_slot(Class::SolHop)
+    }
+    pub(crate) async fn sol_hop_step(
+        &self,
+        url: &str,
+        query: ParameterQuery,
+        total: Instant,
+    ) -> Result<Value> {
+        self.scoped_parameter_step(Class::SolHop, url, query, total)
+            .await
+    }
 
     fn scoped_slot(&self, class: Class) -> Result<OwnedSemaphorePermit> {
         self.slots[class.index()]
@@ -78,6 +90,9 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         };
         if matches!(class, Class::Discovery) && reply.status == StatusCode::TOO_MANY_REQUESTS {
             return Err(unavailable("pool discovery RPC rate limited (429)"));
+        }
+        if matches!(class, Class::SolHop) && reply.status == StatusCode::TOO_MANY_REQUESTS {
+            return Err(unavailable("SOL hop RPC rate limited (429)"));
         }
         ensure!(
             reply.status.is_success(),

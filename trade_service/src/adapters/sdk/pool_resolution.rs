@@ -33,6 +33,12 @@ pub(crate) struct DiscoveryLane {
     helius: bool,
 }
 impl DiscoveryLane {
+    pub(super) fn url(&self) -> &str {
+        &self.url
+    }
+    pub(super) fn commitment(&self) -> CommitmentConfig {
+        self.commitment
+    }
     pub(crate) fn new(url: String, commitment: CommitmentConfig, helius: bool) -> Self {
         Self {
             url,

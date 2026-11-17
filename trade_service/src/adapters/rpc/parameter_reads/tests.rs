@@ -8,6 +8,7 @@ use std::collections::VecDeque;
 use tokio::sync::Notify;
 
 mod discovery;
+mod sol_hop;
 
 #[derive(Clone, Copy)]
 enum Mode {
@@ -64,6 +65,9 @@ impl ReadHttpTransport for Fake {
                 json!({"epoch":17,"slotIndex":1,"slotsInEpoch":432000,"absoluteSlot":7344001,"blockHeight":42,"transactionCount":100})
             }
             "getProgramAccounts" => json!([]),
+            "getTokenAccountBalance" => {
+                json!({"context":{"slot":42},"value":{"amount":u64::MAX.to_string(),"decimals":6,"uiAmount":null,"uiAmountString":"18446744073709.551615"}})
+            }
             _ => panic!("non-parameter capability reached transport"),
         };
         if matches!(mode, Mode::Hold) {

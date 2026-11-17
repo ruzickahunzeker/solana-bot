@@ -21,6 +21,7 @@ pub(super) struct ReadRpc {
     accounts: HashMap<String, Option<Account>>,
     epoch: Option<u64>,
     program_scans: HashMap<Pubkey, Vec<(Pubkey, Account)>>,
+    token_balances: HashMap<String, Value>,
     calls: Arc<Mutex<Vec<(RpcRequest, Value)>>>,
     violations: Arc<Mutex<Vec<String>>>,
 }
@@ -36,6 +37,12 @@ impl ReadRpc {
 
     pub(super) fn epoch(&mut self, epoch: u64) {
         self.epoch = Some(epoch);
+    }
+    pub(super) fn token_balance(&mut self, address: Pubkey, units: u64) {
+        self.token_balances.insert(address.to_string(),json!({"amount":units.to_string(),"decimals":6,"uiAmount":null,"uiAmountString":"unused display"}));
+    }
+    pub(super) fn clear_calls(&self) {
+        self.calls.lock().unwrap().clear();
     }
     pub(super) fn program_scan(&mut self, program: Pubkey, addresses: &[Pubkey]) {
         self.program_scans.insert(
@@ -59,6 +66,7 @@ impl ReadRpc {
     pub(super) fn merge(&mut self, other: Self) {
         self.accounts.extend(other.accounts);
         self.program_scans.extend(other.program_scans);
+        self.token_balances.extend(other.token_balances);
     }
 
     pub(super) fn client(&self) -> RpcClient {
@@ -76,7 +84,8 @@ impl ReadRpc {
             RpcRequest::GetAccountInfo | RpcRequest::GetMultipleAccounts | RpcRequest::GetEpochInfo
         ) || (*method
             == RpcRequest::GetProgramAccounts
-            && !self.program_scans.is_empty())));
+            && !self.program_scans.is_empty())
+            || (*method == RpcRequest::GetTokenAccountBalance && !self.token_balances.is_empty())));
     }
 
     fn reject(&self, message: String) -> Error {
@@ -123,6 +132,11 @@ impl ReadRpc {
                 return Ok(json!({"epoch":epoch,"slotIndex":1,"slotsInEpoch":432000,
                     "absoluteSlot":epoch * 432000 + 1,"blockHeight":42,"transactionCount":100}));
             }
+            RpcRequest::GetTokenAccountBalance if !self.token_balances.is_empty() => self
+                .token_balances
+                .get(params[0].as_str().unwrap())
+                .cloned()
+                .ok_or_else(|| self.reject("unscripted vault balance".into()))?,
             RpcRequest::GetProgramAccounts if !self.program_scans.is_empty() => {
                 let program = params[0].as_str().unwrap().parse::<Pubkey>().unwrap();
                 let accounts = self

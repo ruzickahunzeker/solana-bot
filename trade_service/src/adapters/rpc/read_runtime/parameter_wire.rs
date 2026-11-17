@@ -227,3 +227,140 @@ pub(super) async fn discovery_errors() {
     }
     sink.finish().await;
 }
+
+fn hop_scan(reverse: bool) -> solana_client::rpc_config::RpcProgramAccountsConfig {
+    use sol_trade_sdk::instruction::utils::raydium_cpmm_types::POOL_STATE_DISCRIMINATOR;
+    use solana_client::{
+        rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
+        rpc_filter::{Memcmp, RpcFilterType},
+    };
+    let (a, b) = if reverse { (200, 168) } else { (168, 200) };
+    RpcProgramAccountsConfig {
+        filters: Some(vec![
+            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &POOL_STATE_DISCRIMINATOR)),
+            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(a, key(1).as_ref())),
+            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
+                b,
+                sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT.as_ref(),
+            )),
+        ]),
+        account_config: RpcAccountInfoConfig {
+            encoding: Some(solana_account_decoder::UiAccountEncoding::Base64),
+            ..Default::default()
+        },
+        with_context: None,
+        sort_results: None,
+    }
+}
+pub(super) async fn sol_hop_success() {
+    use crate::adapters::rpc::sol_hop_reads::SolHopReadSession;
+    let server = LocalServer::new(reply(Reply::Success)).await;
+    let r = runtime(&[&server]);
+    let s = SolHopReadSession::new(
+        r.clone(),
+        server.url.clone(),
+        CommitmentConfig::processed(),
+        Address::from_bytes([1; 32]),
+        Instant::now() + Duration::from_secs(5),
+    );
+    for reverse in [false, true] {
+        #[allow(deprecated)]
+        let rows = s
+            .rpc()
+            .get_program_ui_accounts_with_config(
+                &sol_trade_sdk::instruction::utils::raydium_cpmm::accounts::RAYDIUM_CPMM,
+                hop_scan(reverse),
+            )
+            .await
+            .unwrap();
+        assert!(rows.is_empty());
+    }
+    assert_eq!(
+        s.rpc()
+            .get_token_account_balance(&key(4))
+            .await
+            .unwrap()
+            .amount,
+        "23"
+    );
+    s.finish(Ok(())).unwrap();
+    assert_eq!(count(&server), 3);
+    assert_eq!(method(&server, 2), "getTokenAccountBalance");
+    assert!(r.sol_hop_slot().is_ok());
+    server.finish().await;
+}
+pub(super) async fn sol_hop_errors_cancel() {
+    use crate::adapters::rpc::sol_hop_reads::SolHopReadSession;
+    let sink = LocalServer::new(reply(Reply::Success)).await;
+    for balance in [false, true] {
+        let max = if balance { 524_288 } else { 1_048_576 };
+        for mode in [
+            Reply::WrongId,
+            Reply::RpcError,
+            Reply::DeclaredOversize,
+            Reply::Chunked(max + 1),
+            Reply::RateLimited(Some("60")),
+            Reply::Redirect(sink.url.clone()),
+        ] {
+            let server = LocalServer::new(reply(mode)).await;
+            let r = runtime(&[&server, &sink]);
+            let s = SolHopReadSession::new(
+                r.clone(),
+                server.url.clone(),
+                CommitmentConfig::processed(),
+                Address::from_bytes([1; 32]),
+                Instant::now() + Duration::from_secs(5),
+            );
+            let result = if balance {
+                s.rpc()
+                    .get_token_account_balance(&key(4))
+                    .await
+                    .map(|_| ())
+                    .map_err(anyhow::Error::from)
+            } else {
+                #[allow(deprecated)]
+                let result = s
+                    .rpc()
+                    .get_program_ui_accounts_with_config(
+                        &sol_trade_sdk::instruction::utils::raydium_cpmm::accounts::RAYDIUM_CPMM,
+                        hop_scan(false),
+                    )
+                    .await
+                    .map(|_| ())
+                    .map_err(anyhow::Error::from);
+                result
+            };
+            assert!(s.finish(result).is_err());
+            assert_eq!((count(&server), count(&sink)), (1, 0));
+            assert!(r.sol_hop_slot().is_ok());
+            server.finish().await;
+        }
+    }
+    sink.finish().await;
+    let slow = LocalServer::new(reply(Reply::SlowHeaders)).await;
+    let backup = LocalServer::new(Reply::Success).await;
+    let r = runtime(&[&slow, &backup]);
+    let s = SolHopReadSession::new(
+        r.clone(),
+        slow.url.clone(),
+        CommitmentConfig::processed(),
+        Address::from_bytes([1; 32]),
+        Instant::now() + Duration::from_secs(5),
+    );
+    let task = tokio::spawn(async move {
+        let result = s.rpc().get_token_account_balance(&key(4)).await;
+        s.finish(result.map_err(anyhow::Error::from))
+    });
+    tokio::time::timeout(Duration::from_secs(1), slow.received.notified())
+        .await
+        .unwrap();
+    assert!(r.sol_hop_slot().is_err());
+    r.latest_blockhash().await.unwrap();
+    assert!(!task.is_finished());
+    task.abort();
+    assert!(task.await.err().unwrap().is_cancelled());
+    assert!(r.sol_hop_slot().is_ok());
+    assert_eq!((count(&slow), count(&backup)), (2, 1));
+    slow.finish().await;
+    backup.finish().await;
+}

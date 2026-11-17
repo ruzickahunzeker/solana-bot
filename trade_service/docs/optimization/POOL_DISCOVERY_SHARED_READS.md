@@ -1,8 +1,9 @@
 # Ordinary Pool Discovery Read Boundary
 
 Date: 2026-11-18, Asia/Shanghai. Continues NP-03 / TS-07/09, not a new task or
-protocol implementation. Current source is wired; independent Rust acceptance
-is pending. Parent is 1792c51 / Actions 44133854054 (full suites each 1675).
+protocol implementation. Current source has independent offline Rust acceptance:
+cde04bd / Actions 44146511097 / artifact 14359025763. Parent remains 1792c51 /
+Actions 44133854054 (full suites each 1675), not reused as this batch's proof.
 
 ## Actual Production Wiring
 
@@ -53,7 +54,7 @@ successful. A hint is not trade permission or a fresh economic quote.
   config values, avoiding the pinned SDK's 180 ms optional-config timeout. No
   vendor changes, decoder copy, static fee replacement or cross-session cache.
 
-## Required Acceptance
+## Acceptance
 
 Source adds eighteen Rust test names: eight scoped-session, eight loader entries
 (one isolated helper) and two actual HTTP cases. Verify real SDK DBC filters,
@@ -67,15 +68,30 @@ caches from hiding the cold route. Node failover checks endpoint seriality.
 Application PoolQueryService witnesses record exactly one successful hint and
 none on RPC failure/timeout, without a real wallet, database, signing or send.
 Real loopback HTTP covers account/GPA serialization, body limits, bad envelopes,
-429 and redirect/no hidden fallback. All 1675 parent names must remain, exactly
-18 added (expected complete count 1693), with full concurrent/serial execution.
-Three new focused steps make 63 total; the original type policy adds this
-concrete session (34 types / 105 scoped fields including outside alias).
+429 and redirect/no hidden fallback. Both complete suites passed: concurrent
+1693 (182.21 seconds), serial 1693 (340.51 seconds), no failures/ignored/filtered.
+All 1675 parent names remain and exactly 18 were added. Scope 8 / loader 8 / real
+HTTP 2 and all 63 steps passed. The same type policy includes this concrete
+session (34 types / 105 scoped fields including outside alias): raw spans and
+original/restored checks were independently verified. Identity and manifest/
+lock/vendor-manifest hashes match; the whole 1079-file, 13,241,022-byte tree
+matches the accepted source snapshot. Real main/index, frozen history, SDK and
+migrations remain unchanged. Do not rerun the terminal run or trigger docs-only
+CI; carry acceptance records with the next source batch.
+
+One serial test prefix is interrupted by a pinned SDK child's stderr diagnostic,
+then an immediate standalone `ok`. The audit associates only that exact name,
+fixed fixture mint/diagnostic and immediate completion; raw logs are not changed.
+Two positive and seven negative local format cases reject a failed completion,
+wrong fixture/name/diagnostic, intervening test, duplicate or concurrent split.
+This does not omit a name or accept arbitrary split output. Both complete name
+sets and all focused sets match after this strict association.
 
 Local formatting, source policy and workflow checks are separate evidence only.
 After the prior 2200 MiB resource failure, do not repeat local Cargo checks or
 test linking; use the authorized source-only, network-isolated GitHub Actions.
-Audit raw names, compiler spans and artifact/source identity before acceptance.
+The final source-only run supplies runtime evidence; local checks are not a
+substitute for it. No production rollout or live-node proof is claimed.
 
 First snapshot 7495079 / Actions 44142801934 / artifact 14356861217 passed its
 type check, 105-field compiler gate and all focused steps, including the 18 new
@@ -85,7 +101,8 @@ class had exactly one slot. Discovery explicitly adds two. The correction checks
 the exact eight-class vector [1,1,1,1,1,1,1,2], retaining every old release/start/
 drop assertion. Production budgets and cancellation code are unchanged. This is
 not a relaxation to nonzero permits. Do not rerun that terminal failure; the
-corrected snapshot requires its own complete concurrent/serial acceptance.
+corrected cde04bd snapshot independently passed complete concurrent/serial
+acceptance as recorded above.
 
 ## Boundaries And Remaining Work
 

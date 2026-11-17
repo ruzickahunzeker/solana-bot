@@ -114,11 +114,22 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
-The next ordinary-discovery batch adds DiscoveryReadSession: 34 selected types /
-105 scoped fields including outside alias, pending its own source-only CI. Do
-not reuse the accepted 102-field parameter evidence below, retry local Cargo
-after the resource failure, or treat projected read configuration as signing
-authority. Complete suites must retain 1675 parent names and add exactly 18.
+The SOL-hop read batch adds SolHopReadSession: 35 selected types / 108 fields
+including outside alias, pending its own source-only CI. Expected complete suites
+retain all 1693 parent names and add exactly 20. Do not reuse the 105-field run
+below, retry local Cargo after the resource failure, or deploy the new source.
+
+The ordinary-discovery batch adds DiscoveryReadSession: 34 selected types /
+105 scoped fields including outside alias. Source cde04bd / Actions 44146511097 /
+artifact 14359025763 independently passed original/restored checks, all 105 raw
+field spans, and both complete 1693-test suites (63 steps exit zero). All 1675
+parent names remain, exactly 18 added. Scope 8 / loader 8 / real HTTP 2 passed;
+three old cancellation fixtures now assert the exact capacities of all eight
+classes, not a blanket one-slot assumption or a nonzero check. One serial child
+stderr split was strictly associated with its exact name and immediate ok;
+two positive/seven negative local audit-format cases passed. Do not reuse older
+102-field evidence, retry local Cargo after the resource failure, or treat read
+configuration as signing authority. No deployment or real RPC proof is implied.
 
 The 2026-11-18 protocol-parameter batch adds ParameterReadSession to the same
 policy: 33 selected types / 102 scoped fields including the outside alias.
@@ -158,7 +169,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 33 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 34 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

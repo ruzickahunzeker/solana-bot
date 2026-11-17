@@ -26,6 +26,7 @@ enum Class {
     PreparationBalance,
     Parameters,
     Discovery,
+    SolHop,
 }
 impl Class {
     fn index(self) -> usize {
@@ -38,6 +39,7 @@ impl Class {
             Self::PreparationBalance => 5,
             Self::Parameters => 6,
             Self::Discovery => 7,
+            Self::SolHop => 8,
         }
     }
     fn interval(self) -> Duration {
@@ -50,12 +52,13 @@ impl Class {
             Self::PreparationBalance => Duration::from_millis(250),
             Self::Parameters => Duration::from_millis(250),
             Self::Discovery => Duration::from_millis(100),
+            Self::SolHop => Duration::from_millis(100),
         }
     }
 }
 
 struct Budget {
-    next_start: [Instant; 8],
+    next_start: [Instant; 9],
     cooldowns: Vec<Option<Instant>>,
 }
 
@@ -64,7 +67,7 @@ pub(crate) struct SharedReadRuntime<T = ReqwestReadTransport> {
     urls: Vec<String>,
     endpoints: Vec<Option<Url>>,
     transport: T,
-    slots: [Arc<Semaphore>; 8],
+    slots: [Arc<Semaphore>; 9],
     budget: Mutex<Budget>,
     hash_id: AtomicU64,
 }
@@ -104,7 +107,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         }
         Self {
             budget: Mutex::new(Budget {
-                next_start: [Instant::now(); 8],
+                next_start: [Instant::now(); 9],
                 cooldowns: vec![None; unique.len()],
             }),
             urls: unique,
@@ -194,6 +197,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
                     Class::PreparationBalance => "preparation balance",
                     Class::Parameters => "protocol parameters",
                     Class::Discovery => "pool discovery",
+                    Class::SolHop => "SOL hop discovery",
                 },
                 "read RPC rate limited; shared endpoint cooling down"
             );

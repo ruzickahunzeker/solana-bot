@@ -219,6 +219,9 @@ async fn serve(
                     )
                 }
                 Some("getProgramAccounts") => Some(json!([])),
+                Some("getTokenAccountBalance") => {
+                    Some(json!({"context":{"slot":123},"value":quote_amount("23")}))
+                }
                 _ => None,
             };
             (*other, value)
@@ -299,9 +302,14 @@ async fn serve(
         other => other,
     };
     if parameter_value.is_some() {
-        if payload["method"] == "getEpochInfo" {
+        if payload["method"] == "getEpochInfo" || payload["method"] == "getTokenAccountBalance" {
+            let config_index = if payload["method"] == "getEpochInfo" {
+                0
+            } else {
+                1
+            };
             assert!(matches!(
-                payload["params"][0]["commitment"].as_str(),
+                payload["params"][config_index]["commitment"].as_str(),
                 Some("processed" | "confirmed" | "finalized")
             ));
         } else {

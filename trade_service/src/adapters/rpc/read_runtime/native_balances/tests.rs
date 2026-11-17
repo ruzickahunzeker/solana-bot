@@ -383,7 +383,7 @@ async fn native_balance_shared_read_busy_and_cancel_do_not_take_other_reserved_c
             .slots
             .each_ref()
             .map(|slot| slot.available_permits()),
-        [1, 1, 1, 1, 1, 1, 1, 2]
+        [1, 1, 1, 1, 1, 1, 1, 2, 1]
     );
     assert_eq!(runtime.transport.dropped.load(Ordering::SeqCst), 4);
 }

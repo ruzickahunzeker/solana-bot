@@ -6,16 +6,13 @@ use sol_trade_sdk::common::{
 use sol_trade_sdk::swqos::{
     AstralaneTransport, SwqosConfig, SwqosRegion, SwqosTransport, SwqosType,
 };
-use sol_trade_sdk::trading::core::params::{MeteoraDammV2Params, RaydiumCpmmParams};
+use sol_trade_sdk::trading::core::params::MeteoraDammV2Params;
 use sol_trade_sdk::TradingClient;
 use solana_account_decoder::UiAccountEncoding;
 use solana_address_lookup_table_interface::{program as lookup_program, state::AddressLookupTable};
-use solana_client::rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig};
 use solana_client::rpc_config::{
     RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
 };
-use solana_client::rpc_filter::Memcmp;
-use solana_client::rpc_filter::RpcFilterType;
 use solana_commitment_config::CommitmentConfig;
 use solana_program_pack::Pack;
 use solana_sdk::hash::Hash;
@@ -43,11 +40,11 @@ use crate::adapters::sdk::ordinary_lanes;
 use crate::adapters::sdk::ordinary_params::default_fee_strategy;
 #[cfg(test)]
 use crate::adapters::sdk::ordinary_params::simulation_fee_strategy;
+use crate::adapters::sdk::protocol_params;
 #[cfg(test)]
 use crate::adapters::sdk::protocol_params::quote_tokens::{
     trade_token_type_for_buy, trade_token_type_for_sell,
 };
-use crate::adapters::sdk::protocol_params::{self, checks::ensure_pool_contains_quote};
 #[cfg(test)]
 use crate::application::sol_transfer_policy::calculate_sol_transfer_amount;
 use crate::config::{MevConfig, ProviderConfig};
@@ -946,123 +943,25 @@ impl SdkTradeClient {
         })
     }
 
-    pub async fn resolve_stonkfun_sol_hop(&self, quote_mint: &Pubkey) -> anyhow::Result<Pubkey> {
-        // Serialize discovery so repeated panel opens do not multiply expensive GPA calls.
-        let mut cache = self.sol_hop_cache.lock().await;
-        if let Some((pool_id, expires_at)) = cache.get(quote_mint) {
-            if *expires_at > Instant::now() {
-                return Ok(*pool_id);
-            }
-        }
-        let wsol = Pubkey::from_str(WSOL_MINT).expect("valid WSOL mint");
-        if quote_mint == &wsol {
-            bail!("quote mint is already WSOL");
-        }
-        let mut last_error = None;
-        let mut complete_empty_scans = 0;
-        for lane in self
+    pub(crate) async fn resolve_stonkfun_sol_hop(
+        &self,
+        quote_mint: &Pubkey,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    ) -> anyhow::Result<Pubkey> {
+        use crate::adapters::sdk::{pool_resolution::DiscoveryLane, sol_hop_resolution};
+        let lanes = self
             .lanes
             .iter()
             .filter(|lane| lane.swqos_type == SwqosType::Default)
-        {
-            let started = Instant::now();
-            let rpc = lane.client.get_rpc();
-            let found = tokio::time::timeout(Duration::from_secs(5), async {
-                use sol_trade_sdk::instruction::utils::raydium_cpmm::{accounts, fetch_pool_state};
-                use sol_trade_sdk::instruction::utils::raydium_cpmm_types::POOL_STATE_DISCRIMINATOR;
-                for (quote_offset, wsol_offset) in [(168usize, 200usize), (200, 168)] {
-                    let config = RpcProgramAccountsConfig {
-                        filters: Some(vec![
-                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
-                                0,
-                                &POOL_STATE_DISCRIMINATOR,
-                            )),
-                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
-                                quote_offset,
-                                quote_mint.as_ref(),
-                            )),
-                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
-                                wsol_offset,
-                                wsol.as_ref(),
-                            )),
-                        ]),
-                        account_config: RpcAccountInfoConfig {
-                            encoding: Some(UiAccountEncoding::Base64),
-                            data_slice: None,
-                            commitment: None,
-                            min_context_slot: None,
-                        },
-                        with_context: None,
-                        sort_results: None,
-                    };
-                    #[allow(deprecated)]
-                    let pools = rpc
-                        .get_program_ui_accounts_with_config(&accounts::RAYDIUM_CPMM, config)
-                        .await?;
-                    for (pool_id, _) in pools {
-                        let state = fetch_pool_state(rpc, &pool_id).await?;
-                        if [state.token0_mint, state.token1_mint].contains(&wsol)
-                            && [state.token0_mint, state.token1_mint].contains(quote_mint)
-                        {
-                            let params =
-                                RaydiumCpmmParams::from_pool_address_by_rpc(rpc, &pool_id).await?;
-                            let mints = [params.base_mint, params.quote_mint];
-                            ensure_pool_contains_quote("stonkfun Via-SOL hop", quote_mint, &mints)?;
-                            ensure_pool_contains_quote("stonkfun Via-SOL hop", &wsol, &mints)?;
-                            let (base_balance, quote_balance) = tokio::try_join!(
-                                rpc.get_token_account_balance(&params.base_vault),
-                                rpc.get_token_account_balance(&params.quote_vault),
-                            )?;
-                            if base_balance.amount.parse::<u64>()? == 0
-                                || quote_balance.amount.parse::<u64>()? == 0
-                            {
-                                continue;
-                            }
-                            return Ok::<Option<Pubkey>, anyhow::Error>(Some(pool_id));
-                        }
-                    }
-                }
-                Ok::<Option<Pubkey>, anyhow::Error>(None)
+            .map(|lane| {
+                DiscoveryLane::new(
+                    lane.client.get_rpc().url(),
+                    lane.client.get_rpc().commitment(),
+                    lane.is_helius,
+                )
             })
-            .await;
-            match found {
-                Ok(Ok(Some(pool_id))) => {
-                    cache.insert(
-                        *quote_mint,
-                        (pool_id, Instant::now() + Duration::from_secs(30)),
-                    );
-                    return Ok(pool_id);
-                }
-                Ok(Ok(None)) => {
-                    complete_empty_scans += 1;
-                    info!(
-                        elapsed_ms = started.elapsed().as_millis(),
-                        "SOL hop RPC scan found no CPMM pool"
-                    );
-                    if complete_empty_scans >= 2 {
-                        bail!("no WSOL/Quote Raydium CPMM pool found on two RPC lanes");
-                    }
-                }
-                Ok(Err(error)) => {
-                    last_error = Some(redact_urls(&error.to_string()));
-                    warn!(
-                        elapsed_ms = started.elapsed().as_millis(),
-                        "SOL hop RPC lane failed"
-                    );
-                }
-                Err(_) => {
-                    last_error = Some("SOL hop discovery timed out".to_string());
-                    warn!(
-                        elapsed_ms = started.elapsed().as_millis(),
-                        "SOL hop RPC lane timed out"
-                    );
-                }
-            }
-        }
-        bail!(
-            "no verified WSOL/Quote Raydium CPMM pool: {}",
-            last_error.unwrap_or_else(|| "no Default RPC lane configured".to_string())
-        )
+            .collect::<Vec<_>>();
+        sol_hop_resolution::resolve(read_rpc, &lanes, &self.sol_hop_cache, *quote_mint).await
     }
     pub(crate) async fn new(
         rpc_urls: Vec<String>,

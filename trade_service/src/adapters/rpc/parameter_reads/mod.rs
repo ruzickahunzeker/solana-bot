@@ -42,6 +42,7 @@ pub(crate) struct ParameterReadScope {
     mint: Address,
     pool_id: Option<Address>,
     discovery: bool,
+    hop_quote: Option<Address>,
 }
 impl ParameterReadScope {
     pub(crate) fn new(pool: Pool, mint: Address, pool_id: Option<Address>) -> Self {
@@ -50,6 +51,7 @@ impl ParameterReadScope {
             mint,
             pool_id,
             discovery: false,
+            hop_quote: None,
         }
     }
     fn pump_scan_mint(self) -> Option<Address> {
@@ -64,6 +66,7 @@ impl ParameterReadScope {
 enum Profile {
     Parameters,
     Discovery,
+    SolHop,
 }
 
 struct State {
@@ -189,6 +192,17 @@ impl<T: ReadHttpTransport + 'static> ParameterReadSession<T> {
             deadline,
         )
     }
+    pub(super) fn sol_hop(
+        runtime: Arc<SharedReadRuntime<T>>,
+        url: String,
+        commitment: CommitmentConfig,
+        quote: Address,
+        deadline: Instant,
+    ) -> Self {
+        let mut scope = ParameterReadScope::new(Pool::RaydiumCpmm, quote, None);
+        scope.hop_quote = Some(quote);
+        Self::scoped(runtime, url, commitment, scope, Profile::SolHop, deadline)
+    }
     fn scoped(
         runtime: Arc<SharedReadRuntime<T>>,
         url: String,
@@ -275,6 +289,7 @@ impl<T: ReadHttpTransport + 'static> Sender<T> {
                         *permit = Some(match self.state.profile {
                             Profile::Parameters => self.runtime.parameter_slot()?,
                             Profile::Discovery => self.runtime.discovery_slot()?,
+                            Profile::SolHop => self.runtime.sol_hop_slot()?,
                         });
                     }
                 }
@@ -304,6 +319,11 @@ impl<T: ReadHttpTransport + 'static> Sender<T> {
             Profile::Discovery => {
                 self.runtime
                     .discovery_step(&self.url, query, self.state.deadline)
+                    .await
+            }
+            Profile::SolHop => {
+                self.runtime
+                    .sol_hop_step(&self.url, query, self.state.deadline)
                     .await
             }
         }
