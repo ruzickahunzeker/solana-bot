@@ -105,6 +105,9 @@ PY
         step wsol-quote-runtime cargo test --locked --offline wsol_quote_read_ -- --test-threads=2
         step wsol-quote-loaders cargo test --locked --offline wsol_quote_loader_ -- --test-threads=2
         step wsol-quote-wire cargo test --locked --offline wsol_quote_wire_ -- --test-threads=2
+        step wsol-status-shared cargo test --locked --offline wsol_status_shared_ -- --test-threads=2
+        step wsol-status-wire cargo test --locked --offline wsol_status_wire_ -- --test-threads=2
+        step wsol-status-contract cargo test --locked --offline wsol_status_ -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

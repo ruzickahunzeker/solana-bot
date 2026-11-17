@@ -6,12 +6,29 @@
 
 ## 当前任务
 
-- 当前续原 NP-03/TS-07/09 WSOL 只读报价：原首 RPC 的 URL/commitment 投影给 SDK
+- 续原 NP-03 WSOL 签名状态读取：源码已接原 SharedReadRuntime/Observation 配额和
+  单签名 history 请求；移除生产 reader 的执行 RpcClient，保留原严格 parser 与
+  首 Default lane/错误顺序。原六项 oracle 和 HTTP 终态矩阵保留，新增十四项及
+  40 类型/123 字段门禁待本批独立 CI，不套用下方父批 1769 证据。状态账本/CAS、
+  签名广播和生产环境不动，见 [WSOL 状态读取边界](WSOL_STATUS_SHARED_READS.md)。
+- 原 NP-03/TS-07/09 WSOL 只读报价已完成本批源码/离线验收：原首 RPC 的 URL/commitment 投影给 SDK
   estimator 和借用五步 scope，共用原 runtime；余额/ATA/租金/hash/fee 顺序及
   Token/native/金额/租金/退款/错误政策保留，原 estimator 仅测试保留、原构建器
   字节不动。公开 Message helper 不交出临时密钥，不改 conversion 账本/签名提交/
-  状态。二十项新用例、预计完整 1769/75 步骤/39 类型120字段待本批独立 CI，不
-  套用父批、不本地重试 Cargo。其余独立读取/SDK 内部资源和原门槛继续，见
+  状态。`c196d1b6f1ec3124e141114441e855c18dc70f4b` /
+  [Actions 44182843252](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44182843252)
+  首次运行终态 success；artifact `14374676338` 下载独立核对：完整并发 1769
+  （200.75 秒）/串行 1769（379.92 秒），零失败/忽略/过滤，原始名称集合相同；
+  父批 1749 名称全保留且恰增源码二十项。scope 10/SDK oracle policy 7/真实 HTTP 3、
+  原全部专项及 75 步骤通过；39 类型/120 原始字段拒绝（含 Message/借用会话）、
+  原源码/恢复与 Python policy 十二项通过。旧 estimator/构建器 blob 保持，新旧
+  报告/归一化请求逐项见证通过。全树 1105 文件/13,473,071 字节和模式与快照一致，
+  identity/manifest/lock/vendor manifest 匹配。旧串行 stderr 精确关联/两正七负
+  格式回归通过，未改日志或省略名称。原 main/索引/冻结历史/SDK/迁移保持，不本地
+  重试 Cargo、不重跑终态或另发文档 CI；记录随下一源码批归档。下一原 NP-03
+  入口为 WSOL 状态读取：原单签名/history 和更严格 finality/context/error 检查
+  应保留，不能换成宽松普通 parser；状态账本/CAS、准备/模拟/签名提交仍未迁移。
+  其他独立读取/SDK 内部资源和原门槛继续，不新增任务或分母，见
   [WSOL 报价读取边界](WSOL_QUOTE_SHARED_READS.md)。
 - 原 NP-03/TS-07/09 聚合模拟和余额基线已完成本批源码/离线验收：根 SDK 仅投影原 runtime/Default URL/
   钱包公钥，SDK adapter 保留先验基线/Token 校验后模拟的顺序及原报告/CPI/同 slot

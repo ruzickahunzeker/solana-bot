@@ -30,11 +30,24 @@
 
 ## 当前批次
 
-2026-11-18 WSOL 只读报价新源码待独立 CI：保留父批 1749 全部名称并新增二十项，
-预计完整各 1769、75 步骤、39 类型/120 原始字段拒绝。原 estimator/构建器不改，
-新 SDK path 与旧 RpcClient path 的报告/五步请求逐项对照，仅归一化压缩选项与原本
-随机的临时账户公钥。静态 lifetime 门禁沿用原限制，不改 SDK/账本/签名提交，不
-本地重试 Cargo，见 `WSOL_QUOTE_SHARED_READS.md`。
+续原 WSOL 签名状态读取源码等待本批独立 CI：预期完整并发/串行各 1783，
+父批 1769 全保留、恰增十四项，40 类型/123 字段及 78 步骤。原状态矩阵与
+请求 witness、共享 Observation 争用/冷却/取消及真实 HTTP 验收见
+`WSOL_STATUS_SHARED_READS.md`，不能套用下方父批通过记录。
+
+2026-11-18 WSOL 只读报价最终源码 `c196d1b6f1ec3124e141114441e855c18dc70f4b` /
+[Actions 44182843252](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44182843252)
+首次运行终态 success；artifact `14374676338` 下载独立核对：全部 75 步骤 exit=0。
+完整并发 1769（200.75 秒）/串行 1769（379.92 秒）零失败/忽略/过滤，原始名称
+集合相同；父批 1749 全保留且恰增源码二十项。scope 10/SDK oracle policy 7/真实
+HTTP 3 和原全部专项通过。39 类型/120 不同字段原始 spans、原源码/恢复与十二项
+Python policy 通过。旧 estimator/构建器 blob 保持，报告/请求见证执行通过；只
+归一化压缩选项与原随机临时公钥，不改金额/commitment/hash/签名数/fee/rent。
+identity/manifest/lock/vendor manifest 匹配；记录前全树 1105 文件/13,473,071 字节
+和模式与快照一致。旧串行诊断仅按原名称/固定夹具/紧随 ok 关联，两正/七负格式
+回归通过，不改日志或省略名称。真实 main/索引/冻结历史/SDK/依赖/迁移保持，没有
+本地 Cargo 重试或生产操作。不重跑终态或另发文档 CI；记录随下一源码批归档。
+WSOL 状态/准备/模拟和其他原门槛继续，见 `WSOL_QUOTE_SHARED_READS.md`。
 
 2026-11-18 聚合模拟/余额基线最终源码 `2f12c97fad9b35d81c38e4515b03362c410234b9` /
 [Actions 44173368003](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44173368003)

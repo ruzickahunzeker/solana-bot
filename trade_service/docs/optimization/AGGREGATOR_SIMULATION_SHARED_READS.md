@@ -125,10 +125,10 @@ production configuration/wallet/database access, real RPC or trade. PumpAPI new
 integration remains paused. No new route/backend or permission to submit follows
 from these read-only simulation checks.
 
-The next original NP-03 independent-read entry is WSOL quote estimation:
-`sdk_client/wsol_conversion/queries.rs` still reads native balance, the processed
-ATA, fixed Account::LEN rent, latest hash and fee for its own unsigned message
-through the execution RpcClient. `adapters/sdk/wsol_queries.rs` still projects
-that first existing RPC. Preserve its original error/Token/native/rent/all/fee
-semantics and old oracle while replacing only those reads; do not merge the
-independent conversion journal or change sign/submission/status ownership.
+The original WSOL quote entry identified at this checkpoint was subsequently
+isolated and independently accepted in c196d1b / Actions 44182843252. Its old
+`sdk_client/wsol_conversion/queries.rs` is now test-only and byte-identical; the
+production SDK adapter uses the original runtime. Do not repeat that task or
+reinterpret this old queue note as pending work. Remaining WSOL status, unsigned
+preparation/simulation/sign/submission ownership and the independent conversion
+journal remain separate gates; see WSOL_QUOTE_SHARED_READS.md.

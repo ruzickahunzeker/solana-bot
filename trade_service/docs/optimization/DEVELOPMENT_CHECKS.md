@@ -114,14 +114,18 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
-The WSOL quote batch is source wired, not independently Rust-accepted yet.
-Message and borrowed WsolQuoteReadSession enter the same gate: 39 selected types /
-120 scoped fields including outside alias, with only the existing fixed static
-lifetime flag. Expected complete suites retain all 1749 names and add exactly
-20 (1769), 75 steps. Old estimator and instruction builder blobs stay unchanged;
-new report/RPC witnesses need their own CI. Do not inherit the 114-field evidence
-below, retry local Cargo after the resource failure or deploy. See
-WSOL_QUOTE_SHARED_READS.md.
+The WSOL quote batch is independently accepted: c196d1b / Actions 44182843252 /
+artifact 14374676338, complete concurrent/serial each 1769 (200.75/379.92 seconds),
+all 1749 parent names retained and exactly 20 added. Scope 10 / SDK oracle policy
+7 / real HTTP 3 and all 75 steps pass. Original/restored checks and all 120 distinct
+raw field spans verify 39 selected types plus outside alias, including Message
+and borrowed WsolQuoteReadSession with the unchanged fixed-static-lifetime gate.
+Twelve Python policy tests pass. Original estimator/builder blobs and report/RPC
+witnesses pass; all 1105 snapshot blobs/modes (13,473,071 bytes) and manifest/lock/
+vendor-manifest hashes match. Main/index/frozen history remain unchanged. No local
+Cargo retry, deployment or production action; do not inherit the 114-field run
+below, rerun terminal CI or start documentation-only CI. See
+WSOL_QUOTE_SHARED_READS.md for remaining status/preparation/simulation gates.
 
 The aggregator baseline/simulation batch is independently accepted: source
 2f12c97 / Actions 44173368003 / artifact 14371180749, complete concurrent/serial
@@ -212,7 +216,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 37 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 39 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

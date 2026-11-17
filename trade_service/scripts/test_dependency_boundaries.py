@@ -30,6 +30,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         for module in policy["guarded_modules"]:
             self.assertTrue((ROOT / module["path"]).read_text().startswith(boundaries.GUARD + "\n"))
         self.assertIn("Use project-owned types and ports", boundaries.config_text(policy))
+        self.assertIn("wsol_status_reader", types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):

@@ -1557,15 +1557,18 @@ async fn wsol_status_router_bounds_rpc_lookup_and_preserves_original_signed_rece
 
 #[tokio::test]
 async fn wsol_status_router_validates_actual_rpc_shape_and_explicit_finality_without_wallet_keys() {
+    use crate::adapters::rpc::{
+        read_runtime::SharedReadRuntime, wsol_status::shared_tests as status_fixture,
+    };
     use crate::application::{
         ports::wsol_conversion::WsolWalletMetadata, ports::wsol_queries::WsolQuerySource,
         wsol_queries::WsolQueryService,
     };
-    use solana_client::{nonblocking::rpc_client::RpcClient, rpc_request::RpcRequest};
-    struct Source(Arc<RpcClient>);
+    struct Source(Arc<SharedReadRuntime<status_fixture::Fixture>>);
     impl WsolQuerySource for Source {
         type QuoteReader = crate::application::wsol_queries::tests::QuoteReader;
-        type StatusReader = crate::adapters::rpc::wsol_status::WsolSignatureReader;
+        type StatusReader =
+            crate::adapters::rpc::wsol_status::WsolSignatureReader<status_fixture::Fixture>;
         async fn metadata(&self, _: &str) -> anyhow::Result<WsolWalletMetadata> {
             anyhow::bail!("status must not read wallet metadata");
         }
@@ -1580,6 +1583,7 @@ async fn wsol_status_router_validates_actual_rpc_shape_and_explicit_finality_wit
             assert_eq!(wallet, "fixture-wallet");
             Ok(crate::adapters::rpc::wsol_status::WsolSignatureReader::new(
                 self.0.clone(),
+                status_fixture::URL.into(),
                 signature.parse()?,
             ))
         }
@@ -1616,13 +1620,11 @@ async fn wsol_status_router_validates_actual_rpc_shape_and_explicit_finality_wit
         } else {
             json!({"Ok":null})
         };
-        let mut mocks = std::collections::HashMap::new();
-        mocks.insert(RpcRequest::GetSignatureStatuses, json!({"context":{"slot":42},"value":[{
+        let read_rpc = status_fixture::runtime(json!({"context":{"slot":42},"value":[{
             "slot":slot,"confirmationStatus":commitment,"confirmations":confirmations,"err":error,"status":legacy,
         }]}));
-        let rpc = Arc::new(RpcClient::new_mock_with_mocks("fails".into(), mocks));
         state.wsol_queries = Arc::new(WsolQueryService::new(
-            Source(rpc),
+            Source(read_rpc.clone()),
             Some(
                 crate::adapters::persistence::wsol_conversion::SqliteWsolJournal::new(
                     store.clone(),
@@ -1643,6 +1645,7 @@ async fn wsol_status_router_validates_actual_rpc_shape_and_explicit_finality_wit
         assert_eq!(body.as_object().unwrap().len(), 7);
         assert_eq!(body["status"], expected, "{commitment}, {confirmations}");
         assert_eq!(body["signature"], signature);
+        assert_eq!(read_rpc.test_transport().calls.lock().unwrap().len(), 1);
         let stored = store
             .get_by_id(&original.submission_id)
             .await

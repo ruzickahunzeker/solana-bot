@@ -20,6 +20,8 @@ mod preparation_wire;
 mod presence_wire;
 #[path = "wsol_quote_wire.rs"]
 mod wsol_quote_wire;
+#[path = "wsol_status_wire.rs"]
+mod wsol_status_wire;
 
 fn runtime(servers: &[&LocalServer]) -> Arc<SharedReadRuntime> {
     Arc::new(
@@ -777,6 +779,9 @@ async fn shared_read_wire_child() {
             "wsol-quote-success" => wsol_quote_wire::success().await,
             "wsol-quote-errors" => wsol_quote_wire::errors().await,
             "wsol-quote-timeout-cancel" => wsol_quote_wire::timeout_cancel().await,
+            "wsol-status-success" => wsol_status_wire::success().await,
+            "wsol-status-errors" => wsol_status_wire::errors().await,
+            "wsol-status-timeout-cancel" => wsol_status_wire::timeout_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -993,4 +998,17 @@ fn wsol_quote_wire_bad_identity_body_redirect_and_429_never_retry_or_fallback() 
 #[test]
 fn wsol_quote_wire_timeouts_and_cancel_preserve_critical_hash_capacity() {
     run("wsol-quote-timeout-cancel");
+}
+
+#[test]
+fn wsol_status_wire_exact_bound_signature_and_declared_streamed_body_limits() {
+    run("wsol-status-success");
+}
+#[test]
+fn wsol_status_wire_bad_identity_429_and_redirect_never_retry_or_fallback() {
+    run("wsol-status-errors");
+}
+#[test]
+fn wsol_status_wire_timeout_cancel_and_hash_priority_release_existing_quota() {
+    run("wsol-status-timeout-cancel");
 }

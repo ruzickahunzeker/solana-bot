@@ -206,7 +206,7 @@ memory -> shadow（完成对账）-> durable + ENABLE_SIMULATE=true（完成验�
 
 ## 参数说明
 
-WSOL 只读报价已接原 runtime 的余额/ATA/租金/hash/fee 五步 scope，保留原金额、费用、退款及 Token/native 校验；20 项新测试及 120 字段门禁待本批独立 CI，未改兑换签名提交/状态或部署。见 [WSOL 报价读取边界](docs/optimization/WSOL_QUOTE_SHARED_READS.md)。
+WSOL 只读报价已接原 runtime 的余额/ATA/租金/hash/fee 五步 scope，保留原金额、费用、退款及 Token/native 校验。`c196d1b` / Actions `44182843252` 独立验收完整并发/串行各 1769，新增 20、120 字段及全部 75 步骤通过；未改兑换签名提交/状态，尚未部署。见 [WSOL 报价读取边界](docs/optimization/WSOL_QUOTE_SHARED_READS.md)。
 
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 

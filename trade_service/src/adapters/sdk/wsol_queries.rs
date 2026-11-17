@@ -61,7 +61,11 @@ impl WsolQuerySource for SdkWsolQuerySource {
             .into_iter()
             .next()
             .context("trade service has no RPC")?;
-        Ok(WsolSignatureReader::new(rpc, signature))
+        Ok(WsolSignatureReader::new(
+            self.read_rpc.clone(),
+            rpc.url(),
+            signature,
+        ))
     }
 }
 impl WsolQuoteReader for SdkWsolQuoteReader {

@@ -1,8 +1,9 @@
 # WSOL Quote Read Boundary
 
-Date: 2026-11-18, Asia/Shanghai. Continues original NP-03 / TS-07/09. Source wired,
-independent Rust CI pending. Accepted parent 2f12c97 has 1749 tests; it does not
-accept this source. This is quote estimation only, not conversion submission.
+Date: 2026-11-18, Asia/Shanghai. Continues original NP-03 / TS-07/09. Source and
+independent offline Rust CI accepted, not deployed. Identity: c196d1b / Actions
+44182843252 / artifact 14374676338. Parent evidence is not reused. This is quote
+estimation only, not conversion submission.
 
 ## Resource And Compatibility
 
@@ -87,6 +88,31 @@ checks, source identity and test-name sets; do not reuse the parent's 114-field
 evidence. No local service Cargo check/test retry after the recorded 2200 MiB
 failure; use authorized source-only/loopback-only GitHub Actions.
 
+## Accepted Evidence
+
+Source `c196d1b6f1ec3124e141114441e855c18dc70f4b`,
+[Actions 44182843252](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44182843252),
+first run terminal success; downloaded artifact `14374676338` independently
+audited. All 75 steps exit zero. Complete concurrent 1769 (200.75 seconds) and
+serial 1769 (379.92 seconds) have zero failed/ignored/filtered tests and identical
+raw name sets. All 1749 parent names remain; exactly the twenty source-defined
+names are added. Scope 10 / SDK oracle and policy 7 / real HTTP 3 and all earlier
+focused regressions pass. The old estimator/instruction blobs above are unchanged.
+All report fields and normalized request witnesses execute in the new SDK cases,
+including original partial-unwrap randomness, explicit zero and missing fee.
+
+Original/restored compiler checks and all 120 distinct raw field spans pass on
+this source: 39 selected types plus outside alias, including Message and the
+borrowed session's fixed static-lifetime probe. Python policy 12 / workflow 7 and
+SDK provenance pass. Identity and manifest/lock/vendor-manifest hashes match.
+Before recording acceptance, all 1105 source blobs / 13,473,071 bytes and executable
+modes matched the snapshot. Main/index, frozen history, SDK/manifests/lock/vendor/
+migrations remain unchanged. The known old serial discovery child stderr split
+is associated only with its exact test/pinned fixture/immediate ok; two positive/
+seven negative format cases pass. Raw logs are not rewritten and no test names
+omitted. No local service Cargo retry or production action. Do not rerun terminal
+CI or trigger documentation-only CI; carry records with the next source batch.
+
 ## Remaining Gates
 
 WSOL unsigned preparation/simulation/sign/submission/status, other independent
@@ -95,3 +121,10 @@ rollout gates continue in the original queue. No new task or denominator. SDK
 stays 6.0.2; manifests/lock/vendor/migrations/release, production configuration,
 wallets/databases and running services are untouched. No real RPC/trade and
 no new Live permission. New PumpAPI integration stays paused.
+
+The subsequent original NP-03 status entry is now implemented, pending its own
+independent CI: see WSOL_STATUS_SHARED_READS.md. Its shared reader removes
+execution-RPC ownership while preserving the single original signature/history
+and strict finality/error/slot/outcome policy; ordinary parsing is not an
+interchangeable replacement. Status journal/finality CAS is deliberately unchanged.
+This quote batch's accepted run is not evidence for the subsequent status source.

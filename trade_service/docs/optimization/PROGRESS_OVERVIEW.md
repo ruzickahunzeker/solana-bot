@@ -6,10 +6,17 @@
 
 ## 统计口径
 
-- 当前续原 NP-03 WSOL 只读报价：原 runtime 的五步借用 scope 接原首 RPC metadata，
+- 当前续原 NP-03 WSOL 状态读取已实现共享 runtime/原 Observation 配额和严格
+  parser，新增十四项测试及 123 字段门禁待独立 CI；父批通过不代表本批通过。
+  不重复立项或增加分母，不涉及签名提交/状态 CAS 改动，见 `WSOL_STATUS_SHARED_READS.md`。
+- 原 NP-03 WSOL 只读报价已由 `c196d1b` / Actions `44182843252` /
+  artifact `14374676338` 独立验收：原 runtime 的五步借用 scope 接原首 RPC metadata，
   保留原金额/native/fee/rent/refund/错误顺序，原 estimator/构建器字节未改；20 新
-  用例、预计完整各 1769/75 步骤/120 字段待独立 CI。不新增任务或分母，不套用
-  父批，见 `WSOL_QUOTE_SHARED_READS.md`。签名提交/状态和其他原门槛继续，无生产操作。
+  用例实际执行。完整并发 1769（200.75 秒）/串行 1769（379.92 秒），原始名称相同，
+  父批 1749 全保留且恰增二十项；scope 10/SDK oracle policy 7/真实 HTTP 3、120 字段
+  和全部 75 步骤通过，原始 spans/源码身份/全树已核对。不重跑终态或另发文档 CI，
+  不新增任务或分母，见 `WSOL_QUOTE_SHARED_READS.md`。下一原入口为 WSOL 状态读取，
+  保留其原严格 parser/账本与 CAS；准备/模拟/签名提交和其他原门槛继续，无生产操作。
 - 原 NP-03 聚合模拟/余额基线已由 `2f12c97` / Actions `44173368003` /
   artifact `14371180749` 独立验收：原三条入口接原 runtime，一次性零签名会话
   固定两步/钱包/target/slot/packet，原基线验证、Token/CPI 和报告政策保持；旧函数

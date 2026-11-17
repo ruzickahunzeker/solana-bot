@@ -1,7 +1,7 @@
 use anyhow::{bail, Context};
-use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_client::rpc_response::Response;
 use solana_sdk::signature::Signature;
-use solana_transaction_status_client_types::TransactionConfirmationStatus;
+use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
 use std::sync::Arc;
 
 use crate::{
@@ -12,63 +12,110 @@ use crate::{
     },
 };
 
-pub(crate) struct WsolSignatureReader {
-    rpc: Arc<RpcClient>,
+use super::{
+    read_http::{ReadHttpTransport, ReqwestReadTransport, MAX_BODY},
+    read_runtime::SharedReadRuntime,
+};
+
+pub(crate) struct WsolSignatureReader<T = ReqwestReadTransport> {
+    runtime: Arc<SharedReadRuntime<T>>,
+    url: String,
     signature: Signature,
 }
-impl WsolSignatureReader {
-    pub(crate) fn new(rpc: Arc<RpcClient>, signature: Signature) -> Self {
-        Self { rpc, signature }
+impl<T: ReadHttpTransport> WsolSignatureReader<T> {
+    pub(crate) fn new(
+        runtime: Arc<SharedReadRuntime<T>>,
+        url: String,
+        signature: Signature,
+    ) -> Self {
+        Self {
+            runtime,
+            url,
+            signature,
+        }
     }
 }
-impl WsolStatusReader for WsolSignatureReader {
+impl<T: ReadHttpTransport> WsolStatusReader for WsolSignatureReader<T> {
     async fn lookup(&self) -> anyhow::Result<Option<WsolSignatureObservation>> {
-        let response = self
-            .rpc
-            .get_signature_statuses_with_history(&[self.signature])
-            .await?;
-        if response.value.len() != 1 {
-            bail!("WSOL signature status RPC returned an invalid result count");
-        }
-        if response.context.slot == 0 {
-            bail!("WSOL signature status RPC returned a zero context slot");
-        }
-        let Some(status) = response.value.into_iter().next().flatten() else {
-            return Ok(None);
-        };
-        if status.status.as_ref().err() != status.err.as_ref() {
-            bail!("WSOL signature status RPC returned inconsistent transaction errors");
-        }
-        let commitment = match status
-            .confirmation_status
-            .context("WSOL signature status RPC omitted explicit confirmation status")?
-        {
-            TransactionConfirmationStatus::Processed => ChainCommitment::Processed,
-            TransactionConfirmationStatus::Confirmed => ChainCommitment::Confirmed,
-            TransactionConfirmationStatus::Finalized => ChainCommitment::Finalized,
-        };
-        if (commitment == ChainCommitment::Finalized) != status.confirmations.is_none() {
-            bail!("WSOL signature status RPC returned inconsistent rooted confirmation fields");
-        }
-        let signature = self.signature.to_string();
-        let observation = WsolSignatureObservation {
-            chain: ChainObservation {
-                signature: signature.clone(),
-                commitment,
-                slot: status.slot,
-                error: status.err.as_ref().map(ToString::to_string),
-            },
-            context_slot: response.context.slot,
-        };
-        observation.outcome_for(&signature)?;
-        Ok(Some(observation))
+        self.runtime
+            .wsol_signature_status(&self.url, &self.signature)
+            .await
     }
 }
 
+#[derive(serde::Deserialize)]
+struct Envelope {
+    jsonrpc: String,
+    id: u64,
+    result: Option<Response<Vec<Option<TransactionStatus>>>>,
+    error: Option<serde_json::Value>,
+}
+pub(super) fn decode(
+    id: u64,
+    bound: &Signature,
+    bytes: &[u8],
+) -> anyhow::Result<Option<WsolSignatureObservation>> {
+    anyhow::ensure!(
+        bytes.len() <= MAX_BODY,
+        "WSOL signature status RPC body exceeds limit"
+    );
+    let envelope: Envelope = serde_json::from_slice(bytes)
+        .map_err(|_| anyhow::anyhow!("invalid WSOL signature status JSON-RPC response"))?;
+    anyhow::ensure!(
+        envelope.jsonrpc == "2.0" && envelope.id == id && envelope.error.is_none(),
+        "WSOL signature status RPC identity or result invalid"
+    );
+    let response = envelope
+        .result
+        .context("WSOL signature status RPC omitted result")?;
+    if response.value.len() != 1 {
+        bail!("WSOL signature status RPC returned an invalid result count");
+    }
+    if response.context.slot == 0 {
+        bail!("WSOL signature status RPC returned a zero context slot");
+    }
+    let Some(status) = response.value.into_iter().next().flatten() else {
+        return Ok(None);
+    };
+    if status.status.as_ref().err() != status.err.as_ref() {
+        bail!("WSOL signature status RPC returned inconsistent transaction errors");
+    }
+    let commitment = match status
+        .confirmation_status
+        .context("WSOL signature status RPC omitted explicit confirmation status")?
+    {
+        TransactionConfirmationStatus::Processed => ChainCommitment::Processed,
+        TransactionConfirmationStatus::Confirmed => ChainCommitment::Confirmed,
+        TransactionConfirmationStatus::Finalized => ChainCommitment::Finalized,
+    };
+    if (commitment == ChainCommitment::Finalized) != status.confirmations.is_none() {
+        bail!("WSOL signature status RPC returned inconsistent rooted confirmation fields");
+    }
+    let signature = bound.to_string();
+    let observation = WsolSignatureObservation {
+        chain: ChainObservation {
+            signature: signature.clone(),
+            commitment,
+            slot: status.slot,
+            error: status.err.as_ref().map(ToString::to_string),
+        },
+        context_slot: response.context.slot,
+    };
+    observation.outcome_for(&signature)?;
+    Ok(Some(observation))
+}
+
+#[cfg(test)]
+pub(crate) mod original;
+#[cfg(test)]
+pub(crate) mod shared_tests;
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::original::*;
+    use super::{Arc, ChainCommitment, Signature, WsolStatusReader};
     use serde_json::{json, Value};
+    use solana_client::nonblocking::rpc_client::RpcClient;
     use solana_client::rpc_request::RpcRequest;
 
     fn reader(values: Value) -> WsolSignatureReader {
