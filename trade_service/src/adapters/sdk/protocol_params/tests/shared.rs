@@ -11,6 +11,8 @@ use crate::{
 };
 use reqwest::{StatusCode, Url};
 use serde_json::{json, Value};
+use sol_trade_sdk::instruction::utils::bonk::accounts;
+use solana_client::rpc_request::RpcRequest;
 use solana_sdk::hash::Hash;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -22,7 +24,7 @@ struct Transport {
 }
 impl ReadHttpTransport for Transport {
     async fn fetch(&self, _: &Url, request: &ReadRequest) -> anyhow::Result<HttpReply> {
-        let body = request.body();
+        let body = request.test_body();
         self.calls
             .lock()
             .unwrap()
@@ -32,11 +34,7 @@ impl ReadHttpTransport for Transport {
             && body["params"][0]
                 == sol_trade_sdk::instruction::utils::pumpswap::accounts::FEE_CONFIG.to_string()
         {
-            return Ok(HttpReply {
-                status: StatusCode::SERVICE_UNAVAILABLE,
-                retry_after: None,
-                body: vec![],
-            });
+            return Ok(HttpReply::for_test(StatusCode::SERVICE_UNAVAILABLE, vec![]));
         }
         let method = match body["method"].as_str().unwrap() {
             "getAccountInfo" => RpcRequest::GetAccountInfo,
@@ -49,12 +47,10 @@ impl ReadHttpTransport for Transport {
             .fixture
             .respond(method, body["params"].clone())
             .unwrap();
-        Ok(HttpReply {
-            status: StatusCode::OK,
-            retry_after: None,
-            body: serde_json::to_vec(&json!({"jsonrpc":"2.0","id":body["id"],"result":result}))
-                .unwrap(),
-        })
+        Ok(HttpReply::for_test(
+            StatusCode::OK,
+            serde_json::to_vec(&json!({"jsonrpc":"2.0","id":body["id"],"result":result})).unwrap(),
+        ))
     }
 }
 

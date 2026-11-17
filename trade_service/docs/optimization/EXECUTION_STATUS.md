@@ -150,6 +150,11 @@
 
 ## 已结束的失败
 
+- `255ef09` / Actions `44130661475` / artifact `14348964516`：十个前置步骤通过，
+  测试类型检查 221 秒失败。新共享 loader 夹具缺 accounts/RpcRequest 导入且访问
+  私有 body 方法；已补显式导入及仅 cfg(test) 的 request/reply helper，不放宽生产
+  可见性、loader 或断言。该快照未运行 Rust 测试/102 字段门禁，后继源码须独立 CI，
+  不重跑终态失败。
 - `ebc51d4` / Actions `44104753013` / artifact `14339127559`：前 29 步通过，
   executor 十项及原卖出 runtime 三项通过。新增买入 runtime 四项未通过：夹具的
   同 bank 余额/token/CPI 索引绑定未开启 rate-limiter sysvar 的旧 discovery 消息。

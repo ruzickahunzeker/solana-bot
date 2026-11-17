@@ -71,6 +71,14 @@ Do not retry local Cargo or raise resources after this failure. Use the authoriz
 source-only, network-isolated GitHub Actions. Formatting/Python checks alone do
 not prove Rust execution. No local service test linking or release build.
 
+First cloud snapshot 255ef09 / Actions 44130661475 / artifact 14348964516
+failed test type-check after ten preflight steps passed (221 seconds). The shared
+loader fixture lacked accounts/RpcRequest imports and crossed a private RPC body
+method. The fix uses explicit test imports and cfg(test)-only request/reply
+helpers; production visibility, loaders and assertions are unchanged. No Rust
+tests or compiler boundary rejections ran in that snapshot. The failed run is
+terminal, not retried; corrected source requires its own independent CI.
+
 ## Remaining Scope
 
 SDK stays 6.0.2; no dependency/vendor changes, deployment/restart, production

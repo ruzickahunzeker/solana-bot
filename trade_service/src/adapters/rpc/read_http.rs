@@ -21,6 +21,17 @@ pub(crate) struct HttpReply {
     pub(super) body: Vec<u8>,
 }
 
+#[cfg(test)]
+impl HttpReply {
+    pub(crate) fn for_test(status: StatusCode, body: Vec<u8>) -> Self {
+        Self {
+            status,
+            retry_after: None,
+            body,
+        }
+    }
+}
+
 pub(crate) enum ReadRequest {
     Parameters {
         id: u64,
@@ -62,6 +73,11 @@ pub(crate) enum ReadRequest {
 }
 
 impl ReadRequest {
+    #[cfg(test)]
+    pub(crate) fn test_body(&self) -> Value {
+        self.body()
+    }
+
     pub(super) fn body(&self) -> Value {
         match self {
             Self::Parameters { id, query } => query.body(*id),
