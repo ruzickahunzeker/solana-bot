@@ -42,6 +42,8 @@
     {"id": "discovery_session", "path": "pump_trade_service::adapters::rpc::discovery_reads::DiscoveryReadSession", "probe": "crate::adapters::rpc::discovery_reads::DiscoveryReadSession"},
     {"id": "sol_hop_session", "path": "pump_trade_service::adapters::rpc::sol_hop_reads::SolHopReadSession", "probe": "crate::adapters::rpc::sol_hop_reads::SolHopReadSession"},
     {"id": "aggregator_simulation_plan", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::UnsignedAggregatorSimulation", "probe": "crate::adapters::rpc::aggregator_simulation::UnsignedAggregatorSimulation"},
-    {"id": "aggregator_simulation_session", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "probe": "crate::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "static_lifetime": true}
+    {"id": "aggregator_simulation_session", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "probe": "crate::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "static_lifetime": true},
+    {"id": "message", "path": "solana_sdk::message::Message"},
+    {"id": "wsol_quote_session", "path": "pump_trade_service::adapters::rpc::wsol_quote_reads::WsolQuoteReadSession", "probe": "crate::adapters::rpc::wsol_quote_reads::WsolQuoteReadSession", "static_lifetime": true}
   ]
 }

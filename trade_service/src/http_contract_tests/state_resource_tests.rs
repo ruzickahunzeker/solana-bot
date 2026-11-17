@@ -17,7 +17,11 @@ async fn state_resource_services_retain_original_arcs_without_fixture_handles_an
     let mut state = state().await;
     let store = Arc::new(ConversionStore::new("sqlite::memory:").await.unwrap());
     state.wsol_queries = Arc::new(WsolQueryService::new(
-        SdkWsolQuerySource::new(state.wallets.clone(), state.wallet_repository.clone()),
+        SdkWsolQuerySource::new(
+            state.wallets.clone(),
+            state.wallet_repository.clone(),
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap()),
+        ),
         Some(SqliteWsolJournal::new(store.clone())),
         SdkAddressParser,
     ));

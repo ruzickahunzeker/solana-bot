@@ -29,6 +29,7 @@ enum Class {
     SolHop,
     AggregatorAccounts,
     AggregatorSimulation,
+    WsolQuote,
 }
 impl Class {
     fn index(self) -> usize {
@@ -44,6 +45,7 @@ impl Class {
             Self::SolHop => 8,
             Self::AggregatorAccounts => 9,
             Self::AggregatorSimulation => 10,
+            Self::WsolQuote => 11,
         }
     }
     fn interval(self) -> Duration {
@@ -59,12 +61,13 @@ impl Class {
             Self::SolHop => Duration::from_millis(100),
             Self::AggregatorAccounts => Duration::from_millis(100),
             Self::AggregatorSimulation => Duration::from_millis(100),
+            Self::WsolQuote => Duration::from_millis(100),
         }
     }
 }
 
 struct Budget {
-    next_start: [Instant; 11],
+    next_start: [Instant; 12],
     cooldowns: Vec<Option<Instant>>,
 }
 
@@ -73,7 +76,7 @@ pub(crate) struct SharedReadRuntime<T = ReqwestReadTransport> {
     urls: Vec<String>,
     endpoints: Vec<Option<Url>>,
     transport: T,
-    slots: [Arc<Semaphore>; 11],
+    slots: [Arc<Semaphore>; 12],
     budget: Mutex<Budget>,
     hash_id: AtomicU64,
 }
@@ -113,7 +116,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         }
         Self {
             budget: Mutex::new(Budget {
-                next_start: [Instant::now(); 11],
+                next_start: [Instant::now(); 12],
                 cooldowns: vec![None; unique.len()],
             }),
             urls: unique,
@@ -206,6 +209,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
                     Class::SolHop => "SOL hop discovery",
                     Class::AggregatorAccounts => "aggregator accounts",
                     Class::AggregatorSimulation => "aggregator simulation",
+                    Class::WsolQuote => "WSOL quote",
                 },
                 "read RPC rate limited; shared endpoint cooling down"
             );
@@ -396,6 +400,7 @@ pub(crate) mod aggregator_accounts;
 mod aggregator_simulation;
 mod native_balances;
 mod quote_balance;
+mod wsol_quotes;
 pub(crate) use quote_balance::preparation_scan;
 mod parameters;
 mod preparation_balance;

@@ -5,6 +5,7 @@ use crate::application::wsol_failure::WsolFailure;
 use crate::application::wsol_submission_types::{WsolDirection as Direction, WsolQuoteSnapshot};
 mod authorization;
 mod instructions;
+#[cfg(test)]
 pub(crate) mod queries;
 use anyhow::{bail, Context, Result};
 use solana_client::{
@@ -17,6 +18,21 @@ use solana_sdk::{
     message::Message, pubkey::Pubkey, signature::Signature, transaction::Transaction,
 };
 use spl_associated_token_account_interface::address::get_associated_token_address_with_program_id;
+
+pub(crate) fn quote_message(
+    owner: &Pubkey,
+    direction: Direction,
+    amount: u64,
+    balance: u64,
+    exists: bool,
+    rent: u64,
+) -> Result<(Message, u64)> {
+    let built = build_wsol_instructions(owner, direction, amount, balance, exists, rent)?;
+    Ok((
+        Message::new(&built.instructions, Some(owner)),
+        built.temporary_rent_lamports,
+    ))
+}
 
 /// Constructed only after quote, balance, fee and instruction validation.
 pub(crate) struct UnsignedWsolTransaction {

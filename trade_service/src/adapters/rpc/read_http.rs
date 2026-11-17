@@ -33,6 +33,10 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    WsolQuote {
+        id: u64,
+        query: super::wsol_quote_reads::WsolQuoteQuery,
+    },
     AggregatorSimulation {
         id: u64,
         plan: super::aggregator_simulation::UnsignedAggregatorSimulation,
@@ -90,6 +94,7 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::WsolQuote { id, query } => query.body(*id),
             Self::AggregatorSimulation {
                 id,
                 plan,
@@ -140,6 +145,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::WsolQuote { .. } => "WSOL quote",
             Self::AggregatorSimulation { .. } => "aggregator simulation",
             Self::AggregatorAccount { .. } => "aggregator account",
             Self::Parameters { .. } => "protocol parameters",

@@ -210,7 +210,7 @@ async fn aggregator_account_read_busy_and_cancel_leave_all_other_capacities_inta
             .iter()
             .map(|s| s.available_permits())
             .collect::<Vec<_>>(),
-        vec![1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1]
+        vec![1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 1, 1]
     );
     r.latest_blockhash().await.unwrap();
     task.abort();
@@ -221,7 +221,7 @@ async fn aggregator_account_read_busy_and_cancel_leave_all_other_capacities_inta
             .iter()
             .map(|s| s.available_permits())
             .collect::<Vec<_>>(),
-        vec![1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1]
+        vec![1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1]
     );
     assert_eq!(r.test_transport().calls.lock().unwrap().len(), 2);
 }

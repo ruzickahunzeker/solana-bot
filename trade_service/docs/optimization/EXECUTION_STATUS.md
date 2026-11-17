@@ -6,13 +6,31 @@
 
 ## 当前任务
 
-- 当前续原 NP-03/TS-07/09 聚合模拟和余额基线：根 SDK 仅投影原 runtime/Default URL/
+- 当前续原 NP-03/TS-07/09 WSOL 只读报价：原首 RPC 的 URL/commitment 投影给 SDK
+  estimator 和借用五步 scope，共用原 runtime；余额/ATA/租金/hash/fee 顺序及
+  Token/native/金额/租金/退款/错误政策保留，原 estimator 仅测试保留、原构建器
+  字节不动。公开 Message helper 不交出临时密钥，不改 conversion 账本/签名提交/
+  状态。二十项新用例、预计完整 1769/75 步骤/39 类型120字段待本批独立 CI，不
+  套用父批、不本地重试 Cargo。其余独立读取/SDK 内部资源和原门槛继续，见
+  [WSOL 报价读取边界](WSOL_QUOTE_SHARED_READS.md)。
+- 原 NP-03/TS-07/09 聚合模拟和余额基线已完成本批源码/离线验收：根 SDK 仅投影原 runtime/Default URL/
   钱包公钥，SDK adapter 保留先验基线/Token 校验后模拟的顺序及原报告/CPI/同 slot
   差额政策。固定零签名 packet、pair/loaded keys 和基线 slot，一次性借用会话复用
-  原 HTTP/冷却与第十一类预算，不新增 client/cache/signer/worker。二十项新用例、
-  预计完整 1749/72 步骤/37 类型114字段待本批独立 CI，不套用父批。旧纯检查函数
-  规范字节与旧测试模块逐字核对保持，不本地重试 Cargo；剩余独立读取/SDK 内部
-  资源和原门槛继续，见 [聚合模拟读取边界](AGGREGATOR_SIMULATION_SHARED_READS.md)。
+  原 HTTP/冷却与第十一类预算，不新增 client/cache/signer/worker。
+  `2f12c97fad9b35d81c38e4515b03362c410234b9` /
+  [Actions 44173368003](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44173368003)
+  首次运行终态 success；artifact `14371180749` 下载独立核对：完整并发 1749
+  （220.73 秒）/串行 1749（402.90 秒），零失败/忽略/过滤，原始名称集合相同；
+  父批 1729 名称全保留且恰增源码二十项。scope 10/SDK pipeline 7/真实 HTTP 3、
+  原全部专项和 72 步骤通过；37 类型/114 原始字段拒绝含固定 static lifetime、
+  原源码/恢复成功，Python policy 十二项通过。全树 1098 文件/13,405,912 字节及
+  模式与快照一致，identity/manifest/lock/vendor manifest 匹配。原纯函数规范 SHA
+  与旧测试模块逐字核对保持；旧串行 stderr 精确关联/两正七负格式回归通过，未改
+  日志或省略名称。原 main/索引/冻结历史/SDK/迁移保持，不本地重试 Cargo、不重跑
+  终态或另发文档 CI；记录随下一源码批归档。下一原 NP-03 入口为 WSOL 只读报价：
+  原余额/ATA/租金/hash/fee 五类读取仍借执行 RPC，应保留原估值和金额校验、独立
+  conversion 账本/签名提交，逐项接原 runtime。其他独立读取/SDK 内部资源和原
+  门槛继续，不新增任务或分母，见 [聚合模拟读取边界](AGGREGATOR_SIMULATION_SHARED_READS.md)。
 - 原 NP-03/TS-07/09 聚合预检账户读取已完成本批源码/离线验收：Mint/ATA 与 ALT 的原校验提到 SDK
   adapter，三条实际入口（独立预检/Quote 提交/普通聚合买入含 observed）共用原
   bootstrap runtime。原第一 Default lane/commitment、Token 程序与 ALT 解码/停用

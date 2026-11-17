@@ -21,6 +21,12 @@ fn response(id: u64) -> Value {
 }
 #[derive(Clone)]
 pub(crate) enum Reply {
+    WsolQuote {
+        values: std::collections::HashMap<String, Value>,
+        fail_method: Option<&'static str>,
+        failure: Box<Reply>,
+        normal: Box<Reply>,
+    },
     AggregatorSimulation {
         baseline: Box<Reply>,
         simulation: Box<Reply>,
@@ -197,7 +203,28 @@ async fn serve(
 ) {
     let payload = read_request(&mut stream).await;
     let id = payload["id"].as_u64().unwrap();
+    let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let (reply, parameter_value) = match reply {
+        Reply::WsolQuote {
+            values,
+            fail_method,
+            failure,
+            normal,
+        } => {
+            let method = payload["method"].as_str().unwrap();
+            let value = values
+                .get(method)
+                .expect("unscripted WSOL quote method")
+                .clone();
+            (
+                if fail_method == Some(method) {
+                    *failure
+                } else {
+                    *normal
+                },
+                Some(value),
+            )
+        }
         Reply::AggregatorSimulation {
             baseline,
             simulation,
@@ -255,7 +282,9 @@ async fn serve(
         payload["method"].as_str(),
         Some("getTokenSupply" | "getTokenAccountBalance" | "getBalance")
     );
-    let body_limit = if parameter_value.is_some() && payload["method"] == "getProgramAccounts" {
+    let body_limit = if is_wsol_quote {
+        MAX_BODY
+    } else if parameter_value.is_some() && payload["method"] == "getProgramAccounts" {
         1_048_576
     } else if is_scan || parameter_value.is_some() {
         524_288
@@ -317,7 +346,24 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if parameter_value.is_some() {
+    if is_wsol_quote {
+        match payload["method"].as_str().unwrap() {
+            "getMinimumBalanceForRentExemption" => assert_eq!(payload["params"], json!([165])),
+            "getAccountInfo" => {
+                assert_eq!(payload["params"][1]["encoding"], "base64");
+                assert_eq!(payload["params"][1]["commitment"], "processed");
+            }
+            "getLatestBlockhash" => assert!(matches!(
+                payload["params"][0]["commitment"].as_str(),
+                Some("processed" | "confirmed" | "finalized")
+            )),
+            "getBalance" | "getFeeForMessage" => assert!(matches!(
+                payload["params"][1]["commitment"].as_str(),
+                Some("processed" | "confirmed" | "finalized")
+            )),
+            _ => panic!("WSOL quote fixture cannot accept simulation or sending"),
+        }
+    } else if parameter_value.is_some() {
         if payload["method"] == "simulateTransaction" {
             assert_eq!(payload["params"][1]["sigVerify"], false);
             assert_eq!(payload["params"][1]["replaceRecentBlockhash"], false);

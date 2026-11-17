@@ -1,8 +1,9 @@
 # Aggregator Simulation Read Boundary
 
-Date: 2026-11-18, Asia/Shanghai. Continues NP-03 / TS-07/09. Source wired, pending
-independent Rust CI. Accepted parent 10c5b4b has 1729 tests; do not reuse that
-evidence for this source. No production action or new execution authority.
+Date: 2026-11-18, Asia/Shanghai. Continues NP-03 / TS-07/09. Source and independent
+offline Rust CI accepted, not deployed. Identity: 2f12c97 / Actions 44173368003 /
+artifact 14371180749. Parent 10c5b4b evidence is not reused for this source.
+No production action or new execution authority.
 
 ## Existing Pipeline And Ownership
 
@@ -91,6 +92,30 @@ source/artifact identity and old name sets require independent audit on this
 source. Local fmt/Python/workflow/provenance is not Rust runtime acceptance;
 do not retry local Cargo after the recorded 2200 MiB failure.
 
+## Accepted Evidence
+
+Source `2f12c97fad9b35d81c38e4515b03362c410234b9`,
+[Actions 44173368003](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44173368003),
+first run terminal success; downloaded artifact `14371180749` independently
+audited. All 72 steps exit zero. Complete concurrent 1749 (220.73 seconds) and
+serial 1749 (402.90 seconds) have zero failed/ignored/filtered tests and identical
+raw name sets. All 1729 parent names remain; exactly the 20 source-defined names
+are added. Scope 10 / SDK pipeline 7 / real HTTP 3 pass, as do all earlier account,
+hop, ordinary discovery, preparation and execution focused regressions. Original/
+restored compiler checks and all 114 distinct raw field spans pass, including the
+borrowed session's fixed static-lifetime probe. The 12 Python policy tests pass;
+no generic Rust/path/lifetime input was enabled to satisfy the compiler gate.
+
+Identity and manifest/lock/vendor-manifest hashes match. Before recording this
+acceptance, all 1098 snapshot files / 13,405,912 bytes and executable modes matched
+the working source. Pure helpers retain the canonical hash above and the old
+test module remains byte-identical. Main/index, frozen history, SDK/manifests/
+lock/vendor/migrations remain unchanged. The known old serial discovery child
+stderr split is associated only with its exact test/pinned fixture/immediate ok;
+two positive/seven negative format regressions pass. No raw log rewrite, omitted
+name, local service Cargo retry or production action. Do not rerun terminal CI or
+trigger documentation-only CI; carry these records with the next source batch.
+
 ## Remaining Work
 
 Independent quote/WSOL, DAMM/SDK-internal reads and opaque workers, provider-wide
@@ -99,3 +124,11 @@ quotas and other original NP-01/03/04/05/rollout gates remain. No SDK upgrade
 production configuration/wallet/database access, real RPC or trade. PumpAPI new
 integration remains paused. No new route/backend or permission to submit follows
 from these read-only simulation checks.
+
+The next original NP-03 independent-read entry is WSOL quote estimation:
+`sdk_client/wsol_conversion/queries.rs` still reads native balance, the processed
+ATA, fixed Account::LEN rent, latest hash and fee for its own unsigned message
+through the execution RpcClient. `adapters/sdk/wsol_queries.rs` still projects
+that first existing RPC. Preserve its original error/Token/native/rent/all/fee
+semantics and old oracle while replacing only those reads; do not merge the
+independent conversion journal or change sign/submission/status ownership.

@@ -30,10 +30,24 @@
 
 ## 当前批次
 
-2026-11-18 聚合模拟/余额基线新源码待独立 CI：保留原 1729 名称并新增二十项，预计
-完整各 1749、72 步骤。新增零签名计划/借用会话进入原类型门禁，37 类型/114 字段
-及固定 static lifetime 元数据/拒绝注入须由本源码验证，不套用父批。旧纯检查函数
-和旧测试模块已独立核对未改，不本地重试 Cargo、不做生产操作，见
+2026-11-18 WSOL 只读报价新源码待独立 CI：保留父批 1749 全部名称并新增二十项，
+预计完整各 1769、75 步骤、39 类型/120 原始字段拒绝。原 estimator/构建器不改，
+新 SDK path 与旧 RpcClient path 的报告/五步请求逐项对照，仅归一化压缩选项与原本
+随机的临时账户公钥。静态 lifetime 门禁沿用原限制，不改 SDK/账本/签名提交，不
+本地重试 Cargo，见 `WSOL_QUOTE_SHARED_READS.md`。
+
+2026-11-18 聚合模拟/余额基线最终源码 `2f12c97fad9b35d81c38e4515b03362c410234b9` /
+[Actions 44173368003](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44173368003)
+首次运行终态 success；artifact `14371180749` 下载独立核对：全部 72 步骤 exit=0。
+完整并发 1749（220.73 秒）/串行 1749（402.90 秒）零失败/忽略/过滤，原始名称
+集合相同；父批 1729 全保留且恰增源码二十项。scope 10/SDK pipeline 7/真实 HTTP 3、
+原全部专项通过。37 类型/114 不同字段原始 compiler spans（含借用会话的固定 static
+lifetime）、原源码/恢复检查和十二项 Python policy 通过。identity/manifest/lock/
+vendor manifest 匹配；记录前全树 1098 文件/13,405,912 字节及模式与快照一致，旧
+纯函数规范 hash 和旧测试模块原字节保持。旧串行诊断仅按原名称/固定夹具/紧随 ok
+关联，两正/七负格式回归通过，不改日志或省略名称。真实 main/索引/冻结历史/SDK/
+依赖/迁移保持，无本地 Cargo 重试或生产操作。不重跑终态或另发文档 CI；记录随
+下一源码批归档。独立 WSOL/quote、SDK 内部读取与其余原门槛继续，见
 `AGGREGATOR_SIMULATION_SHARED_READS.md`。
 
 2026-11-18 聚合预检 Mint/ALT 最终源码 `10c5b4b0f8cd8ba04c03d088850e0806e2c35f18` /

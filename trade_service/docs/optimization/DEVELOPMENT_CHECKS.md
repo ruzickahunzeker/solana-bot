@@ -114,14 +114,28 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
-The aggregator baseline/simulation batch is source wired, not Rust-accepted yet.
-Its owned unsigned plan and borrowed read session add two selected concrete types:
-37 types / 114 scoped fields including outside alias. The fixed static_lifetime
-probe flag permits only true and emits the literal 'static, never supplied Rust;
-two additional Python regressions (12 total) cover it and injection rejection.
-Expected full suites retain all 1729 names and add exactly 20 (1749), 72 steps.
-Do not reuse the accepted 108-field run below or retry local service Cargo after
-the resource failure. See AGGREGATOR_SIMULATION_SHARED_READS.md.
+The WSOL quote batch is source wired, not independently Rust-accepted yet.
+Message and borrowed WsolQuoteReadSession enter the same gate: 39 selected types /
+120 scoped fields including outside alias, with only the existing fixed static
+lifetime flag. Expected complete suites retain all 1749 names and add exactly
+20 (1769), 75 steps. Old estimator and instruction builder blobs stay unchanged;
+new report/RPC witnesses need their own CI. Do not inherit the 114-field evidence
+below, retry local Cargo after the resource failure or deploy. See
+WSOL_QUOTE_SHARED_READS.md.
+
+The aggregator baseline/simulation batch is independently accepted: source
+2f12c97 / Actions 44173368003 / artifact 14371180749, complete concurrent/serial
+each 1749 (220.73/402.90 seconds), all 1729 parent names retained, exactly 20 added.
+Scope 10 / SDK pipeline 7 / real HTTP 3 and all 72 steps pass. Original/restored
+checks and all 114 distinct raw field spans verify 37 selected types and outside
+alias on this source, including the borrowed session. The fixed static_lifetime
+flag permits only true and emits only literal 'static; identifier-only path
+validation remains. Twelve Python tests include metadata/injection regressions.
+All 1098 source blobs/modes (13,405,912 bytes), manifest/lock/vendor-manifest and
+original helper/test-module checks match. Main/index/frozen history remain.
+No local service Cargo retry, deployment or production action. Do not reuse the
+108-field run below, rerun terminal CI or start documentation-only CI. See
+AGGREGATOR_SIMULATION_SHARED_READS.md for remaining independent-read/SDK gates.
 
 The aggregator mint/ALT batch is independently accepted: 10c5b4b / Actions
 44164727015 / artifact 14366377330 passes complete concurrent/serial suites each
@@ -198,7 +212,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 35 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 37 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

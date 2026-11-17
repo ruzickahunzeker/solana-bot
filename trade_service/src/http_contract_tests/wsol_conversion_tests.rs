@@ -47,6 +47,7 @@ async fn fixture() -> (AppState, Arc<ConversionStore>) {
         crate::adapters::sdk::wsol_queries::SdkWsolQuerySource::new(
             state.wallets.clone(),
             state.wallet_repository.clone(),
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap()),
         ),
         Some(crate::adapters::persistence::wsol_conversion::SqliteWsolJournal::new(store.clone())),
         crate::adapters::sdk::address_parser::SdkAddressParser,

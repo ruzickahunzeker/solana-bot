@@ -39,6 +39,7 @@ pub(crate) mod wallet_identity;
 pub(crate) mod wallet_management;
 pub(crate) mod wsol_conversion;
 pub(crate) mod wsol_queries;
+pub(crate) mod wsol_quote;
 
 #[cfg(test)]
 mod unsigned_compile_contract_tests;

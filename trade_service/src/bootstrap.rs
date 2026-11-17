@@ -224,6 +224,7 @@ fn complete(
             crate::adapters::sdk::wsol_queries::SdkWsolQuerySource::new(
                 wallets.clone(),
                 wallet_repository.clone(),
+                read_rpc.clone(),
             ),
             conversions
                 .clone()

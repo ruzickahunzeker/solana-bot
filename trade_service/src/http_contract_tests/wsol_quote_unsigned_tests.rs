@@ -217,6 +217,7 @@ async fn wsol_quote_unsigned_router_real_metadata_absence_decode_and_unloaded_wa
             crate::adapters::sdk::wsol_queries::SdkWsolQuerySource::new(
                 state.wallets.clone(),
                 Arc::new(repository),
+                Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap()),
             ),
             Some(
                 crate::adapters::persistence::wsol_conversion::SqliteWsolJournal::new(

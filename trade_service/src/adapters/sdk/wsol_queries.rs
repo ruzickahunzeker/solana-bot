@@ -18,17 +18,24 @@ use crate::{
 pub(crate) struct SdkWsolQuerySource {
     wallets: Arc<WalletRegistry>,
     repository: Arc<WalletRepository>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 impl SdkWsolQuerySource {
-    pub(crate) fn new(wallets: Arc<WalletRegistry>, repository: Arc<WalletRepository>) -> Self {
+    pub(crate) fn new(
+        wallets: Arc<WalletRegistry>,
+        repository: Arc<WalletRepository>,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    ) -> Self {
         Self {
             wallets,
             repository,
+            read_rpc,
         }
     }
 }
 pub(crate) struct SdkWsolQuoteReader {
-    rpc: Option<Arc<solana_client::nonblocking::rpc_client::RpcClient>>,
+    lane: Option<(String, solana_commitment_config::CommitmentConfig)>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 impl WsolQuerySource for SdkWsolQuerySource {
     type QuoteReader = SdkWsolQuoteReader;
@@ -38,7 +45,12 @@ impl WsolQuerySource for SdkWsolQuerySource {
     }
     fn quote_reader(&self, id: &str) -> Option<Self::QuoteReader> {
         self.wallets.get(id).map(|client| SdkWsolQuoteReader {
-            rpc: client.rpcs().into_iter().next(),
+            lane: client
+                .rpcs()
+                .into_iter()
+                .next()
+                .map(|rpc| (rpc.url(), rpc.commitment())),
+            read_rpc: self.read_rpc.clone(),
         })
     }
     fn status_reader(&self, id: &str, signature: &str) -> Result<Self::StatusReader> {
@@ -54,10 +66,12 @@ impl WsolQuerySource for SdkWsolQuerySource {
 }
 impl WsolQuoteReader for SdkWsolQuoteReader {
     async fn estimate(&self, owner: Address, input: &WsolQuoteInput) -> Result<WsolQuoteEstimate> {
-        let rpc = self.rpc.as_ref().context("wallet has no RPC")?;
-        crate::sdk_client::wsol_conversion::queries::estimate(
+        let (url, commitment) = self.lane.as_ref().context("wallet has no RPC")?;
+        crate::adapters::sdk::wsol_quote::estimate(
+            &self.read_rpc,
+            url,
+            *commitment,
             solana_sdk::pubkey::Pubkey::new_from_array(owner.to_bytes()),
-            &rpc,
             input,
         )
         .await
@@ -72,9 +86,13 @@ mod tests {
     async fn wsol_query_source_reuses_metadata_and_validates_signature_before_wallet_resolution() {
         let state = crate::http_contract_tests::state().await;
         let h = crate::application::sol_transfers::test_support::harness().await;
-        let source = SdkWsolQuerySource::new(state.wallets.clone(), h.repo.clone());
+        let read_rpc =
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
+        let source =
+            SdkWsolQuerySource::new(state.wallets.clone(), h.repo.clone(), read_rpc.clone());
         assert!(Arc::ptr_eq(&source.wallets, &state.wallets));
         assert!(Arc::ptr_eq(&source.repository, &h.repo));
+        assert!(Arc::ptr_eq(&source.read_rpc, &read_rpc));
         let metadata = source.metadata("source").await.unwrap();
         assert_eq!(metadata.pubkey, Address::from_bytes([1; 32]).to_string());
         assert!(source.quote_reader("source").is_none());

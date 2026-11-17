@@ -18,6 +18,8 @@ mod parameter_wire;
 mod preparation_wire;
 #[path = "presence_wire.rs"]
 mod presence_wire;
+#[path = "wsol_quote_wire.rs"]
+mod wsol_quote_wire;
 
 fn runtime(servers: &[&LocalServer]) -> Arc<SharedReadRuntime> {
     Arc::new(
@@ -772,6 +774,9 @@ async fn shared_read_wire_child() {
             "aggregator-sim-success" => aggregator_simulation_wire::success().await,
             "aggregator-sim-errors" => aggregator_simulation_wire::errors().await,
             "aggregator-sim-timeout-cancel" => aggregator_simulation_wire::timeout_cancel().await,
+            "wsol-quote-success" => wsol_quote_wire::success().await,
+            "wsol-quote-errors" => wsol_quote_wire::errors().await,
+            "wsol-quote-timeout-cancel" => wsol_quote_wire::timeout_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -975,4 +980,17 @@ fn aggregator_sim_wire_bad_responses_limits_redirect_and_429_never_retry_either_
 #[test]
 fn aggregator_sim_wire_deadlines_and_cancel_preserve_other_profile_capacity() {
     run("aggregator-sim-timeout-cancel");
+}
+
+#[test]
+fn wsol_quote_wire_four_paths_and_body_limits_use_original_fixed_transport() {
+    run("wsol-quote-success");
+}
+#[test]
+fn wsol_quote_wire_bad_identity_body_redirect_and_429_never_retry_or_fallback() {
+    run("wsol-quote-errors");
+}
+#[test]
+fn wsol_quote_wire_timeouts_and_cancel_preserve_critical_hash_capacity() {
+    run("wsol-quote-timeout-cancel");
 }

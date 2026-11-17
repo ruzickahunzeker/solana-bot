@@ -206,9 +206,11 @@ memory -> shadow（完成对账）-> durable + ENABLE_SIMULATE=true（完成验�
 
 ## 参数说明
 
-聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策；二十项新测试及 114 字段门禁待本批独立 CI，不代表已经部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
+WSOL 只读报价已接原 runtime 的余额/ATA/租金/hash/fee 五步 scope，保留原金额、费用、退款及 Token/native 校验；20 项新测试及 120 字段门禁待本批独立 CI，未改兑换签名提交/状态或部署。见 [WSOL 报价读取边界](docs/optimization/WSOL_QUOTE_SHARED_READS.md)。
 
-聚合预检的 Mint/ATA 与 ALT 读取已接原共享 runtime/HTTP/冷却，三条入口共用同一资源；保留原 Token 程序、ATA 和 ALT 政策。`10c5b4b` / Actions `44164727015` 独立验收完整并发/串行各 1729，新增 16、108 字段及全部 69 步骤通过；不代表后继模拟读取也已验收或已部署。见 [聚合账户读取边界](docs/optimization/AGGREGATOR_ACCOUNT_SHARED_READS.md)。
+聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
+
+聚合预检的 Mint/ATA 与 ALT 读取已接原共享 runtime/HTTP/冷却，三条入口共用同一资源；保留原 Token 程序、ATA 和 ALT 政策。`10c5b4b` / Actions `44164727015` 独立验收完整并发/串行各 1729，新增 16、108 字段及全部 69 步骤通过；后继模拟读取已由上方独立验收，尚未部署。见 [聚合账户读取边界](docs/optimization/AGGREGATOR_ACCOUNT_SHARED_READS.md)。
 
 既有 WSOL/Quote CPMM 两跳寻池新增专用只读 scope，共用原 runtime/HTTP/冷却，保留原缓存与 TTL；五秒总期限、单在途/100 ms、最多 32 次请求。`17bc3be` / Actions `44156380200` 独立验收完整并发/串行各 1713，新增 20、108 字段及全部 66 步骤通过；不代表 SOL 路线已实网验收或部署。见 [两跳读取边界](docs/optimization/SOL_HOP_SHARED_READS.md)。
 

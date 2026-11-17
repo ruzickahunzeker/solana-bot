@@ -6,11 +6,19 @@
 
 ## 统计口径
 
-- 当前续原 NP-03 聚合模拟/余额基线：原三条入口接原 runtime，一次性零签名会话
+- 当前续原 NP-03 WSOL 只读报价：原 runtime 的五步借用 scope 接原首 RPC metadata，
+  保留原金额/native/fee/rent/refund/错误顺序，原 estimator/构建器字节未改；20 新
+  用例、预计完整各 1769/75 步骤/120 字段待独立 CI。不新增任务或分母，不套用
+  父批，见 `WSOL_QUOTE_SHARED_READS.md`。签名提交/状态和其他原门槛继续，无生产操作。
+- 原 NP-03 聚合模拟/余额基线已由 `2f12c97` / Actions `44173368003` /
+  artifact `14371180749` 独立验收：原三条入口接原 runtime，一次性零签名会话
   固定两步/钱包/target/slot/packet，原基线验证、Token/CPI 和报告政策保持；旧函数
-  规范字节与测试模块已核对。二十项新测试、预计完整 1749/72 步骤/114 字段待独立
-  CI，不套用父批，不新增任务或分母，见 `AGGREGATOR_SIMULATION_SHARED_READS.md`。
-  其他独立读取、SDK 内部任务/资源及真实发布仍保留，无生产操作。
+  规范字节与测试模块已核对。完整并发 1749（220.73 秒）/串行 1749（402.90 秒），
+  名称相同、父批 1729 全保留且恰增二十项；scope 10/SDK pipeline 7/真实 HTTP 3、
+  114 字段及全部 72 步骤通过，原始 spans/源码身份/全树一致已核对。不重跑终态
+  或另发文档 CI，不新增任务或分母，见 `AGGREGATOR_SIMULATION_SHARED_READS.md`。
+  下一原独立读取入口是 WSOL 报价的余额/ATA/租金/hash/fee；其他独立读取、SDK
+  内部任务/资源及真实发布仍保留，无生产操作。
 - 原 NP-03 聚合预检 Mint/ALT 读取已由 `10c5b4b` / Actions `44164727015` /
   artifact `14366377330` 独立验收：三条真实入口共用原 runtime/HTTP/冷却，SDK
   owner/ATA/ALT 原政策不改。完整并发 1729（212.62 秒）/串行 1729（387.94 秒），

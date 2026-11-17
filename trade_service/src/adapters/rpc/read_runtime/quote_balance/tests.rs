@@ -70,7 +70,7 @@ impl ReadHttpTransport for Fake {
             });
         }
         let (id,value) = match request {
-            ReadRequest::PreparationAccounts { .. } | ReadRequest::Parameters { .. } | ReadRequest::AggregatorAccount { .. } | ReadRequest::AggregatorSimulation { .. } => panic!("quote fixture must not read preparation accounts or protocol parameters or aggregator accounts/simulation"),
+            ReadRequest::PreparationAccounts { .. } | ReadRequest::Parameters { .. } | ReadRequest::AggregatorAccount { .. } | ReadRequest::AggregatorSimulation { .. } | ReadRequest::WsolQuote { .. } => panic!("quote fixture must not read preparation accounts or protocol parameters or aggregator accounts/simulation/WSOL quote"),
             ReadRequest::TokenSupply{id,..} => (*id,token_amount(u64::MAX,6)),
             ReadRequest::TokenAccounts{id,..} => {
                 if matches!(self.mode,Mode::Hold) { std::future::pending::<()>().await; }
@@ -506,7 +506,7 @@ async fn quote_balance_shared_read_busy_cancel_and_other_four_reservations_are_i
             .slots
             .each_ref()
             .map(|slot| slot.available_permits()),
-        [1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1]
+        [1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1]
     );
     assert_eq!(methods(&runtime).len(), 6);
     assert_eq!(runtime.transport.dropped.load(Ordering::SeqCst), 6);
