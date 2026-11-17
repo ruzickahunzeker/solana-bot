@@ -34,6 +34,9 @@
 1799 名称全保留且恰增十八项；45 类型/138 字段及 84 步骤。原 RpcClient 精确
 请求与结果 witness、两条实际 wrapper/原 RPC 零请求和真实 HTTP 见
 `WSOL_SIMULATION_SHARED_READS.md`，不套用下方父批证据，不做生产操作。
+首轮 `2a1cc27` / Actions `44202635009` 在验证时因缺失 err 的可选解码风险被主动
+取消；修正后要求明确 err（允许 null），补负例及旧客户端容忍行为对照。不重跑
+原候选，不将部分日志或旧通过记录当成修正源码验收。
 
 续原 WSOL 准备读取源码 `cf5e63bca191362bf7f234af942b63f73ffc8e16` /
 [Actions 44195580476](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44195580476)

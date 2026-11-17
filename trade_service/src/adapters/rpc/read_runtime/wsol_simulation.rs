@@ -44,7 +44,15 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
                 response.context.slot > 0,
                 "WSOL simulation RPC context is invalid"
             );
-            Ok::<_, anyhow::Error>(response.value)
+            ensure!(
+                response
+                    .value
+                    .as_object()
+                    .is_some_and(|value| value.contains_key("err")),
+                "WSOL simulation RPC omitted explicit error outcome"
+            );
+            serde_json::from_value::<RpcSimulateTransactionResult>(response.value)
+                .map_err(|_| anyhow::anyhow!("invalid WSOL simulation result"))
         })
         .await
         .map_err(|_| anyhow::anyhow!("WSOL simulation RPC timed out"))??;
@@ -59,6 +67,6 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
 struct Envelope {
     jsonrpc: String,
     id: u64,
-    result: Option<Response<RpcSimulateTransactionResult>>,
+    result: Option<Response<Value>>,
     error: Option<Value>,
 }

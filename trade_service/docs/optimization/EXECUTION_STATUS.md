@@ -11,6 +11,8 @@
   模拟仍向同一配置 RPC 交出可重放签名包，不能声称 provider 无广播能力。十八项
   新增、45 类型/138 字段与 84 步骤待独立 CI，不套用父批。原 sign/send/账本顺序
   不动，包装仍持执行 RPC 供广播，见 [WSOL 模拟读取边界](WSOL_SIMULATION_SHARED_READS.md)。
+  首轮 `2a1cc27` / Actions `44202635009` 因审查发现缺失 err 可误判成功而主动取消；
+  已补显式字段要求和新旧负例，须验证修正源码，不重跑原候选或将部分日志算通过。
 - 原 NP-03 WSOL 准备读取本批已独立源码/离线验收：真实 execution wallet 通过
   原 runtime/既有五步 scope 重查准备证据，保留原金额/授权/临时 signer 和签名
   发送。复用原十二类/配额，不增 client/cache/worker。源码

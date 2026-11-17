@@ -72,7 +72,11 @@ cancels local I/O/releases its permit, not remote processing.
 
 Declared and streamed response bodies are capped at 512 KiB. Require typed
 JSON-RPC v2/request ID/exclusive result with no error, a present result and nonzero
-context slot. Bad status/identity/schema/context/JSON/body or transport/deadline
+context slot. Require the value object to contain explicit err (null is valid),
+rather than treating an omitted error outcome as success through optional-field
+deserialization. This deliberately rejects malformed provider replies tolerated
+by the old client; conforming response/error semantics remain unchanged.
+Bad status/identity/schema/context/JSON/body or transport/deadline
 failure returns an error without echoing raw provider messages, URLs or packets.
 
 ## Required Acceptance
@@ -106,6 +110,12 @@ acceptance. Do not reuse parent's 129-field run. No local service Cargo retry
 after the recorded 2200 MiB failure: source-only offline/loopback-only CI only.
 
 ## Remaining Original Gates
+
+First candidate 2a1cc27 / Actions 44202635009 was cancelled during validation after
+review found missing err could deserialize to None and imply success. The corrected
+source requires explicit err and tests both forms plus the old client's permissive
+behavior. Do not restart that candidate or treat partial logs as acceptance. Only
+the corrected source's independently audited full run can accept this batch.
 
 Actual WSOL broadcast RPC ownership/SDK internals, standalone Quote reconciliation
 status, DAMM/opaque reads/tasks, provider-wide quotas and NP-01/03/04/05/rollout

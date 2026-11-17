@@ -111,6 +111,7 @@ pub(crate) enum Mode {
     Error,
     Http,
     ZeroContext,
+    MissingErr,
 }
 pub(crate) struct Fake {
     value: Value,
@@ -176,6 +177,12 @@ impl ReadHttpTransport for Fake {
                 envelope = json!({"jsonrpc":"2.0","id":body["id"],"error":{"code":-32005,"message":"private provider detail"}})
             }
             Mode::ZeroContext => envelope["result"]["context"]["slot"] = json!(0),
+            Mode::MissingErr => {
+                envelope["result"]["value"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("err");
+            }
             _ => {}
         }
         let mut bytes = serde_json::to_vec(&envelope)?;
@@ -429,6 +436,7 @@ async fn wsol_simulation_shared_bad_envelopes_context_body_or_transport_never_su
             Mode::Error,
             Mode::Http,
             Mode::ZeroContext,
+            Mode::MissingErr,
         ] {
             let r = runtime(result(Value::Null), mode);
             let error = lookup(&r, signed_mode).await.unwrap_err();
@@ -530,4 +538,19 @@ async fn wsol_simulation_shared_missing_units_remain_none_and_invalid_scalar_is_
             assert_eq!(actual.fee, Some(0));
         }
     }
+    let mut value = result(Value::Null);
+    value.as_object_mut().unwrap().remove("err");
+    let old = Legacy::new(value.clone());
+    let p = signed(false);
+    assert!(p
+        .simulate(&old.client(CommitmentConfig::confirmed()))
+        .await
+        .unwrap()
+        .err
+        .is_none());
+    let r = runtime(value, Mode::Good);
+    let error = simulate_signed(&p, &r, URL, CommitmentConfig::confirmed())
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("omitted explicit error outcome"));
 }
