@@ -8,10 +8,12 @@ mod instructions;
 pub(crate) mod preparation;
 #[cfg(test)]
 pub(crate) mod queries;
+pub(crate) mod simulation;
 use anyhow::{bail, Context, Result};
-use solana_client::{
-    nonblocking::rpc_client::RpcClient, rpc_response::RpcSimulateTransactionResult,
-};
+use solana_client::nonblocking::rpc_client::RpcClient;
+#[cfg(test)]
+use solana_client::rpc_response::RpcSimulateTransactionResult;
+#[cfg(test)]
 use solana_commitment_config::CommitmentConfig;
 #[cfg(test)]
 use solana_program_pack::Pack;
@@ -83,6 +85,7 @@ impl UnsignedWsolTransaction {
         Ok((self.message, self.temporary_signer))
     }
 
+    #[cfg(test)]
     pub(crate) async fn simulate(
         &self,
         rpc: &solana_client::nonblocking::rpc_client::RpcClient,
@@ -127,6 +130,7 @@ impl UnsignedWsolTransaction {
     }
 }
 
+#[cfg(test)]
 fn unsigned_wsol_simulation_config(
     commitment: CommitmentConfig,
 ) -> solana_client::rpc_config::RpcSimulateTransactionConfig {
@@ -270,6 +274,7 @@ impl SignedWsolTransaction {
         Ok(())
     }
 
+    #[cfg(test)]
     pub(crate) async fn simulate(&self, rpc: &RpcClient) -> Result<RpcSimulateTransactionResult> {
         self.validate_snapshot(&self.owner)?;
         Ok(rpc.simulate_transaction(&self.transaction).await?.value)

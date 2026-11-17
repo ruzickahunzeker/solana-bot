@@ -11,7 +11,9 @@ use crate::{
     },
     domain::trade::Address,
     sdk_client::{
-        wsol_conversion::{preparation, SignedWsolTransaction, UnsignedWsolTransaction},
+        wsol_conversion::{
+            preparation, simulation, SignedWsolTransaction, UnsignedWsolTransaction,
+        },
         SdkTradeClient,
     },
     wallet_repository::WalletRepository,
@@ -48,6 +50,39 @@ pub(crate) struct PreparedWsol {
 pub(crate) struct SignedWsol {
     artifact: SignedWsolTransaction,
     rpc: Arc<RpcClient>,
+}
+impl PreparedWsol {
+    async fn simulate<T: crate::adapters::rpc::read_http::ReadHttpTransport>(
+        &self,
+        runtime: &crate::adapters::rpc::read_runtime::SharedReadRuntime<T>,
+        quote: &WsolQuoteSnapshot,
+    ) -> Result<Option<u64>> {
+        Ok(simulation::simulate_unsigned(
+            &self.unsigned,
+            quote,
+            runtime,
+            &self.rpc.url(),
+            self.rpc.commitment(),
+        )
+        .await?
+        .units_consumed)
+    }
+}
+impl SignedWsol {
+    async fn simulate<T: crate::adapters::rpc::read_http::ReadHttpTransport>(
+        &self,
+        runtime: &crate::adapters::rpc::read_runtime::SharedReadRuntime<T>,
+    ) -> Result<bool> {
+        Ok(simulation::simulate_signed(
+            &self.artifact,
+            runtime,
+            &self.rpc.url(),
+            self.rpc.commitment(),
+        )
+        .await?
+        .err
+        .is_none())
+    }
 }
 impl WsolArtifact for SignedWsol {
     fn signature(&self) -> &str {
@@ -97,11 +132,7 @@ impl WsolExecutionWallet for WsolWallet {
         prepared: &Self::Prepared,
         quote: &WsolQuoteSnapshot,
     ) -> Result<Option<u64>> {
-        Ok(prepared
-            .unsigned
-            .simulate(&prepared.rpc, quote)
-            .await?
-            .units_consumed)
+        prepared.simulate(&self.read_rpc, quote).await
     }
     fn sign(&self, prepared: Self::Prepared, quote: &WsolQuoteSnapshot) -> Result<Self::Signed> {
         Ok(SignedWsol {
@@ -110,7 +141,7 @@ impl WsolExecutionWallet for WsolWallet {
         })
     }
     async fn simulate_signed(&self, signed: &Self::Signed) -> Result<bool> {
-        Ok(signed.artifact.simulate(&signed.rpc).await?.err.is_none())
+        signed.simulate(&self.read_rpc).await
     }
     async fn broadcast(&self, signed: &Self::Signed) -> Result<String> {
         Ok(self
@@ -124,6 +155,44 @@ impl WsolExecutionWallet for WsolWallet {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn wsol_simulation_adapter_both_real_wrapper_paths_use_selected_shared_runtime_not_execution_rpc(
+    ) {
+        use crate::sdk_client::wsol_conversion::simulation::tests as fixture;
+        use solana_commitment_config::CommitmentConfig;
+        for error in [
+            serde_json::Value::Null,
+            serde_json::json!({"InstructionError":[0,{"Custom":42}]}),
+        ] {
+            let legacy = fixture::Legacy::new(fixture::result(error.clone()));
+            let runtime = fixture::runtime(fixture::result(error.clone()), fixture::Mode::Good);
+            let unsigned = fixture::unsigned(true);
+            let quote = fixture::quote(&unsigned);
+            let prepared = PreparedWsol {
+                unsigned,
+                rpc: Arc::new(legacy.client(CommitmentConfig::confirmed())),
+            };
+            let report = prepared.simulate(&runtime, &quote).await;
+            if error.is_null() {
+                assert_eq!(report.unwrap(), Some(999));
+            } else {
+                assert!(report.is_err());
+            }
+            let signed = SignedWsol {
+                artifact: fixture::signed(true),
+                rpc: prepared.rpc.clone(),
+            };
+            let before = signed.artifact.signed_bytes().to_vec();
+            assert_eq!(signed.simulate(&runtime).await.unwrap(), error.is_null());
+            assert_eq!(signed.artifact.signed_bytes(), before.as_slice());
+            assert!(legacy.calls.lock().unwrap().is_empty());
+            let calls = runtime.test_transport().calls.lock().unwrap();
+            assert_eq!(calls.len(), 2);
+            assert!(calls.iter().all(|(url, body, _)| url == fixture::URL
+                && body["params"][1]["commitment"] == "confirmed"));
+        }
+    }
 
     #[tokio::test]
     async fn wsol_runtime_reuses_original_registry_and_metadata_without_loading_wallets() {

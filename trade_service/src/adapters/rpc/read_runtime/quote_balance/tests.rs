@@ -70,7 +70,7 @@ impl ReadHttpTransport for Fake {
             });
         }
         let (id,value) = match request {
-            ReadRequest::PreparationAccounts { .. } | ReadRequest::Parameters { .. } | ReadRequest::AggregatorAccount { .. } | ReadRequest::AggregatorSimulation { .. } | ReadRequest::WsolQuote { .. } => panic!("quote fixture must not read preparation accounts or protocol parameters or aggregator accounts/simulation/WSOL quote"),
+            ReadRequest::PreparationAccounts { .. } | ReadRequest::Parameters { .. } | ReadRequest::AggregatorAccount { .. } | ReadRequest::AggregatorSimulation { .. } | ReadRequest::WsolQuote { .. } | ReadRequest::WsolSimulation { .. } => panic!("quote fixture must not read preparation accounts or protocol parameters or aggregator accounts/simulation/WSOL quote/simulation"),
             ReadRequest::TokenSupply{id,..} => (*id,token_amount(u64::MAX,6)),
             ReadRequest::TokenAccounts{id,..} => {
                 if matches!(self.mode,Mode::Hold) { std::future::pending::<()>().await; }

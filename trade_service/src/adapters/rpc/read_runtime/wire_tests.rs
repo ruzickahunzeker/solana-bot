@@ -22,6 +22,8 @@ mod presence_wire;
 mod wsol_preparation_wire;
 #[path = "wsol_quote_wire.rs"]
 mod wsol_quote_wire;
+#[path = "wsol_simulation_wire.rs"]
+mod wsol_simulation_wire;
 #[path = "wsol_status_wire.rs"]
 mod wsol_status_wire;
 
@@ -787,6 +789,9 @@ async fn shared_read_wire_child() {
             "wsol-preparation-success" => wsol_preparation_wire::success().await,
             "wsol-preparation-errors" => wsol_preparation_wire::errors().await,
             "wsol-preparation-timeout-cancel" => wsol_preparation_wire::timeout_cancel().await,
+            "wsol-simulation-success" => wsol_simulation_wire::success().await,
+            "wsol-simulation-errors" => wsol_simulation_wire::errors().await,
+            "wsol-simulation-timeout-cancel" => wsol_simulation_wire::timeout_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -1029,4 +1034,17 @@ fn wsol_preparation_wire_bad_replies_429_and_redirect_do_not_return_candidate_or
 #[test]
 fn wsol_preparation_wire_timeouts_cancel_and_hash_progress_release_original_capacity() {
     run("wsol-preparation-timeout-cancel");
+}
+
+#[test]
+fn wsol_simulation_wire_signed_unsigned_shapes_and_declared_streamed_body_bounds() {
+    run("wsol-simulation-success");
+}
+#[test]
+fn wsol_simulation_wire_bad_identity_body_429_and_redirect_never_retry_or_fallback() {
+    run("wsol-simulation-errors");
+}
+#[test]
+fn wsol_simulation_wire_timeouts_cancel_and_critical_hash_share_original_runtime() {
+    run("wsol-simulation-timeout-cancel");
 }

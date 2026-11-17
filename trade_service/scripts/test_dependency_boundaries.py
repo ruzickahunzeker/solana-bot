@@ -32,6 +32,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertIn("Use project-owned types and ports", boundaries.config_text(policy))
         self.assertIn("wsol_status_reader", types)
         self.assertTrue({"wsol_unsigned", "wsol_prepared"} <= types)
+        self.assertTrue({"wsol_simulation_packet", "wsol_signed", "wsol_signed_wrapper"} <= types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):

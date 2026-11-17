@@ -111,6 +111,9 @@ PY
         step wsol-preparation-shared cargo test --locked --offline wsol_preparation_shared_ -- --test-threads=2
         step wsol-preparation-wire cargo test --locked --offline wsol_preparation_wire_ -- --test-threads=2
         step wsol-preparation-ownership cargo test --locked --offline wsol_preparation_ownership_ -- --test-threads=2
+        step wsol-simulation-shared cargo test --locked --offline wsol_simulation_shared_ -- --test-threads=2
+        step wsol-simulation-wire cargo test --locked --offline wsol_simulation_wire_ -- --test-threads=2
+        step wsol-simulation-adapter cargo test --locked --offline wsol_simulation_adapter_ -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

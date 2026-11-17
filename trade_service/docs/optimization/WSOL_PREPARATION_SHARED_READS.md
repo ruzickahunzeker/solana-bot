@@ -1,8 +1,9 @@
 # WSOL Preparation Read Boundary
 
 Date: 2026-11-18, Asia/Shanghai. Continues original NP-03 / TS-07/09, not a new
-task or denominator. Implemented source awaits its own independent offline CI;
-parent ec608c0 is not evidence for this batch. No deployment or production use.
+task or denominator. Source and independent offline Rust CI accepted, not deployed:
+cf5e63b / Actions 44195580476 / artifact 14381545057. Parent ec608c0 evidence is
+not reused for this batch. No production use or live acceptance is implied.
 
 ## Actual Execution Path
 
@@ -89,7 +90,44 @@ reused. Check source blobs/modes, identity and manifest/lock/vendor provenance.
 No local service Cargo retry after the recorded 2200 MiB failure; CI is source-only,
 offline with loopback and no production wallet/configuration/database inputs.
 
+## Accepted Evidence
+
+Source `cf5e63bca191362bf7f234af942b63f73ffc8e16`,
+[Actions 44195580476](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44195580476),
+first run terminal success in 27m22s; downloaded artifact `14381545057` independently
+audited. All 81 steps exit zero. Full concurrent 1799 (263.49 seconds) and serial
+1799 (485.64 seconds) have zero failed/ignored/filtered tests and identical raw
+name sets; all 1783 parent names remain, exactly the sixteen source-defined names
+are added. Shared/oracle 12 / real HTTP 3 / ownership 1 and all prior focused
+regressions pass, including original status contract 59. Original/restored compiler
+checks and all 129 distinct raw field spans pass on this source: 42 selected
+concrete types plus outside alias. Python policy 12 / workflow 7 and SDK provenance
+pass; identity and manifest/lock/vendor-manifest hashes match.
+
+Before recording acceptance all 1114 snapshot blobs/modes (13,553,143 bytes) match
+the local source. The original root SDK module is byte-identical after removing
+only the new module registration and three test-only cfg attributes; this covers
+the original prepare oracle/tests and all validation/sign/simulate/send bodies.
+The new preparation body matches the original after only the fresh scope and
+five typed-read substitutions. Authorization/instructions/old estimator and its
+tests, read runtime/budgets, quote session and original scope tests remain exact.
+Every authorization field, normalized public message and five-request witness
+comparison actually ran; each artifact's own temporary signer binding is checked
+before normalization. The known old serial discovery child-stderr split is
+associated only with its exact name/pinned fixture/immediate ok; two positive/
+seven negative audit-format regressions pass. No raw logs are rewritten or names
+omitted. All main/index/frozen-history invariants remain unchanged.
+
+No local service Cargo retry, release build, deployment/restart, production data
+access, real RPC or trades. Do not rerun terminal CI or trigger documentation-only
+CI; carry acceptance records with the next actual source batch.
+
 ## Remaining Original Gates
+
+The subsequent original unsigned/signed simulation entry is now implemented,
+pending its own independent CI; see WSOL_SIMULATION_SHARED_READS.md. Both wrappers
+use the original shared simulation quota with original validation/request/error
+policies. This preparation batch's accepted run does not cover that source.
 
 WSOL unsigned/signed simulation and submission RPC ownership, standalone Quote
 reconciliation status, DAMM/SDK-internal/opaque tasks, provider-wide quotas and

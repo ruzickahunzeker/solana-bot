@@ -21,6 +21,10 @@ fn response(id: u64) -> Value {
 }
 #[derive(Clone)]
 pub(crate) enum Reply {
+    WsolSimulation {
+        value: Value,
+        mode: Box<Reply>,
+    },
     WsolQuote {
         values: std::collections::HashMap<String, Value>,
         fail_method: Option<&'static str>,
@@ -204,7 +208,12 @@ async fn serve(
     let payload = read_request(&mut stream).await;
     let id = payload["id"].as_u64().unwrap();
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
+    let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
     let (reply, parameter_value) = match reply {
+        Reply::WsolSimulation { value, mode } => {
+            assert_eq!(payload["method"], "simulateTransaction");
+            (*mode, Some(json!({"context":{"slot":42},"value":value})))
+        }
         Reply::WsolQuote {
             values,
             fail_method,
@@ -282,7 +291,9 @@ async fn serve(
         payload["method"].as_str(),
         Some("getTokenSupply" | "getTokenAccountBalance" | "getBalance")
     );
-    let body_limit = if is_wsol_quote {
+    let body_limit = if is_wsol_simulation {
+        524_288
+    } else if is_wsol_quote {
         MAX_BODY
     } else if parameter_value.is_some() && payload["method"] == "getProgramAccounts" {
         1_048_576
@@ -346,7 +357,26 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if is_wsol_quote {
+    if is_wsol_simulation {
+        let config = &payload["params"][1];
+        assert_eq!(config["sigVerify"], false);
+        assert_eq!(config["replaceRecentBlockhash"], false);
+        assert_eq!(config["innerInstructions"], false);
+        assert_eq!(config["encoding"], "base64");
+        assert!(config["accounts"].is_null() && config["minContextSlot"].is_null());
+        assert!(matches!(
+            config["commitment"].as_str(),
+            Some("processed" | "confirmed" | "finalized")
+        ));
+        let bytes = base64::Engine::decode(
+            &base64::engine::general_purpose::STANDARD,
+            payload["params"][0].as_str().unwrap(),
+        )
+        .unwrap();
+        assert!(bytes.len() <= 1232);
+        let tx: solana_sdk::transaction::Transaction = bincode::deserialize(&bytes).unwrap();
+        assert!((1..=2).contains(&tx.message.header.num_required_signatures));
+    } else if is_wsol_quote {
         match payload["method"].as_str().unwrap() {
             "getMinimumBalanceForRentExemption" => assert_eq!(payload["params"], json!([165])),
             "getAccountInfo" => {

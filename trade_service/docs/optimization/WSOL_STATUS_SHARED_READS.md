@@ -102,10 +102,12 @@ documentation-only CI; carry acceptance records with the next actual source batc
 
 ## Remaining Original Gates
 
-The subsequent original WSOL preparation-read entry is now implemented, pending
-its own independent CI; see WSOL_PREPARATION_SHARED_READS.md. Its actual wallet
+The subsequent original WSOL preparation-read entry is independently accepted in
+cf5e63b / Actions 44195580476 / artifact 14381545057: concurrent/serial each 1799,
+parent 1783 retained, exactly sixteen added, all 129 fields/81 steps pass. See
+WSOL_PREPARATION_SHARED_READS.md. Its actual wallet
 path reuses the existing five-step class and retains original authorization and
-temporary-signer ownership. This status batch's acceptance does not cover it.
+temporary-signer ownership. This status batch's acceptance was not reused for it.
 
 WSOL unsigned preparation/simulation/sign/submission read resources, standalone
 Quote reconciliation status, DAMM/SDK-internal or opaque reads/tasks, provider-wide

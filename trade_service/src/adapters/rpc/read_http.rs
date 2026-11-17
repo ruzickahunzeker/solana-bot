@@ -33,6 +33,10 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    WsolSimulation {
+        id: u64,
+        packet: crate::sdk_client::wsol_conversion::simulation::WsolSimulationPacket,
+    },
     WsolQuote {
         id: u64,
         query: super::wsol_quote_reads::WsolQuoteQuery,
@@ -94,6 +98,7 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::WsolSimulation { id, packet } => packet.body(*id),
             Self::WsolQuote { id, query } => query.body(*id),
             Self::AggregatorSimulation {
                 id,
@@ -145,6 +150,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::WsolSimulation { .. } => "WSOL simulation",
             Self::WsolQuote { .. } => "WSOL quote",
             Self::AggregatorSimulation { .. } => "aggregator simulation",
             Self::AggregatorAccount { .. } => "aggregator account",
@@ -166,7 +172,9 @@ impl ReadRequest {
         }
         if matches!(
             self,
-            Self::TokenAccounts { .. } | Self::AggregatorSimulation { .. }
+            Self::TokenAccounts { .. }
+                | Self::AggregatorSimulation { .. }
+                | Self::WsolSimulation { .. }
         ) {
             MAX_TOKEN_BODY
         } else {

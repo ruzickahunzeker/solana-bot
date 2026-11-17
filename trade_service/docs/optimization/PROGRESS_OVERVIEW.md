@@ -6,10 +6,18 @@
 
 ## 统计口径
 
-- 当前续原 NP-03 WSOL 准备读取：真实准备入口已接原共享 runtime/五步会话和
-  原配额，每次重查而非复用报价证据；原授权/金额/临时 signer/签名发送保持。
-  十六项新增和 129 字段门禁待独立 CI，不套用父批、不新增任务或分母，见
-  `WSOL_PREPARATION_SHARED_READS.md`。后续模拟/发送的执行 RPC 所有权仍保留。
+- 当前续原 NP-03 WSOL 两种模拟：实际 wrapper 已接共享模拟 runtime/配额，保留
+  原授权/签后快照/请求和错误规则，原签名广播及账本顺序不动。十八项新增和
+  138 字段门禁待独立 CI，不复用父批、不新增任务或分母。已签模拟的 provider
+  信任假设保持，不是无可重放包外发的证明，见 `WSOL_SIMULATION_SHARED_READS.md`。
+- 原 NP-03 WSOL 准备读取已由 `cf5e63b` / Actions `44195580476` / artifact
+  `14381545057` 独立验收：实际准备入口通过原 runtime/五步会话重查证据，原
+  授权/金额/临时 signer/签名发送保持。完整并发 1799（263.49 秒）/串行 1799
+  （485.64 秒），父批 1783 名称全保留、恰增十六项；shared/oracle 12/真实 HTTP 3/
+  ownership 1、129 字段与全部 81 步骤通过，原始名称/spans/源码身份/全树及
+  旧 oracle/消息/请求已核对。不新增任务或分母、不重跑终态或另发文档 CI。
+  未部署，后续未签名/已签模拟及发送 RPC 所有权、独立 Quote 状态与其他原门槛
+  仍保留，见 `WSOL_PREPARATION_SHARED_READS.md`。
 - 原 NP-03 WSOL 状态读取已由 `ec608c0` / Actions `44188954352` / artifact
   `14377382655` 独立验收：共享原 runtime/Observation 配额和严格 parser，原
   首 lane/错误顺序/单签名 history 保持。完整并发 1783（244.35 秒）/串行 1783

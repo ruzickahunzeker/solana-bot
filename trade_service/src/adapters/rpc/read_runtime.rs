@@ -401,6 +401,7 @@ mod aggregator_simulation;
 mod native_balances;
 mod quote_balance;
 mod wsol_quotes;
+mod wsol_simulation;
 mod wsol_status;
 pub(crate) use quote_balance::preparation_scan;
 mod parameters;
