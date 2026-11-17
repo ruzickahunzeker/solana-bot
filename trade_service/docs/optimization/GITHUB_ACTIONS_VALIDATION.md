@@ -35,6 +35,12 @@
 三条入口共用原 runtime，SDK 原政策及签名/发送不改；不复用下方父批的运行结论，
 不本地重试 Cargo，见 `AGGREGATOR_ACCOUNT_SHARED_READS.md`。
 
+首轮 `43a17e0` / Actions `44163177413` 已终态失败，artifact `14365660021` 下载核对：
+十项前置检查通过，类型检查发现锁定版本 UiAccount 无 decode 方法；Rust 用例、108
+字段门禁及完整回归尚未运行。修正为按已有边界的 Base64/owner/size 校验组装原
+Account，不升级依赖或放宽政策，补空间/owner 长度负例；新源码另发原分支验证，
+不重跑该终态任务、不复用父批结果。
+
 2026-11-18 两跳寻池源码 `17bc3be30b386cf4f16b80c9f8fdc864dda43167` /
 [Actions 44156380200](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44156380200)
 首次运行终态 success；artifact `14362832442` 下载独立核对：全部 66 步骤 exit=0。

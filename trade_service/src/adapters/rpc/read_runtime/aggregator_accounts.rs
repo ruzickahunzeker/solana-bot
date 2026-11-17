@@ -3,6 +3,7 @@ use crate::{
     adapters::rpc::parameter_reads::{invalid, unavailable},
     domain::trade::Address,
 };
+use base64::Engine;
 use solana_account_decoder::{UiAccount, UiAccountData, UiAccountEncoding};
 use solana_commitment_config::CommitmentConfig;
 use solana_sdk::account::Account;
@@ -108,14 +109,30 @@ fn decode(id: u64, body: &[u8]) -> Result<Account> {
         .value
         .ok_or_else(|| invalid("aggregator account is missing"))?;
     ensure!(
-        matches!(
-            &ui.data,
-            UiAccountData::Binary(_, UiAccountEncoding::Base64)
-        ),
-        invalid("aggregator account encoding is invalid")
+        ui.owner.len() <= 44,
+        invalid("aggregator account owner is invalid")
     );
-    ui.decode()
-        .ok_or_else(|| invalid("aggregator account data or owner is invalid"))
+    let owner = ui
+        .owner
+        .parse()
+        .map_err(|_| invalid("aggregator account owner is invalid"))?;
+    let UiAccountData::Binary(encoded, UiAccountEncoding::Base64) = ui.data else {
+        return Err(invalid("aggregator account encoding is invalid"));
+    };
+    let data = base64::engine::general_purpose::STANDARD
+        .decode(encoded)
+        .map_err(|_| invalid("aggregator account data is invalid"))?;
+    ensure!(
+        data.len() <= 65_536 && ui.space.is_none_or(|space| space == data.len() as u64),
+        invalid("aggregator account size is invalid")
+    );
+    Ok(Account {
+        lamports: ui.lamports,
+        owner,
+        data,
+        executable: ui.executable,
+        rent_epoch: ui.rent_epoch,
+    })
 }
 
 #[cfg(test)]

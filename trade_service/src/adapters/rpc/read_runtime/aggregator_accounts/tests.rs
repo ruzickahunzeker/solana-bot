@@ -92,7 +92,7 @@ fn aggregator_account_read_decoder_keeps_integer_and_raw_data_and_rejects_invali
     let good = json!({"jsonrpc":"2.0","id":7,"result":{"context":{"slot":42},"value":value()}});
     let raw = decode(7, &serde_json::to_vec(&good).unwrap()).unwrap();
     assert_eq!((raw.lamports, raw.data), (u64::MAX, vec![1, 2, 3]));
-    for damage in 0..13 {
+    for damage in 0..15 {
         let mut broken = good.clone();
         match damage {
             0 => broken["id"] = json!(8),
@@ -110,9 +110,11 @@ fn aggregator_account_read_decoder_keeps_integer_and_raw_data_and_rejects_invali
                 broken["result"] = Value::Null;
                 broken["error"] = json!({"code":-32005,"message":"fixture-secret"});
             }
-            _ => {
+            12 => {
                 broken.as_object_mut().unwrap().remove("result");
             }
+            13 => broken["result"]["value"]["space"] = json!(99),
+            _ => broken["result"]["value"]["owner"] = json!("x".repeat(45)),
         }
         let error = decode(7, &serde_json::to_vec(&broken).unwrap()).unwrap_err();
         assert!(

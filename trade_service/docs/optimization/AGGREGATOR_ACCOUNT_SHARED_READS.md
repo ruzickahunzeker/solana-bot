@@ -71,6 +71,14 @@ source, not be inherited from its parent. Verify artifact/source identity and
 raw name sets independently. Local fmt/Python/provenance checks are not Rust
 runtime proof; do not retry local Cargo after the recorded 2200 MiB failure.
 
+First source 43a17e0 / Actions 44163177413 / artifact 14365660021 is terminal
+failure: ten preliminary checks pass, type check rejects UiAccount::decode
+because the pinned version has no such method. No Rust tests/boundary gate ran.
+The correction uses the established Base64/owner/size checks and maps the original
+Account fields, with extra space/owner-length negatives; no SDK/dependency change
+or relaxed policy. The corrected source needs its own run; do not restart this
+terminal failure or borrow parent evidence.
+
 ## Remaining Gates
 
 Simulation/baseline reads, independent quote/WSOL, execution/SDK opaque workers,

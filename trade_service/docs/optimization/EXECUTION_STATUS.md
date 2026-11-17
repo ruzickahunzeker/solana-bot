@@ -13,6 +13,9 @@
   不新增 client/cache/signer。16 项新测试/预计完整 1729、69 步骤及原 108 字段
   待本批独立 CI，不套用下方父批，不本地重试 Cargo。模拟/其他独立读取和剩余
   原门槛继续，见 [聚合账户读取边界](AGGREGATOR_ACCOUNT_SHARED_READS.md)。
+  首轮 43a17e0 / Actions 44163177413 / artifact 14365660021 已终态失败于锁定版本
+  UiAccount 无 decode 方法；仅十项前置通过，测试/门禁未运行。已按既有 Base64/
+  owner/size 政策组装账户并补负例，修正源码待独立 CI，不重跑旧失败或改依赖。
 - 原 NP-03/TS-07/09 两跳寻池已完成本批源码/离线验收：原 Default lane、原缓存实例/锁、30 秒正缓存、
   两个完整空扫描规则保持；扫描/候选/CPMM 参数/金库余额已接相同 runtime 的新有界
   只读 scope。五秒总期限、32 次 SDK 准入、单在途/100 ms 与共享冷却，不新增 signer/
