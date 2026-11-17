@@ -41,6 +41,7 @@ pub(crate) struct ParameterReadScope {
     pool: Pool,
     mint: Address,
     pool_id: Option<Address>,
+    discovery: bool,
 }
 impl ParameterReadScope {
     pub(crate) fn new(pool: Pool, mint: Address, pool_id: Option<Address>) -> Self {
@@ -48,16 +49,27 @@ impl ParameterReadScope {
             pool,
             mint,
             pool_id,
+            discovery: false,
         }
     }
     fn pump_scan_mint(self) -> Option<Address> {
         (self.pool == Pool::PumpAmm && self.pool_id.is_none()).then_some(self.mint)
     }
+    fn dbc_scan_mint(self) -> Option<Address> {
+        (self.discovery && self.pool == Pool::MeteoraDbc).then_some(self.mint)
+    }
+}
+
+#[derive(Clone, Copy)]
+enum Profile {
+    Parameters,
+    Discovery,
 }
 
 struct State {
     deadline: Instant,
     scope: ParameterReadScope,
+    profile: Profile,
     serial: tokio::sync::Mutex<()>,
     permit: Mutex<Option<OwnedSemaphorePermit>>,
     fault: Mutex<Option<ParameterReadFailure>>,
@@ -149,10 +161,47 @@ impl<T: ReadHttpTransport + 'static> ParameterReadSession<T> {
         commitment: CommitmentConfig,
         scope: ParameterReadScope,
     ) -> Self {
+        Self::scoped(
+            runtime,
+            url,
+            commitment,
+            scope,
+            Profile::Parameters,
+            Instant::now() + Duration::from_secs(8),
+        )
+    }
+    pub(super) fn discovery(
+        runtime: Arc<SharedReadRuntime<T>>,
+        url: String,
+        commitment: CommitmentConfig,
+        pool: Pool,
+        mint: Address,
+        deadline: Instant,
+    ) -> Self {
+        let mut scope = ParameterReadScope::new(pool, mint, None);
+        scope.discovery = true;
+        Self::scoped(
+            runtime,
+            url,
+            commitment,
+            scope,
+            Profile::Discovery,
+            deadline,
+        )
+    }
+    fn scoped(
+        runtime: Arc<SharedReadRuntime<T>>,
+        url: String,
+        commitment: CommitmentConfig,
+        scope: ParameterReadScope,
+        profile: Profile,
+        deadline: Instant,
+    ) -> Self {
         let (closed, _) = watch::channel(false);
         let state = Arc::new(State {
-            deadline: Instant::now() + Duration::from_secs(8),
+            deadline,
             scope,
+            profile,
             serial: tokio::sync::Mutex::new(()),
             permit: Mutex::new(None),
             fault: Mutex::new(None),
@@ -222,23 +271,42 @@ impl<T: ReadHttpTransport + 'static> Sender<T> {
                 }
                 {
                     let mut permit = self.state.permit.lock().map_err(|_| unavailable("parameter RPC quota unavailable"))?;
-                    if permit.is_none() { *permit = Some(self.runtime.parameter_slot()?); }
+                    if permit.is_none() {
+                        *permit = Some(match self.state.profile {
+                            Profile::Parameters => self.runtime.parameter_slot()?,
+                            Profile::Discovery => self.runtime.discovery_slot()?,
+                        });
+                    }
                 }
                 self.state.check()?;
                 // The pinned SDK gives both optional config reads only 180 ms. Include their
                 // raw accounts in its coherent pool snapshot, then feed the unchanged decoders.
                 if let Some(expanded) = query.with_pump_configs(self.state.scope) {
-                    let result = self.runtime.parameter_step(&self.url, expanded.clone(), self.state.deadline).await?;
+                    let result = self.step(expanded.clone()).await?;
                     let (result, snapshot) = expanded.split_pump_configs(result);
                     *self.state.pump_configs.lock().map_err(|_| unavailable("parameter snapshot unavailable"))? = Some(snapshot);
                     Ok(result)
                 } else {
-                    self.runtime.parameter_step(&self.url, query, self.state.deadline).await
+                    self.step(query).await
                 }
             }) => result.unwrap_or_else(|_| Err(unavailable("parameter RPC session timed out"))),
         };
         guard.completed = true;
         result
+    }
+    async fn step(&self, query: request::ParameterQuery) -> Result<Value> {
+        match self.state.profile {
+            Profile::Parameters => {
+                self.runtime
+                    .parameter_step(&self.url, query, self.state.deadline)
+                    .await
+            }
+            Profile::Discovery => {
+                self.runtime
+                    .discovery_step(&self.url, query, self.state.deadline)
+                    .await
+            }
+        }
     }
 }
 

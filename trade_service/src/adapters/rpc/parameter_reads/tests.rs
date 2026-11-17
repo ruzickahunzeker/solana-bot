@@ -7,6 +7,8 @@ use solana_sdk::pubkey::Pubkey;
 use std::collections::VecDeque;
 use tokio::sync::Notify;
 
+mod discovery;
+
 #[derive(Clone, Copy)]
 enum Mode {
     Good,
@@ -17,6 +19,7 @@ enum Mode {
     RpcError,
     Oversize,
     Missing,
+    Slow,
 }
 struct Fake {
     modes: Mutex<VecDeque<Mode>>,
@@ -65,6 +68,9 @@ impl ReadHttpTransport for Fake {
         };
         if matches!(mode, Mode::Hold) {
             std::future::pending::<()>().await;
+        }
+        if matches!(mode, Mode::Slow) {
+            tokio::time::sleep(Duration::from_millis(1200)).await;
         }
         if matches!(mode, Mode::Rate) {
             return Ok(HttpReply {

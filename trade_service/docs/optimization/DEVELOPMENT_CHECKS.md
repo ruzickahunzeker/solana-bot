@@ -114,10 +114,20 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The next ordinary-discovery batch adds DiscoveryReadSession: 34 selected types /
+105 scoped fields including outside alias, pending its own source-only CI. Do
+not reuse the accepted 102-field parameter evidence below, retry local Cargo
+after the resource failure, or treat projected read configuration as signing
+authority. Complete suites must retain 1675 parent names and add exactly 18.
+
 The 2026-11-18 protocol-parameter batch adds ParameterReadSession to the same
 policy: 33 selected types / 102 scoped fields including the outside alias.
-These are pending independent CI evidence, not accepted by the older 99-field
-run. The bounded local check reached MemoryMax=2200M (SIGKILL, 50 seconds,
+Source 1792c51 / Actions 44133854054 / artifact 14351589608 independently passed
+all 102 raw-span rejections, original/restored checks and both complete 1675-test
+suites (60 steps exit zero). All 1652 parent names remain, exactly 23 added,
+including the isolated helper. Cold-success/fault loader witnesses both ran.
+This is not acceptance by the older 99-field run, deployment or real RPC proof.
+The bounded local check reached MemoryMax=2200M (SIGKILL, 50 seconds,
 RSS 2,273,960 KiB; target/dev-checks/20261117T162617Z-1019411). Do not retry
 local Cargo or raise the cap; use the authorized source-only CI for this batch.
 
@@ -148,7 +158,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The accepted parent JSON fixture lists 32 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 33 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

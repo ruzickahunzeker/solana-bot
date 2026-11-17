@@ -1,7 +1,8 @@
 # Protocol Parameter Read Scopes
 
 Date: 2026-11-18, Asia/Shanghai. Continues NP-03 / TS-07/09. Source is connected
-to ordinary SDK preparation and warmup; independent Rust acceptance is pending.
+to ordinary SDK preparation and warmup; this batch has independent offline Rust
+acceptance in 1792c51 / Actions 44133854054 / artifact 14351589608.
 Parent acceptance remains 27bd996 / Actions 44115951258 (full suites each 1652).
 
 ## Actual Boundary
@@ -60,7 +61,7 @@ commitments, protocols and explicit wrong pool IDs cannot use this projection.
 There is no extra HTTP request or per-step budget bypass; the two SDK calls still
 count toward 32. The scope closes and loses its snapshot when finished/dropped.
 
-## Required Acceptance
+## Acceptance
 
 Source has 23 new Rust tests: 22 behavioral contracts and one isolated child entry.
 Twelve scope/query tests, six loader entries (including child), four real HTTP
@@ -76,10 +77,17 @@ The execution RPC mock now rejects parameter reads; old quote/sign/journal/packe
 checks remain. Presence cancellation waits for its actual method, not the first
 HTTP request, since parameter reads now precede it.
 
-CI must retain all 1652 parent names and add exactly these 23; full concurrent and
-serial plus three new focused steps and all original gates. Add the concrete
-session to the same type policy: 33 types / 102 fields including outside alias.
-Audit raw compiler spans, names and artifact/source identity; do not reuse 99.
+The final run retained all 1652 parent names and added exactly these 23. Full
+concurrent 1675 (156.47 seconds) and serial 1675 (294.26 seconds) have identical
+raw name sets, with no failures/ignored/filtered cases. All 60 steps exit zero;
+scope 12 / loader 6 / real HTTP 4 / original-buy runtime 6 passed. The concrete
+session belongs to the same policy: 33 types / 102 fields including outside
+alias; all distinct raw compiler spans plus original/restored builds were checked.
+Identity and manifest/lock/vendor-manifest hashes match; the whole 1074-file,
+13,188,757-byte source tree matches the accepted snapshot. Real main/index,
+frozen history, SDK and migrations remain unchanged. This is source-only evidence,
+not live-node or rollout acceptance. Do not rerun the terminal run or create a
+docs-only CI; carry these acceptance notes with the next source batch.
 
 Local first check found an exhaustive fixture match omission, now fixed. The next
 bounded metadata check was killed at 2200 MiB after 50 seconds (RSS 2,273,960 KiB).
@@ -94,12 +102,13 @@ loader fixture lacked accounts/RpcRequest imports and crossed a private RPC body
 method. The fix uses explicit test imports and cfg(test)-only request/reply
 helpers; production visibility, loaders and assertions are unchanged. No Rust
 tests or compiler boundary rejections ran in that snapshot. The failed run is
-terminal, not retried; corrected source requires its own independent CI.
+terminal, not retried; corrected source was independently accepted in the final
+1792c51 run above.
 
 Successor 7a63477 / Actions 44132188285 was superseded and cancelled after source
 review found that cold-cache timeout conflict. Its artifact is 14351441124; it
 is not full acceptance and is not rerun. The batched-snapshot correction and cold
-positive witness require a new source run with the same 23 added test names.
+positive witness were accepted in the final 1792c51 run with the same 23 added names.
 
 ## Remaining Scope
 

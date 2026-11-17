@@ -17,7 +17,7 @@ enum Kind {
     Account,
     Accounts(usize),
     Epoch,
-    PumpScan,
+    ProgramScan,
 }
 
 #[derive(Clone)]
@@ -164,16 +164,25 @@ impl ParameterQuery {
                 Kind::Epoch
             }
             RpcRequest::GetProgramAccounts if length == 2 => {
-                let Some(mint) = scope.pump_scan_mint() else {
+                let pump = scope.pump_scan_mint();
+                let dbc = scope.dbc_scan_mint();
+                let Some(mint) = pump.or(dbc) else {
                     return Err(invalid(
                         "parameter program scan is not permitted for this loader",
                     ));
                 };
                 use sol_trade_sdk::instruction::utils::{
-                    pumpswap::accounts::AMM_PROGRAM, pumpswap_types::POOL_DISCRIMINATOR,
+                    meteora_dbc, pumpswap::accounts::AMM_PROGRAM,
+                    pumpswap_types::POOL_DISCRIMINATOR,
                 };
                 ensure!(
-                    params[0] == AMM_PROGRAM.to_string(),
+                    params[0]
+                        == if pump.is_some() {
+                            AMM_PROGRAM
+                        } else {
+                            meteora_dbc::accounts::PROGRAM
+                        }
+                        .to_string(),
                     invalid("parameter program scan has wrong program")
                 );
                 let config: RpcProgramAccountsConfig = serde_json::from_value(params[1].clone())
@@ -201,28 +210,34 @@ impl ParameterQuery {
                         ))),
                     invalid("unsupported parameter program scan configuration")
                 );
-                let allowed = [252u64, 261, 270, 271, 300, 643].into_iter().any(|size| {
-                    [43usize, 75].into_iter().any(|offset| {
-                        let filters = vec![
-                            RpcFilterType::DataSize(size),
-                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
-                                0,
-                                &POOL_DISCRIMINATOR,
-                            )),
-                            RpcFilterType::Memcmp(Memcmp::new_base58_encoded(
-                                offset,
-                                &mint.to_bytes(),
-                            )),
-                        ];
-                        serde_json::to_value(filters)
-                            .is_ok_and(|filters| params[1]["filters"] == filters)
-                    })
+                let profiles = if pump.is_some() {
+                    [252u64, 261, 270, 271, 300, 643]
+                        .into_iter()
+                        .flat_map(|size| {
+                            [43usize, 75].map(|offset| (size, offset, POOL_DISCRIMINATOR))
+                        })
+                        .collect::<Vec<_>>()
+                } else {
+                    vec![(
+                        meteora_dbc::VIRTUAL_POOL_ACCOUNT_SIZE,
+                        meteora_dbc::BASE_MINT_OFFSET,
+                        meteora_dbc::VIRTUAL_POOL_DISCRIMINATOR,
+                    )]
+                };
+                let allowed = profiles.into_iter().any(|(size, offset, discriminator)| {
+                    let filters = vec![
+                        RpcFilterType::DataSize(size),
+                        RpcFilterType::Memcmp(Memcmp::new_base58_encoded(0, &discriminator)),
+                        RpcFilterType::Memcmp(Memcmp::new_base58_encoded(offset, &mint.to_bytes())),
+                    ];
+                    serde_json::to_value(filters)
+                        .is_ok_and(|filters| params[1]["filters"] == filters)
                 });
                 ensure!(
                     allowed,
                     invalid("parameter program scan filters are not audited")
                 );
-                Kind::PumpScan
+                Kind::ProgramScan
             }
             _ => return Err(invalid("parameter RPC method is not permitted")),
         };
@@ -234,13 +249,13 @@ impl ParameterQuery {
             Kind::Account => "getAccountInfo",
             Kind::Accounts(_) => "getMultipleAccounts",
             Kind::Epoch => "getEpochInfo",
-            Kind::PumpScan => "getProgramAccounts",
+            Kind::ProgramScan => "getProgramAccounts",
         };
         json!({"jsonrpc":"2.0","id":id,"method":method,"params":self.params})
     }
 
     pub(crate) fn max_body(&self) -> usize {
-        if matches!(self.kind, Kind::PumpScan) {
+        if matches!(self.kind, Kind::ProgramScan) {
             1_048_576
         } else {
             524_288
@@ -281,7 +296,7 @@ impl ParameterQuery {
                 serde_json::from_value::<solana_sdk::epoch_info::EpochInfo>(result.clone())
                     .map_err(|_| invalid("parameter epoch result is invalid"))?;
             }
-            Kind::PumpScan => {
+            Kind::ProgramScan => {
                 let rows = result
                     .as_array()
                     .ok_or_else(|| invalid("parameter program scan result is invalid"))?;

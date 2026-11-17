@@ -12,6 +12,7 @@ mod bonk;
 mod cpmm;
 mod damm_v2;
 mod dbc;
+mod discovery;
 mod pump;
 mod pump_swap;
 mod read_rpc;

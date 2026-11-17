@@ -3,7 +3,15 @@ use crate::adapters::rpc::parameter_reads::{invalid, request::ParameterQuery, un
 
 impl<T: ReadHttpTransport> SharedReadRuntime<T> {
     pub(crate) fn parameter_slot(&self) -> Result<OwnedSemaphorePermit> {
-        self.slots[Class::Parameters.index()]
+        self.scoped_slot(Class::Parameters)
+    }
+
+    pub(crate) fn discovery_slot(&self) -> Result<OwnedSemaphorePermit> {
+        self.scoped_slot(Class::Discovery)
+    }
+
+    fn scoped_slot(&self, class: Class) -> Result<OwnedSemaphorePermit> {
+        self.slots[class.index()]
             .clone()
             .try_acquire_owned()
             .map_err(|_| unavailable("parameter RPC quota busy"))
@@ -11,6 +19,27 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
 
     pub(crate) async fn parameter_step(
         &self,
+        url: &str,
+        query: ParameterQuery,
+        total: Instant,
+    ) -> Result<Value> {
+        self.scoped_parameter_step(Class::Parameters, url, query, total)
+            .await
+    }
+
+    pub(crate) async fn discovery_step(
+        &self,
+        url: &str,
+        query: ParameterQuery,
+        total: Instant,
+    ) -> Result<Value> {
+        self.scoped_parameter_step(Class::Discovery, url, query, total)
+            .await
+    }
+
+    async fn scoped_parameter_step(
+        &self,
+        class: Class,
         url: &str,
         query: ParameterQuery,
         total: Instant,
@@ -30,7 +59,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         let reply = match tokio::time::timeout_at(
             tokio::time::Instant::from_std(deadline),
             self.read(
-                Class::Parameters,
+                class,
                 index,
                 ReadRequest::Parameters {
                     id,
@@ -47,6 +76,9 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
             }
             _ => return Err(unavailable("parameter RPC read unavailable")),
         };
+        if matches!(class, Class::Discovery) && reply.status == StatusCode::TOO_MANY_REQUESTS {
+            return Err(unavailable("pool discovery RPC rate limited (429)"));
+        }
         ensure!(
             reply.status.is_success(),
             unavailable("parameter RPC HTTP unavailable")

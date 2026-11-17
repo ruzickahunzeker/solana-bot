@@ -10,10 +10,17 @@
   模拟和全局额度仍在原队列，不重复立项，见 [读取接线](optimization/PREPARATION_PRESENCE_SHARED_RPC.md)。
 - 2026-11-18 续原 NP-03 / TS-07/09 参数读取：普通交易 loader 与预热已接同一
   SharedReadRuntime 的有界只读 scope，原 SDK decoder、lane 顺序及提交权威不变。
-  新增 23 项测试源码（含一项隔离 helper），待本批独立 CI 验收，不套用父批结果。
-  本机类型检查触及 2200 MiB 限制后停止，后续只用已授权源码 CI，不重试本地大编译。
+  PumpSwap 冷配置合入同次快照，不放宽 pacing。`1792c51` / Actions `44133854054` /
+  artifact `14351589608` 独立验收完整并发/串行各 1675，父批 1652 全保留且恰增
+  23（含一项隔离 helper）；102 字段拒绝与全部 60 步骤通过。本机检查触及
+  2200 MiB 限制后未重试，最终类型检查由本批 CI 通过，不重跑终态或另发文档 CI。
+  寻池/模拟/独立及 SDK 内部读取、全局预算与其余原门槛继续，不据此宣称整体完成。
   见 [参数读取边界](optimization/PROTOCOL_PARAMETER_SHARED_READS.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
+- 2026-11-18 再续原 NP-03 普通寻池：原算法接只读 SDK adapter 和共享 runtime 的
+  独立分支预算，不改 SDK/路由优先级/API/每节点总期限。十八项新增测试和 105 字段
+  门禁待本批独立 CI，不能套用父批结果；不本地重试大编译、不做生产操作，见
+  [寻池读取边界](optimization/POOL_DISCOVERY_SHARED_READS.md)。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
 不将其扩大为其他方向/协议/provider 或生产验收。

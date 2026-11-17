@@ -1,5 +1,4 @@
 use anyhow::{anyhow, bail, Context};
-use ring::rand::{SecureRandom, SystemRandom};
 use sol_trade_sdk::common::{
     fast_fn::get_associated_token_address_with_program_id_fast, spl_token, spl_token_2022,
     TradeConfig,
@@ -7,11 +6,8 @@ use sol_trade_sdk::common::{
 use sol_trade_sdk::swqos::{
     AstralaneTransport, SwqosConfig, SwqosRegion, SwqosTransport, SwqosType,
 };
-use sol_trade_sdk::trading::core::params::{
-    MeteoraDammV2Params, MeteoraDbcParams, PumpFunParams, PumpSwapParams, RaydiumCpmmParams,
-};
-use sol_trade_sdk::trading::factory::DexType;
-use sol_trade_sdk::{find_pool_by_mint, TradingClient};
+use sol_trade_sdk::trading::core::params::{MeteoraDammV2Params, RaydiumCpmmParams};
+use sol_trade_sdk::TradingClient;
 use solana_account_decoder::UiAccountEncoding;
 use solana_address_lookup_table_interface::{program as lookup_program, state::AddressLookupTable};
 use solana_client::rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig};
@@ -102,21 +98,9 @@ fn is_helius_rpc(url: &str) -> bool {
         .unwrap_or(false)
 }
 
+#[cfg(test)]
 fn pool_resolution_lane_order(helius_lanes: &[bool], swap_helius: bool) -> Vec<usize> {
-    let mut order = (0..helius_lanes.len()).collect::<Vec<_>>();
-    let helius = helius_lanes
-        .iter()
-        .enumerate()
-        .filter_map(|(index, is_helius)| is_helius.then_some(index))
-        .take(2)
-        .collect::<Vec<_>>();
-    if helius.len() == 2 {
-        order.retain(|index| !helius.contains(index));
-        let first = usize::from(swap_helius);
-        order.insert(0, helius[1 - first]);
-        order.insert(0, helius[first]);
-    }
-    order
+    crate::adapters::sdk::pool_resolution::lane_order(helius_lanes, swap_helius)
 }
 
 pub use crate::adapters::sdk::trade_command::ExecuteTrade;
@@ -1381,104 +1365,25 @@ impl SdkTradeClient {
         crate::adapters::sdk::damm_probe::evidence_damm_probe_output(&evidence).await
     }
 
-    pub async fn resolve_pool(&self, mint: &Pubkey) -> anyhow::Result<PoolRouteHint> {
-        let default_lanes = self
+    pub(crate) async fn resolve_pool(
+        &self,
+        mint: &Pubkey,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    ) -> anyhow::Result<PoolRouteHint> {
+        use crate::adapters::sdk::pool_resolution::{self, DiscoveryLane};
+        let lanes = self
             .lanes
             .iter()
             .filter(|lane| lane.swqos_type == SwqosType::Default)
-            .collect::<Vec<_>>();
-        if default_lanes.is_empty() {
-            bail!("no Default RPC lane configured for pool resolution");
-        }
-
-        let helius_lanes = default_lanes
-            .iter()
-            .map(|lane| lane.is_helius)
-            .collect::<Vec<_>>();
-        let mut random_byte = [0u8; 1];
-        if helius_lanes.iter().filter(|&&is_helius| is_helius).count() >= 2 {
-            SystemRandom::new()
-                .fill(&mut random_byte)
-                .map_err(|_| anyhow!("could not choose Helius RPC lane"))?;
-        }
-        let lane_order = pool_resolution_lane_order(&helius_lanes, random_byte[0] & 1 != 0);
-        let mut failures = Vec::with_capacity(default_lanes.len());
-        for lane_index in lane_order {
-            let lane = default_lanes[lane_index];
-            let rpc = lane.client.get_rpc();
-            // Keep the total resolver budget usable for the remaining serial fallback lanes.
-            let lane_result = tokio::time::timeout(Duration::from_secs(3), async {
-                let (pump_result, dbc_result) = tokio::join!(
-                    PumpFunParams::from_mint_by_rpc(rpc, mint),
-                    MeteoraDbcParams::from_base_mint_by_rpc(rpc, mint),
-                );
-                if let Ok(params) = &pump_result {
-                    if !params.bonding_curve.complete {
-                        return Ok(PoolRouteHint {
-                            mint: Address::from_bytes(mint.to_bytes()),
-                            pool: Pool::Pump,
-                            pool_id: None,
-                            quote_mint: Address::from_bytes(params.quote_mint.to_bytes()),
-                        });
-                    }
-                }
-                if let Ok(params) = &dbc_result {
-                    return Ok(PoolRouteHint {
-                        mint: Address::from_bytes(mint.to_bytes()),
-                        pool: Pool::MeteoraDbc,
-                        pool_id: Some(Address::from_bytes(params.pool.to_bytes())),
-                        quote_mint: Address::from_bytes(params.quote_mint.to_bytes()),
-                    });
-                }
-                let dbc_error = match dbc_result {
-                    Err(error) => error,
-                    Ok(_) => unreachable!("successful DBC resolution returned above"),
-                };
-
-                let pump_amm_result = match find_pool_by_mint(rpc, mint, DexType::PumpSwap).await {
-                    Ok(pool_address) => {
-                        PumpSwapParams::from_pool_address_by_rpc(rpc, &pool_address).await
-                    }
-                    Err(error) => Err(error),
-                };
-                match pump_amm_result {
-                    Ok(params) => Ok(PoolRouteHint {
-                        mint: Address::from_bytes(mint.to_bytes()),
-                        pool: Pool::PumpAmm,
-                        pool_id: Some(Address::from_bytes(params.pool.to_bytes())),
-                        quote_mint: Address::from_bytes(params.quote_mint.to_bytes()),
-                    }),
-                    Err(pump_amm_error) => match pump_result {
-                        Ok(_) => Err(format!(
-                            "pump bonding curve is complete but migrated pools are unavailable: pump-amm={pump_amm_error}; meteora-dbc={dbc_error}"
-                        )),
-                        Err(pump_error) => Err(format!(
-                            "no supported pool found for mint; pump={pump_error}; pump-amm={pump_amm_error}; meteora-dbc={dbc_error}"
-                        )),
-                    },
-                }
+            .map(|lane| {
+                DiscoveryLane::new(
+                    lane.client.get_rpc().url(),
+                    lane.client.get_rpc().commitment(),
+                    lane.is_helius,
+                )
             })
-            .await;
-            let failure = match lane_result {
-                Ok(Ok(resolved)) => return Ok(resolved),
-                Ok(Err(failure)) => failure,
-                Err(_) => "pool resolution timed out".to_string(),
-            };
-            let redacted = redact_urls(&failure);
-            warn!(
-                mint = %mint,
-                rpc_lane = lane_index + 1,
-                error = %redacted,
-                "pool resolution RPC lane failed"
-            );
-            failures.push(pool_resolution_failure_kind(&redacted));
-        }
-
-        bail!(
-            "pool resolution failed across {} RPC lanes: {}",
-            failures.len(),
-            failures.join(", ")
-        )
+            .collect::<Vec<_>>();
+        pool_resolution::resolve(read_rpc, &lanes, Address::from_bytes(mint.to_bytes())).await
     }
 
     fn execution_lanes(&self) -> Vec<&SdkLane> {
@@ -1563,21 +1468,9 @@ fn provider_name(provider: MevProvider) -> &'static str {
     }
 }
 
+#[cfg(test)]
 fn pool_resolution_failure_kind(error: &str) -> String {
-    let lower = error.to_ascii_lowercase();
-    if lower.contains("429") || lower.contains("too many requests") {
-        return "rate limited".to_string();
-    }
-    if lower.contains("timed out") || lower.contains("timeout") {
-        return "timeout".to_string();
-    }
-    if lower.contains("accountnotfound")
-        || lower.contains("account not found")
-        || lower.contains("no pool found")
-    {
-        return "pool not found".to_string();
-    }
-    "RPC unavailable".to_string()
+    crate::adapters::sdk::pool_resolution::failure_kind(error)
 }
 
 fn build_swqos_configs(mev: &MevConfig) -> anyhow::Result<Vec<SwqosConfig>> {

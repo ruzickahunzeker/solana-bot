@@ -90,6 +90,9 @@ PY
         step parameter-session cargo test --locked --offline adapters::rpc::parameter_reads -- --test-threads=2
         step parameter-loaders cargo test --locked --offline protocol_params::tests::shared -- --test-threads=2
         step parameter-wire cargo test --locked --offline parameter_wire_ -- --test-threads=2
+        step pool-discovery-session cargo test --locked --offline pool_discovery_session -- --test-threads=2
+        step pool-discovery-loaders cargo test --locked --offline pool_discovery_loader -- --test-threads=2
+        step pool-discovery-wire cargo test --locked --offline pool_discovery_wire -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

@@ -142,3 +142,88 @@ pub(super) async fn rate_cancel() {
     slow.finish().await;
     backup.finish().await;
 }
+
+pub(super) async fn discovery_success() {
+    use crate::adapters::rpc::discovery_reads::{DiscoveryProtocol, DiscoveryReadSession};
+    let server = LocalServer::new(reply(Reply::Success)).await;
+    let r = runtime(&[&server]);
+    let s = DiscoveryReadSession::new(
+        r.clone(),
+        server.url.clone(),
+        CommitmentConfig::processed(),
+        DiscoveryProtocol::Pump,
+        Address::from_bytes([1; 32]),
+        Instant::now() + Duration::from_secs(3),
+    );
+    assert_eq!(s.rpc().get_account(&key(1)).await.unwrap().data, [1, 2, 3]);
+    s.finish(Ok(())).unwrap();
+    let s = DiscoveryReadSession::new(
+        r.clone(),
+        server.url.clone(),
+        CommitmentConfig::processed(),
+        DiscoveryProtocol::Dbc,
+        Address::from_bytes([1; 32]),
+        Instant::now() + Duration::from_secs(3),
+    );
+    let result =
+        sol_trade_sdk::instruction::utils::meteora_dbc::find_pool_by_base_mint(s.rpc(), &key(1))
+            .await;
+    let error = s.finish(result).err().unwrap();
+    assert!(error
+        .downcast_ref::<crate::domain::parameter_read::ParameterReadFailure>()
+        .is_none());
+    assert_eq!(count(&server), 2);
+    assert_eq!(method(&server, 1), "getProgramAccounts");
+    assert_eq!(
+        server.requests.lock().unwrap()[1]["params"][1]["filters"]
+            .as_array()
+            .unwrap()
+            .len(),
+        3
+    );
+    let a = r.discovery_slot().unwrap();
+    let b = r.discovery_slot().unwrap();
+    drop((a, b));
+    assert!(r.parameter_slot().is_ok());
+    server.finish().await;
+}
+
+pub(super) async fn discovery_errors() {
+    use crate::adapters::rpc::discovery_reads::{DiscoveryProtocol, DiscoveryReadSession};
+    let sink = LocalServer::new(reply(Reply::Success)).await;
+    for mode in [
+        Reply::WrongId,
+        Reply::InvalidJson,
+        Reply::DeclaredOversize,
+        Reply::Chunked(1_048_577),
+        Reply::RateLimited(Some("60")),
+        Reply::Redirect(sink.url.clone()),
+    ] {
+        let server = LocalServer::new(reply(mode)).await;
+        let r = runtime(&[&server, &sink]);
+        let s = DiscoveryReadSession::new(
+            r.clone(),
+            server.url.clone(),
+            CommitmentConfig::processed(),
+            DiscoveryProtocol::Dbc,
+            Address::from_bytes([1; 32]),
+            Instant::now() + Duration::from_secs(3),
+        );
+        let result = sol_trade_sdk::instruction::utils::meteora_dbc::find_pool_by_base_mint(
+            s.rpc(),
+            &key(1),
+        )
+        .await;
+        let error = s.finish(result).err().unwrap();
+        assert!(error
+            .downcast_ref::<crate::domain::parameter_read::ParameterReadFailure>()
+            .is_some());
+        assert!(!format!("{error:?}").contains("fixture-secret"));
+        assert_eq!((count(&server), count(&sink)), (1, 0));
+        let a = r.discovery_slot().unwrap();
+        let b = r.discovery_slot().unwrap();
+        drop((a, b));
+        server.finish().await;
+    }
+    sink.finish().await;
+}

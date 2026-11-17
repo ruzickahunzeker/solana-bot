@@ -26,7 +26,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         policy = boundaries.read_policy()
         self.assertEqual({module["name"] for module in policy["guarded_modules"]}, {"application", "domain", "protocol"})
         types = {item["id"] for item in policy["forbidden_types"]}
-        self.assertTrue({"keypair", "sdk_client", "dex_params", "rpc", "sqlite_pool", "http_headers", "app_state", "config", "trade_index", "blockhash_cache", "trade_tasks", "dispatch_ticket", "damm_buy_quote", "damm_buy_message", "damm_buy_candidate", "damm_buy_signed", "parameter_session"} <= types)
+        self.assertTrue({"keypair", "sdk_client", "dex_params", "rpc", "sqlite_pool", "http_headers", "app_state", "config", "trade_index", "blockhash_cache", "trade_tasks", "dispatch_ticket", "damm_buy_quote", "damm_buy_message", "damm_buy_candidate", "damm_buy_signed", "parameter_session", "discovery_session"} <= types)
         for module in policy["guarded_modules"]:
             self.assertTrue((ROOT / module["path"]).read_text().startswith(boundaries.GUARD + "\n"))
         self.assertIn("Use project-owned types and ports", boundaries.config_text(policy))

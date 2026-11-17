@@ -20,7 +20,7 @@ use std::{
 pub(super) struct ReadRpc {
     accounts: HashMap<String, Option<Account>>,
     epoch: Option<u64>,
-    program_scan: Option<(Pubkey, Vec<(Pubkey, Account)>)>,
+    program_scans: HashMap<Pubkey, Vec<(Pubkey, Account)>>,
     calls: Arc<Mutex<Vec<(RpcRequest, Value)>>>,
     violations: Arc<Mutex<Vec<String>>>,
 }
@@ -38,7 +38,7 @@ impl ReadRpc {
         self.epoch = Some(epoch);
     }
     pub(super) fn program_scan(&mut self, program: Pubkey, addresses: &[Pubkey]) {
-        self.program_scan = Some((
+        self.program_scans.insert(
             program,
             addresses
                 .iter()
@@ -53,7 +53,12 @@ impl ReadRpc {
                     )
                 })
                 .collect(),
-        ));
+        );
+    }
+
+    pub(super) fn merge(&mut self, other: Self) {
+        self.accounts.extend(other.accounts);
+        self.program_scans.extend(other.program_scans);
     }
 
     pub(super) fn client(&self) -> RpcClient {
@@ -71,7 +76,7 @@ impl ReadRpc {
             RpcRequest::GetAccountInfo | RpcRequest::GetMultipleAccounts | RpcRequest::GetEpochInfo
         ) || (*method
             == RpcRequest::GetProgramAccounts
-            && self.program_scan.is_some())));
+            && !self.program_scans.is_empty())));
     }
 
     fn reject(&self, message: String) -> Error {
@@ -118,11 +123,12 @@ impl ReadRpc {
                 return Ok(json!({"epoch":epoch,"slotIndex":1,"slotsInEpoch":432000,
                     "absoluteSlot":epoch * 432000 + 1,"blockHeight":42,"transactionCount":100}));
             }
-            RpcRequest::GetProgramAccounts if self.program_scan.is_some() => {
-                let (program, accounts) = self.program_scan.as_ref().unwrap();
-                if params[0] != program.to_string() {
-                    return Err(self.reject("wrong scripted program".into()));
-                }
+            RpcRequest::GetProgramAccounts if !self.program_scans.is_empty() => {
+                let program = params[0].as_str().unwrap().parse::<Pubkey>().unwrap();
+                let accounts = self
+                    .program_scans
+                    .get(&program)
+                    .ok_or_else(|| self.reject("wrong scripted program".into()))?;
                 let config: solana_client::rpc_config::RpcProgramAccountsConfig =
                     serde_json::from_value(params[1].clone()).unwrap();
                 let filters = config.filters.unwrap();

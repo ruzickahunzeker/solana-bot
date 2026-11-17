@@ -25,7 +25,10 @@ impl PoolReadBackend for SdkPoolReadBackend {
     async fn resolve(&self, mint: Address) -> Result<PoolRouteHint> {
         self.wallets
             .default()
-            .resolve_pool(&Pubkey::new_from_array(mint.to_bytes()))
+            .resolve_pool(
+                &Pubkey::new_from_array(mint.to_bytes()),
+                self.read_rpc.clone(),
+            )
             .await
     }
 

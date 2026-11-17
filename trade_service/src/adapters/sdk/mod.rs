@@ -10,6 +10,7 @@ pub(crate) mod ordinary_preparation;
 pub(crate) mod ordinary_sol_buy;
 pub(crate) mod original_sender;
 pub(crate) mod pool_queries;
+pub(crate) mod pool_resolution;
 pub(crate) mod preparation_assets;
 pub(crate) mod preparation_balance;
 pub(crate) mod preparation_input;

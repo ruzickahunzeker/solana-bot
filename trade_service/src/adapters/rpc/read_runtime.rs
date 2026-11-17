@@ -25,6 +25,7 @@ enum Class {
     QuoteBalance,
     PreparationBalance,
     Parameters,
+    Discovery,
 }
 impl Class {
     fn index(self) -> usize {
@@ -36,6 +37,7 @@ impl Class {
             Self::QuoteBalance => 4,
             Self::PreparationBalance => 5,
             Self::Parameters => 6,
+            Self::Discovery => 7,
         }
     }
     fn interval(self) -> Duration {
@@ -47,12 +49,13 @@ impl Class {
             Self::QuoteBalance => Duration::from_millis(250),
             Self::PreparationBalance => Duration::from_millis(250),
             Self::Parameters => Duration::from_millis(250),
+            Self::Discovery => Duration::from_millis(100),
         }
     }
 }
 
 struct Budget {
-    next_start: [Instant; 7],
+    next_start: [Instant; 8],
     cooldowns: Vec<Option<Instant>>,
 }
 
@@ -61,7 +64,7 @@ pub(crate) struct SharedReadRuntime<T = ReqwestReadTransport> {
     urls: Vec<String>,
     endpoints: Vec<Option<Url>>,
     transport: T,
-    slots: [Arc<Semaphore>; 7],
+    slots: [Arc<Semaphore>; 8],
     budget: Mutex<Budget>,
     hash_id: AtomicU64,
 }
@@ -101,13 +104,19 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         }
         Self {
             budget: Mutex::new(Budget {
-                next_start: [Instant::now(); 7],
+                next_start: [Instant::now(); 8],
                 cooldowns: vec![None; unique.len()],
             }),
             urls: unique,
             endpoints,
             transport,
-            slots: std::array::from_fn(|_| Arc::new(Semaphore::new(1))),
+            slots: std::array::from_fn(|index| {
+                Arc::new(Semaphore::new(if index == Class::Discovery.index() {
+                    2
+                } else {
+                    1
+                }))
+            }),
             hash_id: AtomicU64::new(1),
         }
     }
@@ -136,28 +145,33 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
             Instant::now() < deadline,
             "read RPC deadline expired before admission"
         );
-        let until = self
-            .budget
-            .lock()
-            .map_err(|_| anyhow::anyhow!("read RPC budget unavailable"))?
-            .next_start[class.index()];
-        ensure!(until < deadline, "read RPC pacing exceeds deadline");
-        tokio::time::sleep_until(tokio::time::Instant::from_std(until)).await;
         let url = self.endpoints[index]
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("read RPC endpoint unavailable"))?;
-        {
+        loop {
+            let until = self
+                .budget
+                .lock()
+                .map_err(|_| anyhow::anyhow!("read RPC budget unavailable"))?
+                .next_start[class.index()];
+            ensure!(until < deadline, "read RPC pacing exceeds deadline");
+            tokio::time::sleep_until(tokio::time::Instant::from_std(until)).await;
             let mut state = self
                 .budget
                 .lock()
                 .map_err(|_| anyhow::anyhow!("read RPC budget unavailable"))?;
             let now = Instant::now();
             ensure!(now < deadline, "read RPC deadline expired before admission");
+            // Two discovery branches may wake together; only one can claim this start.
+            if now < state.next_start[class.index()] {
+                continue;
+            }
             ensure!(
                 state.cooldowns[index].is_none_or(|until| now >= until),
                 "read RPC endpoint cooling down or unavailable"
             );
             state.next_start[class.index()] = now + class.interval();
+            break;
         }
         let reply = self.transport.fetch(url, &request).await?;
         if reply.status == StatusCode::TOO_MANY_REQUESTS {
@@ -179,6 +193,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
                     Class::QuoteBalance => "quote balance",
                     Class::PreparationBalance => "preparation balance",
                     Class::Parameters => "protocol parameters",
+                    Class::Discovery => "pool discovery",
                 },
                 "read RPC rate limited; shared endpoint cooling down"
             );

@@ -218,6 +218,7 @@ async fn serve(
                         json!({"epoch":epoch,"slotIndex":1,"slotsInEpoch":432000,"absoluteSlot":epoch*432000+1,"blockHeight":42,"transactionCount":100}),
                     )
                 }
+                Some("getProgramAccounts") => Some(json!([])),
                 _ => None,
             };
             (*other, value)
@@ -235,7 +236,9 @@ async fn serve(
         payload["method"].as_str(),
         Some("getTokenSupply" | "getTokenAccountBalance" | "getBalance")
     );
-    let body_limit = if is_scan || parameter_value.is_some() {
+    let body_limit = if parameter_value.is_some() && payload["method"] == "getProgramAccounts" {
+        1_048_576
+    } else if is_scan || parameter_value.is_some() {
         524_288
     } else {
         MAX_BODY

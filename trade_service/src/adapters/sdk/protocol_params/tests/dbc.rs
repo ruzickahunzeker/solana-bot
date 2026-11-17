@@ -150,6 +150,19 @@ pub(super) fn shared_fixture() -> (ReadRpc, Pubkey, Pubkey, Pubkey) {
     (read, expected.id, expected.base, expected.quote)
 }
 
+pub(super) fn discovery_fixture(base: Pubkey, migrated: bool) -> (ReadRpc, Pubkey, Pubkey) {
+    let (mut read, mut expected) = fixture(spl_token_2022_interface::ID);
+    expected.pool.data[BASE_MINT_OFFSET..BASE_MINT_OFFSET + 32].copy_from_slice(base.as_ref());
+    expected.pool.data[MIGRATED_OFFSET] = u8::from(migrated);
+    read.account(expected.id, expected.pool);
+    read.account(
+        base,
+        account(spl_token_2022_interface::ID, super::cpmm::mint(6)),
+    );
+    read.program_scan(PROGRAM, &[expected.id]);
+    (read, expected.id, expected.quote)
+}
+
 #[tokio::test]
 async fn dbc_migrated_pool_fails_before_reading_config_or_mints() {
     let (mut fixture, mut expected) = fixture(spl_token_interface::ID);

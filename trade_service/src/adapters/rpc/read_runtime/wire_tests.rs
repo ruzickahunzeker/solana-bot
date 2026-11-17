@@ -758,6 +758,8 @@ async fn shared_read_wire_child() {
             "parameter_errors" => parameter_wire::errors().await,
             "parameter_timeouts" => parameter_wire::timeouts().await,
             "parameter_rate_cancel" => parameter_wire::rate_cancel().await,
+            "pool-discovery-success" => parameter_wire::discovery_success().await,
+            "pool-discovery-errors" => parameter_wire::discovery_errors().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -917,4 +919,13 @@ fn preparation_shared_read_wire_429_is_shared_without_widening_current_lane() {
 #[test]
 fn preparation_shared_read_wire_busy_cancel_releases_capacity_without_blocking_hash() {
     run("preparation_priority");
+}
+#[test]
+fn pool_discovery_wire_real_sdk_account_and_filtered_scan_use_fixed_transport() {
+    run("pool-discovery-success");
+}
+
+#[test]
+fn pool_discovery_wire_scan_body_identity_cooldown_and_redirects_fail_without_retry() {
+    run("pool-discovery-errors");
 }

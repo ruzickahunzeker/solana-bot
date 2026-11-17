@@ -1,5 +1,6 @@
 pub(crate) mod blockhash;
 pub(crate) mod damm_sell_simulation;
+pub(crate) mod discovery_reads;
 pub(crate) mod ordinary_observation;
 pub(crate) mod parameter_reads;
 pub(crate) mod preparation_balance;
