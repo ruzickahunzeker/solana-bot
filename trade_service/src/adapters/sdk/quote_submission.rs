@@ -8,7 +8,10 @@ use crate::domain::quote::{BoundQuote, QuotePreflight};
 use crate::domain::submission::SignedSubmission;
 use crate::sdk_client::SdkTradeClient;
 
-pub(crate) struct SdkQuoteSubmission<'a>(pub &'a SdkTradeClient);
+pub(crate) struct SdkQuoteSubmission<'a>(
+    pub &'a SdkTradeClient,
+    pub &'a crate::adapters::rpc::read_runtime::SharedReadRuntime,
+);
 
 /// Only this adapter can construct one after prepare/audit; callers cannot edit its message.
 pub(crate) struct PreparedQuoteTransaction {
@@ -97,7 +100,8 @@ impl QuoteSubmissionBackend for SdkQuoteSubmission<'_> {
     }
 
     async fn prepare(&self, bound: &BoundQuote) -> Result<(Self::Prepared, QuotePreflight)> {
-        let (transaction, preflight) = aggregator_quote::prepare_transaction(bound, self.0).await?;
+        let (transaction, preflight) =
+            aggregator_quote::prepare_transaction(bound, self.0, self.1).await?;
         let prepared = PreparedQuoteTransaction::from_preflight(transaction, bound, &preflight);
         Ok((prepared, preflight))
     }

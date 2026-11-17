@@ -6,12 +6,28 @@
 
 ## 当前任务
 
-- 当前续原 NP-03/TS-07/09 两跳寻池：原 Default lane、原缓存实例/锁、30 秒正缓存、
+- 当前续原 NP-03/TS-07/09 聚合预检账户读取：Mint/ATA 与 ALT 的原校验提到 SDK
+  adapter，三条实际入口（独立预检/Quote 提交/普通聚合买入含 observed）共用原
+  bootstrap runtime。原第一 Default lane/commitment、Token 程序与 ALT 解码/停用
+  政策保留；第十类单在途/100 ms、固定只读请求/64 KiB/两秒 HTTP 和共享冷却，
+  不新增 client/cache/signer。16 项新测试/预计完整 1729、69 步骤及原 108 字段
+  待本批独立 CI，不套用下方父批，不本地重试 Cargo。模拟/其他独立读取和剩余
+  原门槛继续，见 [聚合账户读取边界](AGGREGATOR_ACCOUNT_SHARED_READS.md)。
+- 原 NP-03/TS-07/09 两跳寻池已完成本批源码/离线验收：原 Default lane、原缓存实例/锁、30 秒正缓存、
   两个完整空扫描规则保持；扫描/候选/CPMM 参数/金库余额已接相同 runtime 的新有界
   只读 scope。五秒总期限、32 次 SDK 准入、单在途/100 ms 与共享冷却，不新增 signer/
-  cache/HTTP。二十项新测试源码、预计完整 1713/66 步骤/35 类型108字段待独立 CI，
-  不套用父批 1693/105 字段结果、不本地重试 Cargo。模拟/独立读取和其余原门槛保留，
-  见 [两跳寻池边界](SOL_HOP_SHARED_READS.md)。
+  cache/HTTP。`17bc3be30b386cf4f16b80c9f8fdc864dda43167` /
+  [Actions 44156380200](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44156380200)
+  首次运行终态 success，artifact `14362832442` 下载独立核对：完整并发 1713
+  （194.93 秒）/串行 1713（355.03 秒），零失败/忽略/过滤、原始名称集合相同；
+  父批 1693 名称全保留且恰增源码二十项。scope 8/SDK cache 10/真实 HTTP 2、
+  参数 scope 28 和原寻池 8/8/2 通过；35 类型/108 原始字段拒绝、原源码/恢复及
+  全部 66 步骤通过。全树 1084 文件/13,296,707 字节和模式与测试快照一致，identity/
+  manifest/lock/vendor manifest 匹配。串行旧子进程 stderr 严格按固定诊断和原名称
+  关联，两正/七负格式回归通过，未改日志或省略名称。原 main/索引/冻结历史保持，
+  不本地重试 Cargo、不重跑终态或另发文档 CI；记录随下一源码批归档。模拟/独立
+  quote/WSOL 读取、SDK 内部资源与其余原门槛继续，不新增任务或分母，见
+  [两跳寻池边界](SOL_HOP_SHARED_READS.md)。
 - 原 NP-03/TS-07/09 普通寻池子项已完成本批源码/离线验收：原 Default lane 投影后交只读 SDK adapter，
   Pump/DBC/PumpSwap 的顺序、Helius 随机选择及每节点三秒总期限保留。分支分别持
   sticky failure，接原 runtime 的两分支/100 ms 独立预算和同一冷却，不降低参数

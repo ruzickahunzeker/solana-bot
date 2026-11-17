@@ -185,11 +185,14 @@ pub(crate) async fn state() -> AppState {
         crate::adapters::sdk::wallet_identity::SdkWalletIdentityDirectory::new(wallets.clone()),
     );
     let aggregator_quotes = Arc::new(crate::aggregator_quote::QuoteStore::default());
+    let read_rpc =
+        Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
     let ordinary_sol_buy = Arc::new(
         crate::adapters::sdk::ordinary_sol_buy::SdkOrdinarySolBuyBackend::new(
             wallets.clone(),
             aggregator_quotes.clone(),
             persistence.clone(),
+            read_rpc.clone(),
         ),
     );
     let quote_queries = Arc::new(crate::application::sol_buy_quotes::SolBuyQuoteService::new(
@@ -202,6 +205,7 @@ pub(crate) async fn state() -> AppState {
             Arc::new(
                 crate::adapters::sdk::quote_preflight::SdkQuotePreflightBackend::new(
                     wallets.clone(),
+                    read_rpc.clone(),
                 ),
             ),
             aggregator_quotes.clone(),
@@ -212,6 +216,7 @@ pub(crate) async fn state() -> AppState {
             crate::adapters::sdk::quote_submit::SdkQuoteSubmissionRuntime::new(
                 wallets.clone(),
                 persistence.clone(),
+                read_rpc.clone(),
             ),
             aggregator_quotes.clone(),
         ),
@@ -252,9 +257,7 @@ pub(crate) async fn state() -> AppState {
                 ),
                 crate::adapters::sdk::wallet_balances::SdkWalletBalanceRuntime::new(
                     wallets.clone(),
-                    Arc::new(
-                        crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap(),
-                    ),
+                    read_rpc,
                 ),
                 crate::adapters::sdk::address_parser::SdkAddressParser,
                 crate::state::now_ms,

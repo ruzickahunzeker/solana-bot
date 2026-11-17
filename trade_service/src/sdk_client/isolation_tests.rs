@@ -95,6 +95,7 @@ async fn sdk_buy_and_sell_are_blocked_even_with_simulate_and_mev_overrides() {
 #[tokio::test]
 async fn aggregator_send_and_adapter_sign_are_blocked_without_a_signer() {
     let client = client();
+    let read_rpc = crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap();
     assert_eq!(
         client
             .send_aggregator_transaction(&transaction())
@@ -105,7 +106,7 @@ async fn aggregator_send_and_adapter_sign_are_blocked_without_a_signer() {
         BROADCAST_DISABLED_ERROR
     );
     assert_eq!(
-        SdkQuoteSubmission(&client)
+        SdkQuoteSubmission(&client, &read_rpc)
             .sign(PreparedQuoteTransaction::unverified_for_policy_test(
                 transaction()
             ))
@@ -128,7 +129,8 @@ async fn ordinary_scan_observed_quote_preserves_sign_and_send_guards_without_sdk
         Duration::from_secs(1),
     )
     .unwrap();
-    let backend = ObservedQuote::new(&client, &reader);
+    let read_rpc = crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap();
+    let backend = ObservedQuote::new(&client, &reader, &read_rpc);
     assert_eq!(
         backend.ensure_live_allowed().unwrap_err().to_string(),
         BROADCAST_DISABLED_ERROR

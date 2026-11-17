@@ -244,6 +244,7 @@ struct JupiterSwapResponse {
 pub(crate) async fn prepare_transaction(
     bound: &BoundQuote,
     wallet: &SdkTradeClient,
+    read_rpc: &crate::adapters::rpc::read_runtime::SharedReadRuntime,
 ) -> Result<(VersionedTransaction, QuotePreflight)> {
     let request = SolBuyQuoteRequest {
         wallet_id: bound.wallet_id.clone(),
@@ -334,7 +335,7 @@ pub(crate) async fn prepare_transaction(
     let mut readonly = Vec::new();
     for lookup in lookups {
         let table = wallet
-            .resolve_aggregator_lookup_table(&lookup.account_key)
+            .resolve_aggregator_lookup_table(&lookup.account_key, read_rpc)
             .await?;
         for index in &lookup.writable_indexes {
             writable.push(
@@ -372,7 +373,7 @@ pub(crate) async fn prepare_transaction(
         bail!("aggregator transaction has too many writable accounts");
     }
     let mint = Pubkey::from_str(&bound.quote.output_mint).context("invalid bound target mint")?;
-    let (target_ata, token_program) = wallet.aggregator_target_ata(&mint).await?;
+    let (target_ata, token_program) = wallet.aggregator_target_ata(&mint, read_rpc).await?;
     let target_index =
         require_writable_target_ata(&transaction.message, &resolved_keys, &target_ata)?;
     let mut top_level_programs = Vec::new();

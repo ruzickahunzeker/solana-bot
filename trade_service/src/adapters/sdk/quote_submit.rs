@@ -22,19 +22,26 @@ use crate::{
 pub(crate) struct SdkQuoteSubmissionRuntime {
     wallets: Arc<WalletRegistry>,
     persistence: Arc<TradePersistence>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 
 impl SdkQuoteSubmissionRuntime {
-    pub(crate) fn new(wallets: Arc<WalletRegistry>, persistence: Arc<TradePersistence>) -> Self {
+    pub(crate) fn new(
+        wallets: Arc<WalletRegistry>,
+        persistence: Arc<TradePersistence>,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    ) -> Self {
         Self {
             wallets,
             persistence,
+            read_rpc,
         }
     }
 }
 
 pub(crate) struct ResolvedQuoteSubmissionWallet {
     client: Arc<SdkTradeClient>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 
 impl QuoteSubmissionRuntime for SdkQuoteSubmissionRuntime {
@@ -44,7 +51,10 @@ impl QuoteSubmissionRuntime for SdkQuoteSubmissionRuntime {
     fn resolve(&self, wallet_id: &str) -> Option<Self::Wallet> {
         self.wallets
             .get(wallet_id)
-            .map(|client| ResolvedQuoteSubmissionWallet { client })
+            .map(|client| ResolvedQuoteSubmissionWallet {
+                client,
+                read_rpc: self.read_rpc.clone(),
+            })
     }
 
     fn journal(&self) -> Option<Self::Journal> {
@@ -62,22 +72,26 @@ impl QuoteSubmissionBackend for ResolvedQuoteSubmissionWallet {
     type Prepared = PreparedQuoteTransaction;
 
     fn ensure_live_allowed(&self) -> anyhow::Result<()> {
-        SdkQuoteSubmission(&self.client).ensure_live_allowed()
+        SdkQuoteSubmission(&self.client, &self.read_rpc).ensure_live_allowed()
     }
 
     async fn prepare(
         &self,
         bound: &BoundQuote,
     ) -> anyhow::Result<(Self::Prepared, QuotePreflight)> {
-        SdkQuoteSubmission(&self.client).prepare(bound).await
+        SdkQuoteSubmission(&self.client, &self.read_rpc)
+            .prepare(bound)
+            .await
     }
 
     fn sign(&self, prepared: Self::Prepared) -> anyhow::Result<SignedSubmission> {
-        SdkQuoteSubmission(&self.client).sign(prepared)
+        SdkQuoteSubmission(&self.client, &self.read_rpc).sign(prepared)
     }
 
     async fn broadcast(&self, signed: &SignedSubmission) -> anyhow::Result<String> {
-        SdkQuoteSubmission(&self.client).broadcast(signed).await
+        SdkQuoteSubmission(&self.client, &self.read_rpc)
+            .broadcast(signed)
+            .await
     }
 }
 
@@ -88,10 +102,16 @@ mod tests {
     #[tokio::test]
     async fn quote_submit_runtime_reuses_empty_registry_and_memory_persistence_without_sdk_init() {
         let state = crate::http_contract_tests::state().await;
-        let runtime =
-            SdkQuoteSubmissionRuntime::new(state.wallets.clone(), state.persistence.clone());
+        let read_rpc =
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
+        let runtime = SdkQuoteSubmissionRuntime::new(
+            state.wallets.clone(),
+            state.persistence.clone(),
+            read_rpc.clone(),
+        );
         assert!(Arc::ptr_eq(&runtime.wallets, &state.wallets));
         assert!(Arc::ptr_eq(&runtime.persistence, &state.persistence));
+        assert!(Arc::ptr_eq(&runtime.read_rpc, &read_rpc));
         assert!(runtime.resolve("missing").is_none());
         assert!(runtime.journal().is_none());
         assert_eq!(state.wallets.wallet_count(), 0);
@@ -115,7 +135,13 @@ mod tests {
             .await
             .unwrap(),
         );
-        let runtime = SdkQuoteSubmissionRuntime::new(state.wallets.clone(), persistence.clone());
+        let read_rpc =
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
+        let runtime = SdkQuoteSubmissionRuntime::new(
+            state.wallets.clone(),
+            persistence.clone(),
+            read_rpc.clone(),
+        );
         let intent = SubmissionIntent {
             key: SubmissionKey::new("fixture-wallet", "fixture-key").unwrap(),
             wallet_pubkey: Address::from_bytes([1; 32]).to_string(),

@@ -114,10 +114,24 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The aggregator mint/ALT batch is source wired and pending its own source-only CI:
+retain all 1713 parent names and add exactly 16 (expected 1729), three focused
+steps and 69 total; rerun the same 35-type/108-field boundary on this source.
+Do not inherit the acceptance below, retry local service Cargo after the recorded
+2200 MiB failure or deploy. Original request/SDK policy and resource contracts
+are described in AGGREGATOR_ACCOUNT_SHARED_READS.md.
+
 The SOL-hop read batch adds SolHopReadSession: 35 selected types / 108 fields
-including outside alias, pending its own source-only CI. Expected complete suites
-retain all 1693 parent names and add exactly 20. Do not reuse the 105-field run
-below, retry local Cargo after the resource failure, or deploy the new source.
+including outside alias. Source 17bc3be / Actions 44156380200 / artifact 14362832442
+independently passed original/restored checks, all 108 raw field spans and both
+complete 1713-test suites (194.93/355.03 seconds; 66 steps exit zero). All 1693
+parent names remain, exactly 20 added; scope 8 / SDK cache 10 / real HTTP 2 and
+parameter session 28 pass. All snapshot blobs/modes match (1084 files,
+13,296,707 bytes), identity/manifest/lock/vendor-manifest hashes match. Main/index
+and frozen history remain unchanged. The exact old serial child-stderr format
+and two-positive/seven-negative audit regressions also pass. No local Cargo retry
+or production action; do not reuse the 105-field run below, rerun terminal CI,
+start documentation-only CI or deploy this source as part of verification.
 
 The ordinary-discovery batch adds DiscoveryReadSession: 34 selected types /
 105 scoped fields including outside alias. Source cde04bd / Actions 44146511097 /
@@ -169,7 +183,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 34 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 35 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

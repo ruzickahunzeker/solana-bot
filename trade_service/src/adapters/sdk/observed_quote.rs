@@ -21,9 +21,13 @@ pub(crate) struct ObservedQuote<'a> {
     reader: &'a SingleShotStatusReader,
 }
 impl<'a> ObservedQuote<'a> {
-    pub(crate) fn new(client: &'a SdkTradeClient, reader: &'a SingleShotStatusReader) -> Self {
+    pub(crate) fn new(
+        client: &'a SdkTradeClient,
+        reader: &'a SingleShotStatusReader,
+        read_rpc: &'a crate::adapters::rpc::read_runtime::SharedReadRuntime,
+    ) -> Self {
         Self {
-            submission: SdkQuoteSubmission(client),
+            submission: SdkQuoteSubmission(client, read_rpc),
             reader,
         }
     }

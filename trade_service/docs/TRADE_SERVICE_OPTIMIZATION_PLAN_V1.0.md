@@ -17,9 +17,17 @@
   寻池/模拟/独立及 SDK 内部读取、全局预算与其余原门槛继续，不据此宣称整体完成。
   见 [参数读取边界](optimization/PROTOCOL_PARAMETER_SHARED_READS.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
+- 2026-11-18 续原 NP-03 聚合预检 Mint/ALT 读取：原三条入口共用原 runtime，
+  保留第一 Default lane/commitment、owner/ATA/ALT 校验和后续交易权威。新增第十类
+  有界只读预算，16 项新测试/预计完整 1729/69 步骤/108 字段待独立 CI，不套用
+  父批、不本地重试 Cargo 或做生产操作，见
+  [聚合账户读取边界](optimization/AGGREGATOR_ACCOUNT_SHARED_READS.md)。
 - 2026-11-18 接续原 NP-03 两跳寻池：保持原缓存和政策，将既有 CPMM hop 的扫描、
-  参数/余额读取接同一 runtime 的专用 scope。20 项新测试和108字段门禁待独立 CI，
-  不套用父批、不本地重试大编译或做生产操作，见
+  参数/余额读取接同一 runtime 的专用 scope。`17bc3be` / Actions `44156380200` /
+  artifact `14362832442` 独立验收完整并发/串行各 1713，父批 1693 名称全保留且
+  恰增二十项；108 字段及全部 66 步骤通过，源码身份/原始 spans/全树一致已核对。
+  不套用父批、不本地重试大编译、不重跑终态或另发文档 CI、不做生产操作；
+  模拟/独立读取与其余原门槛继续，见
   [两跳读取边界](optimization/SOL_HOP_SHARED_READS.md)。
 - 2026-11-18 再续原 NP-03 普通寻池：原算法接只读 SDK adapter 和共享 runtime 的
   独立分支预算，不改 SDK/路由优先级/API/每节点总期限。`cde04bd` / Actions
@@ -84,7 +92,7 @@ c220ba8 的专项及完整回归通过，不在前序 970d835 的 bootstrap CI�
 | --- | --- | --- |
 | NP-01 | 普通 SDK/legacy 聚合构建、签名、广播与账本缺口复核 | C3c1/C3c2 原受控 SDK 执行、C3d1 原签名恢复、C3d2 扫描/010 及 C3e Default 完整准备串联已离线验收。后继 6c50aca 完整并发/串行各 1437，runtime 5、扫描 16、历史迁移 1、HTTP 200、参数 3 全过；原 005 夹具清理问题已修复，不改生产校验。其余方向/协议/backend/mode/资源/发布门槛继续，不恢复 owner、不伪造 Quote，不把离线通过当实网验收。原参数/hash/JSON/vendor 保持，无部署/生产操作 |
 | NP-02 | 剩余非 PumpAPI Handler/Application 分拆 | B/C 普通交易/查询、D Pool/系统、E 全部 Handler/DTO/路由组、F 余额、G 管理以及 H 靓号任务控制已接项目边界；H 新增十三项，最终并发/串行各 984、HTTP 194、check/fmt/diff 通过，旧 C2b 时序测试加门闩/零写审计不改生产实现，见 `optimization/VANITY_APPLICATION_AND_WORKER_BOUNDARIES.md`。直接 worker 已移出 AppState，生成函数原字节保持；后继普通接受 26be717 和执行 26445c5 已验收，不重新排队。剩余资源/生命周期归原 NP-03，不改公开路径、参数、鉴权、原部分失败顺序、存储/密文格式和默认 backend |
-| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；八类读取共用原 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受已验收。普通执行编排在 26445c5、三层门禁在 e3be442 起、任务生命周期在 c6f2745、Shadow 关闭/排空在 796ba50 验收。后继 presence 在 27bd996、普通参数/预热在 1792c51、普通三协议寻池在 cde04bd 独立验收，最新完整各 1693/105 字段/63 步骤通过，见 optimization/EXECUTION_STATUS.md。根具体资源、SDK 内部/独立操作任务、两跳寻池/独立参数/quote/WSOL/模拟读取、全局预算与真实退出/刷盘门槛继续，不重做已验收子项 |
+| NP-03 | 基础设施与依赖方向收口 | 四个旧资源及具体 params 字段仅测试保留；九类读取共用原 runtime/冷却，默认值/缓存/鉴权/校验/bootstrap/readiness 与普通接受已验收。普通执行编排在 26445c5、三层门禁在 e3be442 起、任务生命周期在 c6f2745、Shadow 关闭/排空在 796ba50 验收。后继 presence 在 27bd996、普通参数/预热在 1792c51、普通三协议寻池在 cde04bd、两跳寻池在 17bc3be 独立验收，最新完整各 1713/108 字段/66 步骤通过，见 optimization/EXECUTION_STATUS.md。根具体资源、SDK 内部/独立操作任务、独立参数/quote/WSOL/模拟读取、全局预算与真实退出/刷盘门槛继续，不重做已验收子项 |
 | NP-04 | 通用 Backend 契约验收 | Record/Tape 独立构建/候选八项合同接现有普通 SOL Quote 控制器与原 SQLite authority，验证金额、能力拒绝、取消、未知和签后不换后端；91b3d94 / Actions 43714527309 已验收，专项 8、完整各 1481，见 optimization/BACKEND_CONSTRUCTION_CONTRACT.md。其他业务路径适用性仍待验，不新增 Router SDK 依赖、生产候选 profile 或 PumpAPI 接入 |
 | NP-05 | SDK 来源与后续升级演练准备 | A 已核对固定上游 6.0.2 commit/tree、372/375 文件及既有 DBC 差异 8 修改/3 新增，486 行补丁隔离重放完全一致；只读来源 checker 与八项负例通过并加入后续 CI，见 `optimization/SDK_PROVENANCE.md`。上游 tag/commit 无签名，实际适配/升级与协议演练、release/部署仍有独立门槛，不覆盖 vendor |
 

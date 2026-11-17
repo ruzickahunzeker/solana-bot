@@ -33,6 +33,11 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    AggregatorAccount {
+        id: u64,
+        account: crate::domain::trade::Address,
+        commitment: solana_commitment_config::CommitmentConfig,
+    },
     Parameters {
         id: u64,
         query: super::parameter_reads::request::ParameterQuery,
@@ -80,6 +85,13 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::AggregatorAccount {
+                id,
+                account,
+                commitment,
+            } => {
+                json!({"jsonrpc":"2.0","id":id,"method":"getAccountInfo","params":[account.to_string(),{"encoding":"base64","commitment":commitment.commitment}]})
+            }
             Self::Parameters { id, query } => query.body(*id),
             Self::SignatureStatus { id, signature } => {
                 json!({"jsonrpc":"2.0","id":id,"method":"getSignatureStatuses","params":[[signature],{"searchTransactionHistory":true}]})
@@ -115,6 +127,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::AggregatorAccount { .. } => "aggregator account",
             Self::Parameters { .. } => "protocol parameters",
             Self::SignatureStatus { .. } => "observation",
             Self::LatestBlockhash { .. } => "blockhash",

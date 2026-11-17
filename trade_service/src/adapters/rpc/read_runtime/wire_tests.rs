@@ -8,6 +8,8 @@ const FLAG: &str = "SOL_BOT_SHARED_READ_WIRE_CASE";
 const CHILD: &str = "adapters::rpc::read_runtime::tests::wire_tests::shared_read_wire_child";
 const DONE: &str = "SHARED_READ_WIRE_DONE";
 
+#[path = "aggregator_account_wire.rs"]
+mod aggregator_account_wire;
 #[path = "parameter_wire.rs"]
 mod parameter_wire;
 #[path = "preparation_wire.rs"]
@@ -762,6 +764,9 @@ async fn shared_read_wire_child() {
             "pool-discovery-errors" => parameter_wire::discovery_errors().await,
             "sol-hop-success" => parameter_wire::sol_hop_success().await,
             "sol-hop-errors" => parameter_wire::sol_hop_errors_cancel().await,
+            "aggregator-account-success" => aggregator_account_wire::success().await,
+            "aggregator-account-errors" => aggregator_account_wire::errors().await,
+            "aggregator-account-timeout-cancel" => aggregator_account_wire::timeout_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -939,4 +944,17 @@ fn sol_hop_wire_real_sdk_pair_scans_and_vault_balance_share_fixed_http_transport
 #[test]
 fn sol_hop_wire_bad_ids_bodies_429_redirect_and_cancel_do_not_retry_or_leak_capacity() {
     run("sol-hop-errors");
+}
+
+#[test]
+fn aggregator_account_wire_sdk_ata_and_lookup_use_fixed_transport_and_exact_body_limit() {
+    run("aggregator-account-success");
+}
+#[test]
+fn aggregator_account_wire_bad_identity_body_redirect_and_rate_never_retry() {
+    run("aggregator-account-errors");
+}
+#[test]
+fn aggregator_account_wire_timeout_and_cancel_preserve_hash_capacity() {
+    run("aggregator-account-timeout-cancel");
 }

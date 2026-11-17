@@ -177,6 +177,7 @@ fn complete(
         wallets.clone(),
         aggregator_quotes.clone(),
         persistence.clone(),
+        read_rpc.clone(),
     );
     if let Some(plan) = &observation_plan {
         ordinary_sol_buy = ordinary_sol_buy.with_observation_reader(plan.reader());
@@ -188,11 +189,14 @@ fn complete(
         aggregator_quotes.clone(),
     ));
     let quote_preflights = Arc::new(QuotePreflightService::new(
-        Arc::new(SdkQuotePreflightBackend::new(wallets.clone())),
+        Arc::new(SdkQuotePreflightBackend::new(
+            wallets.clone(),
+            read_rpc.clone(),
+        )),
         aggregator_quotes.clone(),
     ));
     let quote_submissions = Arc::new(SolBuySubmissionService::new(
-        SdkQuoteSubmissionRuntime::new(wallets.clone(), persistence.clone()),
+        SdkQuoteSubmissionRuntime::new(wallets.clone(), persistence.clone(), read_rpc.clone()),
         aggregator_quotes.clone(),
     ));
     let quote_reconciliations = Arc::new(QuoteReconciliationService::new(

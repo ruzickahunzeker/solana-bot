@@ -27,6 +27,7 @@ enum Class {
     Parameters,
     Discovery,
     SolHop,
+    AggregatorAccounts,
 }
 impl Class {
     fn index(self) -> usize {
@@ -40,6 +41,7 @@ impl Class {
             Self::Parameters => 6,
             Self::Discovery => 7,
             Self::SolHop => 8,
+            Self::AggregatorAccounts => 9,
         }
     }
     fn interval(self) -> Duration {
@@ -53,12 +55,13 @@ impl Class {
             Self::Parameters => Duration::from_millis(250),
             Self::Discovery => Duration::from_millis(100),
             Self::SolHop => Duration::from_millis(100),
+            Self::AggregatorAccounts => Duration::from_millis(100),
         }
     }
 }
 
 struct Budget {
-    next_start: [Instant; 9],
+    next_start: [Instant; 10],
     cooldowns: Vec<Option<Instant>>,
 }
 
@@ -67,7 +70,7 @@ pub(crate) struct SharedReadRuntime<T = ReqwestReadTransport> {
     urls: Vec<String>,
     endpoints: Vec<Option<Url>>,
     transport: T,
-    slots: [Arc<Semaphore>; 9],
+    slots: [Arc<Semaphore>; 10],
     budget: Mutex<Budget>,
     hash_id: AtomicU64,
 }
@@ -107,7 +110,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         }
         Self {
             budget: Mutex::new(Budget {
-                next_start: [Instant::now(); 9],
+                next_start: [Instant::now(); 10],
                 cooldowns: vec![None; unique.len()],
             }),
             urls: unique,
@@ -198,6 +201,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
                     Class::Parameters => "protocol parameters",
                     Class::Discovery => "pool discovery",
                     Class::SolHop => "SOL hop discovery",
+                    Class::AggregatorAccounts => "aggregator accounts",
                 },
                 "read RPC rate limited; shared endpoint cooling down"
             );
@@ -384,6 +388,7 @@ fn parse_blockhash(id: u64, bytes: &[u8]) -> Result<Blockhash> {
 #[cfg(test)]
 mod tests;
 
+pub(crate) mod aggregator_accounts;
 mod native_balances;
 mod quote_balance;
 pub(crate) use quote_balance::preparation_scan;

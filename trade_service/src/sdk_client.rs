@@ -1,15 +1,11 @@
 use anyhow::{anyhow, bail, Context};
-use sol_trade_sdk::common::{
-    fast_fn::get_associated_token_address_with_program_id_fast, spl_token, spl_token_2022,
-    TradeConfig,
-};
+use sol_trade_sdk::common::{spl_token, spl_token_2022, TradeConfig};
 use sol_trade_sdk::swqos::{
     AstralaneTransport, SwqosConfig, SwqosRegion, SwqosTransport, SwqosType,
 };
 use sol_trade_sdk::trading::core::params::MeteoraDammV2Params;
 use sol_trade_sdk::TradingClient;
 use solana_account_decoder::UiAccountEncoding;
-use solana_address_lookup_table_interface::{program as lookup_program, state::AddressLookupTable};
 use solana_client::rpc_config::{
     RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
 };
@@ -734,52 +730,43 @@ impl SdkTradeClient {
         .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))
     }
 
-    pub async fn aggregator_target_ata(&self, mint: &Pubkey) -> anyhow::Result<(Pubkey, Pubkey)> {
+    pub(crate) async fn aggregator_target_ata(
+        &self,
+        mint: &Pubkey,
+        read_rpc: &crate::adapters::rpc::read_runtime::SharedReadRuntime,
+    ) -> anyhow::Result<(Pubkey, Pubkey)> {
         let lane = self
             .lanes
             .iter()
             .find(|lane| lane.swqos_type == SwqosType::Default)
             .context("no default RPC lane available for aggregator preflight")?;
-        let account = tokio::time::timeout(
-            Duration::from_secs(5),
-            lane.client.get_rpc().get_account(mint),
+        crate::adapters::sdk::aggregator_accounts::target_ata(
+            read_rpc,
+            &lane.client.get_rpc().url(),
+            lane.client.get_rpc().commitment(),
+            self.wallet(),
+            *mint,
         )
         .await
-        .context("target mint RPC lookup timed out")?
-        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
-        if account.owner != spl_token::ID && account.owner != spl_token_2022::ID {
-            bail!("aggregator target mint is not owned by a supported token program");
-        }
-        let ata =
-            get_associated_token_address_with_program_id_fast(&self.wallet(), mint, &account.owner);
-        Ok((ata, account.owner))
     }
 
-    pub async fn resolve_aggregator_lookup_table(
+    pub(crate) async fn resolve_aggregator_lookup_table(
         &self,
         address: &Pubkey,
+        read_rpc: &crate::adapters::rpc::read_runtime::SharedReadRuntime,
     ) -> anyhow::Result<Vec<Pubkey>> {
         let lane = self
             .lanes
             .iter()
             .find(|lane| lane.swqos_type == SwqosType::Default)
             .context("no default RPC lane available for aggregator preflight")?;
-        let account = tokio::time::timeout(
-            Duration::from_secs(5),
-            lane.client.get_rpc().get_account(address),
+        crate::adapters::sdk::aggregator_accounts::lookup_table(
+            read_rpc,
+            &lane.client.get_rpc().url(),
+            lane.client.get_rpc().commitment(),
+            *address,
         )
         .await
-        .context("aggregator lookup table RPC timed out")?
-        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
-        if account.owner != lookup_program::id() {
-            bail!("aggregator lookup table has invalid owner");
-        }
-        let table = AddressLookupTable::deserialize(&account.data)
-            .map_err(|_| anyhow!("invalid aggregator lookup table data"))?;
-        if table.meta.deactivation_slot != u64::MAX {
-            bail!("aggregator lookup table is deactivating or deactivated");
-        }
-        Ok(table.addresses.into_owned())
     }
 
     pub async fn simulate_unsigned_aggregator_transaction(

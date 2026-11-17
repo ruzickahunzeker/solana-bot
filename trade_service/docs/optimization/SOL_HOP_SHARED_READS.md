@@ -1,8 +1,9 @@
 # SOL Hop Discovery Read Boundary
 
-Date: 2026-11-18, Asia/Shanghai. Continues NP-03 / TS-07/09. This batch is source
-wired and pending independent Rust CI. Parent cde04bd / Actions 44146511097 has
-complete suites each 1693; that evidence is not reused for these changes.
+Date: 2026-11-18, Asia/Shanghai. Continues NP-03 / TS-07/09. This batch passed
+independent source-only Rust CI and artifact audit; it is not deployed. Source
+17bc3be / Actions 44156380200 / artifact 14362832442 is the accepted identity.
+Parent cde04bd evidence is not reused for these changes.
 
 ## Ownership And Compatibility
 
@@ -72,6 +73,29 @@ artifact/source identity and retained named parent tests, not only totals.
 After the earlier local 2200 MiB resource failure, no local Cargo check/test link
 is retried. Formatting/Python/workflow/provenance checks are distinct evidence,
 not substitutes for the authorized source-only, loopback-only GitHub Actions.
+
+## Accepted Evidence
+
+Source `17bc3be30b386cf4f16b80c9f8fdc864dda43167`,
+[Actions 44156380200](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44156380200),
+first run terminal success; downloaded artifact `14362832442` independently
+audited. All 66 steps exit zero. Complete concurrent 1713 (194.93 seconds) and
+serial 1713 (355.03 seconds) have zero failures/ignored/filtered tests and identical
+raw name sets. All 1693 parent names remain, exactly the 20 source-defined hop
+tests are added. Focused scope 8 / real SDK and cache 10 / real HTTP 2 pass;
+parameter session 28, ordinary discovery 8/8/2 and earlier execution contracts
+also pass. Original/restored compiler checks and all 108 distinct raw diagnostic
+field spans pass, covering 35 selected types and the outside alias.
+
+Identity and manifest/lock/vendor-manifest hashes match. Before recording this
+acceptance, all 1084 snapshot files / 13,296,707 bytes and executable modes matched
+the working source. The real main/index and frozen history remain unchanged.
+One serial SDK child-stderr split is associated only with its exact old discovery
+test name, pinned fixture diagnostic and immediate standalone ok; two positive
+and seven negative audit-format regressions pass. Raw logs are not rewritten or
+names omitted. No local service Cargo retry, SDK change or production action.
+Do not rerun this terminal CI or start a separate documentation-only build;
+carry these acceptance records with the next source batch.
 
 ## Remaining Gates
 

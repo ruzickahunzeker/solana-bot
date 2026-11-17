@@ -29,6 +29,7 @@ pub(crate) struct SdkOrdinarySolBuyBackend {
     wallets: Arc<WalletRegistry>,
     quotes: Arc<QuoteStore>,
     persistence: Arc<TradePersistence>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
     observation_reader:
         Option<Arc<crate::adapters::rpc::ordinary_observation::SingleShotStatusReader>>,
 }
@@ -38,11 +39,13 @@ impl SdkOrdinarySolBuyBackend {
         wallets: Arc<WalletRegistry>,
         quotes: Arc<QuoteStore>,
         persistence: Arc<TradePersistence>,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
     ) -> Self {
         Self {
             wallets,
             quotes,
             persistence,
+            read_rpc,
             observation_reader: None,
         }
     }
@@ -60,6 +63,7 @@ struct ResolvedSolBuyWallet {
     client: Arc<SdkTradeClient>,
     quotes: Arc<QuoteStore>,
     persistence: Arc<TradePersistence>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
     observation_reader:
         Option<Arc<crate::adapters::rpc::ordinary_observation::SingleShotStatusReader>>,
 }
@@ -72,6 +76,7 @@ impl OrdinarySolBuyBackend for SdkOrdinarySolBuyBackend {
                 client,
                 quotes: self.quotes.clone(),
                 persistence: self.persistence.clone(),
+                read_rpc: self.read_rpc.clone(),
                 observation_reader: self.observation_reader.clone(),
             }) as Box<dyn OrdinarySolBuyWallet>
         })
@@ -112,6 +117,7 @@ impl OrdinarySolBuyWallet for ResolvedSolBuyWallet {
                         &crate::adapters::sdk::observed_quote::ObservedQuote::new(
                             &self.client,
                             reader,
+                            &self.read_rpc,
                         ),
                         execution,
                         owner,
@@ -121,7 +127,7 @@ impl OrdinarySolBuyWallet for ResolvedSolBuyWallet {
                 return Ok(ordinary_submission::execute(
                     &journal,
                     self,
-                    &SdkQuoteSubmission(&self.client),
+                    &SdkQuoteSubmission(&self.client, &self.read_rpc),
                     execution,
                     owner,
                 )
@@ -170,7 +176,12 @@ impl OrdinarySolBuyPipeline for ResolvedSolBuyWallet {
         bound: &BoundQuote,
         request: &QuoteSubmissionCommand,
     ) -> anyhow::Result<QuoteSubmissionResult> {
-        legacy_quote_submission::execute(&SdkQuoteSubmission(&self.client), bound, request).await
+        legacy_quote_submission::execute(
+            &SdkQuoteSubmission(&self.client, &self.read_rpc),
+            bound,
+            request,
+        )
+        .await
     }
 }
 
@@ -181,14 +192,18 @@ mod tests {
     #[tokio::test]
     async fn construction_and_absent_wallet_lookup_keep_existing_registry_and_quote_store() {
         let state = crate::http_contract_tests::state().await;
+        let read_rpc =
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
         let backend = SdkOrdinarySolBuyBackend::new(
             state.wallets.clone(),
             state.aggregator_quotes.clone(),
             state.persistence.clone(),
+            read_rpc.clone(),
         );
         assert!(Arc::ptr_eq(&backend.wallets, &state.wallets));
         assert!(Arc::ptr_eq(&backend.quotes, &state.aggregator_quotes));
         assert!(Arc::ptr_eq(&backend.persistence, &state.persistence));
+        assert!(Arc::ptr_eq(&backend.read_rpc, &read_rpc));
         assert!(backend.resolve("fixture-wallet").is_none());
         assert!(backend.resolve("missing").is_none());
         assert_eq!(state.wallets.wallet_count(), 0);

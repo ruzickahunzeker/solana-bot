@@ -30,10 +30,23 @@
 
 ## 当前批次
 
-2026-11-18 两跳寻池新源码待独立 CI：20 项新增测试，要求保留父批 1693 全部名称，
-完整并发/串行预计各 1713、66 步骤和 108 个独立字段拒绝。原缓存/锁和政策不改，
-新增 scope 只读，无生产操作；不能套用下方 cde04bd 的 105 字段或已验收结果，
-见 `SOL_HOP_SHARED_READS.md`。本机触限后不重试大 Cargo。
+2026-11-18 聚合预检 Mint/ALT 读取新源码待独立 CI：16 项新增测试，要求父批 1713
+全部名称保留，完整并发/串行预计各 1729、69 步骤和原 108 独立字段拒绝通过。
+三条入口共用原 runtime，SDK 原政策及签名/发送不改；不复用下方父批的运行结论，
+不本地重试 Cargo，见 `AGGREGATOR_ACCOUNT_SHARED_READS.md`。
+
+2026-11-18 两跳寻池源码 `17bc3be30b386cf4f16b80c9f8fdc864dda43167` /
+[Actions 44156380200](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44156380200)
+首次运行终态 success；artifact `14362832442` 下载独立核对：全部 66 步骤 exit=0。
+完整并发 1713（194.93 秒）/串行 1713（355.03 秒），零失败/忽略/过滤，原始名称
+集合相同；父批 1693 全保留且恰增源码二十项。hop scope 8/SDK cache 10/真实 HTTP 2、
+参数 scope 28、原寻池 8/8/2 与原执行合同通过。35 类型/108 不同字段原始 compiler
+spans、原源码/恢复检查均通过；identity/manifest/lock/vendor manifest 匹配。验收
+记录更新前全树 1084 文件/13,296,707 字节及可执行模式与快照一致。旧串行 discovery
+子进程 stderr 仅按原名称/固定夹具诊断/紧随 ok 关联，两正/七负格式回归通过，
+未改原始日志或省略名称。原缓存/锁与政策、main/真实索引/冻结历史、SDK/依赖/迁移
+保持，无生产操作。本机触限后未重试大 Cargo；不重跑终态或另发文档 CI，记录随
+下一源码批归档。模拟/独立读取、SDK 内部资源和其余原门槛继续，见 `SOL_HOP_SHARED_READS.md`。
 
 普通寻池最终源码 `cde04bdc9236a7964ac735e01615c05631d3ccda` /
 [Actions 44146511097](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44146511097)
