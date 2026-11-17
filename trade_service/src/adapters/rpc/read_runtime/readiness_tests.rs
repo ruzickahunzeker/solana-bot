@@ -163,10 +163,13 @@ async fn readiness_shared_read_busy_fails_fast_while_other_reserved_profiles_sti
     hash.abort();
     assert!(ready.await.unwrap_err().is_cancelled());
     assert!(hash.await.unwrap_err().is_cancelled());
-    assert!(runtime
-        .slots
-        .iter()
-        .all(|slot| slot.available_permits() == 1));
+    assert_eq!(
+        runtime
+            .slots
+            .each_ref()
+            .map(|slot| slot.available_permits()),
+        [1, 1, 1, 1, 1, 1, 1, 2]
+    );
 }
 
 #[tokio::test]

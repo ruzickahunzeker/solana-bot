@@ -378,10 +378,13 @@ async fn native_balance_shared_read_busy_and_cancel_do_not_take_other_reserved_c
     task.abort();
     assert!(task.await.unwrap_err().is_cancelled());
     assert_eq!(runtime.budget.lock().unwrap().next_start[3], next_start);
-    assert!(runtime
-        .slots
-        .iter()
-        .all(|slot| slot.available_permits() == 1));
+    assert_eq!(
+        runtime
+            .slots
+            .each_ref()
+            .map(|slot| slot.available_permits()),
+        [1, 1, 1, 1, 1, 1, 1, 2]
+    );
     assert_eq!(runtime.transport.dropped.load(Ordering::SeqCst), 4);
 }
 

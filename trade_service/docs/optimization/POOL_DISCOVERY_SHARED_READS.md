@@ -77,6 +77,16 @@ After the prior 2200 MiB resource failure, do not repeat local Cargo checks or
 test linking; use the authorized source-only, network-isolated GitHub Actions.
 Audit raw names, compiler spans and artifact/source identity before acceptance.
 
+First snapshot 7495079 / Actions 44142801934 / artifact 14356861217 passed its
+type check, 105-field compiler gate and all focused steps, including the 18 new
+names. Full concurrent execution was 1690 passed / 3 failed; serial did not run.
+The three old readiness/native/quote cancellation fixtures assumed every runtime
+class had exactly one slot. Discovery explicitly adds two. The correction checks
+the exact eight-class vector [1,1,1,1,1,1,1,2], retaining every old release/start/
+drop assertion. Production budgets and cancellation code are unchanged. This is
+not a relaxation to nonzero permits. Do not rerun that terminal failure; the
+corrected snapshot requires its own complete concurrent/serial acceptance.
+
 ## Boundaries And Remaining Work
 
 No API/DTO, amount units, wallet selection, request/hash/JSON, claim, journal,

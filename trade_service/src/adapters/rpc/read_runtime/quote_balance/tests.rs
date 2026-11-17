@@ -501,10 +501,13 @@ async fn quote_balance_shared_read_busy_cancel_and_other_four_reservations_are_i
     task.abort();
     assert!(task.await.unwrap_err().is_cancelled());
     assert_eq!(runtime.budget.lock().unwrap().next_start[4], next);
-    assert!(runtime
-        .slots
-        .iter()
-        .all(|slot| slot.available_permits() == 1));
+    assert_eq!(
+        runtime
+            .slots
+            .each_ref()
+            .map(|slot| slot.available_permits()),
+        [1, 1, 1, 1, 1, 1, 1, 2]
+    );
     assert_eq!(methods(&runtime).len(), 6);
     assert_eq!(runtime.transport.dropped.load(Ordering::SeqCst), 6);
 }
