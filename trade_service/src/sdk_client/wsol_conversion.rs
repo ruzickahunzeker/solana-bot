@@ -5,6 +5,7 @@ use crate::application::wsol_failure::WsolFailure;
 use crate::application::wsol_submission_types::{WsolDirection as Direction, WsolQuoteSnapshot};
 mod authorization;
 mod instructions;
+pub(crate) mod preparation;
 #[cfg(test)]
 pub(crate) mod queries;
 use anyhow::{bail, Context, Result};
@@ -12,11 +13,13 @@ use solana_client::{
     nonblocking::rpc_client::RpcClient, rpc_response::RpcSimulateTransactionResult,
 };
 use solana_commitment_config::CommitmentConfig;
+#[cfg(test)]
 use solana_program_pack::Pack;
 use solana_sdk::signature::{Keypair, Signer};
 use solana_sdk::{
     message::Message, pubkey::Pubkey, signature::Signature, transaction::Transaction,
 };
+#[cfg(test)]
 use spl_associated_token_account_interface::address::get_associated_token_address_with_program_id;
 
 pub(crate) fn quote_message(
@@ -134,6 +137,7 @@ fn unsigned_wsol_simulation_config(
     }
 }
 
+#[cfg(test)]
 pub(crate) async fn prepare_unsigned_wsol_transaction(
     owner: Pubkey,
     rpc: &RpcClient,

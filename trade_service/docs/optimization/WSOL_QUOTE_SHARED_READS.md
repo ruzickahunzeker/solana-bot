@@ -122,9 +122,11 @@ stays 6.0.2; manifests/lock/vendor/migrations/release, production configuration,
 wallets/databases and running services are untouched. No real RPC/trade and
 no new Live permission. New PumpAPI integration stays paused.
 
-The subsequent original NP-03 status entry is now implemented, pending its own
-independent CI: see WSOL_STATUS_SHARED_READS.md. Its shared reader removes
+The subsequent original NP-03 status entry is now independently accepted in
+ec608c0 / Actions 44188954352 / artifact 14377382655: complete concurrent/serial
+each 1783, parent 1769 retained, exactly fourteen added, all 123 fields/78 steps
+pass. See WSOL_STATUS_SHARED_READS.md. Its shared reader removes
 execution-RPC ownership while preserving the single original signature/history
 and strict finality/error/slot/outcome policy; ordinary parsing is not an
 interchangeable replacement. Status journal/finality CAS is deliberately unchanged.
-This quote batch's accepted run is not evidence for the subsequent status source.
+This quote batch's accepted run was not reused as evidence for the status source.

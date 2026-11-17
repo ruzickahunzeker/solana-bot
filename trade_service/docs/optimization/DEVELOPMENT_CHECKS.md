@@ -114,6 +114,19 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The WSOL status batch is independently accepted: ec608c0 / Actions 44188954352 /
+artifact 14377382655, complete concurrent/serial each 1783 (244.35/447.74 seconds),
+all 1769 parent names retained and exactly fourteen added. Shared/oracle 11 /
+real HTTP 3 / complete status contract 59 and all 78 steps pass. Original/restored
+checks and all 123 distinct raw field spans verify 40 selected types plus outside
+alias, including the concrete WsolSignatureReader. Python policy 12 / workflow 7
+and SDK provenance pass. Original RpcClient oracle, six old test bodies, strict
+parser and exact request witness are checked; all 1110 snapshot blobs/modes
+(13,509,839 bytes) and manifest/lock/vendor-manifest hashes match. Main/index/frozen
+history remain unchanged. No local service Cargo retry, production action, terminal
+CI rerun or documentation-only CI. See WSOL_STATUS_SHARED_READS.md for remaining
+WSOL preparation/simulation, Quote reconciliation and original rollout gates.
+
 The WSOL quote batch is independently accepted: c196d1b / Actions 44182843252 /
 artifact 14374676338, complete concurrent/serial each 1769 (200.75/379.92 seconds),
 all 1749 parent names retained and exactly 20 added. Scope 10 / SDK oracle policy
@@ -216,7 +229,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 39 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 40 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

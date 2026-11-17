@@ -1,8 +1,9 @@
 # WSOL Status Read Boundary
 
 Date: 2026-11-18, Asia/Shanghai. Continues the original NP-03 / TS-07/09 queue,
-not a new task or completion denominator. Source implemented; independent Rust
-CI is pending. Accepted parent is c196d1b, not evidence for this batch.
+not a new task or completion denominator. Source and independent offline Rust CI
+accepted, not deployed: ec608c0 / Actions 44188954352 / artifact 14377382655.
+Parent c196d1b evidence is not reused for this batch.
 
 ## Ownership And Compatibility
 
@@ -69,7 +70,42 @@ name sets and diagnostic spans before marking this batch accepted. No local
 service Cargo retry after the recorded 2200 MiB failure. CI remains source-only,
 offline with loopback, without wallets, runtime databases or real RPC.
 
+## Accepted Evidence
+
+Source `ec608c08db09981eee27c5b15727e6d660aee6a8`,
+[Actions 44188954352](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44188954352),
+first run terminal success in 25m23s. Downloaded artifact `14377382655` independently
+audited: all 78 steps exit zero; full concurrent 1783 (244.35 seconds) and serial
+1783 (447.74 seconds), zero failed/ignored/filtered tests and identical raw name
+sets. All 1769 parent names remain and exactly the fourteen source-defined names
+are added. Shared/oracle 11, real HTTP 3 and complete status contract 59 pass;
+all earlier focused regressions also pass. Original/restored compiler checks
+and all 123 distinct raw field spans pass on this source, including the new
+concrete reader and outside alias. Python policy 12 / workflow 7 and SDK
+provenance pass; identity and manifest/lock/vendor-manifest hashes match.
+
+Before recording acceptance, all 1110 snapshot blobs/modes (13,509,839 bytes)
+match the local source. The original RpcClient lookup body is byte-identical
+except test-only rpc field visibility; six original test bodies are byte-identical.
+The production strict parser matches after whitespace and the sole bound-signature
+reference substitution. Original quote estimator/instruction blobs remain as
+recorded in WSOL_QUOTE_SHARED_READS.md. Original result fields, exact request
+witness without normalization and eight-case HTTP/journal finality matrix execute
+in the accepted run. The old serial discovery child-stderr split is associated
+only with its exact test/pinned fixture/immediate ok; two positive/seven negative
+audit-format regressions pass. Raw logs are not rewritten or names omitted.
+
+Main/index/frozen history, SDK/manifests/lock/vendor/migrations remain unchanged.
+No local service Cargo retry, release/deployment, production configuration or
+wallet/database access, real RPC or trades. Do not rerun terminal CI or start
+documentation-only CI; carry acceptance records with the next actual source batch.
+
 ## Remaining Original Gates
+
+The subsequent original WSOL preparation-read entry is now implemented, pending
+its own independent CI; see WSOL_PREPARATION_SHARED_READS.md. Its actual wallet
+path reuses the existing five-step class and retains original authorization and
+temporary-signer ownership. This status batch's acceptance does not cover it.
 
 WSOL unsigned preparation/simulation/sign/submission read resources, standalone
 Quote reconciliation status, DAMM/SDK-internal or opaque reads/tasks, provider-wide

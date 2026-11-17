@@ -11,9 +11,7 @@ use crate::{
     },
     domain::trade::Address,
     sdk_client::{
-        wsol_conversion::{
-            prepare_unsigned_wsol_transaction, SignedWsolTransaction, UnsignedWsolTransaction,
-        },
+        wsol_conversion::{preparation, SignedWsolTransaction, UnsignedWsolTransaction},
         SdkTradeClient,
     },
     wallet_repository::WalletRepository,
@@ -23,18 +21,25 @@ use crate::{
 pub(crate) struct SdkWsolRuntime {
     wallets: Arc<WalletRegistry>,
     repository: Arc<WalletRepository>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 impl SdkWsolRuntime {
-    pub(crate) fn new(wallets: Arc<WalletRegistry>, repository: Arc<WalletRepository>) -> Self {
+    pub(crate) fn new(
+        wallets: Arc<WalletRegistry>,
+        repository: Arc<WalletRepository>,
+        read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
+    ) -> Self {
         Self {
             wallets,
             repository,
+            read_rpc,
         }
     }
 }
 
 pub(crate) struct WsolWallet {
     client: Arc<SdkTradeClient>,
+    read_rpc: Arc<crate::adapters::rpc::read_runtime::SharedReadRuntime>,
 }
 pub(crate) struct PreparedWsol {
     unsigned: UnsignedWsolTransaction,
@@ -58,7 +63,10 @@ impl WsolRuntime for SdkWsolRuntime {
         crate::adapters::persistence::wsol_wallet_metadata::load(&self.repository, id).await
     }
     fn resolve(&self, id: &str) -> Option<Self::Wallet> {
-        self.wallets.get(id).map(|client| WsolWallet { client })
+        self.wallets.get(id).map(|client| WsolWallet {
+            client,
+            read_rpc: self.read_rpc.clone(),
+        })
     }
 }
 impl WsolExecutionWallet for WsolWallet {
@@ -74,7 +82,14 @@ impl WsolExecutionWallet for WsolWallet {
             .into_iter()
             .next()
             .context("wallet has no RPC")?;
-        let unsigned = prepare_unsigned_wsol_transaction(self.client.wallet(), &rpc, quote).await?;
+        let unsigned = preparation::prepare(
+            self.client.wallet(),
+            &self.read_rpc,
+            &rpc.url(),
+            rpc.commitment(),
+            quote,
+        )
+        .await?;
         Ok(PreparedWsol { unsigned, rpc })
     }
     async fn simulate_unsigned(
@@ -114,9 +129,12 @@ mod tests {
     async fn wsol_runtime_reuses_original_registry_and_metadata_without_loading_wallets() {
         let h = crate::application::sol_transfers::test_support::harness().await;
         let state = crate::http_contract_tests::state().await;
-        let runtime = SdkWsolRuntime::new(state.wallets.clone(), h.repo.clone());
+        let read_rpc =
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
+        let runtime = SdkWsolRuntime::new(state.wallets.clone(), h.repo.clone(), read_rpc.clone());
         assert!(Arc::ptr_eq(&runtime.wallets, &state.wallets));
         assert!(Arc::ptr_eq(&runtime.repository, &h.repo));
+        assert!(Arc::ptr_eq(&runtime.read_rpc, &read_rpc));
         let metadata = runtime.metadata("source").await.unwrap();
         assert_eq!(metadata.wallet_id, "source");
         assert_eq!(metadata.pubkey, Address::from_bytes([1; 32]).to_string());
@@ -124,5 +142,32 @@ mod tests {
         assert!(runtime.resolve("source").is_none());
         assert!(runtime.metadata("missing").await.is_err());
         assert_eq!(state.wallets.wallet_count(), 0);
+    }
+
+    #[tokio::test]
+    async fn wsol_preparation_ownership_reuses_original_runtime_and_releases_with_wallet_registry()
+    {
+        let state = crate::http_contract_tests::state().await;
+        let read_rpc =
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
+        let read_weak = Arc::downgrade(&read_rpc);
+        let wallets = Arc::downgrade(&state.wallets);
+        let repository = Arc::downgrade(&state.wallet_repository);
+        let config = Arc::downgrade(&state.config);
+        let runtime = SdkWsolRuntime::new(
+            state.wallets.clone(),
+            state.wallet_repository.clone(),
+            read_rpc.clone(),
+        );
+        assert!(Arc::ptr_eq(&runtime.read_rpc, &read_rpc));
+        drop((state, read_rpc));
+        assert!(config.upgrade().is_none());
+        assert!(read_weak.upgrade().is_some());
+        assert!(wallets.upgrade().is_some());
+        assert!(repository.upgrade().is_some());
+        drop(runtime);
+        assert!(read_weak.upgrade().is_none());
+        assert!(wallets.upgrade().is_none());
+        assert!(repository.upgrade().is_none());
     }
 }

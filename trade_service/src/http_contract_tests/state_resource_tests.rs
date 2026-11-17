@@ -16,17 +16,23 @@ async fn state_resource_services_retain_original_arcs_without_fixture_handles_an
 ) {
     let mut state = state().await;
     let store = Arc::new(ConversionStore::new("sqlite::memory:").await.unwrap());
+    let read_rpc =
+        Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
     state.wsol_queries = Arc::new(WsolQueryService::new(
         SdkWsolQuerySource::new(
             state.wallets.clone(),
             state.wallet_repository.clone(),
-            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap()),
+            read_rpc.clone(),
         ),
         Some(SqliteWsolJournal::new(store.clone())),
         SdkAddressParser,
     ));
     state.wsol_submissions = Arc::new(WsolSubmissionService::new(
-        SdkWsolRuntime::new(state.wallets.clone(), state.wallet_repository.clone()),
+        SdkWsolRuntime::new(
+            state.wallets.clone(),
+            state.wallet_repository.clone(),
+            read_rpc.clone(),
+        ),
         Some(SqliteWsolJournal::new(store.clone())),
     ));
     state.conversions = Some(store.clone());
@@ -34,6 +40,8 @@ async fn state_resource_services_retain_original_arcs_without_fixture_handles_an
     let repository = Arc::downgrade(&state.wallet_repository);
     let quotes = Arc::downgrade(&state.aggregator_quotes);
     let conversions = Arc::downgrade(&store);
+    let reads = Arc::downgrade(&read_rpc);
+    drop(read_rpc);
     drop(store);
 
     let (replacement_repository, pool) =
@@ -50,6 +58,7 @@ async fn state_resource_services_retain_original_arcs_without_fixture_handles_an
     assert!(repository.upgrade().is_some());
     assert!(quotes.upgrade().is_some());
     assert!(conversions.upgrade().is_some());
+    assert!(reads.upgrade().is_some());
     let app = http::router(state);
     assert_eq!(
         json_body(
@@ -71,6 +80,7 @@ async fn state_resource_services_retain_original_arcs_without_fixture_handles_an
     assert!(repository.upgrade().is_none());
     assert!(quotes.upgrade().is_none());
     assert!(conversions.upgrade().is_none());
+    assert!(reads.upgrade().is_none());
     pool.close().await;
 }
 

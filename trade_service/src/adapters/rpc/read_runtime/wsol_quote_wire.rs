@@ -3,7 +3,12 @@ use crate::{
     adapters::{rpc::wsol_quote_reads::tests::Fixture, sdk::wsol_quote},
     application::{wsol_queries::WsolQuoteEstimate, wsol_submission_types::WsolDirection},
 };
-fn reply(f: &Fixture, method: Option<&'static str>, failure: Reply, normal: Reply) -> Reply {
+pub(super) fn reply(
+    f: &Fixture,
+    method: Option<&'static str>,
+    failure: Reply,
+    normal: Reply,
+) -> Reply {
     Reply::WsolQuote {
         values: [
             "getBalance",

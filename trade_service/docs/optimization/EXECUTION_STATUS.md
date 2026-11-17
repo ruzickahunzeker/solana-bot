@@ -6,11 +6,26 @@
 
 ## 当前任务
 
-- 续原 NP-03 WSOL 签名状态读取：源码已接原 SharedReadRuntime/Observation 配额和
-  单签名 history 请求；移除生产 reader 的执行 RpcClient，保留原严格 parser 与
-  首 Default lane/错误顺序。原六项 oracle 和 HTTP 终态矩阵保留，新增十四项及
-  40 类型/123 字段门禁待本批独立 CI，不套用下方父批 1769 证据。状态账本/CAS、
-  签名广播和生产环境不动，见 [WSOL 状态读取边界](WSOL_STATUS_SHARED_READS.md)。
+- 续原 NP-03 WSOL 准备读取：源码已通过原 execution wallet 接原 runtime 和既有
+  五步 scope，每次准备重新查余额/ATA/租金/hash/fee，不复用报价时证据；保留原
+  校验顺序、授权、部分解包临时 signer 和后续签名发送。复用原十二类/配额，
+  不增 client/cache/worker。十六项新增、42 类型/129 字段及 81 步骤待独立 CI，
+  不套用父批通过记录。准备包装仍持 RPC 供后续模拟发送，不能声称已完全迁移；
+  见 [WSOL 准备读取边界](WSOL_PREPARATION_SHARED_READS.md)。
+- 原 NP-03 WSOL 签名状态读取本批已独立源码/离线验收：生产 reader 不再持执行
+  RpcClient，共用原 runtime/Observation 配额，保留首 Default lane/错误顺序、
+  单签名 history 和严格 finality/error/slot parser。`ec608c08db09981eee27c5b15727e6d660aee6a8` /
+  [Actions 44188954352](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44188954352)
+  首次终态 success；artifact `14377382655` 下载独立核对：完整并发 1783
+  （244.35 秒）/串行 1783（447.74 秒），零失败/忽略/过滤且原始名称相同；
+  父批 1769 全保留且恰增十四项。shared/oracle 11/真实 HTTP 3/status 合同 59、
+  原全部专项和 78 步骤通过；40 类型/123 原始字段拒绝、原源码/恢复成功。
+  旧 RpcClient oracle/六项旧测试/严格 parser、零归一化请求与结果见证和 HTTP
+  终态矩阵已核对；全树 1110 文件/13,509,839 字节及模式、identity/依赖哈希一致。
+  原 main/索引/冻结历史/SDK/迁移保持；未改状态账本/CAS 或签名广播，不本地
+  Cargo 重试、不做生产操作、不重跑终态或另发文档 CI。后续续原 WSOL 准备/
+  模拟读取、独立 Quote 状态、SDK 内部资源及其余原门槛，不新增任务或分母，见
+  [WSOL 状态读取边界](WSOL_STATUS_SHARED_READS.md)。
 - 原 NP-03/TS-07/09 WSOL 只读报价已完成本批源码/离线验收：原首 RPC 的 URL/commitment 投影给 SDK
   estimator 和借用五步 scope，共用原 runtime；余额/ATA/租金/hash/fee 顺序及
   Token/native/金额/租金/退款/错误政策保留，原 estimator 仅测试保留、原构建器

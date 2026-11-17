@@ -44,6 +44,8 @@
     {"id": "aggregator_simulation_plan", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::UnsignedAggregatorSimulation", "probe": "crate::adapters::rpc::aggregator_simulation::UnsignedAggregatorSimulation"},
     {"id": "aggregator_simulation_session", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "probe": "crate::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "static_lifetime": true},
     {"id": "message", "path": "solana_sdk::message::Message"},
+    {"id": "wsol_unsigned", "path": "pump_trade_service::sdk_client::wsol_conversion::UnsignedWsolTransaction", "probe": "crate::sdk_client::wsol_conversion::UnsignedWsolTransaction"},
+    {"id": "wsol_prepared", "path": "pump_trade_service::adapters::sdk::wsol_conversion::PreparedWsol", "probe": "crate::adapters::sdk::wsol_conversion::PreparedWsol"},
     {"id": "wsol_status_reader", "path": "pump_trade_service::adapters::rpc::wsol_status::WsolSignatureReader", "probe": "crate::adapters::rpc::wsol_status::WsolSignatureReader"},
     {"id": "wsol_quote_session", "path": "pump_trade_service::adapters::rpc::wsol_quote_reads::WsolQuoteReadSession", "probe": "crate::adapters::rpc::wsol_quote_reads::WsolQuoteReadSession", "static_lifetime": true}
   ]

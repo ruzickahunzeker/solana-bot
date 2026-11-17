@@ -30,10 +30,23 @@
 
 ## 当前批次
 
-续原 WSOL 签名状态读取源码等待本批独立 CI：预期完整并发/串行各 1783，
-父批 1769 全保留、恰增十四项，40 类型/123 字段及 78 步骤。原状态矩阵与
-请求 witness、共享 Observation 争用/冷却/取消及真实 HTTP 验收见
-`WSOL_STATUS_SHARED_READS.md`，不能套用下方父批通过记录。
+续原 WSOL 准备读取源码待独立 CI：预期完整并发/串行各 1799，父批 1783 全保留、
+恰增十六项；42 类型/129 字段及 81 步骤。实际准备入口/原授权/消息/请求 witness、
+逐阶段取消/故障和真实 HTTP 验收见 `WSOL_PREPARATION_SHARED_READS.md`；不能用下方
+父批通过记录替代本批，不本地重试 Cargo，不触及生产配置、钱包或数据库。
+
+续原 WSOL 签名状态读取源码 `ec608c08db09981eee27c5b15727e6d660aee6a8` /
+[Actions 44188954352](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44188954352)
+首次运行 success（25m23s）；下载 artifact `14377382655` 独立核验：完整并发
+1783（244.35 秒）/串行 1783（447.74 秒），零失败/忽略/过滤，原始名称相同，
+父批 1769 全保留且恰增十四项；shared/oracle 11/真实 HTTP 3/status 合同 59、
+原全部专项及 78 步骤通过。40 类型/123 原始字段拒绝和原源码/恢复成功；Python
+policy 十二项、workflow 七项和 SDK provenance 通过。全树 1110 文件/13,509,839
+字节及模式与源码快照一致，identity/manifest/lock/vendor manifest 匹配，旧
+RpcClient oracle/六项测试/严格 parser 与请求见证已核对。旧串行 stderr 精确关联
+及两正七负格式回归通过，不改日志或省略名称。不重跑终态或另发文档 CI，不本地
+Cargo 重试、不做生产操作；状态账本/CAS 和签名广播保持，见
+`WSOL_STATUS_SHARED_READS.md`。未使用下方父批通过记录代替本批验收。
 
 2026-11-18 WSOL 只读报价最终源码 `c196d1b6f1ec3124e141114441e855c18dc70f4b` /
 [Actions 44182843252](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44182843252)

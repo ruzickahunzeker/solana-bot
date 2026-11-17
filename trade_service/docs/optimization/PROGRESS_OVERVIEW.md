@@ -6,9 +6,17 @@
 
 ## 统计口径
 
-- 当前续原 NP-03 WSOL 状态读取已实现共享 runtime/原 Observation 配额和严格
-  parser，新增十四项测试及 123 字段门禁待独立 CI；父批通过不代表本批通过。
-  不重复立项或增加分母，不涉及签名提交/状态 CAS 改动，见 `WSOL_STATUS_SHARED_READS.md`。
+- 当前续原 NP-03 WSOL 准备读取：真实准备入口已接原共享 runtime/五步会话和
+  原配额，每次重查而非复用报价证据；原授权/金额/临时 signer/签名发送保持。
+  十六项新增和 129 字段门禁待独立 CI，不套用父批、不新增任务或分母，见
+  `WSOL_PREPARATION_SHARED_READS.md`。后续模拟/发送的执行 RPC 所有权仍保留。
+- 原 NP-03 WSOL 状态读取已由 `ec608c0` / Actions `44188954352` / artifact
+  `14377382655` 独立验收：共享原 runtime/Observation 配额和严格 parser，原
+  首 lane/错误顺序/单签名 history 保持。完整并发 1783（244.35 秒）/串行 1783
+  （447.74 秒），父批 1769 名称全保留且恰增十四项；shared/oracle 11/真实 HTTP 3/
+  status 合同 59、123 字段与全部 78 步骤通过，原始 spans/名称/源码身份/全树及
+  原 oracle 已核对。不重复立项或增加分母，不重跑终态或另发文档 CI，未部署或
+  改签名提交/状态 CAS。WSOL 准备/模拟与其他原门槛继续，见 `WSOL_STATUS_SHARED_READS.md`。
 - 原 NP-03 WSOL 只读报价已由 `c196d1b` / Actions `44182843252` /
   artifact `14374676338` 独立验收：原 runtime 的五步借用 scope 接原首 RPC metadata，
   保留原金额/native/fee/rent/refund/错误顺序，原 estimator/构建器字节未改；20 新

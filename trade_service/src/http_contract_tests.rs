@@ -267,7 +267,7 @@ pub(crate) async fn state() -> AppState {
             crate::adapters::sdk::wsol_queries::SdkWsolQuerySource::new(
                 wallets.clone(),
                 wallet_repository.clone(),
-                read_rpc,
+                read_rpc.clone(),
             ),
             None::<crate::adapters::persistence::wsol_conversion::SqliteWsolJournal>,
             crate::adapters::sdk::address_parser::SdkAddressParser,
@@ -277,6 +277,7 @@ pub(crate) async fn state() -> AppState {
                 crate::adapters::sdk::wsol_conversion::SdkWsolRuntime::new(
                     wallets.clone(),
                     wallet_repository.clone(),
+                    read_rpc,
                 ),
                 None::<crate::adapters::persistence::wsol_conversion::SqliteWsolJournal>,
             ),
