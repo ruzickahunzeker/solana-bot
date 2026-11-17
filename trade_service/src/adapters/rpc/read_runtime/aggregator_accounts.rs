@@ -108,6 +108,10 @@ fn decode(id: u64, body: &[u8]) -> Result<Account> {
     let ui = result
         .value
         .ok_or_else(|| invalid("aggregator account is missing"))?;
+    checked_account(ui)
+}
+
+pub(in crate::adapters::rpc) fn checked_account(ui: UiAccount) -> Result<Account> {
     ensure!(
         ui.owner.len() <= 44,
         invalid("aggregator account owner is invalid")

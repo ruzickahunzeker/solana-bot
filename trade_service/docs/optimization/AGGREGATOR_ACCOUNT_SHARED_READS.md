@@ -1,9 +1,9 @@
 # Aggregator Account Read Boundary
 
 Date: 2026-11-18, Asia/Shanghai. Continues existing NP-03 / TS-07/09; not a new
-protocol, router backend or execution authority. Source wired, independent Rust
-CI pending. The accepted 17bc3be parent has 1713 tests; it is not evidence for
-these new changes.
+protocol, router backend or execution authority. Source and independent offline
+Rust CI accepted, not deployed. Accepted identity is 10c5b4b / Actions 44164727015 /
+artifact 14366377330; the 17bc3be parent evidence is not reused for these changes.
 
 ## Ownership And Compatibility
 
@@ -76,8 +76,32 @@ failure: ten preliminary checks pass, type check rejects UiAccount::decode
 because the pinned version has no such method. No Rust tests/boundary gate ran.
 The correction uses the established Base64/owner/size checks and maps the original
 Account fields, with extra space/owner-length negatives; no SDK/dependency change
-or relaxed policy. The corrected source needs its own run; do not restart this
-terminal failure or borrow parent evidence.
+or relaxed policy. The corrected source is independently accepted below; do not
+restart this terminal failure or borrow parent evidence.
+
+## Accepted Evidence
+
+Source `10c5b4b0f8cd8ba04c03d088850e0806e2c35f18`,
+[Actions 44164727015](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44164727015),
+first run for this corrected source terminal success; downloaded artifact
+`14366377330` independently audited. All 69 steps exit zero. Complete concurrent
+1729 (212.62 seconds) and serial 1729 (387.94 seconds) have zero failed/ignored/
+filtered tests and identical raw name sets. All 1713 parent names remain, exactly
+the 16 source-defined tests above are added. Runtime 8 / SDK policy 5 / real HTTP
+3 pass; earlier parameter session 28, ordinary discovery 8/8/2, hop 8/10/2,
+presence and execution regressions also pass. Original/restored compiler checks
+and all 108 distinct raw diagnostic field spans pass on this source, not just
+the accepted parent.
+
+Identity and manifest/lock/vendor-manifest hashes match. Before updating these
+acceptance records, all 1090 snapshot files / 13,341,064 bytes and executable
+modes matched the working source. Real main/index, frozen history, SDK/vendor,
+manifests/lock and migrations remain unchanged. The exact old serial discovery
+child-stderr split is associated with its pinned test/fixture/immediate ok only;
+two positive/seven negative parser cases pass. Raw logs are not rewritten and
+no test name is omitted. No local service Cargo retry or production action.
+Do not rerun either terminal CI or trigger documentation-only CI; carry these
+records with the next source batch.
 
 ## Remaining Gates
 

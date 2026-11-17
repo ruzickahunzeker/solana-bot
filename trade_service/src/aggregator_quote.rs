@@ -428,6 +428,7 @@ pub(crate) async fn prepare_transaction(
             &target_ata,
             &token_program,
             &resolved_keys,
+            read_rpc,
         )
         .await?;
     if let Some(delta) = simulation.target_token_delta_units {

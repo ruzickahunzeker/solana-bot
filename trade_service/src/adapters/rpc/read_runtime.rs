@@ -28,6 +28,7 @@ enum Class {
     Discovery,
     SolHop,
     AggregatorAccounts,
+    AggregatorSimulation,
 }
 impl Class {
     fn index(self) -> usize {
@@ -42,6 +43,7 @@ impl Class {
             Self::Discovery => 7,
             Self::SolHop => 8,
             Self::AggregatorAccounts => 9,
+            Self::AggregatorSimulation => 10,
         }
     }
     fn interval(self) -> Duration {
@@ -56,12 +58,13 @@ impl Class {
             Self::Discovery => Duration::from_millis(100),
             Self::SolHop => Duration::from_millis(100),
             Self::AggregatorAccounts => Duration::from_millis(100),
+            Self::AggregatorSimulation => Duration::from_millis(100),
         }
     }
 }
 
 struct Budget {
-    next_start: [Instant; 10],
+    next_start: [Instant; 11],
     cooldowns: Vec<Option<Instant>>,
 }
 
@@ -70,7 +73,7 @@ pub(crate) struct SharedReadRuntime<T = ReqwestReadTransport> {
     urls: Vec<String>,
     endpoints: Vec<Option<Url>>,
     transport: T,
-    slots: [Arc<Semaphore>; 10],
+    slots: [Arc<Semaphore>; 11],
     budget: Mutex<Budget>,
     hash_id: AtomicU64,
 }
@@ -110,7 +113,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         }
         Self {
             budget: Mutex::new(Budget {
-                next_start: [Instant::now(); 10],
+                next_start: [Instant::now(); 11],
                 cooldowns: vec![None; unique.len()],
             }),
             urls: unique,
@@ -202,6 +205,7 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
                     Class::Discovery => "pool discovery",
                     Class::SolHop => "SOL hop discovery",
                     Class::AggregatorAccounts => "aggregator accounts",
+                    Class::AggregatorSimulation => "aggregator simulation",
                 },
                 "read RPC rate limited; shared endpoint cooling down"
             );
@@ -389,6 +393,7 @@ fn parse_blockhash(id: u64, bytes: &[u8]) -> Result<Blockhash> {
 mod tests;
 
 pub(crate) mod aggregator_accounts;
+mod aggregator_simulation;
 mod native_balances;
 mod quote_balance;
 pub(crate) use quote_balance::preparation_scan;

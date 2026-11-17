@@ -206,11 +206,13 @@ memory -> shadow（完成对账）-> durable + ENABLE_SIMULATE=true（完成验�
 
 ## 参数说明
 
-聚合预检的 Mint/ATA 与 ALT 读取已接原共享 runtime/HTTP/冷却，三条入口共用同一资源；保留原 Token 程序、ATA 和 ALT 政策。16 项新测试待本批独立 CI，不代表模拟读取也已迁移或已部署。见 [聚合账户读取边界](docs/optimization/AGGREGATOR_ACCOUNT_SHARED_READS.md)。
+聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策；二十项新测试及 114 字段门禁待本批独立 CI，不代表已经部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
+
+聚合预检的 Mint/ATA 与 ALT 读取已接原共享 runtime/HTTP/冷却，三条入口共用同一资源；保留原 Token 程序、ATA 和 ALT 政策。`10c5b4b` / Actions `44164727015` 独立验收完整并发/串行各 1729，新增 16、108 字段及全部 69 步骤通过；不代表后继模拟读取也已验收或已部署。见 [聚合账户读取边界](docs/optimization/AGGREGATOR_ACCOUNT_SHARED_READS.md)。
 
 既有 WSOL/Quote CPMM 两跳寻池新增专用只读 scope，共用原 runtime/HTTP/冷却，保留原缓存与 TTL；五秒总期限、单在途/100 ms、最多 32 次请求。`17bc3be` / Actions `44156380200` 独立验收完整并发/串行各 1713，新增 20、108 字段及全部 66 步骤通过；不代表 SOL 路线已实网验收或部署。见 [两跳读取边界](docs/optimization/SOL_HOP_SHARED_READS.md)。
 
-普通寻池算法已接只读 SDK adapter 和原共享 runtime 的两分支/100 ms 专用预算，保留原 Default/Helius 顺序及每节点三秒期限；Pump/DBC 分支故障独立，DBC 扫描只开放固定布局。`cde04bd` / Actions `44146511097` 独立验收完整并发/串行各 1693，新增 18、105 字段及 63 步骤通过；两跳等其他读取仍待收口，尚未部署。见 [寻池读取边界](docs/optimization/POOL_DISCOVERY_SHARED_READS.md)。
+普通寻池算法已接只读 SDK adapter 和原共享 runtime 的两分支/100 ms 专用预算，保留原 Default/Helius 顺序及每节点三秒期限；Pump/DBC 分支故障独立，DBC 扫描只开放固定布局。`cde04bd` / Actions `44146511097` 独立验收完整并发/串行各 1693，新增 18、105 字段及 63 步骤通过；两跳已由上方后继批次独立验收，模拟等其他读取仍待收口，尚未部署。见 [寻池读取边界](docs/optimization/POOL_DISCOVERY_SHARED_READS.md)。
 
 `RPC_URL`
 

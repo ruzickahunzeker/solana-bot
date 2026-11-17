@@ -168,7 +168,7 @@ async fn readiness_shared_read_busy_fails_fast_while_other_reserved_profiles_sti
             .slots
             .each_ref()
             .map(|slot| slot.available_permits()),
-        [1, 1, 1, 1, 1, 1, 1, 2, 1, 1]
+        [1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1]
     );
 }
 

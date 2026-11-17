@@ -114,12 +114,27 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
-The aggregator mint/ALT batch is source wired and pending its own source-only CI:
-retain all 1713 parent names and add exactly 16 (expected 1729), three focused
-steps and 69 total; rerun the same 35-type/108-field boundary on this source.
-Do not inherit the acceptance below, retry local service Cargo after the recorded
-2200 MiB failure or deploy. Original request/SDK policy and resource contracts
-are described in AGGREGATOR_ACCOUNT_SHARED_READS.md.
+The aggregator baseline/simulation batch is source wired, not Rust-accepted yet.
+Its owned unsigned plan and borrowed read session add two selected concrete types:
+37 types / 114 scoped fields including outside alias. The fixed static_lifetime
+probe flag permits only true and emits the literal 'static, never supplied Rust;
+two additional Python regressions (12 total) cover it and injection rejection.
+Expected full suites retain all 1729 names and add exactly 20 (1749), 72 steps.
+Do not reuse the accepted 108-field run below or retry local service Cargo after
+the resource failure. See AGGREGATOR_SIMULATION_SHARED_READS.md.
+
+The aggregator mint/ALT batch is independently accepted: 10c5b4b / Actions
+44164727015 / artifact 14366377330 passes complete concurrent/serial suites each
+1729 (212.62/387.94 seconds), all 1713 parent names retained and exactly 16 added.
+Runtime 8 / SDK policy 5 / real HTTP 3, all 69 steps and original/restored checks
+pass; raw diagnostic spans independently verify the same 35-type/108-field gate
+on this source. All 1090 snapshot blobs/modes (13,341,064 bytes) and manifest/lock/
+vendor-manifest hashes match; main/index/frozen history remain unchanged. The
+first source 43a17e0 failed type checking because pinned UiAccount has no decode
+method; original Base64/owner/size mapping and negatives fix it without dependency
+changes. Do not rerun either terminal CI, trigger documentation-only CI, retry
+local service Cargo after the 2200 MiB failure or deploy. See
+AGGREGATOR_ACCOUNT_SHARED_READS.md for scope and remaining simulation/other gates.
 
 The SOL-hop read batch adds SolHopReadSession: 35 selected types / 108 fields
 including outside alias. Source 17bc3be / Actions 44156380200 / artifact 14362832442

@@ -21,6 +21,12 @@ fn response(id: u64) -> Value {
 }
 #[derive(Clone)]
 pub(crate) enum Reply {
+    AggregatorSimulation {
+        baseline: Box<Reply>,
+        simulation: Box<Reply>,
+        baseline_value: Value,
+        simulation_value: Value,
+    },
     Parameters {
         accounts: std::collections::HashMap<String, Value>,
         epoch: Option<u64>,
@@ -192,6 +198,16 @@ async fn serve(
     let payload = read_request(&mut stream).await;
     let id = payload["id"].as_u64().unwrap();
     let (reply, parameter_value) = match reply {
+        Reply::AggregatorSimulation {
+            baseline,
+            simulation,
+            baseline_value,
+            simulation_value,
+        } => match payload["method"].as_str() {
+            Some("getMultipleAccounts") => (*baseline, Some(baseline_value)),
+            Some("simulateTransaction") => (*simulation, Some(simulation_value)),
+            _ => (Reply::Success, None),
+        },
         Reply::Parameters {
             accounts,
             epoch,
@@ -302,7 +318,23 @@ async fn serve(
         other => other,
     };
     if parameter_value.is_some() {
-        if payload["method"] == "getEpochInfo" || payload["method"] == "getTokenAccountBalance" {
+        if payload["method"] == "simulateTransaction" {
+            assert_eq!(payload["params"][1]["sigVerify"], false);
+            assert_eq!(payload["params"][1]["replaceRecentBlockhash"], false);
+            assert_eq!(payload["params"][1]["innerInstructions"], true);
+            assert_eq!(payload["params"][1]["commitment"], "processed");
+            assert_eq!(payload["params"][1]["encoding"], "base64");
+            assert_eq!(
+                payload["params"][1]["accounts"]["addresses"]
+                    .as_array()
+                    .unwrap()
+                    .len(),
+                2
+            );
+            assert!(payload["params"][1]["minContextSlot"].as_u64().unwrap() > 0);
+        } else if payload["method"] == "getEpochInfo"
+            || payload["method"] == "getTokenAccountBalance"
+        {
             let config_index = if payload["method"] == "getEpochInfo" {
                 0
             } else {

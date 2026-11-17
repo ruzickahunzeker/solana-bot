@@ -30,16 +30,30 @@
 
 ## 当前批次
 
-2026-11-18 聚合预检 Mint/ALT 读取新源码待独立 CI：16 项新增测试，要求父批 1713
-全部名称保留，完整并发/串行预计各 1729、69 步骤和原 108 独立字段拒绝通过。
-三条入口共用原 runtime，SDK 原政策及签名/发送不改；不复用下方父批的运行结论，
-不本地重试 Cargo，见 `AGGREGATOR_ACCOUNT_SHARED_READS.md`。
+2026-11-18 聚合模拟/余额基线新源码待独立 CI：保留原 1729 名称并新增二十项，预计
+完整各 1749、72 步骤。新增零签名计划/借用会话进入原类型门禁，37 类型/114 字段
+及固定 static lifetime 元数据/拒绝注入须由本源码验证，不套用父批。旧纯检查函数
+和旧测试模块已独立核对未改，不本地重试 Cargo、不做生产操作，见
+`AGGREGATOR_SIMULATION_SHARED_READS.md`。
+
+2026-11-18 聚合预检 Mint/ALT 最终源码 `10c5b4b0f8cd8ba04c03d088850e0806e2c35f18` /
+[Actions 44164727015](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44164727015)
+首次运行终态 success；artifact `14366377330` 下载独立核对：全部 69 步骤 exit=0。
+完整并发 1729（212.62 秒）/串行 1729（387.94 秒），零失败/忽略/过滤、原始名称
+集合相同，父批 1713 全保留且恰增源码十六项。runtime 8/SDK policy 5/真实 HTTP 3、
+原参数 28/寻池 8/8/2/hop 8/10/2 与执行回归通过。35 类型/108 不同字段原始 spans、
+原源码/恢复检查通过；identity/manifest/lock/vendor manifest 匹配。记录前全树 1090
+文件/13,341,064 字节及可执行模式与快照一致；旧串行诊断仅按原名称/固定夹具/紧随
+ok 关联，两正/七负格式回归通过，不改日志或省略名称。三条入口共用原 runtime，
+SDK 原政策和签名/发送不改，真实 main/索引/冻结历史/依赖/迁移保持。本机触限后未
+重试 Cargo；不部署、不重跑终态或另发文档 CI，记录随下一源码批归档。模拟/独立
+读取、SDK 内部资源和其余原门槛继续，见 `AGGREGATOR_ACCOUNT_SHARED_READS.md`。
 
 首轮 `43a17e0` / Actions `44163177413` 已终态失败，artifact `14365660021` 下载核对：
 十项前置检查通过，类型检查发现锁定版本 UiAccount 无 decode 方法；Rust 用例、108
 字段门禁及完整回归尚未运行。修正为按已有边界的 Base64/owner/size 校验组装原
-Account，不升级依赖或放宽政策，补空间/owner 长度负例；新源码另发原分支验证，
-不重跑该终态任务、不复用父批结果。
+Account，不升级依赖或放宽政策，补空间/owner 长度负例；修正源码已在上方 10c5b4b
+独立验收，不重跑该终态任务、不复用父批结果。
 
 2026-11-18 两跳寻池源码 `17bc3be30b386cf4f16b80c9f8fdc864dda43167` /
 [Actions 44156380200](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44156380200)

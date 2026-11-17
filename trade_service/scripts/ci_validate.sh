@@ -99,6 +99,9 @@ PY
         step aggregator-account-runtime cargo test --locked --offline aggregator_account_read_ -- --test-threads=2
         step aggregator-account-loaders cargo test --locked --offline aggregator_account_loader_ -- --test-threads=2
         step aggregator-account-wire cargo test --locked --offline aggregator_account_wire_ -- --test-threads=2
+        step aggregator-sim-runtime cargo test --locked --offline aggregator_sim_read_ -- --test-threads=2
+        step aggregator-sim-loaders cargo test --locked --offline aggregator_sim_loader_ -- --test-threads=2
+        step aggregator-sim-wire cargo test --locked --offline aggregator_sim_wire_ -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

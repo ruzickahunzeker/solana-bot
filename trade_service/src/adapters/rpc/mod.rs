@@ -1,3 +1,4 @@
+pub(crate) mod aggregator_simulation;
 pub(crate) mod blockhash;
 pub(crate) mod damm_sell_simulation;
 pub(crate) mod discovery_reads;

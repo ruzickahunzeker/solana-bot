@@ -10,6 +10,8 @@ const DONE: &str = "SHARED_READ_WIRE_DONE";
 
 #[path = "aggregator_account_wire.rs"]
 mod aggregator_account_wire;
+#[path = "aggregator_simulation_wire.rs"]
+mod aggregator_simulation_wire;
 #[path = "parameter_wire.rs"]
 mod parameter_wire;
 #[path = "preparation_wire.rs"]
@@ -767,6 +769,9 @@ async fn shared_read_wire_child() {
             "aggregator-account-success" => aggregator_account_wire::success().await,
             "aggregator-account-errors" => aggregator_account_wire::errors().await,
             "aggregator-account-timeout-cancel" => aggregator_account_wire::timeout_cancel().await,
+            "aggregator-sim-success" => aggregator_simulation_wire::success().await,
+            "aggregator-sim-errors" => aggregator_simulation_wire::errors().await,
+            "aggregator-sim-timeout-cancel" => aggregator_simulation_wire::timeout_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -957,4 +962,17 @@ fn aggregator_account_wire_bad_identity_body_redirect_and_rate_never_retry() {
 #[test]
 fn aggregator_account_wire_timeout_and_cancel_preserve_hash_capacity() {
     run("aggregator-account-timeout-cancel");
+}
+
+#[test]
+fn aggregator_sim_wire_unsigned_sdk_sequence_uses_fixed_transport_and_both_body_limits() {
+    run("aggregator-sim-success");
+}
+#[test]
+fn aggregator_sim_wire_bad_responses_limits_redirect_and_429_never_retry_either_stage() {
+    run("aggregator-sim-errors");
+}
+#[test]
+fn aggregator_sim_wire_deadlines_and_cancel_preserve_other_profile_capacity() {
+    run("aggregator-sim-timeout-cancel");
 }

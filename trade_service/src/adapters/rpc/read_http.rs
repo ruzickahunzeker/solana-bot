@@ -33,6 +33,11 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    AggregatorSimulation {
+        id: u64,
+        plan: super::aggregator_simulation::UnsignedAggregatorSimulation,
+        minimum_slot: Option<u64>,
+    },
     AggregatorAccount {
         id: u64,
         account: crate::domain::trade::Address,
@@ -85,6 +90,14 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::AggregatorSimulation {
+                id,
+                plan,
+                minimum_slot,
+            } => match minimum_slot {
+                Some(slot) => plan.simulation_body(*id, *slot),
+                None => plan.baseline_body(*id),
+            },
             Self::AggregatorAccount {
                 id,
                 account,
@@ -127,6 +140,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::AggregatorSimulation { .. } => "aggregator simulation",
             Self::AggregatorAccount { .. } => "aggregator account",
             Self::Parameters { .. } => "protocol parameters",
             Self::SignatureStatus { .. } => "observation",
@@ -144,7 +158,10 @@ impl ReadRequest {
         if let Self::Parameters { query, .. } = self {
             return query.max_body();
         }
-        if matches!(self, Self::TokenAccounts { .. }) {
+        if matches!(
+            self,
+            Self::TokenAccounts { .. } | Self::AggregatorSimulation { .. }
+        ) {
             MAX_TOKEN_BODY
         } else {
             MAX_BODY

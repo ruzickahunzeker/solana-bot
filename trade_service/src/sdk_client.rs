@@ -1,30 +1,21 @@
 use anyhow::{anyhow, bail, Context};
-use sol_trade_sdk::common::{spl_token, spl_token_2022, TradeConfig};
+use sol_trade_sdk::common::TradeConfig;
+#[cfg(test)]
+use sol_trade_sdk::common::{spl_token, spl_token_2022};
 use sol_trade_sdk::swqos::{
     AstralaneTransport, SwqosConfig, SwqosRegion, SwqosTransport, SwqosType,
 };
 use sol_trade_sdk::trading::core::params::MeteoraDammV2Params;
 use sol_trade_sdk::TradingClient;
-use solana_account_decoder::UiAccountEncoding;
-use solana_client::rpc_config::{
-    RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig,
-};
 use solana_commitment_config::CommitmentConfig;
-use solana_program_pack::Pack;
 use solana_sdk::hash::Hash;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{Keypair, Signature, Signer};
 use solana_sdk::transaction::VersionedTransaction;
-use solana_transaction_status_client_types::UiTransactionEncoding;
-use solana_transaction_status_client_types::{
-    UiInnerInstructions, UiInstruction, UiParsedInstruction,
-};
-use spl_token_2022_interface::{
-    extension::StateWithExtensions, instruction::TokenInstruction as Token2022Instruction,
-    state::Account as Token2022Account,
-};
-use spl_token_interface::{instruction::TokenInstruction, state::Account as TokenAccount};
+#[cfg(test)]
+use solana_transaction_status_client_types::{UiInnerInstructions, UiInstruction};
 use std::collections::HashMap;
+#[cfg(test)]
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -100,349 +91,10 @@ pub use crate::adapters::sdk::trade_command::ExecuteTrade;
 
 pub use crate::application::trade_execution::TradeExecutionResult as ExecuteResult;
 
-pub struct AggregatorSimulation {
-    pub ok: bool,
-    pub fee_lamports: Option<u64>,
-    pub units_consumed: Option<u64>,
-    pub payer_debit_lamports: Option<u64>,
-    pub inner_instruction_groups: Option<usize>,
-    pub target_token_delta_units: Option<u64>,
-    pub target_token_post_units: Option<u64>,
-    pub baseline_slot: u64,
-    pub simulation_slot: u64,
-    pub observed_same_slot_payer_debit_lamports: Option<u64>,
-    pub observed_same_slot_target_token_delta_units: Option<u64>,
-    pub inner_instruction_count: Option<usize>,
-    pub inner_programs: Option<Vec<String>>,
-    pub inner_payer_system_spend_lamports: Option<u64>,
-}
-
-pub(crate) fn check_target_token_instruction(
-    program: &Pubkey,
-    data: &[u8],
-    accounts: &[Pubkey],
-    target_ata: &Pubkey,
-) -> anyhow::Result<()> {
-    if accounts.first() != Some(target_ata) {
-        return Ok(());
-    }
-    let initialization = if *program == spl_token::ID {
-        matches!(
-            TokenInstruction::unpack(data).context("invalid SPL target ATA instruction")?,
-            TokenInstruction::InitializeAccount
-                | TokenInstruction::InitializeAccount2 { .. }
-                | TokenInstruction::InitializeAccount3 { .. }
-                | TokenInstruction::InitializeImmutableOwner
-        )
-    } else if *program == spl_token_2022::ID {
-        matches!(
-            Token2022Instruction::unpack(data)
-                .context("invalid Token-2022 target ATA instruction")?,
-            Token2022Instruction::InitializeAccount
-                | Token2022Instruction::InitializeAccount2 { .. }
-                | Token2022Instruction::InitializeAccount3 { .. }
-                | Token2022Instruction::InitializeImmutableOwner
-        )
-    } else {
-        return Ok(());
-    };
-    if !initialization {
-        bail!("token instruction attempts to modify target ATA beyond initialization");
-    }
-    Ok(())
-}
-
-fn check_inner_target_token_instructions(
-    groups: &[UiInnerInstructions],
-    keys: &[Pubkey],
-    target_ata: &Pubkey,
-) -> anyhow::Result<()> {
-    for group in groups {
-        for instruction in &group.instructions {
-            match instruction {
-                UiInstruction::Compiled(ix) => {
-                    let program = keys
-                        .get(usize::from(ix.program_id_index))
-                        .context("invalid inner token program index")?;
-                    let accounts = ix
-                        .accounts
-                        .iter()
-                        .map(|index| {
-                            keys.get(usize::from(*index))
-                                .copied()
-                                .context("invalid inner token account index")
-                        })
-                        .collect::<anyhow::Result<Vec<_>>>()?;
-                    if *program == spl_token::ID || *program == spl_token_2022::ID {
-                        let data = bs58::decode(&ix.data)
-                            .into_vec()
-                            .context("invalid inner token instruction data")?;
-                        check_target_token_instruction(program, &data, &accounts, target_ata)?;
-                    }
-                }
-                UiInstruction::Parsed(UiParsedInstruction::PartiallyDecoded(ix)) => {
-                    let program =
-                        Pubkey::from_str(&ix.program_id).context("invalid inner token program")?;
-                    if program == spl_token::ID || program == spl_token_2022::ID {
-                        let accounts = ix
-                            .accounts
-                            .iter()
-                            .map(|address| {
-                                Pubkey::from_str(address).context("invalid inner token account")
-                            })
-                            .collect::<anyhow::Result<Vec<_>>>()?;
-                        let data = bs58::decode(&ix.data)
-                            .into_vec()
-                            .context("invalid inner token instruction data")?;
-                        check_target_token_instruction(&program, &data, &accounts, target_ata)?;
-                    }
-                }
-                UiInstruction::Parsed(UiParsedInstruction::Parsed(ix)) => {
-                    let program =
-                        Pubkey::from_str(&ix.program_id).context("invalid inner token program")?;
-                    let target = target_ata.to_string();
-                    let target_is_source_or_account =
-                        ["/info/source", "/info/account"].iter().any(|path| {
-                            ix.parsed.pointer(path).and_then(|value| value.as_str())
-                                == Some(target.as_str())
-                        });
-                    if (program == spl_token::ID || program == spl_token_2022::ID)
-                        && target_is_source_or_account
-                        && !matches!(
-                            ix.parsed.get("type").and_then(|value| value.as_str()),
-                            Some(
-                                "initializeAccount"
-                                    | "initializeAccount2"
-                                    | "initializeAccount3"
-                                    | "initializeImmutableOwner"
-                            )
-                        )
-                    {
-                        bail!("parsed token instruction references target ATA unexpectedly");
-                    }
-                }
-            }
-        }
-    }
-    Ok(())
-}
-
-fn decoded_system_transfer_amount(data: &[u8], accounts: &[Pubkey], payer: &Pubkey) -> Option<u64> {
-    if data.len() != 12 || data[..4] != [2, 0, 0, 0] || accounts.len() != 2 {
-        return None;
-    }
-    if accounts[0] != *payer {
-        return Some(0);
-    }
-    Some(u64::from_le_bytes(data[4..12].try_into().ok()?))
-}
-
-fn inner_payer_system_spend(
-    groups: &[UiInnerInstructions],
-    keys: &[Pubkey],
-    payer: &Pubkey,
-) -> anyhow::Result<Option<u64>> {
-    let system_program = Pubkey::default().to_string();
-    let mut total = 0u64;
-    for group in groups {
-        for instruction in &group.instructions {
-            let amount = match instruction {
-                UiInstruction::Compiled(ix)
-                    if keys.get(usize::from(ix.program_id_index)) == Some(&Pubkey::default()) =>
-                {
-                    let accounts = ix
-                        .accounts
-                        .iter()
-                        .map(|index| {
-                            keys.get(usize::from(*index))
-                                .copied()
-                                .context("invalid inner System account")
-                        })
-                        .collect::<anyhow::Result<Vec<_>>>()?;
-                    bs58::decode(&ix.data)
-                        .into_vec()
-                        .ok()
-                        .and_then(|data| decoded_system_transfer_amount(&data, &accounts, payer))
-                }
-                UiInstruction::Parsed(UiParsedInstruction::PartiallyDecoded(ix))
-                    if ix.program_id == system_program =>
-                {
-                    let accounts = ix
-                        .accounts
-                        .iter()
-                        .map(|address| {
-                            Pubkey::from_str(address).context("invalid inner System account")
-                        })
-                        .collect::<anyhow::Result<Vec<_>>>()?;
-                    bs58::decode(&ix.data)
-                        .into_vec()
-                        .ok()
-                        .and_then(|data| decoded_system_transfer_amount(&data, &accounts, payer))
-                }
-                UiInstruction::Parsed(UiParsedInstruction::Parsed(ix))
-                    if ix.program_id == system_program =>
-                {
-                    if ix.parsed.get("type").and_then(|value| value.as_str()) != Some("transfer") {
-                        None
-                    } else {
-                        match ix
-                            .parsed
-                            .pointer("/info/source")
-                            .and_then(|value| value.as_str())
-                        {
-                            Some(source) if source == payer.to_string() => ix
-                                .parsed
-                                .pointer("/info/lamports")
-                                .and_then(|value| value.as_u64()),
-                            Some(_) => Some(0),
-                            None => None,
-                        }
-                    }
-                }
-                _ => continue,
-            };
-            let Some(amount) = amount else {
-                return Ok(None);
-            };
-            total = total
-                .checked_add(amount)
-                .context("inner System transfer total overflow")?;
-        }
-    }
-    Ok(Some(total))
-}
-
-fn audit_inner_instruction_inventory(
-    groups: &[UiInnerInstructions],
-    keys: &[Pubkey],
-    outer_count: usize,
-) -> anyhow::Result<(usize, Vec<String>)> {
-    let mut count = 0usize;
-    let mut programs = Vec::new();
-    for group in groups {
-        if usize::from(group.index) >= outer_count {
-            bail!("simulated inner instruction group has invalid outer index");
-        }
-        for instruction in &group.instructions {
-            count += 1;
-            if count > 128 {
-                bail!("simulated transaction has too many inner instructions");
-            }
-            let program = match instruction {
-                UiInstruction::Compiled(ix) => {
-                    for index in &ix.accounts {
-                        if usize::from(*index) >= keys.len() {
-                            bail!("simulated inner instruction has invalid account index");
-                        }
-                    }
-                    *keys
-                        .get(usize::from(ix.program_id_index))
-                        .context("simulated inner instruction has invalid program index")?
-                }
-                UiInstruction::Parsed(UiParsedInstruction::Parsed(ix)) => {
-                    Pubkey::from_str(&ix.program_id)
-                        .context("invalid simulated inner program ID")?
-                }
-                UiInstruction::Parsed(UiParsedInstruction::PartiallyDecoded(ix)) => {
-                    for address in &ix.accounts {
-                        let key =
-                            Pubkey::from_str(address).context("invalid simulated inner account")?;
-                        if !keys.contains(&key) {
-                            bail!("simulated inner account is not in transaction message");
-                        }
-                    }
-                    Pubkey::from_str(&ix.program_id)
-                        .context("invalid simulated inner program ID")?
-                }
-            };
-            if !keys.contains(&program) {
-                bail!("simulated inner program is not in transaction message");
-            }
-            let program = program.to_string();
-            if !programs.contains(&program) {
-                programs.push(program);
-            }
-        }
-    }
-    Ok((count, programs))
-}
-
-fn same_slot_deltas(
-    baseline_slot: u64,
-    simulation_slot: u64,
-    payer_before: u64,
-    payer_after: Option<u64>,
-    token_before: u64,
-    token_after: Option<u64>,
-) -> (Option<u64>, Option<u64>) {
-    if baseline_slot != simulation_slot {
-        return (None, None);
-    }
-    (
-        payer_after.and_then(|after| payer_before.checked_sub(after)),
-        token_after.and_then(|after| after.checked_sub(token_before)),
-    )
-}
-
-fn target_account_amount_from_data(
-    account_owner: &Pubkey,
-    data: &[u8],
-    token_program: &Pubkey,
-    mint: &Pubkey,
-    wallet: &Pubkey,
-) -> anyhow::Result<u64> {
-    if account_owner != token_program {
-        bail!("target ATA has unexpected token program");
-    }
-    let (account_mint, account_wallet, amount) = if *token_program == spl_token::ID {
-        let account = TokenAccount::unpack(data).context("invalid SPL target ATA")?;
-        (account.mint, account.owner, account.amount)
-    } else if *token_program == spl_token_2022::ID {
-        let account = StateWithExtensions::<Token2022Account>::unpack(data)
-            .context("invalid Token-2022 target ATA")?;
-        (account.base.mint, account.base.owner, account.base.amount)
-    } else {
-        bail!("unsupported target ATA token program");
-    };
-    if account_mint.as_ref() != mint.as_ref() || account_wallet.as_ref() != wallet.as_ref() {
-        bail!("target ATA has unexpected mint or wallet owner");
-    }
-    Ok(amount)
-}
-
-fn simulated_target_account_amount(
-    account: &solana_account_decoder::UiAccount,
-    token_program: &Pubkey,
-    mint: &Pubkey,
-    wallet: &Pubkey,
-) -> anyhow::Result<u64> {
-    let owner = Pubkey::from_str(&account.owner).context("invalid simulated ATA program owner")?;
-    let data = account
-        .data
-        .decode()
-        .context("simulated target ATA has no binary data")?;
-    target_account_amount_from_data(&owner, &data, token_program, mint, wallet)
-}
-
-fn target_token_amount(
-    balances: &[solana_transaction_status_client_types::UiTransactionTokenBalance],
-    account_index: u8,
-    mint: &Pubkey,
-) -> Option<u64> {
-    let mut matching = balances.iter().filter(|balance| {
-        balance.account_index == account_index && balance.mint == mint.to_string()
-    });
-    let amount = matching
-        .next()?
-        .ui_token_amount
-        .amount
-        .parse::<u64>()
-        .ok()?;
-    if matching.next().is_some() {
-        return None;
-    }
-    Some(amount)
-}
+pub(crate) use crate::adapters::sdk::aggregator_simulation::audit::check_target_token_instruction;
+#[cfg(test)]
+use crate::adapters::sdk::aggregator_simulation::audit::*;
+pub use crate::adapters::sdk::aggregator_simulation::AggregatorSimulation;
 
 #[cfg(test)]
 mod aggregator_simulation_tests {
@@ -769,7 +421,7 @@ impl SdkTradeClient {
         .await
     }
 
-    pub async fn simulate_unsigned_aggregator_transaction(
+    pub(crate) async fn simulate_unsigned_aggregator_transaction(
         &self,
         transaction: &VersionedTransaction,
         target_account_index: u8,
@@ -777,157 +429,25 @@ impl SdkTradeClient {
         target_ata: &Pubkey,
         target_token_program: &Pubkey,
         resolved_keys: &[Pubkey],
+        read_rpc: &crate::adapters::rpc::read_runtime::SharedReadRuntime,
     ) -> anyhow::Result<AggregatorSimulation> {
         let lane = self
             .lanes
             .iter()
             .find(|lane| lane.swqos_type == SwqosType::Default)
             .context("no default RPC lane available for aggregator preflight")?;
-        let baseline = tokio::time::timeout(
-            Duration::from_secs(5),
-            lane.client.get_rpc().get_multiple_accounts_with_commitment(
-                &[self.wallet(), *target_ata],
-                CommitmentConfig {
-                    commitment: solana_commitment_config::CommitmentLevel::Processed,
-                },
-            ),
+        crate::adapters::sdk::aggregator_simulation::simulate(
+            read_rpc,
+            &lane.client.get_rpc().url(),
+            self.wallet(),
+            transaction,
+            target_account_index,
+            *target_mint,
+            *target_ata,
+            *target_token_program,
+            resolved_keys,
         )
         .await
-        .context("aggregator balance baseline timed out")?
-        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
-        let baseline_payer = baseline
-            .value
-            .first()
-            .and_then(Option::as_ref)
-            .context("aggregator payer account is missing from baseline")?;
-        let baseline_token_amount = baseline
-            .value
-            .get(1)
-            .and_then(Option::as_ref)
-            .map(|account| {
-                target_account_amount_from_data(
-                    &account.owner,
-                    &account.data,
-                    target_token_program,
-                    target_mint,
-                    &self.wallet(),
-                )
-            })
-            .transpose()?
-            .unwrap_or(0);
-        let result = tokio::time::timeout(
-            Duration::from_secs(5),
-            lane.client.get_rpc().simulate_transaction_with_config(
-                transaction,
-                RpcSimulateTransactionConfig {
-                    sig_verify: false,
-                    replace_recent_blockhash: false,
-                    commitment: Some(CommitmentConfig {
-                        commitment: solana_commitment_config::CommitmentLevel::Processed,
-                    }),
-                    encoding: Some(UiTransactionEncoding::Base64),
-                    accounts: Some(RpcSimulateTransactionAccountsConfig {
-                        encoding: Some(UiAccountEncoding::Base64),
-                        addresses: vec![self.wallet().to_string(), target_ata.to_string()],
-                    }),
-                    min_context_slot: Some(baseline.context.slot),
-                    inner_instructions: true,
-                },
-            ),
-        )
-        .await
-        .context("local aggregator simulation timed out")?
-        .map_err(|error| anyhow::anyhow!("{}", redact_urls(&error.to_string())))?;
-        let simulation_slot = result.context.slot;
-        let value = result.value;
-        let inner_inventory = value
-            .inner_instructions
-            .as_ref()
-            .map(|groups| {
-                audit_inner_instruction_inventory(
-                    groups,
-                    resolved_keys,
-                    transaction.message.instructions().len(),
-                )
-            })
-            .transpose()?;
-        if let Some(groups) = value.inner_instructions.as_ref() {
-            check_inner_target_token_instructions(groups, resolved_keys, target_ata)?;
-        }
-        let inner_payer_system_spend_lamports = value
-            .inner_instructions
-            .as_ref()
-            .map(|groups| inner_payer_system_spend(groups, resolved_keys, &self.wallet()))
-            .transpose()?
-            .flatten();
-        let payer_debit_lamports = value
-            .pre_balances
-            .as_ref()
-            .and_then(|balances| balances.first())
-            .zip(
-                value
-                    .post_balances
-                    .as_ref()
-                    .and_then(|balances| balances.first()),
-            )
-            .and_then(|(before, after)| before.checked_sub(*after));
-        let target_token_delta_units = value
-            .pre_token_balances
-            .as_ref()
-            .and_then(|balances| target_token_amount(balances, target_account_index, target_mint))
-            .zip(value.post_token_balances.as_ref().and_then(|balances| {
-                target_token_amount(balances, target_account_index, target_mint)
-            }))
-            .and_then(|(before, after)| after.checked_sub(before));
-        let payer_post_lamports = value
-            .accounts
-            .as_ref()
-            .and_then(|accounts| accounts.first())
-            .and_then(Option::as_ref)
-            .map(|account| account.lamports);
-        let target_token_post_units = value
-            .accounts
-            .as_ref()
-            .and_then(|accounts| accounts.get(1))
-            .and_then(Option::as_ref)
-            .map(|account| {
-                simulated_target_account_amount(
-                    account,
-                    target_token_program,
-                    target_mint,
-                    &self.wallet(),
-                )
-            })
-            .transpose()?;
-        let (same_slot_payer_debit, same_slot_token_delta) = same_slot_deltas(
-            baseline.context.slot,
-            simulation_slot,
-            baseline_payer.lamports,
-            payer_post_lamports,
-            baseline_token_amount,
-            target_token_post_units,
-        );
-        if let (Some(post), Some(delta)) = (target_token_post_units, target_token_delta_units) {
-            if post < delta {
-                bail!("simulated target ATA balance is inconsistent with token delta");
-            }
-        }
-        Ok(AggregatorSimulation {
-            ok: value.err.is_none(),
-            fee_lamports: value.fee,
-            units_consumed: value.units_consumed,
-            payer_debit_lamports,
-            inner_instruction_groups: value.inner_instructions.as_ref().map(Vec::len),
-            target_token_delta_units,
-            target_token_post_units,
-            baseline_slot: baseline.context.slot,
-            simulation_slot,
-            observed_same_slot_payer_debit_lamports: same_slot_payer_debit,
-            observed_same_slot_target_token_delta_units: same_slot_token_delta,
-            inner_instruction_count: inner_inventory.as_ref().map(|inventory| inventory.0),
-            inner_programs: inner_inventory.map(|inventory| inventory.1),
-            inner_payer_system_spend_lamports,
-        })
     }
 
     pub(crate) async fn resolve_stonkfun_sol_hop(

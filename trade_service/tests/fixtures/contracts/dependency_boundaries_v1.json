@@ -40,6 +40,8 @@
     {"id": "damm_buy_signed", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuySignedCandidate", "probe": "crate::adapters::sdk::damm_probe::DammBuySignedCandidate"},
     {"id": "parameter_session", "path": "pump_trade_service::adapters::rpc::parameter_reads::ParameterReadSession", "probe": "crate::adapters::rpc::parameter_reads::ParameterReadSession"},
     {"id": "discovery_session", "path": "pump_trade_service::adapters::rpc::discovery_reads::DiscoveryReadSession", "probe": "crate::adapters::rpc::discovery_reads::DiscoveryReadSession"},
-    {"id": "sol_hop_session", "path": "pump_trade_service::adapters::rpc::sol_hop_reads::SolHopReadSession", "probe": "crate::adapters::rpc::sol_hop_reads::SolHopReadSession"}
+    {"id": "sol_hop_session", "path": "pump_trade_service::adapters::rpc::sol_hop_reads::SolHopReadSession", "probe": "crate::adapters::rpc::sol_hop_reads::SolHopReadSession"},
+    {"id": "aggregator_simulation_plan", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::UnsignedAggregatorSimulation", "probe": "crate::adapters::rpc::aggregator_simulation::UnsignedAggregatorSimulation"},
+    {"id": "aggregator_simulation_session", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "probe": "crate::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "static_lifetime": true}
   ]
 }

@@ -31,8 +31,10 @@ def read_policy(path=POLICY):
         seen.add(module["name"])
     seen = set()
     for item in types:
-        if not {"id", "path"} <= set(item) <= {"id", "path", "probe"}:
+        if not {"id", "path"} <= set(item) <= {"id", "path", "probe", "static_lifetime"}:
             raise ValueError("Unknown type entry")
+        if "static_lifetime" in item and item["static_lifetime"] is not True:
+            raise ValueError("Only a fixed static-lifetime probe is permitted")
         if not re.fullmatch(r"[a-z][a-z_0-9]*", item["id"]) or item["id"] in seen:
             raise ValueError("Invalid or duplicate type id")
         seen.add(item["id"])
@@ -69,6 +71,8 @@ def probe_source(original, policy):
     prefix_lines = len(original.decode("utf-8").splitlines())
     for item in policy["forbidden_types"]:
         path = "HiddenSdkClient" if item["id"] == "sdk_client" else item.get("probe", item["path"])
+        if item.get("static_lifetime"):
+            path += "<'static>"
         lines.append(f'        pub {item["id"]}: Option<{path}>,')
         expected[item["id"]] = prefix_lines + len(lines)
     lines += ["    }", "}"]

@@ -6,16 +6,32 @@
 
 ## 当前任务
 
-- 当前续原 NP-03/TS-07/09 聚合预检账户读取：Mint/ATA 与 ALT 的原校验提到 SDK
+- 当前续原 NP-03/TS-07/09 聚合模拟和余额基线：根 SDK 仅投影原 runtime/Default URL/
+  钱包公钥，SDK adapter 保留先验基线/Token 校验后模拟的顺序及原报告/CPI/同 slot
+  差额政策。固定零签名 packet、pair/loaded keys 和基线 slot，一次性借用会话复用
+  原 HTTP/冷却与第十一类预算，不新增 client/cache/signer/worker。二十项新用例、
+  预计完整 1749/72 步骤/37 类型114字段待本批独立 CI，不套用父批。旧纯检查函数
+  规范字节与旧测试模块逐字核对保持，不本地重试 Cargo；剩余独立读取/SDK 内部
+  资源和原门槛继续，见 [聚合模拟读取边界](AGGREGATOR_SIMULATION_SHARED_READS.md)。
+- 原 NP-03/TS-07/09 聚合预检账户读取已完成本批源码/离线验收：Mint/ATA 与 ALT 的原校验提到 SDK
   adapter，三条实际入口（独立预检/Quote 提交/普通聚合买入含 observed）共用原
   bootstrap runtime。原第一 Default lane/commitment、Token 程序与 ALT 解码/停用
   政策保留；第十类单在途/100 ms、固定只读请求/64 KiB/两秒 HTTP 和共享冷却，
-  不新增 client/cache/signer。16 项新测试/预计完整 1729、69 步骤及原 108 字段
-  待本批独立 CI，不套用下方父批，不本地重试 Cargo。模拟/其他独立读取和剩余
-  原门槛继续，见 [聚合账户读取边界](AGGREGATOR_ACCOUNT_SHARED_READS.md)。
+  不新增 client/cache/signer。`10c5b4b0f8cd8ba04c03d088850e0806e2c35f18` /
+  [Actions 44164727015](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44164727015)
+  首次运行终态 success；artifact `14366377330` 下载独立核对：完整并发 1729
+  （212.62 秒）/串行 1729（387.94 秒），零失败/忽略/过滤、原始名称集合相同；
+  父批 1713 名称全保留且恰增源码十六项。runtime 8/SDK policy 5/真实 HTTP 3、
+  原参数 28/寻池 8/8/2/hop 8/10/2 与执行回归通过；35 类型/108 原始字段拒绝、
+  原源码/恢复及全部 69 步骤通过。全树 1090 文件/13,341,064 字节和模式与快照一致，
+  identity/manifest/lock/vendor manifest 匹配。旧串行 stderr 精确关联/两正七负
+  格式回归通过，未改日志或省略名称。原 main/索引/冻结历史/SDK/迁移保持，不本地
+  重试 Cargo、不重跑终态或另发文档 CI；记录随下一源码批归档。模拟及其余额基线、
+  独立 quote/WSOL、SDK 内部资源和其余原门槛继续，见
+  [聚合账户读取边界](AGGREGATOR_ACCOUNT_SHARED_READS.md)。不新增任务或分母，未部署。
   首轮 43a17e0 / Actions 44163177413 / artifact 14365660021 已终态失败于锁定版本
   UiAccount 无 decode 方法；仅十项前置通过，测试/门禁未运行。已按既有 Base64/
-  owner/size 政策组装账户并补负例，修正源码待独立 CI，不重跑旧失败或改依赖。
+  owner/size 政策组装账户并补负例，修正源码已在上方 10c5b4b 独立验收，不重跑旧失败或改依赖。
 - 原 NP-03/TS-07/09 两跳寻池已完成本批源码/离线验收：原 Default lane、原缓存实例/锁、30 秒正缓存、
   两个完整空扫描规则保持；扫描/候选/CPMM 参数/金库余额已接相同 runtime 的新有界
   只读 scope。五秒总期限、32 次 SDK 准入、单在途/100 ms 与共享冷却，不新增 signer/

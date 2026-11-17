@@ -26,7 +26,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         policy = boundaries.read_policy()
         self.assertEqual({module["name"] for module in policy["guarded_modules"]}, {"application", "domain", "protocol"})
         types = {item["id"] for item in policy["forbidden_types"]}
-        self.assertTrue({"keypair", "sdk_client", "dex_params", "rpc", "sqlite_pool", "http_headers", "app_state", "config", "trade_index", "blockhash_cache", "trade_tasks", "dispatch_ticket", "damm_buy_quote", "damm_buy_message", "damm_buy_candidate", "damm_buy_signed", "parameter_session", "discovery_session", "sol_hop_session"} <= types)
+        self.assertTrue({"keypair", "sdk_client", "dex_params", "rpc", "sqlite_pool", "http_headers", "app_state", "config", "trade_index", "blockhash_cache", "trade_tasks", "dispatch_ticket", "damm_buy_quote", "damm_buy_message", "damm_buy_candidate", "damm_buy_signed", "parameter_session", "discovery_session", "sol_hop_session", "aggregator_simulation_plan", "aggregator_simulation_session"} <= types)
         for module in policy["guarded_modules"]:
             self.assertTrue((ROOT / module["path"]).read_text().startswith(boundaries.GUARD + "\n"))
         self.assertIn("Use project-owned types and ports", boundaries.config_text(policy))
@@ -72,6 +72,29 @@ class DependencyBoundaryTests(unittest.TestCase):
         for messages in [[], complete[:1], complete + [message("src/domain/mod.rs", 4, "E0433")]]:
             with self.assertRaises(ValueError):
                 boundaries.verify_negative(messages, expected)
+
+    def test_borrowed_session_probe_uses_only_the_fixed_static_lifetime(self):
+        policy = boundaries.read_policy()
+        source, expected = boundaries.probe_source((boundaries.GUARD + "\n").encode(), policy)
+        line = source.decode().splitlines()[expected["aggregator_simulation_session"] - 1]
+        self.assertIn("Option<crate::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession<'static>>", line)
+        self.assertNotIn("<'static>", source.decode().splitlines()[expected["aggregator_simulation_plan"] - 1])
+
+    def test_static_lifetime_metadata_cannot_inject_rust_or_replace_path_validation(self):
+        policy = boundaries.read_policy()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "policy.json"
+            for value in [False, 1, None, "'a", "static>; fn bypass() {}"]:
+                changed = copy.deepcopy(policy)
+                changed["forbidden_types"][-1]["static_lifetime"] = value
+                path.write_text(json.dumps(changed))
+                with self.assertRaises(ValueError):
+                    boundaries.read_policy(path)
+            changed = copy.deepcopy(policy)
+            changed["forbidden_types"][-1]["probe"] += "<'static>"
+            path.write_text(json.dumps(changed))
+            with self.assertRaises(ValueError):
+                boundaries.read_policy(path)
 
     def test_sources_are_restored_byte_for_byte_even_when_validation_raises(self):
         policy = boundaries.read_policy()
