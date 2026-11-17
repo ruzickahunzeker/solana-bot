@@ -192,15 +192,14 @@ impl ReadHttpTransport for Fake {
         if matches!(self.mode, Mode::Oversize) {
             bytes.resize(524_289, b' ');
         }
-        Ok(HttpReply {
-            status: match self.mode {
+        Ok(HttpReply::for_test(
+            match self.mode {
                 Mode::Rate => StatusCode::TOO_MANY_REQUESTS,
                 Mode::Http => StatusCode::BAD_GATEWAY,
                 _ => StatusCode::OK,
             },
-            retry_after: Some(60),
-            body: bytes,
-        })
+            bytes,
+        ))
     }
 }
 async fn lookup(

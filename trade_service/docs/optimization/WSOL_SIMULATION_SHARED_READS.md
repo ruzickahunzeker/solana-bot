@@ -117,6 +117,14 @@ source requires explicit err and tests both forms plus the old client's permissi
 behavior. Do not restart that candidate or treat partial logs as acceptance. Only
 the corrected source's independently audited full run can accept this batch.
 
+Corrected-outcome candidate 33cece1 / Actions 44203291583 failed test type-check:
+the SDK fixture attempted to construct RPC-private HttpReply fields (E0451).
+The ten preceding checks passed; no Rust test/negative field gate ran. The fixture
+now uses the existing cfg(test) HttpReply::for_test API, retaining private fields
+and production code. The core fake uses the existing default Retry-After policy;
+the real wire fixture still verifies an explicit header. Do not rerun that
+terminal candidate or count its partial checks as this batch's acceptance.
+
 Actual WSOL broadcast RPC ownership/SDK internals, standalone Quote reconciliation
 status, DAMM/opaque reads/tasks, provider-wide quotas and NP-01/03/04/05/rollout
 gates remain. SDK stays 6.0.2; manifests/lock/vendor/migrations/API/amounts and
