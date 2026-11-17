@@ -14,6 +14,10 @@
   2200 MiB限制被终止，已修警告，不本地重试或升限。详见
   [参数读取边界](PROTOCOL_PARAMETER_SHARED_READS.md)。下方27bd996是已验收父批，
   不算当前参数读取验收，不重复立项。
+  冷缓存复核发现 SDK 配置读取仅 180 ms，已将 PumpSwap 两项固定配置合入同一次
+  四账户快照（共六项），原四项/SDK decoder 不变；两项 raw 值仅同 scope 使用，
+  不新增跨会话缓存或放宽 250 ms 间隔。补隔离冷成功见证及精确投影/模式负例，仍为
+  23 个新增测试名称，待新源码 CI，不复用热缓存证据。
 - 本轮续原 NP-03/TS-07/09：普通买入账户存在性提示接同一个 SharedReadRuntime 的
   preparation permit/250 ms 起点预算和跨类别 429 冷却；移除根 SDK 门面该存在性
   helper 的唯一调用及旧实现，原 program-label 布尔语义保留，不冒充 ATA/余额或签名
@@ -150,6 +154,9 @@
 
 ## 已结束的失败
 
+- `7a63477` / Actions `44132188285` / artifact `14351441124`：源码复核发现 SDK
+  冷配置 180 ms 与原逐请求 pacing 冲突，已主动取消被取代的运行。不计整体验收，
+  不重跑；新源码以同 bank 六账户快照和隔离冷成功回归解决，不降低超时/限流门槛。
 - `255ef09` / Actions `44130661475` / artifact `14348964516`：十个前置步骤通过，
   测试类型检查 221 秒失败。新共享 loader 夹具缺 accounts/RpcRequest 导入且访问
   私有 body 方法；已补显式导入及仅 cfg(test) 的 request/reply helper，不放宽生产

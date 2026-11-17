@@ -63,6 +63,7 @@ struct State {
     fault: Mutex<Option<ParameterReadFailure>>,
     calls: AtomicUsize,
     active: AtomicUsize,
+    pump_configs: Mutex<Option<request::PumpConfigSnapshot>>,
     closed: watch::Sender<bool>,
 }
 impl State {
@@ -70,6 +71,9 @@ impl State {
         if *self.closed.borrow() && self.active.load(Ordering::SeqCst) == 0 {
             if let Ok(mut permit) = self.permit.lock() {
                 permit.take();
+            }
+            if let Ok(mut snapshot) = self.pump_configs.lock() {
+                snapshot.take();
             }
         }
     }
@@ -154,6 +158,7 @@ impl<T: ReadHttpTransport + 'static> ParameterReadSession<T> {
             fault: Mutex::new(None),
             calls: AtomicUsize::new(0),
             active: AtomicUsize::new(0),
+            pump_configs: Mutex::new(None),
             closed,
         });
         let rpc = RpcClient::new_sender(
@@ -210,11 +215,26 @@ impl<T: ReadHttpTransport + 'static> Sender<T> {
                 let _serial = self.state.serial.lock().await;
                 self.state.check()?;
                 {
+                    let snapshot = self.state.pump_configs.lock().map_err(|_| unavailable("parameter snapshot unavailable"))?;
+                    if let Some(reply) = snapshot.as_ref().and_then(|snapshot| query.pump_config_reply(snapshot)) {
+                        return Ok(reply);
+                    }
+                }
+                {
                     let mut permit = self.state.permit.lock().map_err(|_| unavailable("parameter RPC quota unavailable"))?;
                     if permit.is_none() { *permit = Some(self.runtime.parameter_slot()?); }
                 }
                 self.state.check()?;
-                self.runtime.parameter_step(&self.url, query, self.state.deadline).await
+                // The pinned SDK gives both optional config reads only 180 ms. Include their
+                // raw accounts in its coherent pool snapshot, then feed the unchanged decoders.
+                if let Some(expanded) = query.with_pump_configs(self.state.scope) {
+                    let result = self.runtime.parameter_step(&self.url, expanded.clone(), self.state.deadline).await?;
+                    let (result, snapshot) = expanded.split_pump_configs(result);
+                    *self.state.pump_configs.lock().map_err(|_| unavailable("parameter snapshot unavailable"))? = Some(snapshot);
+                    Ok(result)
+                } else {
+                    self.runtime.parameter_step(&self.url, query, self.state.deadline).await
+                }
             }) => result.unwrap_or_else(|_| Err(unavailable("parameter RPC session timed out"))),
         };
         guard.completed = true;

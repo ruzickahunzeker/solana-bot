@@ -26,6 +26,20 @@ pub(crate) struct ParameterQuery {
     params: Value,
 }
 
+pub(super) struct PumpConfigSnapshot {
+    config: Value,
+    context: Value,
+    values: [Value; 2],
+}
+
+fn pump_config_keys() -> [String; 2] {
+    use sol_trade_sdk::instruction::utils::pumpswap::accounts;
+    [
+        accounts::FEE_CONFIG.to_string(),
+        accounts::GLOBAL_ACCOUNT.to_string(),
+    ]
+}
+
 fn key(value: &Value) -> Result<()> {
     let value = value
         .as_str()
@@ -64,6 +78,48 @@ fn account_config(value: &mut Value) -> Result<()> {
 }
 
 impl ParameterQuery {
+    pub(super) fn pump_config_reply(&self, snapshot: &PumpConfigSnapshot) -> Option<Value> {
+        if !matches!(self.kind, Kind::Account) || self.params[1] != snapshot.config {
+            return None;
+        }
+        pump_config_keys()
+            .iter()
+            .position(|key| self.params[0] == *key)
+            .map(|index| json!({"context":snapshot.context,"value":snapshot.values[index]}))
+    }
+
+    pub(super) fn with_pump_configs(&self, scope: ParameterReadScope) -> Option<Self> {
+        if scope.pool != crate::domain::trade::Pool::PumpAmm
+            || !matches!(self.kind, Kind::Accounts(4))
+            || scope
+                .pool_id
+                .is_some_and(|id| self.params[0][0] != id.to_string())
+        {
+            return None;
+        }
+        let mut query = self.clone();
+        let accounts = query.params[0]
+            .as_array_mut()
+            .expect("validated account list");
+        accounts.extend(pump_config_keys().map(Value::String));
+        query.kind = Kind::Accounts(6);
+        Some(query)
+    }
+
+    pub(super) fn split_pump_configs(&self, mut result: Value) -> (Value, PumpConfigSnapshot) {
+        let values = result["value"]
+            .as_array_mut()
+            .expect("validated account result");
+        let global = values.pop().expect("validated six-account result");
+        let fee = values.pop().expect("validated six-account result");
+        let snapshot = PumpConfigSnapshot {
+            config: self.params[1].clone(),
+            context: result["context"].clone(),
+            values: [fee, global],
+        };
+        (result, snapshot)
+    }
+
     pub(super) fn parse(
         method: RpcRequest,
         mut params: Value,

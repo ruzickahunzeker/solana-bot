@@ -539,4 +539,66 @@ fn parameter_query_binary_limits_and_sdk_result_shape_are_checked_before_decodin
         )
         .is_err());
     }
+
+    let scope = ParameterReadScope::new(
+        Pool::PumpAmm,
+        Address::from_bytes([4; 32]),
+        Some(Address::from_bytes([1; 32])),
+    );
+    let config = json!({"encoding":"base64","commitment":"processed"});
+    let batch = request::ParameterQuery::parse(
+        RpcRequest::GetMultipleAccounts,
+        json!([
+            [
+                key(1).to_string(),
+                key(2).to_string(),
+                key(3).to_string(),
+                key(4).to_string()
+            ],
+            config
+        ]),
+        scope,
+    )
+    .unwrap();
+    assert!(batch
+        .with_pump_configs(ParameterReadScope::new(
+            Pool::MeteoraDammV2,
+            scope.mint,
+            scope.pool_id
+        ))
+        .is_none());
+    assert!(batch
+        .with_pump_configs(ParameterReadScope::new(
+            Pool::PumpAmm,
+            scope.mint,
+            Some(Address::from_bytes([99; 32]))
+        ))
+        .is_none());
+    let expanded = batch.with_pump_configs(scope).unwrap();
+    let keys = expanded.body(1)["params"][0].as_array().unwrap().clone();
+    assert_eq!(keys.len(), 6);
+    let value = json!({"context":{"slot":42},"value":[account(),account(),account(),account(),account(),null]});
+    expanded.validate_result(&value).unwrap();
+    let (original, snapshot) = expanded.split_pump_configs(value);
+    batch.validate_result(&original).unwrap();
+    for (index, value) in [(4, account()), (5, Value::Null)] {
+        let query = request::ParameterQuery::parse(
+            RpcRequest::GetAccountInfo,
+            json!([keys[index], config]),
+            scope,
+        )
+        .unwrap();
+        assert_eq!(
+            query.pump_config_reply(&snapshot),
+            Some(json!({"context":{"slot":42},"value":value}))
+        );
+        let other_commitment = request::ParameterQuery::parse(
+            RpcRequest::GetAccountInfo,
+            json!([keys[index],{"encoding":"base64","commitment":"finalized"}]),
+            scope,
+        )
+        .unwrap();
+        assert!(other_commitment.pump_config_reply(&snapshot).is_none());
+    }
+    assert!(query.pump_config_reply(&snapshot).is_none());
 }

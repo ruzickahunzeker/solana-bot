@@ -11,7 +11,7 @@ scope, then call the unchanged original SDK loaders/decoders. Root single-caller
 `dex_params` delegate is removed. Warmup receives the same shared runtime Arc via
 PoolReadBackend/bootstrap. The SDK execution/signing/sending client is unchanged.
 Each scope's RpcClient uses a private fixed-method RpcSender, **not** a second
-HTTP transport, cache, cooldown, wallet or persistent authority. Public HTTP,
+HTTP transport, shared cache, cooldown, wallet or persistent authority. Public HTTP,
 amounts, request/hash/JSON, claim/journal/sender and migration files are unchanged.
 The changed warmup Rust method is internal to this binary, not a public route.
 
@@ -33,7 +33,8 @@ the original pre-sign lane fallback policy. No post-sign retry or new owner.
 ## Fixed Requests
 
 - Allow getAccountInfo, getMultipleAccounts and getEpochInfo, with original keys,
-  commitment/order and SDK decoding. Normalize base64+zstd requests to base64;
+  commitment/order and SDK decoding except the explicit PumpSwap snapshot extension
+  below. Normalize base64+zstd requests to base64;
   compressed replies are rejected without decompression expansion. No signing,
   simulation, balance, blockhash or submission capability in this scoped client.
 - At most 100 batch keys; no data slicing/min-slot widening; 512 KiB HTTP body,
@@ -47,6 +48,18 @@ the original pre-sign lane fallback policy. No post-sign retry or new owner.
   unrecognized SDK requests fail closed for explicit upgrade review, not fallback
   to a raw execution RpcClient.
 
+The pinned PumpSwap SDK wraps its two optional config calls in 180 ms timers.
+Serial 250 ms pacing would deterministically cancel cold reads. Instead of
+loosening pacing or vendor timers, append exactly FEE_CONFIG and GLOBAL_ACCOUNT
+to its four-account pool snapshot on the same endpoint/commitment. Validate all
+six, return the original first four unchanged, and keep only the two raw config
+values/context in that same eight-second scope. Exact-address/config SDK reads
+reuse those raw values and the unchanged SDK decoders; null remains null. This
+is not a cross-session cache or an alternative fee source. Other queries,
+commitments, protocols and explicit wrong pool IDs cannot use this projection.
+There is no extra HTTP request or per-step budget bypass; the two SDK calls still
+count toward 32. The scope closes and loses its snapshot when finished/dropped.
+
 ## Required Acceptance
 
 Source has 23 new Rust tests: 22 behavioral contracts and one isolated child entry.
@@ -55,6 +68,10 @@ cases and one actual original-buy fault case cover the changes. Nine existing
 protocol variants compare key accounts/programs/reserves/fees/mode witnesses to
 the unchanged loader. Also exercise six actual SDK filtered scans, explicit
 StonkFun CPMM hop, cold optional-config error erasure and original warmup guards.
+The isolated optional-config parent now runs a separate cold-success child before
+the fault child, ensuring process-global SDK caches cannot hide the 180 ms issue.
+Query assertions also verify exact six-to-four projection, null preservation and
+wrong-commitment/protocol/pool isolation.
 The execution RPC mock now rejects parameter reads; old quote/sign/journal/packet
 checks remain. Presence cancellation waits for its actual method, not the first
 HTTP request, since parameter reads now precede it.
@@ -78,6 +95,11 @@ method. The fix uses explicit test imports and cfg(test)-only request/reply
 helpers; production visibility, loaders and assertions are unchanged. No Rust
 tests or compiler boundary rejections ran in that snapshot. The failed run is
 terminal, not retried; corrected source requires its own independent CI.
+
+Successor 7a63477 / Actions 44132188285 was superseded and cancelled after source
+review found that cold-cache timeout conflict. Its artifact is 14351441124; it
+is not full acceptance and is not rerun. The batched-snapshot correction and cold
+positive witness require a new source run with the same 23 added test names.
 
 ## Remaining Scope
 

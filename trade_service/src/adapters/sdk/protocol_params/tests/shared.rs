@@ -30,9 +30,15 @@ impl ReadHttpTransport for Transport {
             .unwrap()
             .push((body.clone(), Instant::now()));
         if self.fail_fee
-            && body["method"] == "getAccountInfo"
-            && body["params"][0]
-                == sol_trade_sdk::instruction::utils::pumpswap::accounts::FEE_CONFIG.to_string()
+            && ((body["method"] == "getAccountInfo"
+                && body["params"][0]
+                    == sol_trade_sdk::instruction::utils::pumpswap::accounts::FEE_CONFIG
+                        .to_string())
+                || (body["method"] == "getMultipleAccounts"
+                    && body["params"][0].as_array().unwrap().iter().any(|key| {
+                        *key == sol_trade_sdk::instruction::utils::pumpswap::accounts::FEE_CONFIG
+                            .to_string()
+                    })))
         {
             return Ok(HttpReply::for_test(StatusCode::SERVICE_UNAVAILABLE, vec![]));
         }
@@ -396,6 +402,13 @@ const OPTIONAL_FLAG: &str = "SOL_BOT_PARAMETER_OPTIONAL_CASE";
 const OPTIONAL_DONE: &str = "PARAMETER_OPTIONAL_DONE";
 #[test]
 fn parameter_loader_shared_sdk_optional_config_cannot_erase_transport_failure() {
+    let cold = crate::adapters::test_support::IsolatedTestProcess::spawn(
+        "adapters::sdk::protocol_params::tests::shared::parameter_optional_child",
+        OPTIONAL_FLAG,
+        "success",
+    );
+    cold.await_line(OPTIONAL_DONE);
+    cold.finish();
     let child = crate::adapters::test_support::IsolatedTestProcess::spawn(
         "adapters::sdk::protocol_params::tests::shared::parameter_optional_child",
         OPTIONAL_FLAG,
@@ -406,9 +419,9 @@ fn parameter_loader_shared_sdk_optional_config_cannot_erase_transport_failure() 
 }
 #[tokio::test]
 async fn parameter_optional_child() {
-    if std::env::var(OPTIONAL_FLAG).is_err() {
+    let Ok(case) = std::env::var(OPTIONAL_FLAG) else {
         return;
-    }
+    };
     use crate::{
         adapters::rpc::parameter_reads::{ParameterReadScope, ParameterReadSession},
         domain::parameter_read::ParameterReadFailure,
@@ -421,9 +434,40 @@ async fn parameter_optional_child() {
         Transport {
             fixture: fixture.clone(),
             calls: Mutex::new(vec![]),
-            fail_fee: true,
+            fail_fee: case != "success",
         },
     ));
+    if case == "success" {
+        let trade = command(Pool::PumpAmm, pool.base_mint, pool.quote_mint, Some(id));
+        let current = load_for_trade(
+            runtime.clone(),
+            url,
+            solana_commitment_config::CommitmentConfig::default(),
+            &trade,
+        )
+        .await
+        .unwrap();
+        let old = dex_params(
+            &fixture.client(),
+            trade.pool,
+            &trade.mint,
+            &trade.quote_mint,
+            Some(&id),
+            None,
+            None,
+        )
+        .await
+        .unwrap();
+        assert_eq!(witness(&current), witness(&old));
+        let calls = runtime.test_transport().calls.lock().unwrap();
+        assert_eq!(calls.len(), 2);
+        assert_eq!(calls[1].0["method"], "getMultipleAccounts");
+        assert_eq!(calls[1].0["params"][0].as_array().unwrap().len(), 6);
+        assert!(calls[1].1.duration_since(calls[0].1) >= std::time::Duration::from_millis(240));
+        fixture.assert_read_only();
+        println!("{OPTIONAL_DONE}");
+        return;
+    }
     let s = ParameterReadSession::new(
         runtime.clone(),
         url.clone(),
