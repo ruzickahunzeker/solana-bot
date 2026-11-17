@@ -10,6 +10,8 @@ const DONE: &str = "SHARED_READ_WIRE_DONE";
 
 #[path = "preparation_wire.rs"]
 mod preparation_wire;
+#[path = "presence_wire.rs"]
+mod presence_wire;
 
 fn runtime(servers: &[&LocalServer]) -> Arc<SharedReadRuntime> {
     Arc::new(
@@ -746,6 +748,10 @@ async fn shared_read_wire_child() {
             "preparation_timeouts" => preparation_wire::timeouts_redirect().await,
             "preparation_rate" => preparation_wire::rate_scope().await,
             "preparation_priority" => preparation_wire::priority_cancel().await,
+            "presence_parity" => presence_wire::parity().await,
+            "presence_limits" => presence_wire::limits().await,
+            "presence_timeouts" => presence_wire::timeouts().await,
+            "presence_rate_cancel" => presence_wire::rate_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -757,6 +763,22 @@ fn run(case: &str) {
     let child = IsolatedTestProcess::spawn(CHILD, FLAG, case);
     child.await_line(DONE);
     child.finish();
+}
+#[test]
+fn preparation_presence_wire_original_sdk_request_and_boolean_parity() {
+    run("presence_parity");
+}
+#[test]
+fn preparation_presence_wire_bad_envelope_and_streaming_limits_never_fall_back() {
+    run("presence_limits");
+}
+#[test]
+fn preparation_presence_wire_deadlines_redirects_and_cancellation_never_retry() {
+    run("presence_timeouts");
+}
+#[test]
+fn preparation_presence_wire_rate_limit_and_busy_share_the_existing_runtime() {
+    run("presence_rate_cancel");
 }
 #[test]
 fn shared_read_wire_hash_429_is_shared_with_status() {

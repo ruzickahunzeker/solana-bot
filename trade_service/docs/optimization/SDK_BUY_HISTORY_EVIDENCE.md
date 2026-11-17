@@ -5,7 +5,9 @@ accepted common-record boundary `2fe436d`. It does not open a buy execution clai
 
 The statements below describe the accepted f029d55 snapshot, not later working
 source. The 2026-11-17 continuation connects the original buy signer/journal/sender
-and coherent claim/scan scope; its new tests require separate CI acceptance.
+and coherent claim/scan scope. Snapshot 882e514 / Actions 44109233896 / artifact
+14340653473 passed separate acceptance: both full suites ran 1638 tests, all 56
+steps passed and all 99 scoped compiler field rejections were independently checked.
 See `SDK_ORIGINAL_DAMM_RUNTIME.md`. Historical records still cannot restore a
 signing permit, owner, freshness or permission to replay a submission.
 
@@ -67,14 +69,18 @@ the terminal job or publish a docs-only CI for this acceptance note.
 
 The controlled buy candidate/signer, same original-owner prepared/signing CAS and
 signed-byte readback, fixed Buy sender, live runtime selection, coherent claim
-admission and buy scan are still to connect. Existing runtime buy workers remain
-legacy. Neither nominal reconstruction, a valid historical signature nor finality
-reconciliation can refresh evidence or authorize a new trade. Unknown results must
-continue tracking the original signature, without route/key/backend retry.
+admission and buy scan were still disconnected at f029d55. They are now separately
+accepted in 882e514 for Durable Live direct DAMM buys with Native SOL/WSOL or
+existing USDC; that path no longer enters the high-level SDK worker. Other
+protocols/modes and their legacy workers remain outside this evidence. Neither
+nominal reconstruction, a valid historical signature nor finality reconciliation
+can refresh evidence or authorize a new trade. Unknown results must continue
+tracking the original signature, without route/key/backend retry.
 
-Old SellV1 payload/codec, production operation classifier, sender, scanner SQL,
-migrations, HTTP/request/hash contracts, manifest/lock/vendor and frozen execution
-history remain unchanged. PumpAPI new integration stays paused. No SDK upgrade,
+Old SellV1 payload/codec, operation classifier, sender and scanner SQL were unchanged
+at f029d55. The later controlled execution batch deliberately connects the latter
+three together; migrations, HTTP/request/hash contracts, manifest/lock/vendor and
+frozen execution history remain unchanged. PumpAPI new integration stays paused. No SDK upgrade,
 release build, deployment/restart, production wallet/database access or transaction
 submission is included. Other protocols/modes, global RPC budgets and real-node/
 production recovery gates remain in the original plan.

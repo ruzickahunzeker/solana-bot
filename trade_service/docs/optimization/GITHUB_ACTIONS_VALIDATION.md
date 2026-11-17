@@ -28,12 +28,28 @@
 云端是独立冷构建环境，关闭依赖的 debug/incremental 以控制空间，与本机复用缓存的规则不同；
 不改变 SDK 版本或 release 行为。新旧参数/消息/合同必须真正运行通过，不能因构建地点变化更新 oracle。
 
-## 当前待验批次
+## 当前批次
+
+2026-11-17 续原 NP-03 的普通买入 presence 接原 preparation 预算，十四项新增合同
+及新 `preparation-presence` 步骤待本批独立 CI。必须保留父批 1638 名称且增量恰为
+十四项，完整并发/串行、原源码/99 字段拒绝/恢复和全部专项均需核对；不重复旧运行。
+详见 `PREPARATION_PRESENCE_SHARED_RPC.md`；下方 882e514 是已验收父批，不套用给当前。
 
 2026-11-17 原 NP-01 受控买入执行接线：十七项新合同，新增 controlled-buy、buy-claims
 和 original-buy-runtime 专项；同一 Clippy 策略增两个私有买入产物，32 类型/99 scoped
-字段（含外部 alias），不借用父批 93。完整并发/串行及原始诊断必须按本批身份独立
-下载核对。未发布/运行前，最新已验收仍是下方 f029d55；不重跑任何终态任务。
+字段（含外部 alias），不借用父批 93。完整并发/串行及原始诊断已按本批身份独立
+下载核对，不重跑任何终态任务。
+
+最新已验收 `882e514a499df01c68c704671ecdf335755e8ea9` /
+[Actions 44109233896](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44109233896)
+终态 success，artifact `14340653473` 下载独立核对：全部 56 步骤 exit=0；完整并发
+1638（149.17 秒）/串行 1638（275.68 秒），零失败/忽略/过滤，名称集合相同、父批
+1621 全保留且新增恰为十七项。controller 买入 6、买入 claim 3、实际买入 runtime 4、
+executor 10、sender 15、扫描 17、买入 probe 79 均通过；原源码/恢复 Clippy 成功，
+原始 compiler spans 独立确认全部 99 个不同字段拒绝。identity 与 manifest/lock/
+vendor manifest 匹配。不代表真实节点/供应商或生产验收。
+源码发布审计：1062 文件/13,058,154 字节；后继四路径仅测试及记录修正。真实 main、
+索引、冻结历史、manifest/lock/vendor/迁移保持；不单独为运行记录触发文档 CI。
 
 首轮 `b572b7a` / Actions `44102178151` 已终态 failure，artifact `14336409343`
 下载核对：27 步通过，controlled-buy 6、buy-claims 3、sender 15 通过；99 字段门禁
@@ -48,11 +64,11 @@
 的索引映射尝试在本地复核后主动取消，不计验收、不重跑。后继夹具使用相同 profile，
 逐字核对实际 discovery 消息而非重排索引，保留生产同 bank 余额、输出及权限检查；
 受限 metadata check 13 秒/RSS 1,427,180 KiB 通过。
-完整回归仍须后继快照独立验收，不重跑失败任务，不套用父批。
+后继 882e514 已独立完成上述完整验收，不重跑失败/取消任务，不套用父批。
 
 ## 已验收运行
 
-最新原 NP-01 买入消息/签名字节证据、原意图绑定及历史回放
+前批原 NP-01 买入消息/签名字节证据、原意图绑定及历史回放
 `f029d55c1778f0688015d85d29dab7562146ee39` /
 [Actions 43785820055](https://github.com/ruzickahunzeker/solana-bot/actions/runs/43785820055)
 终态 success，artifact `14190956041` 下载独立核对：新专项 18（新增十六项及原两项）、

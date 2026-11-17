@@ -67,6 +67,9 @@ enum Mode {
     ReceiptWriteFailure,
     CancelProbe,
     CancelSend,
+    PresenceRate,
+    PresenceInvalid,
+    PresenceHold,
 }
 #[derive(Default)]
 struct Trace {
@@ -223,17 +226,7 @@ impl RpcSender for MemoryRpc {
                     Ok(json!({"context":{"slot":123},"value":self.values[0]}))
                 }
                 RpcRequest::GetTokenAccountsByOwner if self.buy_result.is_some() => {
-                    assert_eq!(params[0], self.wallet.to_string());
-                    assert_eq!(params[1]["mint"], key(4).to_string());
-                    let output = sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(
-                        &self.wallet, &key(4), &spl_token_interface::ID,
-                    );
-                    Ok(
-                        json!({"context":{"slot":42},"value":[{"pubkey":output.to_string(),"account":{
-                            "owner":spl_token_interface::ID.to_string(),"lamports":2039280,"rentEpoch":0,"executable":false,"space":165,
-                            "data":{"program":"spl-token","space":165,"parsed":{"type":"account","info":{"owner":self.wallet.to_string(),"mint":key(4).to_string(),"state":"initialized","tokenAmount":{"amount":"2000","decimals":6,"uiAmount":null,"uiAmountString":"0.002"}}}}
-                        }}]}),
-                    )
+                    panic!("buy presence must use the shared HTTP runtime, not the SDK RPC")
                 }
                 RpcRequest::GetMultipleAccounts => {
                     let addresses = params[0].as_array().unwrap();
@@ -458,7 +451,12 @@ impl Case {
             raw[0]["owner"] = json!(key(99).to_string());
         }
         let server = LocalServer::new(Reply::Preparation {
-            scan: Box::new(Reply::Success),
+            scan: Box::new(match mode {
+                Mode::PresenceRate => Reply::RateLimited(Some("60")),
+                Mode::PresenceInvalid => Reply::WrongId,
+                Mode::PresenceHold => Reply::SlowHeaders,
+                _ => Reply::Success,
+            }),
             raw: Box::new(Reply::Success),
             scan_value: parsed,
             raw_value: json!(raw),
@@ -639,6 +637,7 @@ async fn sdk_original_runtime_child() {
         "buy-pre-sign" => buy::pre_sign().await,
         "buy-post-sign" => buy::post_sign().await,
         "buy-cancel" => buy::cancel().await,
+        "buy-presence" => buy::presence_gate().await,
         _ => panic!("unknown synthetic SDK runtime case"),
     }
     println!("{DONE}");

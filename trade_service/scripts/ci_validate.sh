@@ -86,6 +86,7 @@ PY
         step sdk-prepared-record cargo test --locked --offline sdk_prepared_record -- --test-threads=2
         step sdk-buy-evidence cargo test --locked --offline sdk_buy_ -- --test-threads=2
         step sdk-preparation cargo test --locked --offline ordinary_sdk_preparation -- --test-threads=2
+        step preparation-presence cargo test --locked --offline preparation_presence -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

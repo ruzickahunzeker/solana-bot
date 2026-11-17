@@ -130,8 +130,17 @@ RSS 1,315,280 KiB），尚未运行，不冒用先前 CI 结果；不改生产�
 两资产均覆盖成功、坏 raw/净输出/最终预览、错回执/receipt 写失败和取消；另核对
 故障点精确 key/send 次数、owner 竞争/文件恢复、篡改/过期/错订单及 finality。
 
-本地受限 test check 17 秒/RSS 1,597,132 KiB、production metadata check 已通过，
-Python policy 十项和 workflow 七项通过。Rust 实际运行与扩大后的 99 字段门禁仍待
-本批源码隔离 CI；不升级 SDK、不构建 release、不部署/重启、不读生产钱包/数据库，
+本批 `882e514a499df01c68c704671ecdf335755e8ea9` / Actions `44109233896` 已终态
+success，artifact `14340653473` 下载独立核对：controller 买入 6、claim 3、实际买入
+runtime 4、executor 10、sender 15、扫描 17、买入 probe 79 全通过。完整并发 1638
+（149.17 秒）/串行 1638（275.68 秒），零失败/忽略/过滤；两套原始名称相同、父批
+1621 全保留，新增恰为上述十七项。原源码/恢复 Clippy 成功，原始 spans 独立核对
+99 个不同字段拒绝及全部 56 步骤 exit=0，identity/manifest/lock/vendor manifest 匹配。
+
+新增 runtime 夹具必须开启原参数工厂的 rate-limiter sysvar，并逐字核对实际 discovery
+消息；不能用旧布局或重排索引掩盖差异。前两轮失败和一次被取代的取消均已记录，
+不重跑终态任务；当前完整源码已独立验收。本地最终受限 test check 13 秒/RSS
+1,427,180 KiB、production metadata check、Python policy 十项/workflow 七项通过。
+验收记录不单独触发文档 CI；不升级 SDK、不构建 release、不部署/重启、不读生产钱包/数据库，
 不发送真实交易。Default 的完整离线调用链不证明真实 provider/TLS/节点字段兼容；
 其他协议/模式、全局 RPC 资源与生产恢复/迁移/回滚仍保留原门槛。

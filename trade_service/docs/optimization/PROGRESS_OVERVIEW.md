@@ -6,17 +6,24 @@
 
 ## 统计口径
 
+- 当前续原 NP-03 普通买入存在性读取：接原 preparation 容量/起点与共享冷却，删除
+  根 SDK 唯一 helper 调用；十四项新合同待独立 CI，不把 882e514 的完整各 1638 当作
+  本批结果。它仍只是原 V1 构建提示，不是账户授权；不改变 SDK、API 或生产状态。
+  其他参数/寻池/模拟/独立读取及全局预算保留，见 `PREPARATION_PRESENCE_SHARED_RPC.md`。
 - 当前原 NP-01 买入受控 signer/私有签后产物、原 owner/CAS/落盘回读、固定 Buy sender、
-  runtime 与 claim/扫描一致接线已进入源码；十七项新合同和 99 字段门禁待本批隔离 CI。
-  本地 metadata check 不算 Rust 运行通过；已验收基线仍是 f029d55 的完整各 1621。
+  runtime 与 claim/扫描一致接线已在 `882e514` / Actions `44109233896` / artifact
+  `14340653473` 独立验收：完整并发 1638（149.17 秒）/串行 1638（275.68 秒），
+  名称集合相同、父批 1621 全保留且新增恰为十七项；99 字段拒绝和全部 56 步骤通过。
+  identity/manifest/lock/vendor manifest 与原始 compiler spans 均核对；本地 metadata
+  check 不代替此运行证据。不重跑终态 CI，不把两类输入子路径算作全协议完成。
   不升级 SDK、不部署、不接生产数据；详见当前执行状态。下方历史关闭范围不代指本批。
 - 本轮同一 NP-01 已接共同消息重构/签名证据、原 buy 意图绑定与 V1 历史回放及原
   ownerless capture/finality。`f029d55` / Actions `43785820055` / artifact `14190956041`
   已独立验收：完整并发 1621（120.77 秒）/串行 1621（227.60 秒）、新专项 18（含
   新增 16）、93 字段拒绝和全部 53 步骤通过。名称集合相同，父批 1605 全保留且增量
   恰为十六项；审计 1059 文件/12,989,654 字节、30 路径。不重跑终态任务。
-  原 operation classifier/sender/扫描 SQL 未改，历史证据与纯意图绑定不构成新的
-  执行 owner/permit；买入受控 signer/固定 sender 与 coherent claim 仍待接线。
+  在该历史快照 operation classifier/sender/扫描 SQL 未改，历史证据与纯意图绑定
+  不构成新的执行 owner/permit；后继实际接线已由上方 882e514 独立验收。
   详见 `SDK_BUY_HISTORY_EVIDENCE.md`，不新增任务、authority 或完成度分母。
 - 本轮原 NP-01 的共同 `SdkPreparedRecord` 已接原 journal/backend/permit/回读接口，
   明确区分 BuyV1/SellV1、旧 SellV1 原字节保持。新增十一项方向/codec/临时库/控制器
@@ -222,15 +229,15 @@
 
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
-| 普通 SDK 完整授权 | C3c1/C3c2 受控执行、C3d1 原签名恢复、C3d2 扫描及 C3e 准备串联已离线验收；后继 26445c5 完整各 1473 通过，但原 scope 之外仍 legacy | 真实 provider/节点、生产恢复/发布及其他方向/协议/backend/mode 的全部门槛 |
+| 普通 SDK 完整授权 | 直接 DAMM Durable Live 卖出受控执行/恢复/扫描和准备链已验收；后继 882e514 独立验收 Native SOL/WSOL、既有 USDC 买入的原 owner/CAS/受控签名/固定发送及扫描，完整各 1638 | 真实 provider/节点、生产恢复/发布及其他资产/协议/backend/mode 的全部门槛；原 scope 之外仍有 legacy 路径 |
 | 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；普通后台任务生命周期在 c6f2745、Shadow writer 关闭/排空在 796ba50 验收；旧冗余资源字段不在生产 AppState | 根具体 index/journal/cache/Config、SDK 内部/独立操作任务及全局 RPC/依赖与真实退出仍待续。已验收接受/执行/Bootstrap/普通任务/Shadow 生命周期不重新立项；局部通过不等于额外 fsync、全服务生命周期或原子激活 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
 
 ## 必须继续完成的大项
 
-1. DAMM 直接卖出子项及买入只读取证/兼容/准备绑定/整笔回调/独立名义记录均已有独立验收；买入正式 min_out 不再固定 Some(1)。原候选/回调/无签名模拟在 ec1d2c9、记录基础在 19f80cb、原 journal 共同记录类型在 2fe436d、原意图/历史签名证据和回放在 f029d55 完整运行；买入原 owner/permit 的实际授权、受控签名及原字节账本/固定 sender、最后回调后 worker 时效和其他协议/模式仍未完成。不能把历史签名或纯意图绑定当作完整签名授权，详见主计划 3.3。
-2. 普通 SDK 的全量不可变构建与签名前授权：新 Durable Live DAMM 卖出的原 owner/签名账本/真实 signer/固定 sender、C3d1 原签名恢复、C3d2 扫描/010/混合分页及 C3e Default 完整准备离线链已验收；继续推广到买入、其他协议和模式。池/资产/Token Program、金额/min_out/费用、权限与最终消息政策仍须按范围验证；不能伪造 Quote/新 owner，也不以单一路径替代全量授权。
+1. DAMM 直接卖出和两类输入买入的源码/离线子路径已独立验收；买入正式 min_out 不再固定 Some(1)。882e514 已完成买入原 owner/permit 的实际授权、受控签名及原字节账本/固定 sender、runtime 和 claim/扫描，不再把这些子项列为待接线。其他资产/协议/模式及其 opaque worker 的时效与副作用仍未完成；历史签名不构成新执行授权，真实节点和生产门槛继续保留。
+2. 普通 SDK 的全量不可变构建与签名前授权：在已验收的 Durable Live 直接 DAMM 买卖范围之外，继续核对其他协议和模式。池/资产/Token Program、金额/min_out/费用、权限与最终消息政策仍须按范围验证；不能伪造 Quote/新 owner，也不以单一路径替代全量授权。
 3. 普通交易唯一广播前 signed journal：C1/C2a/C2b、D1A/D1B1/D1B2 已有该 Durable 子路径的原 owner/签名字节/读回、可选跨重开只读扫描与局部预算源码/离线证据；全部 backend/mode、真实节点/生产恢复和 RPC 全局预算仍待续，不能宣称全普通交易完成。
 4. 受控发送与恢复：只使用已授权并持久化的原字节，保留所有签名证据，不确定状态不换路线/新 key 重签；处理 SDK worker 的后台副作用。
 5. 普通 SOL 聚合 legacy 路径迁移：C2b 仅迁移 Durable Live，Memory/Shadow 仍走原 legacy；独立 quote 账本不替代普通原 authority，最终订单写入不冒充广播前账本。

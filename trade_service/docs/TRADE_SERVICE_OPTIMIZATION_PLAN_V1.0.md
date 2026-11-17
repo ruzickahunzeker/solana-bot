@@ -2,7 +2,10 @@
 
 - 版本：V1.0
 - 日期：2026-11-12
-- 状态：2026-11-17 按用户续原非 PumpAPI 队列。原 NP-01 买入历史证据 `f029d55` 已独立验收（完整并发/串行各 1621）；后继原 owner 的受控买入 signer/签后产物、原 CAS/签名字节落盘回读、固定 Buy sender、runtime 与 claim/扫描已接源码，十七项新合同/99 字段门禁待本批隔离 CI。验收前不套用父批结果，不重复原任务或增加分母。其他 NP-01/03/04/05 和真实节点/发布门槛保留；SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 状态：2026-11-17 按用户续原非 PumpAPI 队列。原 NP-01 受控买入 signer/签后产物、原 owner/CAS/签名字节落盘回读、固定 Buy sender、runtime 与 claim/扫描已在 `882e514` / Actions `44109233896` 独立验收：完整并发/串行各 1638 项、99 字段门禁及全部 56 步骤通过，父批 1621 全保留且新增恰为十七项。不重复原任务或增加分母；仅覆盖原 Durable Live SDK 直接 DAMM 的 Native SOL/WSOL 与既有 USDC。其他 NP-01/03/04/05 和真实节点/发布门槛保留；SDK 固定 6.0.2，不构建 release/部署/操作生产数据，详见 [当前状态](optimization/EXECUTION_STATUS.md)、[开发门禁](optimization/DEVELOPMENT_CHECKS.md) 与 [CI 证据](optimization/GITHUB_ACTIONS_VALIDATION.md)。
+- 同日续原 NP-03 的普通买入账户存在性读取：源码接原 preparation 容量/起点与共享
+  冷却，保留原布尔提示语义；十四项新合同待独立 CI，不套用上批结果。参数/寻池/
+  模拟和全局额度仍在原队列，不重复立项，见 [读取接线](optimization/PREPARATION_PRESENCE_SHARED_RPC.md)。
 - 依据：本地 `trade_service/` 源码，以及《Sol Bot Project Optimization Implementation Plan V1.1》第 5、11、14、15、20 节。
 
 当前 C3d2 的有界后台扫描/迁移夹具修复及 C3e Default 完整准备离线链路已通过完整 CI，
@@ -252,7 +255,7 @@ Copy/Bridge 的边界仍按 4.4，SDK 来源/补丁/隔离演练仍按第 5 节�
 | Parser | `src/adapters/sdk/protocol_params/mod.rs` 仍直接接 `RpcClient`，集中加载、协议检查及 SDK 参数转换；`checks.rs`、`quote_tokens.rs` 已拆出纯检查 | NP-01/03 内按实际读取路径分离已有账户快照的解码/检查与 RPC；仍不可将参数 loader 称为独立纯 Parser，不复制 vendor 解码或新增第二套发现缓存 |
 | SDK 门面 | `src/sdk_client.rs` 已委托 `adapters/sdk/` 多个实现；`application/ordinary_runtime.rs` 经项目 ports 执行，26445c5 已验收 | 兼容门面尚未收完：根 Client 仍有 SDK 初始化、寻池及聚合模拟实现。按调用迁移并保留旧 oracle，不另造 Client；三层选定类型门禁不证明所有 SDK 能力均已隔离 |
 | 资源所有权 | `src/bootstrap.rs` 交接原资源；`optimization/APP_STATE_RESOURCE_OWNERSHIP.md` 已列创建/共享/退出责任；接受与执行使用原权威；普通后台任务与 Shadow writer 生命周期分别在 c6f2745、796ba50 验收 | 原任务追踪/关闸/drain 和 Shadow FIFO 排空不再排队；`src/infrastructure/` 已有任务与退出编排，不能沿用附件中“缺少该目录”的旧判断。NP-03 继续根具体资源、SDK 内部/独立操作任务与剩余 RPC/cache 治理，不重复建立 runtime、连接池、cache、reservation 或 journal |
-| 能力证据 | `src/protocol/registry.rs` 是唯一身份/旧政策表；`protocol_capabilities.rs` 只投影旧 V1；`domain/sdk_candidate.rs` 仅有 `DammV2SellV1` nominal profile | NP-01/04/05 按 backend/版本/方向/Quote/Token/模式/路线绑定证据。DAMM Durable Live 直接卖出局部验收不覆盖其他协议；Parser/Builder/V1 live 声明不新增实盘许可 |
+| 能力证据 | `src/protocol/registry.rs` 是唯一身份/旧政策表；`protocol_capabilities.rs` 只投影旧 V1；`domain/sdk_candidate.rs` 与 `sdk_buy_candidate.rs` 分别定义 SellV1/BuyV1，原 journal 通过 `SdkPreparedRecord` 严格分派；DAMM 受控买入链路在 882e514 独立验收 | NP-01/04/05 按 backend/版本/方向/Quote/Token/模式/路线绑定证据。DAMM Durable Live 直接买卖的局部验收不覆盖其他协议/模式或真实节点；Parser/Builder/V1 live 声明不新增实盘许可 |
 | 通用后端 / RouterLeg | `application/ports/ordinary_sdk_submission.rs` 已有后端私有 Candidate/Signed 类型与原 journal；其原 First/Second 测试仍共用 Engine。后继普通 SOL Quote 控制器的 Record/Tape 独立构建/候选八项合同已在 91b3d94 验收 | 本批共同合同不重做；其他业务路径的适用性和真实 Router/SDK 仍须独立证据，不用原两包装测试冒充独立构建。不为测试泛化扩大生产 profile；RouterLeg 仅保留本节与 4.3 的设计方向 |
 
 推进时沿用 `EXECUTION_STATUS.md` 的 NP-01 当前续作点及 NP-03/04/05 原队列；设计归并本身仅核对和校准记录，
@@ -484,7 +487,10 @@ identity/manifest/lock/vendor manifest 匹配，发布审计 1059 文件/12,989,
 及私有签后 artifact 已接同一个 `OriginalDammBackend`、journal 与固定 Buy sender。
 只有原 Durable Live SDK 直接 DAMM 的正整数 Native SOL/WSOL 或既有 USDC claim
 同步准入，同一个 SDK 索引页包含 buy/sell；未改 DDL、旧 SellV1、hash/API 或生产配置。
-十七项新增合同待独立运行，不用历史签名恢复 owner，不扩大到其他协议/模式；
+十七项新增合同已由 `882e514` / Actions `44109233896` / artifact `14340653473`
+独立验收：完整并发 1638（149.17 秒）/串行 1638（275.68 秒），父批 1621 全保留，
+新增名称恰为十七项；99 字段拒绝及全部 56 步骤通过，identity/manifest/lock/vendor
+manifest 匹配。不用历史签名恢复 owner，不扩大到其他协议/模式；
 原高层买入 SDK worker 不参与该新子路径。详见 [原执行接线](optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)。
 后继未完成范围仍为其他协议/模式的完整授权/账本、共享 RPC、资源/依赖边界及真实
 环境/迁移/回滚，不由本批局部接线宣称整体优化完成。

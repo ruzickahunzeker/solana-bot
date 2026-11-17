@@ -125,8 +125,12 @@ impl OrdinaryPreparationSource for LanePreparation<'_> {
     }
 
     async fn mint_account_exists(&self, mint: Pubkey) -> anyhow::Result<bool> {
-        self.wallet
-            .token_account_exists(&self.lane.client, &mint)
+        self.read_rpc
+            .preparation_account_exists(
+                &self.lane.client.get_rpc().url(),
+                Address::from_bytes(self.wallet.wallet().to_bytes()),
+                Address::from_bytes(mint.to_bytes()),
+            )
             .await
     }
 

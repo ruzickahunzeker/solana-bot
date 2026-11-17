@@ -6,6 +6,13 @@
 
 ## 当前任务
 
+- 本轮续原 NP-03/TS-07/09：普通买入账户存在性提示接同一个 SharedReadRuntime 的
+  preparation permit/250 ms 起点预算和跨类别 429 冷却；移除根 SDK 门面唯一未受限
+  helper，原 program-label 布尔语义保留，不冒充 ATA/余额或签名证据。新增十四项
+  合同与一个 CI 专项，已有受限 metadata check/production check，完整运行待本批
+  独立隔离 CI。API/hash/JSON、claim/journal/sender/迁移及 SDK 不改；其他参数/模拟/
+  寻池读取仍须续作。详见 [存在性读取边界](PREPARATION_PRESENCE_SHARED_RPC.md)。
+- 以下原 NP-01 买入执行批次已验收，不重做或将其结果套用于上述新读取变更。
 - 本次续同一个 NP-01：原买入候选增加 live 只读整笔预览、线性 permit 的受控签名及
   私有签后 artifact；原 `OriginalDammBackend` 按方向分派，同一 journal/CAS/独立
   回读后接固定 Buy sender，不走高层 SDK worker。原 Durable Live 直接 DAMM classifier
@@ -14,11 +21,20 @@
 - 新增十七项合同覆盖实际准备 RPC→零签名报价/整笔预览→原 signer→临时 SQLite
   落盘/读回→固定发送器、两资产、错回执/丢写/取消；另有 owner 双连接竞争/重开、
   资产/模式/方向范围、原 executor 分流/禁播/过期、混合扫描，以及精确 key/send 次数。
-  本地受限 test metadata check 已通过；完整 Rust 运行和 99 字段门禁待本批隔离 CI。
-  最新独立已验收基线仍是下方 f029d55，不将父批 1621 套用于本批。
+  本批 `882e514a499df01c68c704671ecdf335755e8ea9` /
+  [Actions 44109233896](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44109233896)
+  已终态 success，artifact `14340653473` 下载独立核对：完整并发 1638（149.17 秒）/
+  串行 1638（275.68 秒），零失败/忽略/过滤；原始名称集合相同、父批 1621 全保留，
+  增量恰为源码十七项。controlled-buy 6、buy-claims 3、原实际买入 runtime 4、executor
+  10、sender 15、扫描 17、买入 probe 79 全部通过；原源码/恢复 Clippy 成功，原始
+  spans 独立核对 99 个不同字段拒绝及全部 56 步骤 exit=0。identity/manifest/lock/
+  vendor manifest 匹配，发布审计绑定 1062 文件/13,058,154 字节；受限 test check
+  13 秒/RSS 1,427,180 KiB。夹具使用原 rate-limiter profile，并逐字核对实际 discovery
+  消息。真实 main/索引、冻结历史、旧 SellV1、SDK/依赖/迁移保持；不重跑终态任务，
+  验收记录不单独触发文档 CI。不代表真实节点/供应商、生产恢复或部署验收。
   详见 [原执行接线](SDK_ORIGINAL_DAMM_RUNTIME.md#2026-11-17-原买入受控执行接线)。
 - 以下为已完成批次的历史证据，关于“买入 claim 仍闭”的描述仅适用于对应快照；
-  不据此重做已完成工作，也不把本批未运行测试当作通过。不新增任务或完成度分母。
+  不据此重做已完成工作，也不将任一批结果套用于后继源码。不新增任务或完成度分母。
 - 本轮续原 NP-01 的买入历史证据和原意图绑定：共同 adapter 已按记录方向重构原完整
   消息并校验有界 canonical 签名字节/钱包；卖出入口仍有专用方向闸门。原 journal
   行及签名回读接此校验器，历史请求按方向重放原 V1 整数/费用默认值及 hash，原
@@ -91,6 +107,7 @@
 
 | 范围 | 提交 / CI / artifact | 已核对结果 |
 | --- | --- | --- |
+| 原 owner 受控买入、固定原字节发送与 claim/扫描 | `882e514` / `44109233896` / `14340653473` | 新增 17；完整并发 1638（149.17 秒）/串行 1638（275.68 秒）；99 字段拒绝，56 步骤通过 |
 | 买入原意图/消息签名证据与 V1 历史回放 | `f029d55` / `43785820055` / `14190956041` | 新专项 18（新增 16）；完整并发 1621（120.77 秒）/串行 1621（227.60 秒）；93 字段拒绝，53 步骤通过 |
 | 原 SDK journal 的买卖类型化记录边界 | `2fe436d` / `43781625542` / `14189296618` | 共同记录专项 9、新增 11、买入 79；完整并发 1605（142.55 秒）/串行 1605（261.47 秒）；93 字段拒绝，52 步骤通过 |
 | 买入独立名义记录与原候选数据绑定 | `19f80cb` / `43777721549` / `14187333877` | 买入专项 79（含新增 11）；完整并发 1594（140.68 秒）/串行 1594（257.60 秒）；93 字段拒绝，51 步骤通过 |
@@ -118,8 +135,8 @@
   同 bank 余额/token/CPI 索引绑定未开启 rate-limiter sysvar 的旧 discovery 消息。
   源码复核确认原参数工厂开启该 sysvar，不是最终消息的 Compute Budget 差异；
   测试夹具现使用相同配置并逐字核对完整 discovery 消息，不以重排索引掩盖差异。
-  受限 metadata check 13 秒通过，RSS 1,427,180 KiB；完整买入与两套回归仍待后继
-  独立 CI，不重跑该终态失败。
+  受限 metadata check 13 秒通过，RSS 1,427,180 KiB；后继 882e514 的完整买入与两套
+  回归已独立验收，不重跑该终态失败。
 - `76f898d` / Actions `44107876296`：源码复核发现其索引映射修正未匹配实际
   rate-limiter profile，主动取消已被取代的运行；不计为验收、不重跑。后继只更正
   夹具 profile 和完整消息断言，生产校验/准备行为不改。
@@ -127,16 +144,16 @@
   controlled-buy 六项、buy-claims 三项、sender 十五项及 99 字段门禁通过；executor
   专项 9/10。新增测试误把原“解析钱包后检查 blockhash”断言为先检查 blockhash，
   已按原顺序修正并补重复调用不重入断言，不改生产行为。实际完整买入 runtime 和
-  两套完整回归尚未执行，待后继修正源码独立 CI；不重跑该终态失败，不冒用父批。
+  两套完整回归在该失败快照未执行，后继 882e514 已独立验收；不重跑该终态失败。
 - `8bd7796` / Actions `43710108477` / artifact `14159823162`：服务类型检查、工具三项与全部前置通过；Clippy 全局配置未转发，原锁定 zap 来源在离线模式下无法解析。未进入生产门禁、81 负例或完整回归。修正已在 e3be442 完整验收，不重跑旧失败。
 - `c58eb8c` / Actions `43705256866` / artifact `14158646075`：新接受夹具 5/3；Shadow 异步镜像等待与 oracle 钱包输入已在 26be717 修复验收，不再排队。
 - 其他旧失败及修复保留在历史和各子项文档；不得仅凭历史的 `in_progress` 或“待验”重启任务。
 
 ## 续作顺序
 
-1. 普通任务生命周期、Shadow writer 生命周期、Record/Tape、买入只读取证/兼容/准备绑定/整笔回调/独立名义记录、原单一 journal 的买卖类型边界，以及本批买入消息/签名字节证据、原意图绑定和历史回放/capture 均已按各自源码独立验收，不重跑终态 CI 或重复实施。下一步续原 owner 的受控买入候选/signer、prepared/signing CAS 与 signed 原字节回读、固定 Buy sender、runtime 及 claim/扫描一致接线；共同类型、纯意图绑定或历史签名均不开放执行授权。不先扩大 claim，再补授权，不由历史恢复 owner/重签/重发。不另立任务，也不核对/修改线上版本。
+1. 普通任务生命周期、Shadow writer、Record/Tape、买入只读取证/兼容/准备/消息/独立记录、原 journal 类型边界、原意图/历史回放，以及原 owner 的受控买入候选/signer、CAS/签名字节回读、固定 Buy sender/runtime 和 claim/扫描均已按各自源码独立验收，不重复实施或重跑终态 CI。882e514 只完成 Durable Live SDK 直接 DAMM 的两类输入子路径；续下方原 NP-01/03/04/05 剩余范围，不以历史恢复 owner/重签/重发，不另立任务，也不核对/修改线上版本。
 2. 原 NP-03 的其他依赖方向、具体资源所有权、SDK 内部/独立操作任务与全局 RPC/cache 收口继续保留；不能把 87 字段门禁当作 API/全部依赖/不透明能力流检查完成，也不能把 Shadow FIFO 的原 SQL 调用完成当作额外刷盘/断电或全服务退出证明。任务取消不代表 SDK 副作用取消，不恢复 owner 或重签/重发。
-3. 原 NP-01 的其他方向/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接卖出子路径不重做，也不冒充全量。
+3. 原 NP-01 的其他资产/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接买卖子路径不重做，也不冒充全量。其他 Live worker/模拟和 Memory/Shadow 仍须按实际路径验证，不能继承本批的原 owner 保证。
 4. NP-04 本批只证明原 Durable SOL Quote 买入控制器的共同合同，其他业务路径适用性、真实 Router/SDK 不由 fake 证明；NP-05 来源/升级准备和主计划的真实环境/迁移/回滚门槛继续。当前不授权实际 SDK 升级或生产动作。
 
 详细剩余范围见 [进度盘点](PROGRESS_OVERVIEW.md)、[执行资源边界](ORDINARY_EXECUTION_PORT.md)、

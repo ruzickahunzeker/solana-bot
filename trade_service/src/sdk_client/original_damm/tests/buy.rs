@@ -17,6 +17,10 @@ fn sdk_original_buy_runtime_wrong_receipt_or_lost_write_preserves_original_signa
 fn sdk_original_buy_runtime_cancellation_during_probe_or_send_never_retries() {
     child("buy-cancel");
 }
+#[test]
+fn sdk_original_buy_runtime_presence_failure_or_cancel_never_reaches_probe_signer_or_send() {
+    child("buy-presence");
+}
 
 pub(super) async fn good() {
     for native in [false, true] {
@@ -49,14 +53,18 @@ pub(super) async fn good() {
             [
                 RpcRequest::GetAccountInfo,
                 RpcRequest::GetMultipleAccounts,
-                RpcRequest::GetTokenAccountsByOwner,
                 RpcRequest::GetMultipleAccounts,
                 RpcRequest::SimulateTransaction,
                 RpcRequest::SimulateTransaction,
                 RpcRequest::SendTransaction
             ]
         );
-        assert!(c.server.requests.lock().unwrap().is_empty());
+        let requests = c.server.requests.lock().unwrap().clone();
+        assert_eq!(requests.len(), 1);
+        assert_eq!(
+            requests[0],
+            json!({"jsonrpc":"2.0","id":1,"method":"getTokenAccountsByOwner","params":[c.wallet.wallet().to_string(),{"mint":key(4).to_string()},{"encoding":"jsonParsed","dataSlice":null,"commitment":"processed","minContextSlot":null}]})
+        );
         let row=sqlx::query("SELECT sdk_prepared_json,unsigned_message FROM ordinary_execution_claims WHERE request_id=?").bind(&c.f.record.request_id).fetch_one(&c.pool).await.unwrap();
         let metadata = SdkPreparedRecord::decode(
             row.get("sdk_prepared_json"),
@@ -204,5 +212,67 @@ pub(super) async fn cancel() {
             assert_eq!(trace.calls.lock().unwrap().len(), before);
             pool.close().await;
         }
+    }
+}
+
+pub(super) async fn presence_gate() {
+    for native in [false, true] {
+        for mode in [Mode::PresenceRate, Mode::PresenceInvalid] {
+            let mut c = Case::new_buy(mode, native).await;
+            let result = c.run().await;
+            assert_eq!(result.record.unwrap().status, TradeStatus::Failed);
+            assert!(result.error.is_some());
+            assert!(result.signature.is_none());
+            assert!(c.trace.simulations.lock().unwrap().is_empty());
+            assert!(c.trace.sent.lock().unwrap().is_empty());
+            assert_eq!(c.server.requests.lock().unwrap().len(), 1);
+            let methods = c
+                .trace
+                .calls
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|call| call.0)
+                .collect::<Vec<_>>();
+            assert_eq!(
+                methods,
+                [RpcRequest::GetAccountInfo, RpcRequest::GetMultipleAccounts]
+            );
+            let row = sqlx::query("SELECT submission_stage,signed_signature FROM ordinary_execution_claims WHERE request_id=?").bind(&c.f.record.request_id).fetch_one(&c.pool).await.unwrap();
+            assert_eq!(row.get::<&str, _>("submission_stage"), "failed");
+            assert!(row.get::<Option<String>, _>("signed_signature").is_none());
+            assert_eq!(
+                c.journal.claim(&c.f.execution).await.unwrap(),
+                ExecutionClaim::AlreadyHeld
+            );
+            c.unchanged_request().await;
+            c.finish().await;
+        }
+        let mut c = Case::new_buy(Mode::PresenceHold, native).await;
+        let received = c.server.received.clone();
+        let requests = c.server.requests.clone();
+        let trace = c.trace.clone();
+        let pool = c.pool.clone();
+        let execution = c.f.execution.clone();
+        let task = tokio::spawn(async move { c.run().await });
+        tokio::time::timeout(Duration::from_secs(2), received.notified())
+            .await
+            .unwrap();
+        task.abort();
+        assert!(task.await.err().unwrap().is_cancelled());
+        assert!(trace.simulations.lock().unwrap().is_empty());
+        assert!(trace.sent.lock().unwrap().is_empty());
+        assert_eq!(requests.lock().unwrap().len(), 1);
+        let row = sqlx::query("SELECT submission_stage,signed_signature FROM ordinary_execution_claims WHERE request_id=?").bind(execution.reservation().request_id()).fetch_one(&pool).await.unwrap();
+        assert_eq!(row.get::<&str, _>("submission_stage"), "claimed");
+        assert!(row.get::<Option<String>, _>("signed_signature").is_none());
+        assert_eq!(
+            SqliteOrdinaryExecutionClaims::new(pool.clone())
+                .claim(&execution)
+                .await
+                .unwrap(),
+            ExecutionClaim::AlreadyHeld
+        );
+        pool.close().await;
     }
 }

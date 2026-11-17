@@ -14,6 +14,8 @@ use solana_account_decoder::UiAccount;
 const TOTAL: Duration = Duration::from_secs(4);
 const STEP: Duration = Duration::from_secs(2);
 
+mod presence;
+
 fn invalid(message: &'static str) -> anyhow::Error {
     PreparationBalanceFailure::new(BalanceFailureKind::Invalid, message).into()
 }

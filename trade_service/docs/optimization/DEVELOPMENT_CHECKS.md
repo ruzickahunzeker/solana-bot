@@ -114,6 +114,15 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The 2026-11-17 controlled-buy batch adds the private DammBuyCandidate and
+DammBuySignedCandidate: 32 selected types and 99 scoped fields including the
+outside-alias probe. Source 882e514 / Actions 44109233896 / artifact 14340653473
+passed original/restored checks, all 99 distinct raw-span rejections and both
+complete 1638-test suites (56 steps exit=0). Names retain all 1621 parent tests
+and add exactly 17. The earlier 30-type/93-field evidence below remains historical.
+This is source-only acceptance, not deployment, real-node/provider validation or
+proof that all dependency/capability flows are covered.
+
 The 2026-11-16 buy-message batch adds DammBuyQuote and DammBuyMessage to the
 same policy: 30 selected types and 93 scoped fields including the outside-alias
 probe. Commit ec1d2c9 / Actions 43773807696 / artifact 14185728930 passed the
@@ -132,7 +141,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The versioned JSON fixture now lists 30 selected SDK,
+`clippy::disallowed_types`. The versioned JSON fixture now lists 32 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

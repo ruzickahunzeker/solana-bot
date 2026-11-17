@@ -11,6 +11,8 @@ use std::collections::VecDeque;
 use std::sync::atomic::AtomicUsize;
 use tokio::sync::Notify;
 
+mod presence;
+
 pub(crate) fn a(n: u8) -> Address {
     Address::from_bytes([n; 32])
 }

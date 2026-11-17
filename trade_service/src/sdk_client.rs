@@ -13,7 +13,7 @@ use sol_trade_sdk::trading::core::params::{
 };
 use sol_trade_sdk::trading::factory::DexType;
 use sol_trade_sdk::{find_pool_by_mint, TradingClient};
-use solana_account_decoder::{UiAccountData, UiAccountEncoding};
+use solana_account_decoder::UiAccountEncoding;
 use solana_address_lookup_table_interface::{program as lookup_program, state::AddressLookupTable};
 use solana_client::rpc_config::{RpcAccountInfoConfig, RpcProgramAccountsConfig};
 use solana_client::rpc_config::{
@@ -21,7 +21,6 @@ use solana_client::rpc_config::{
 };
 use solana_client::rpc_filter::Memcmp;
 use solana_client::rpc_filter::RpcFilterType;
-use solana_client::rpc_request::TokenAccountsFilter;
 use solana_commitment_config::CommitmentConfig;
 use solana_program_pack::Pack;
 use solana_sdk::hash::Hash;
@@ -1400,25 +1399,6 @@ impl SdkTradeClient {
             sol_hop_pool_id,
         )
         .await
-    }
-
-    async fn token_account_exists(
-        &self,
-        client: &TradingClient,
-        mint: &Pubkey,
-    ) -> anyhow::Result<bool> {
-        let accounts = client
-            .get_rpc()
-            .get_token_accounts_by_owner(&self.wallet(), TokenAccountsFilter::Mint(*mint))
-            .await?;
-        Ok(accounts
-            .into_iter()
-            .any(|account| match account.account.data {
-                UiAccountData::Json(parsed) => {
-                    parsed.program == "spl-token" || parsed.program == "spl-token-2022"
-                }
-                _ => false,
-            }))
     }
 
     pub async fn resolve_pool(&self, mint: &Pubkey) -> anyhow::Result<PoolRouteHint> {
