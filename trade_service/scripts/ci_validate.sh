@@ -152,9 +152,11 @@ PY
         step app-state-blockhash cargo test --locked --offline app_state_blockhash_read_ -- --test-threads=2
         step readiness-settings cargo test --locked --offline readiness_settings -- --test-threads=2
         step ordinary-intake cargo test --locked --offline ordinary_intake -- --test-threads=2
+        step ordinary-storage-ownership cargo test --locked --offline ordinary_storage_ownership_ -- --test-threads=2
         step ordinary-runtime cargo test --locked --offline ordinary_runtime -- --test-threads=2
         step backend-contracts cargo test --locked --offline backend_contract -- --test-threads=2
         step trade-task-lifecycle cargo test --locked --offline trade_tasks -- --test-threads=2
+        step trade-task-admission cargo test --locked --offline trade_task_admission_ -- --test-threads=2
         step execution-task-ownership cargo test --locked --offline execution_task_ownership_ -- --test-threads=2
         step vanity-lifecycle cargo test --locked --offline vanity_lifecycle_ -- --test-threads=2
         step vanity-shutdown cargo test --locked --offline vanity_shutdown_ -- --test-threads=2

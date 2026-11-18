@@ -9,6 +9,21 @@ use tokio::sync::Notify;
 #[derive(Clone)]
 pub(crate) struct TradeTasks(Arc<Inner>);
 
+/// Request-side access can register work, but cannot close or drain the group.
+#[derive(Clone)]
+pub(crate) struct TradeTaskAdmission(TradeTasks);
+
+impl TradeTaskAdmission {
+    pub(crate) fn register(&self) -> Option<DispatchTicket> {
+        self.0.register()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn fixture_group(&self) -> &TradeTasks {
+        &self.0
+    }
+}
+
 struct Inner {
     state: Mutex<State>,
     changed: Notify,
@@ -65,6 +80,10 @@ pub(crate) struct DispatchTicket {
 }
 
 impl TradeTasks {
+    pub(crate) fn admission(&self) -> TradeTaskAdmission {
+        TradeTaskAdmission(self.clone())
+    }
+
     /// Register before the first acceptance await, closing the intake-to-spawn race.
     pub(crate) fn register(&self) -> Option<DispatchTicket> {
         let mut state = self.0.state();

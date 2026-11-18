@@ -218,7 +218,7 @@ async fn shadow_shutdown_helper_joins_original_writer_before_reporting_success()
     journal.update(&record).await.unwrap();
     let (refresher, trace) = refresher(false).await;
     let owner = journal.clone();
-    let tasks = fixture.state.trade_tasks.clone();
+    let tasks = fixture.state.trade_task_admission.fixture_group().clone();
     let shutdown = tokio::spawn(async move {
         finish(
             &tasks,
@@ -261,7 +261,7 @@ async fn shadow_shutdown_helper_reports_write_failure_without_changing_original_
     journal.update(&invalid).await.unwrap();
     let (refresher, trace) = refresher(false).await;
     let error = finish(
-        &fixture.state.trade_tasks,
+        fixture.state.trade_task_admission.fixture_group(),
         Duration::from_secs(1),
         refresher,
         None,
@@ -295,7 +295,7 @@ async fn shadow_shutdown_helper_reports_write_failure_without_changing_original_
 #[tokio::test]
 async fn shadow_shutdown_helper_drains_writer_even_when_ordinary_work_is_incomplete() {
     let fixture = shadow_fixture().await;
-    let tasks = fixture.state.trade_tasks.clone();
+    let tasks = fixture.state.trade_task_admission.fixture_group().clone();
     let ticket = tasks.register().unwrap();
     let journal = fixture.state.persistence.clone();
     let (refresher, trace) = refresher(false).await;
@@ -327,7 +327,7 @@ async fn shadow_shutdown_helper_drains_writer_even_when_original_refresher_faile
     let journal = fixture.state.persistence.clone();
     let (refresher, trace) = refresher(true).await;
     let error = finish(
-        &fixture.state.trade_tasks,
+        fixture.state.trade_task_admission.fixture_group(),
         Duration::from_secs(1),
         refresher,
         None,

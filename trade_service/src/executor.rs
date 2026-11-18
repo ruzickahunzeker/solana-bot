@@ -1,5 +1,5 @@
 use crate::{
-    adapters::persistence::ordinary_claims::RuntimeExecutionClaims,
+    adapters::persistence::ordinary_storage::OrdinaryStorage,
     application::{
         ordinary_runtime::OrdinaryExecutionService,
         ports::{
@@ -10,14 +10,13 @@ use crate::{
         trade_admission::AdmittedTrade,
         trade_settings::OrdinaryExecutionSettings,
     },
-    persistence::TradePersistence,
-    state::TradeStore,
     AppState,
 };
 use std::{future::Future, sync::Arc};
 
 #[cfg(test)]
 use crate::{
+    adapters::persistence::ordinary_claims::RuntimeExecutionClaims,
     application::{
         ordinary_runtime::{map_status, persist_before_execution, persist_update},
         ports::{
@@ -83,17 +82,12 @@ pub(crate) fn execute_admitted_trade(
     execution: AdmittedTrade,
 ) -> impl Future<Output = ()> + Send + 'static + use<> {
     let resources = ExecutionResources::from_state(state);
-    let claims = RuntimeExecutionClaims::new(
-        resources.persistence.clone(),
-        resources.trades.clone(),
-        state.idempotency.clone(),
-    );
+    let claims = resources.storage.view().claims();
     async move { resources.execute(&execution, &claims).await }
 }
 
 struct ExecutionResources {
-    persistence: Arc<TradePersistence>,
-    trades: Arc<TradeStore>,
+    storage: OrdinaryStorage,
     blockhash: Arc<dyn CachedBlockhashRead>,
     ordinary: Arc<dyn OrdinaryExecutionBackend>,
     sol_buy: Arc<dyn OrdinarySolBuyBackend>,
@@ -104,8 +98,7 @@ struct ExecutionResources {
 impl ExecutionResources {
     fn from_state(state: &AppState) -> Self {
         Self {
-            persistence: state.persistence.clone(),
-            trades: state.trades.clone(),
+            storage: state.ordinary_storage().retain(),
             blockhash: state.cached_blockhash.clone(),
             ordinary: state.ordinary_execution.clone(),
             sol_buy: state.ordinary_sol_buy.clone(),
@@ -115,9 +108,10 @@ impl ExecutionResources {
     }
 
     async fn execute<C: OrdinaryExecutionClaimer>(&self, execution: &AdmittedTrade, claims: &C) {
+        let storage = self.storage.view();
         OrdinaryExecutionService::new(
-            self.persistence.as_ref(),
-            self.trades.as_ref(),
+            storage.execution_journal(),
+            storage.execution_index(),
             self.blockhash.as_ref(),
             self.ordinary.as_ref(),
             self.sol_buy.as_ref(),

@@ -46,7 +46,7 @@ async fn accept_trade_for_wallet(
     mut request: TradeRequest,
     forced_wallet_id: Option<String>,
 ) -> Result<AcceptTradeOutcome, (StatusCode, String)> {
-    let task_ticket = state.trade_tasks.register().ok_or_else(|| {
+    let task_ticket = state.trade_task_admission.register().ok_or_else(|| {
         (
             StatusCode::SERVICE_UNAVAILABLE,
             "trade service is shutting down".into(),

@@ -30,9 +30,15 @@
 
 ## 当前批次
 
-当前原 NP-03 AppState 资源所有权源码已接，单一 cache/账本/任务组及关停顺序不改。
-预期保留原1984名称、恰增5、完整各1989、113步、59类型/180字段；
+当前原 NP-03 普通存储与登记权限源码已接，仍用同一账本、索引、幂等和任务组。
+预期保留原1989名称、恰增3、完整各1992、115步、62类型/189字段；
 见 [资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)。本地策略检查不替代云端编译。
+
+原 NP-03 AppState 资源所有权 `65ef56e` /
+[Actions 44280875076](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44280875076)
+首次运行 success，artifact `14419816862` 下载独立核对：并发1989（385.91秒）/
+串行1989（735.10秒），原1984名称全保留、恰增5，HTTP208、113步、59类型/
+180原始字段。源码、原资源交接和 CI 步骤顺序匹配；未部署，未重跑首批。
 
 首批资源快照 `3eef0d6` / [Actions 44279040611](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44279040611)
 停在测试类型检查；artifact `14415623129` 核对 13 处同一 `E0425`。

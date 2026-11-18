@@ -211,8 +211,10 @@ fn complete(
     ));
     let wallet_management = SdkWalletManagement::new(wallet_repository.clone(), wallets.clone());
     let trade_tasks = TradeTasks::default();
+    let trades = Arc::new(TradeStore::default());
+    let idempotency = Arc::new(IdempotencyStore::default());
     let state = AppState {
-        trade_tasks: trade_tasks.clone(),
+        trade_task_admission: trade_tasks.admission(),
         vanity_tasks: Arc::new(VanityService::new(wallet_ops.clone())),
         wallet_management: Arc::new(WalletManagementService::new(
             wallet_management.clone(),
@@ -260,8 +262,17 @@ fn complete(
         #[cfg(test)]
         params: params.clone(),
         param_cache_writer: params,
-        trades: Arc::new(TradeStore::default()),
-        idempotency: Arc::new(IdempotencyStore::default()),
+        #[cfg(not(test))]
+        ordinary_storage: crate::adapters::persistence::ordinary_storage::OrdinaryStorage::new(
+            persistence.clone(),
+            trades,
+            idempotency,
+        ),
+        #[cfg(test)]
+        trades,
+        #[cfg(test)]
+        idempotency,
+        #[cfg(test)]
         persistence: persistence.clone(),
         #[cfg(test)]
         aggregator_quotes,

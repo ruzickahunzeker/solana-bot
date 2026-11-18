@@ -86,7 +86,7 @@ git diff --check                                             # passed
 就地复用原 owner、测试 transport 与 no-fallback 合同。若固定 SDK 没有任务完成或取消接口，
 保留未验证状态，不能通过扩大超时或改文案冒充退出完成。未运行真钱包、节点或交易。
 
-后继源码补两项离线见证，待独立 CI 验收。测试使用固定 SDK 的
+后继源码补两项离线见证，由下述资源批独立验收。测试使用固定 SDK 的
 `execute_parallel` 与生产的 lane 编排、结果分类和 `TradeTasks::drain`；跳过
 高层协议构建，合成包只进入内存。分别在原发送器进入后取消 caller，以及让 SDK
 自然等待超时并获得应用层 clean drain。两条路径都要求原发送器仍未完成、释放后
@@ -101,7 +101,7 @@ executor，原 readiness adapter 和 refresher 继续用原对象；不分配第
 不改 TTL、刷新过程、时钟、槽位或读取/拒绝顺序。保留原组装指针和释放断言。
 新增离线见证使用一个门控 hash：更新前两处均见空，原刷新后执行端口能取得该 hash、
 实际 readiness 聚合读到 freshness；只读端口仍持有原分配，最后释放后可回收。
-此处未改变 TradeStore、journal、idempotency 或 RPC 冷却；验收待独立 CI。
+此处未改变 TradeStore、journal、idempotency 或 RPC 冷却；见下述验收。
 
 ## 后台执行不持有 HTTP 状态
 
@@ -123,3 +123,30 @@ Bootstrap 将同一任务组和同一持久化实例交给 `OrdinaryShutdown`；
 新 Bootstrap 测试释放请求状态后，验证关闸作用于原任务组，原未完成票据仍计入
 退出报告，并且原 refresher 和 Shadow writer 均由同一个关停句柄收尾。
 只使用离线夹具和内存数据库；不声称已完成生产落盘或 SDK 全局任务退出。
+
+本批 `65ef56e` / [Actions 44280875076](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44280875076)
+及 artifact `14419816862` 独立核对通过：并发1989（385.91秒）、串行1989（735.10秒），
+原1984名称全保留、恰增五项；208项 HTTP、113步、59类型/180原始字段通过。
+首批缺少的测试入口已仅用 `cfg(test)` 转接恢复；原生产执行和关停顺序不变。
+SDK 的两项见证只证明既有 worker 行为，不把应用 drain 称为 SDK 发送取消。未部署。
+
+## 普通交易存储权限
+
+生产 `AppState` 不再暴露具体 journal、索引或幂等字段。组装入口把同一组三个
+Arc 交给存储适配器，准入、查询和执行各用已有应用接口；后台任务只保留这组三个
+原句柄与其执行端口。关停仍接收 Bootstrap 的原句柄，不经过 Router。
+不新增连接池、缓存或幂等权威。测试的替换夹具构造相同的借用视图，不保留两份
+可静默分叉的引用。Memory/Shadow 仍读原索引，Durable 仍读原持久化记录；
+claim 的身份与 CAS、SQL、JSON 和状态更新逻辑完全保留。
+
+新增两项离线见证：三种模式下用新接口取得 claim、从旧入口确认不能再占用，
+比较读取来源和写回原记录；并验证替换测试持久化实例不改变既有快照。
+两种存储适配类型不允许进入 Application、Domain、Protocol，待独立 CI。
+
+## 请求只登记任务
+
+HTTP 只持有 `TradeTaskAdmission`，不能直接关闭或排空任务组；Bootstrap 给
+`OrdinaryShutdown` 的仍是原 `TradeTasks`。登记复用原流程，已获得的票据仍在线性
+交接路径内。所有拒绝顺序、关闭后的 503、读取路径、排空状态和超时保持不变。
+新测试验证两份登记句柄与原关闸共享状态、最后的原票据仍持有该实例；
+原关停交接和 HTTP 生命周期测试也经新入口。未部署，待 CI。

@@ -6,12 +6,15 @@
 
 ## 当前任务
 
-- 当前续原 NP-03 [AppState 资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)：只读
-  Blockhash、普通后台任务不持有 HTTP 状态、原任务组和持久化独立交接给关停流程；
-  两项离线见证区分 SDK worker 与应用排空。源码与本地审计通过，待独立 CI。
-  预期新增5、完整各1989、113步、59类型/180字段，不借用上批结果。
-  首批 `3eef0d6` 的类型检查发现 13 处旧 claim/SDK journal 测试仍调用被移除的 helper；
-  修正只恢复 `cfg(test)` 转接到同一执行路径，不改原测试或生产代码。
+- 当前续原 NP-03 [普通存储与登记权限](APP_STATE_RESOURCE_OWNERSHIP.md)：请求
+  不暴露具体普通账本、索引、幂等或任务关停能力，原资源及合同行为不改。
+  源码与本地审计通过，待独立 CI；预期新增3、完整各1992、115步、62类型/189字段。
+- 原 NP-03 [AppState 资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)已独立验收：
+  `65ef56e` / [Actions 44280875076](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44280875076)
+  / artifact `14419816862`。并发1989（385.91秒）、串行1989（735.10秒），
+  原1984全保留、恰增5；HTTP208、113步/59类型/180字段通过。覆盖同一只读
+  Blockhash、后台不持有请求状态、原资源关停交接；SDK 见证不等于发送任务可取消。
+  首批 `3eef0d6` 的13个编译错误仅系旧测试缺入口，修正只恢复测试转接，未部署。
 - 原 NP-03 / TS-09-A [AppState 请求配置](APP_STATE_REQUEST_SETTINGS.md)已独立验收：
   `839cd85` / [Actions 44272714261](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44272714261)
   / artifact `14415756815`。并发1984（383.21秒）、串行1984（729.06秒），
@@ -439,7 +442,7 @@
 
 1. 普通任务生命周期、Shadow writer、Record/Tape、买入只读取证/兼容/准备/消息/独立记录、原 journal 类型边界、原意图/历史回放，以及原 owner 的受控买入候选/signer、CAS/签名字节回读、固定 Buy sender/runtime 和 claim/扫描均已按各自源码独立验收，不重复实施或重跑终态 CI。882e514 只完成 Durable Live SDK 直接 DAMM 的两类输入子路径；续下方原 NP-01/03/04/05 剩余范围，不以历史恢复 owner/重签/重发，不另立任务，也不核对/修改线上版本。
 2. 原 NP-03 不重做或重跑上方已验收的读取、生命周期、转账准备、确认和广播。
-   当前独立验收 AppState 请求设置；继续 SDK 内部任务、其他独立操作、全局
+   当前独立验收普通存储与登记权限；继续 SDK 内部任务、其他独立操作、全局
    RPC/cache 配额与退出/刷盘门槛。三层编译门禁不代表全部依赖/能力流完成。不恢复
    owner 或重签/重发。
 3. 原 NP-01 的其他资产/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接买卖子路径不重做，也不冒充全量。其他 Live worker/模拟和 Memory/Shadow 仍须按实际路径验证，不能继承本批的原 owner 保证。

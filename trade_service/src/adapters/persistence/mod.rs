@@ -2,6 +2,7 @@ pub(crate) mod ordinary_claims;
 pub(crate) mod ordinary_journal;
 pub(crate) mod ordinary_observation_scan;
 pub(crate) mod ordinary_sdk_preparation;
+pub(crate) mod ordinary_storage;
 pub(crate) mod ordinary_submission;
 pub(crate) mod quote_reconciliation;
 pub(crate) mod sol_transfer_codec;

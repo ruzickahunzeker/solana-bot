@@ -42,6 +42,8 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertIn("sol_transfer_confirmation_reader", types)
         self.assertIn("request_settings", types)
         self.assertIn("ordinary_shutdown", types)
+        self.assertIn("trade_task_admission", types)
+        self.assertTrue({"ordinary_storage", "ordinary_storage_ref"} <= types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):
@@ -78,6 +80,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertIn("HiddenSdkClient", lines[expected["sdk_client"] - 1])
         self.assertIn("Option<crate::config::request_settings::RequestSettings>", lines[expected["request_settings"] - 1])
         self.assertIn("Option<crate::infrastructure::service_shutdown::OrdinaryShutdown>", lines[expected["ordinary_shutdown"] - 1])
+        self.assertIn("OrdinaryStorageRef<'static>>", lines[expected["ordinary_storage_ref"] - 1])
 
     def test_missing_rejection_or_unrelated_compiler_error_cannot_pass(self):
         expected = {"src/application/mod.rs": {"sdk": 3}, "src/domain/mod.rs": {"sdk": 4}}

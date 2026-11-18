@@ -44,13 +44,17 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::{info, warn};
 
-use crate::adapters::persistence::trade_reads::StoredTradeReadSource;
+#[cfg(not(test))]
+use crate::adapters::persistence::ordinary_storage::OrdinaryStorage;
+use crate::adapters::persistence::ordinary_storage::OrdinaryStorageRef;
 #[cfg(test)]
 use crate::aggregator_quote::QuoteStore;
 use crate::application::pool_queries::PoolQueries;
 use crate::application::ports::blockhash::CachedBlockhashRead;
 use crate::application::ports::ordinary_execution::OrdinaryExecutionBackend;
+use crate::application::ports::ordinary_journal::OrdinaryTradeJournal;
 use crate::application::ports::ordinary_sol_buy::OrdinarySolBuyBackend;
+use crate::application::ports::trade_admission::{MemoryTradeReservations, TradeRecordIndex};
 use crate::application::ports::trade_reads::TradeRecordReadSource;
 use crate::application::ports::wallet_identity::LoadedWalletDirectory;
 use crate::application::quote_preflight::QuotePreflights;
@@ -67,10 +71,13 @@ use crate::application::wallet_management::WalletManagement;
 use crate::blockhash_cache::BlockhashCache;
 #[cfg(test)]
 use crate::conversion::ConversionStore;
+#[cfg(test)]
 use crate::idempotency::IdempotencyStore;
 #[cfg(test)]
 use crate::param_cache::ParamCache;
+#[cfg(test)]
 use crate::persistence::TradePersistence;
+#[cfg(test)]
 use crate::state::TradeStore;
 #[cfg(test)]
 use crate::wallet_ops::WalletOps;
@@ -81,7 +88,7 @@ use crate::wallets::WalletRegistry;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub(crate) trade_tasks: crate::infrastructure::trade_tasks::TradeTasks,
+    pub(crate) trade_task_admission: crate::infrastructure::trade_tasks::TradeTaskAdmission,
     pub(crate) request_settings: Arc<config::request_settings::RequestSettings>,
     #[cfg(test)]
     pub config: Arc<Config>,
@@ -95,8 +102,13 @@ pub struct AppState {
     pub params: Arc<ParamCache>,
     pub(crate) param_cache_writer:
         Arc<dyn crate::application::ports::pool_queries::ParamCacheWriter>,
+    #[cfg(not(test))]
+    ordinary_storage: OrdinaryStorage,
+    #[cfg(test)]
     pub trades: Arc<TradeStore>,
+    #[cfg(test)]
     pub idempotency: Arc<IdempotencyStore>,
+    #[cfg(test)]
     pub persistence: Arc<TradePersistence>,
     #[cfg(test)]
     pub aggregator_quotes: Arc<QuoteStore>,
@@ -120,18 +132,30 @@ pub struct AppState {
 }
 
 impl AppState {
+    pub(crate) fn ordinary_storage(&self) -> OrdinaryStorageRef<'_> {
+        #[cfg(test)]
+        {
+            OrdinaryStorageRef::new(&self.persistence, &self.trades, &self.idempotency)
+        }
+        #[cfg(not(test))]
+        {
+            self.ordinary_storage.view()
+        }
+    }
+
     pub(crate) fn trade_intake(
         &self,
     ) -> crate::application::trade_intake::TradeIntakeService<
         '_,
-        TradePersistence,
-        TradeStore,
-        IdempotencyStore,
+        impl OrdinaryTradeJournal,
+        impl TradeRecordIndex,
+        impl MemoryTradeReservations,
     > {
+        let storage = self.ordinary_storage();
         crate::application::trade_intake::TradeIntakeService::new(
-            self.persistence.as_ref(),
-            self.trades.as_ref(),
-            self.idempotency.as_ref(),
+            storage.admission_journal(),
+            storage.admission_index(),
+            storage.admission_reservations(),
             self.wallet_identity.as_ref(),
             &crate::adapters::sdk::address_parser::SdkAddressParser,
             self.request_settings.intake(),
@@ -141,10 +165,7 @@ impl AppState {
     }
 
     pub(crate) fn trade_queries(&self) -> TradeQueryService<impl TradeRecordReadSource + '_> {
-        TradeQueryService::new(StoredTradeReadSource::new(
-            self.persistence.as_ref(),
-            self.trades.as_ref(),
-        ))
+        TradeQueryService::new(self.ordinary_storage().reads())
     }
 }
 

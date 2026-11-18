@@ -9,6 +9,25 @@ impl Drop for Dropped {
     }
 }
 
+#[test]
+fn trade_task_admission_clones_share_the_original_closed_group() {
+    let owner = TradeTasks::default();
+    let original = Arc::downgrade(&owner.0);
+    let admission = owner.admission();
+    let clone = admission.clone();
+    let ticket = admission.register().unwrap();
+    assert!(Arc::ptr_eq(&ticket.inner, &owner.0));
+
+    owner.close();
+    drop(owner);
+    assert!(admission.register().is_none());
+    assert!(clone.register().is_none());
+    drop((admission, clone));
+    assert!(original.upgrade().is_some());
+    drop(ticket);
+    assert!(original.upgrade().is_none());
+}
+
 #[tokio::test]
 async fn trade_tasks_unused_admission_tickets_release_and_close_is_irreversible() {
     let tasks = TradeTasks::default();

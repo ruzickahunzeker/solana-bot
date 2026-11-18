@@ -221,9 +221,9 @@ async fn trade_shutdown_handoff_drains_original_resources_after_request_state_dr
         ..
     } = complete(resources, refresher).unwrap();
 
-    let ticket = state.trade_tasks.register().unwrap();
+    let ticket = state.trade_task_admission.register().unwrap();
     ordinary_shutdown.stop_intake()();
-    assert!(state.trade_tasks.register().is_none());
+    assert!(state.trade_task_admission.register().is_none());
     drop(state);
     let original = persistence.upgrade().unwrap();
     assert!(!original.shadow_is_closed_for_tests());

@@ -250,7 +250,7 @@ pub(crate) async fn state_with_blockhash() -> (AppState, Arc<BlockhashCache>) {
     let params = Arc::new(crate::param_cache::ParamCache::default());
     let blockhash = Arc::new(BlockhashCache::default());
     let state = AppState {
-        trade_tasks: Default::default(),
+        trade_task_admission: crate::infrastructure::trade_tasks::TradeTasks::default().admission(),
         vanity_tasks: Arc::new(crate::application::vanity::VanityService::new(wallet_ops)),
         wallet_management: Arc::new(
             crate::application::wallet_management::WalletManagementService::new(

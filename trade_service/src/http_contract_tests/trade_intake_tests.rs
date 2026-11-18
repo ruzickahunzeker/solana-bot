@@ -157,7 +157,7 @@ async fn task_fixture(mode: TradePersistenceMode, wait: u64) -> (AppState, Arc<T
 #[tokio::test]
 async fn trade_tasks_http_closed_intake_keeps_auth_batch_and_read_only_query_contracts() {
     let state = state().await;
-    let tasks = state.trade_tasks.clone();
+    let tasks = state.trade_task_admission.fixture_group().clone();
     tasks.close();
     let app = http::router(state.clone());
     let body = json_body(
@@ -230,7 +230,7 @@ async fn trade_tasks_http_accepted_background_work_outlives_response_in_all_orig
         TradePersistenceMode::Durable,
     ] {
         let (state, trace) = task_fixture(mode, 0).await;
-        let tasks = state.trade_tasks.clone();
+        let tasks = state.trade_task_admission.fixture_group().clone();
         let app = http::router(state);
         let body = json_body(
             send(
@@ -279,7 +279,7 @@ async fn trade_tasks_http_accepted_background_work_outlives_response_in_all_orig
 #[tokio::test]
 async fn trade_tasks_http_request_cancellation_does_not_cancel_the_accepted_executor() {
     let (state, trace) = task_fixture(TradePersistenceMode::Durable, 5000).await;
-    let tasks = state.trade_tasks.clone();
+    let tasks = state.trade_task_admission.fixture_group().clone();
     let app = http::router(state.clone());
     let request_app = app.clone();
     let request = tokio::spawn(async move {
@@ -330,7 +330,7 @@ async fn execution_task_ownership_releases_http_settings_and_finishes_in_origina
     use std::time::Duration;
 
     let (state, trace) = task_fixture(TradePersistenceMode::Durable, 0).await;
-    let tasks = state.trade_tasks.clone();
+    let tasks = state.trade_task_admission.fixture_group().clone();
     let settings = Arc::downgrade(&state.request_settings);
     let directory = Arc::downgrade(&state.wallet_identity);
     let original_journal = Arc::downgrade(&state.persistence);
@@ -386,7 +386,7 @@ async fn execution_task_ownership_releases_http_settings_and_finishes_in_origina
 #[tokio::test]
 async fn trade_tasks_http_duplicate_and_rejected_requests_do_not_register_extra_executors() {
     let (state, trace) = task_fixture(TradePersistenceMode::Durable, 0).await;
-    let tasks = state.trade_tasks.clone();
+    let tasks = state.trade_task_admission.fixture_group().clone();
     let app = http::router(state);
     let first = json_body(
         send(
