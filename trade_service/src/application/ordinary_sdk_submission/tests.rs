@@ -34,6 +34,7 @@ use tokio::sync::Notify;
 
 mod buy_tests;
 mod finality_tests;
+mod independent_backend_contracts;
 mod prepared_record_tests;
 
 #[derive(Default)]

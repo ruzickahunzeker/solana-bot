@@ -89,9 +89,12 @@ The local provider-conversion follow-up narrows another original SDK facade
 boundary, not the supported provider/protocol set. Six existing service provider
 configs and eight public choices map to the same pinned SDK variants, strings,
 credentials, regional aliases, transports and validation order. Full source
-reconstruction and six changed-policy negatives pass. Five new contracts and
-the expanded SDK SWQoS type gate await the separate coherent successor CI;
-they are not in the accepted parent. Details remain in the existing
+reconstruction and six changed-policy negatives pass. Five provider contracts
+and the expanded SDK SWQoS/concrete-cache type gate were independently accepted
+in e6c5a6e/run44375225006/artifact14463247130 (full2078 each, provider5/cache3,
+129 steps and74types/225 raw fields). First3721 fixture failure was corrected
+without changing production methods or old assertions, never rerun.
+Seven later SDK controller contracts remain independently pending. Details remain in the existing
 APP_STATE_RESOURCE_OWNERSHIP.md, not a second SDK upgrade or rollout plan.
 
 ## 2026-11-12 本地核对历史

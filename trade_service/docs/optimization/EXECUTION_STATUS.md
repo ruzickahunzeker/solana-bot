@@ -6,14 +6,18 @@
 
 ## 当前任务
 
-- 当前续原NP03的Provider转换边界：原配置/映射移入SDK adapter，去除
-  adapter对根facade的反向调用，原初始化/选路/错误顺序可逐字还原。五项新合同
-  仅源码/格式/策略检查，尚未Rust运行；不继承已验收父批的结果。
-  见同一[资源边界](APP_STATE_RESOURCE_OWNERSHIP.md)，不新增任务/协议/实盘权限。
-- 同批原NP03的[候选缓存](PARAM_CACHE_RESOURCE_BOUNDARY.md)补1024条元数据上限，
-  保留原实例/键/字段与写入端口，不涉及SDK缓存、报价、授权或账本。容量/并发/
-  三模式执行三项新合同待独立Rust验收；与上述合计八项，预期完整各2078、129步
-  及74类型/225字段，不套用父批结果。
+- 当前续原[NP04后端合同](BACKEND_CONSTRUCTION_CONTRACT.md)：七项SDK控制器
+  合同补独立构建/签名/内存发送表示，共用Case不构建候选，复用原临时SQLite与
+  owner/permit，不改原First/Second测试。源码重建/六负例/格式/工作流通过，
+  七项Rust合同仍待独立验收，预期完整各2085/130步/74类型225字段。
+- 原NP03 [Provider边界](APP_STATE_RESOURCE_OWNERSHIP.md)和
+  [1024条候选缓存](PARAM_CACHE_RESOURCE_BOUNDARY.md)已独立验收：`e6c5a6e` /
+  [Actions44375225006](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44375225006)
+  / artifact14463247130。并发2078（350.04秒）、串行2078（681.34秒），原2070
+  名称全保留、恰增八项；provider5/cache3、原config3/surface2/Pump56/HTTP208、
+  129有序步骤及74类型/225原始编译字段通过。源码与锁定依赖身份、原初始化/
+  选路/缓存方法/旧断言重建及6+5负例源审计通过，首批只修正夹具池地址与唯一键断言。
+  不共享SDK资源、不改SDK缓存/授权/账本；不重跑终态或另发文档CI，记录随真实后继源码提交。
 - 首批`3721cf1` / Actions44371523601 / artifact14459603617终态failure：类型检查、
   链接及74类型/225字段已过，Provider五项专项和原cache-port两项通过；缓存专项
   1过2失败，未执行完整套件。原因是容量夹具给不同Mint复用同一Pool ID，而原CPMM

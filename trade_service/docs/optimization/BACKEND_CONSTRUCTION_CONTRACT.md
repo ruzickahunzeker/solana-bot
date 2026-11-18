@@ -77,3 +77,48 @@ NP-01 的其他 backend/mode/方向完整授权与账本、NP-03 全局资源/�
 NP-04 其他业务路径的合同适用性和 NP-05 隔离升级/协议演练仍须按原范围验收。
 本批不得把 fake 合同等同于真实 Router/SDK 可替换、全部协议准入或生产发布完成。
 PumpAPI 新对接仍暂停；不部署、不重启、不接触生产钱包/数据库、不发送交易。
+
+## Original NP-04 SDK Controller Follow-Up
+
+Local continuation after the original Record/Tape Quote contracts, not a new
+backend/protocol task. The original SDK First/Second tests still share Engine
+and retain their old assertions. Seven new unexecuted Rust contracts now run
+the actual ordinary SDK controller and original SQLite journal with Native
+and an independently constructed Tape candidate/signed representation.
+
+The shared Case creates only an admitted public fixture intent, original claim,
+temporary SQLite and a synthetic test Keypair. It builds neither candidate.
+Native uses its existing fixture builder; Tape constructs its own ordered
+price/limit/output-ATA/swap/close recipe from that admitted intent and explicit
+public pool fixture state, using standard Solana/SPL encoding rather than the
+SDK builder or a conversion from Native. Candidate, signer and memory sender
+do not call the original Engine. Control only records events/blocks; the
+original semantic validators and original journal remain shared guards.
+
+These seven tests require matching canonical message/nominal metadata without
+signing, identical controller order and one signer/send, twelve storage faults,
+three altered readbacks, two unknown sender outcomes with original-signature
+read-only observation, four real abort/join boundaries with signed-row evidence,
+and recipe/consistent-candidate/packet changes. A replacement candidate with
+internally consistent metadata must fail the already-issued original permit
+before signer access. Cancellation cannot continue after the blocked gate is
+released, and neither implementation obtains a new owner after an unknown.
+
+This is a deliberately narrow fake contract for the existing Durable direct
+DAMM sell100/classic-SPL/WSOL/Default scenario. Synthetic Keypair signing makes
+valid nominal packets for the actual journal, not a production wallet or live
+permission. The sender only reads temporary SQLite and returns a fixture
+receipt/error. It has no network, SDK client, worker or RPC capability.
+It does not prove fresh chain/pool/output evidence, buy/other modes/providers,
+Router replaceability, all protocols or an SDK upgrade. No profile/dispatch,
+DTO/hash/JSON, signing permit, journal/DDL, manifest/lock/vendor is changed.
+
+Read-only source audit reconstructs every old test after removing one module
+marker, retains989 original source/vendor/migration/dependency blobs, and checks
+independent imports/build/sign/send and original permit/persisted-byte ordering.
+Six actually changed weaker sources reject; mutation generation failures do
+not count as policy rejection. Format/workflow checks pass, not Rust execution.
+The local runner adds one focused group while retaining both complete suites.
+The fixture-correction e6c5a6e/run44375225006/artifact14463247130 independently
+passed full2078 each (350.04s/681.34s),129steps and74types/225fields. It excludes
+these seven tests, whose coherent successor cannot inherit that acceptance.

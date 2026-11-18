@@ -223,7 +223,7 @@ Default RPC append and REQUIRE_MEV_SUBMIT checks remain in the original
 initializer. The SDK supports more providers than this service exposes; that
 does not open new public choices or alter API/fees/MEV/fallback policy.
 
-Five new unexecuted Rust contracts cover512 subset/global-flag combinations,
+Five independently accepted Rust contracts cover512 subset/global-flag combinations,
 exact six-provider fields and order, disabled invalid values, earliest enabled
 error, token-before-region-before-transport, all regional aliases and distinct
 BlockRazor/Astralane modes, owned verbatim credentials and the eight existing
@@ -231,13 +231,17 @@ public choices against the actual DAMM provider guard. They never construct
 SDK clients, payers, RPCs or workers. The existing three-layer compiler policy
 adds five SDK SWQoS types. The same original NP-03 successor also bounds the
 advisory candidate cache, whose concrete type is forbidden in the same gate;
-combined expected74 types/225 raw fields and eight new Rust tests await CI.
+combined74 types/225 raw fields and all eight new Rust tests passed independent CI.
 Cache policy and three contracts are recorded in PARAM_CACHE_RESOURCE_BOUNDARY.md.
 
-Source reconstruction and six rejected policy mutations passed locally, as did
-format and policy checks. These do not replace Rust execution. The accepted
-parent contains neither provider conversion nor cache-bound tests; the coherent
-successor needs independent verification in the same validation branch.
+Source reconstruction and six rejected policy mutations passed. Exact e6c5a6e /
+Actions44375225006 / artifact14463247130 independently passed full2078 each
+(350.04s/681.34s), original2070 retained plus exacteight, provider5/cache3,
+config3/surface2/Pump56/HTTP208,129 ordered zero-exit steps and74types/225 raw
+compiler fields. First3721 failed only two reused-pool-ID fixtures; correction
+only varies fixture pool IDs and asserts unique keys, keeping old assertions
+and production bytes. It is never rerun. Seven later SDK backend contracts are
+not in this acceptance and require their own coherent CI.
 The original Pump permission/journal, provider/ABI/funding, all-mode safety,
 actual SDK resource ownership and real release gates remain incomplete.
 

@@ -30,11 +30,10 @@
 
 ## 当前批次
 
-当前续原NP03 Provider转换及候选缓存上限：八项新Rust合同待独立CI，预期完整
-各2078、原2070名称全保留/恰增八项、provider5/cache3、原config3/surface2、
-Pump56/HTTP208、129有序步骤及74类型/225字段。已有源码重建/负例/格式/策略
-检查不替代Rust执行；见原[资源边界](APP_STATE_RESOURCE_OWNERSHIP.md)和
-[候选缓存](PARAM_CACHE_RESOURCE_BOUNDARY.md)。不改API/SDK/钱包/账本，不新增权限。
+当前续原NP04七项SDK独立后端合同，预期完整各2085、父2078名称全保留/恰增七项、
+130有序步骤及原74类型/225字段。共用Case不预构建候选，原controller/SQLite/owner/
+permit保持，见[同一后端合同](BACKEND_CONSTRUCTION_CONTRACT.md)。源码/负例/格式/
+工作流检查不替代Rust执行；不改API/SDK/钱包/账本，不新增协议、模式或权限。
 
 首批3721cf1 / [Actions44371523601](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44371523601)
 终态failure，artifact14459603617已下载核对：类型检查/链接、74类型/225字段、
@@ -42,6 +41,13 @@ Provider五项及cache-port两项通过；缓存专项1过2失败，完整两套
 原CPMM缓存按Pool ID建键，容量夹具却复用同一池，导致仅一个键及并发覆盖。
 修正只改变公开夹具Pool ID生成并增加唯一键断言，生产缓存/原键/旧断言保持；
 本地后继NP04的runner/module与七项测试留在修正快照之外，不重跑首批。
+
+修正e6c5a6e / [Actions44375225006](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44375225006)
+首次运行success，artifact14463247130已下载独立核对：并发2078（350.04秒）、串行
+2078（681.34秒），原2070全保留、恰增八项；provider5/cache3、原config3/surface2、
+Pump56、HTTP208、129有序步骤及74类型/225原始编译字段通过。身份/锁定依赖与原
+初始化/选路/缓存/旧断言重建、6+5负例源审计通过；仅修正首批的池地址夹具与键唯一
+断言，生产代码保持。后继七项不在此源码或结果中，不继承验收，不重跑或另发文档CI。
 
 已独立验收的SDK配置投影及公开surface合同：0530bed /
 [Actions44363743712](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44363743712)

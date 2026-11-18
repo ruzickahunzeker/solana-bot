@@ -47,8 +47,8 @@ full Config、接受/index/journal、blockhash/SDK 参数内部缓存和 bootstr
 
 ## 2026-11-19 Candidate Metadata Bound
 
-Local original NP-03 continuation, not yet independently Rust-tested or
-published. Current source usage confirms this map is advisory metadata written
+Independently accepted original NP-03 continuation as e6c5a6e /
+Actions44375225006 / artifact14463247130. Source usage confirms this map is advisory metadata written
 by pool resolve/warmup and ordinary `after_trade`; production has no consumer
 of its `get`. It holds no quote, SDK parameters, signed bytes, idempotency or
 authorization. An unbounded sequence of distinct Mints therefore retained
@@ -64,7 +64,7 @@ Arc stay unchanged. No TTL, runtime configuration or SDK internal cache is
 added/changed. This is a count bound for address-sized metadata, not a general
 byte bound or a new route cache/verification policy.
 
-Three unexecuted Rust contracts cover actual default capacity and metadata,
+Three independently accepted Rust contracts cover actual default capacity and metadata,
 existing-key updates, oldest/tie eviction, four concurrent writers with no
 overshoot and final Arc release; the actual pool service and ordinary executor
 then run under Memory/Shadow/Durable after advisory eviction. Original route
@@ -77,7 +77,7 @@ Read-only source reconstruction verifies the original map/metadata/insert/get
 after removing only bounded admission, retains the old executor tests and
 checks unchanged writer/query/ordinary runtime/bootstrap/journal/SDK loader
 sources. Five deliberately weakened bound/lock/eviction mutations reject.
-Format and policy checks do not substitute for the pending Rust execution.
+Format and policy checks did not substitute for the actual Rust execution below.
 This is carried with the provider boundary batch after independently accepting
 0530bed/run44363743712/artifact14457878477 (full2070 each). That accepted
 snapshot does not contain or validate these three cache contracts.
@@ -92,3 +92,12 @@ the public fixture pool address per index and explicitly asserts unique keys.
 Original cache implementation/key/writer and every old assertion remain;
 later independent-backend source is held out. Do not rerun the terminal job
 or treat this partial result as complete2078 acceptance.
+
+The isolated correction e6c5a6e/run44375225006/artifact14463247130 subsequently
+passed first-run CI and independent raw/source audits: full2078 each
+(350.04s/681.34s), all2070 parent names retained plus exacteight, capacity3,
+provider5 and original cache-port2,129 ordered zero-exit steps,74types/225 raw
+compiler field rejections and locked identity match. Correction-source audit
+preserves every old assertion and production method; six provider and five
+cache-policy source mutations reject. No terminal job is rerun. The seven
+later independent-backend tests are not part of this accepted snapshot.
