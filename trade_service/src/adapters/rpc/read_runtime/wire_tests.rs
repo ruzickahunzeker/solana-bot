@@ -26,6 +26,8 @@ mod presence_wire;
 mod quote_status_wire;
 #[path = "sdk_observer_wire.rs"]
 mod sdk_observer_wire;
+#[path = "sol_transfer_wire.rs"]
+mod sol_transfer_wire;
 #[path = "wsol_preparation_wire.rs"]
 mod wsol_preparation_wire;
 #[path = "wsol_quote_wire.rs"]
@@ -813,6 +815,9 @@ async fn shared_read_wire_child() {
             "damm-quote-errors" => damm_quote_wire::errors().await,
             "damm-quote-timeout-cancel" => damm_quote_wire::timeout_cancel().await,
             "damm-quote-long-budgets" => damm_quote_wire::long_budgets().await,
+            "sol-transfer-success" => sol_transfer_wire::success().await,
+            "sol-transfer-errors" => sol_transfer_wire::errors().await,
+            "sol-transfer-deadlines" => sol_transfer_wire::deadlines().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -1124,4 +1129,17 @@ fn damm_quote_wire_account_deadline_cancel_and_hash_use_existing_capacities() {
 #[test]
 fn damm_quote_wire_fixed_http_allowances_are_not_shrunk_to_generic_or_candidate_limits() {
     run("damm-quote-long-budgets");
+}
+
+#[test]
+fn sol_transfer_wire_original_four_requests_fee_bytes_commitment_and_body_limits() {
+    run("sol-transfer-success");
+}
+#[test]
+fn sol_transfer_wire_faults_rate_and_redirect_never_retry_or_switch_endpoints() {
+    run("sol-transfer-errors");
+}
+#[test]
+fn sol_transfer_wire_original_five_second_budget_http_allowance_cancel_and_hash() {
+    run("sol-transfer-deadlines");
 }

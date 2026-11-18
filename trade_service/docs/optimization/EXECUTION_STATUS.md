@@ -6,12 +6,20 @@
 
 ## 当前任务
 
-- 当前续原 NP-03 靓号独立任务生命周期：同一个原 WalletOps 现持有任务句柄，
-  创建仓储 await 前登记，关闸覆盖迟到登记，原生成/导入/激活函数字节未改。
-  Bootstrap 交接同一 Arc，main 关闭入口并和原清理并行等待；超时/取消不丢
-  句柄或声称 blocking 已停止，不新增配置。源码/轻检及一正九负原字节审计通过，
-  尚待独立 Rust 验收；预期恰增十三、完整各 1939、101 步，原 55 类型/168
-  字段保持。不得沿用父批结果，见 [靓号生命周期](VANITY_TASK_LIFECYCLE.md)。
+- 当前续原 NP-03 原生 SOL 转账准备读取：同一 runtime/既有 WsolQuote 配额，
+  保留原四读、原一 lamport 估算消息、零字节租金、原 Default 顺序和五秒整 lane
+  预算；金额错误仍终态，原 selected RPC/sign/send/confirm/journal 不改。源码/
+  轻检和一正十负原字节审计通过，尚待独立 Rust 验收；预期恰增二十一、完整各
+  1960、104 步、56 类型/171 字段，不沿用父批，见
+  [转账准备读取](SOL_TRANSFER_PREPARATION_SHARED_READS.md)。
+- 原 NP-03 靓号任务生命周期已独立验收：`3d72a14` /
+  [Actions 44245588737](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44245588737)
+  首次终态 success，artifact `14403371260` 下载逐项核对。完整并发 1939
+  （333.66 秒）/串行 1939（645.91 秒），父批 1926 名称全保留、恰增十三；
+  owner8/shutdown5、原 bootstrap/退出/Shadow 合同、101 步及55类型/168原始
+  字段通过。原生成/import、同 Arc 交接、原清理与旧释放断言重建，一正九负
+  源审计和全树 1152 文件/13,912,894 字节及模式/依赖身份核对通过，main/索引/
+  冻结历史保持。未部署，不重跑终态或另发文档 CI，见 [靓号生命周期](VANITY_TASK_LIFECYCLE.md)。
 - 原 NP-03 DAMM 报价 probe/账户证据链已独立验收：`903d646` /
   [Actions 44240714400](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44240714400)
   首次终态 success，artifact `14400459607` 下载独立核对。完整并发 1926
@@ -409,7 +417,7 @@
 ## 续作顺序
 
 1. 普通任务生命周期、Shadow writer、Record/Tape、买入只读取证/兼容/准备/消息/独立记录、原 journal 类型边界、原意图/历史回放，以及原 owner 的受控买入候选/signer、CAS/签名字节回读、固定 Buy sender/runtime 和 claim/扫描均已按各自源码独立验收，不重复实施或重跑终态 CI。882e514 只完成 Durable Live SDK 直接 DAMM 的两类输入子路径；续下方原 NP-01/03/04/05 剩余范围，不以历史恢复 owner/重签/重发，不另立任务，也不核对/修改线上版本。
-2. 原 NP-03 已验收的 presence、普通参数/预热/寻池、两跳、聚合账户/模拟、WSOL 报价/状态/准备/模拟/广播所有权、独立 Quote 状态、SDK 原签名/Quote 提交观测、DAMM 最终候选/preview 及报价账户/probe 不重复实施或重跑。下一入口为靓号独立任务关闭/等待，源码已接线而未 Rust 验收；不改原生成/import，不把 abort wrapper 当 blocking 取消。SDK 内部确认器/任务、其他独立操作、全局 RPC/cache 配额与退出/刷盘门槛继续；168 字段门禁不代表全部依赖/能力流完成。不恢复 owner 或重签/重发。
+2. 原 NP-03 已验收的 presence、普通参数/预热/寻池、两跳、聚合账户/模拟、WSOL 报价/状态/准备/模拟/广播所有权、独立 Quote 状态、SDK 原签名/Quote 提交观测、DAMM 最终候选/preview/报价账户/probe 及靓号生命周期不重复实施或重跑。下一入口为原生 SOL 转账准备读取，源码已接线未 Rust 验收；不改金额/sign/send/confirm/journal。SDK 内部确认器/任务、其他独立操作、全局 RPC/cache 配额与退出/刷盘门槛继续；新171字段门禁仍待本批独立编译，不继承父批168字段，不代表全部依赖/能力流完成。不恢复 owner 或重签/重发。
 3. 原 NP-01 的其他资产/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接买卖子路径不重做，也不冒充全量。其他 Live worker/模拟和 Memory/Shadow 仍须按实际路径验证，不能继承本批的原 owner 保证。
 4. NP-04 本批只证明原 Durable SOL Quote 买入控制器的共同合同，其他业务路径适用性、真实 Router/SDK 不由 fake 证明；NP-05 来源/升级准备和主计划的真实环境/迁移/回滚门槛继续。当前不授权实际 SDK 升级或生产动作。
 

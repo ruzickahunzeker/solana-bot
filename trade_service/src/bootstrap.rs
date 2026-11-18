@@ -204,7 +204,7 @@ fn complete(
         SdkQuoteReconciliationRuntime::new(wallets.clone(), persistence.clone(), read_rpc.clone()),
     ));
     let sol_transfers = Arc::new(SolTransferService::new(
-        SdkSolTransferRuntime::new(wallets.clone(), wallet_repository.clone()),
+        SdkSolTransferRuntime::new(wallets.clone(), wallet_repository.clone(), read_rpc.clone()),
         SdkAddressParser,
     ));
     let wallet_management = SdkWalletManagement::new(wallet_repository.clone(), wallets.clone());

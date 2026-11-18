@@ -3,7 +3,8 @@
 Date: 2026-11-18, Asia/Shanghai. Continues the existing NP-03 independent-task
 resource item. This is not a new feature, task number, supervisor for every SDK
 task, or authorization to generate production wallets. Production wiring and
-read-only original-body audit are complete; independent Rust acceptance is pending.
+read-only original-body audit and independent acceptance are complete in 3d72a14 /
+Actions 44245588737 / artifact 14403371260 (details below). No deployment.
 
 ## Actual Gap
 
@@ -80,3 +81,26 @@ TradingInfrastructure sharing needs its own original NP-03 compatibility review;
 do not fork an SDK initializer or modify vendor to manufacture handles. Remaining
 SDK/independent-operation lifecycle, global quotas, NP-01/04/05 and rollout gates
 remain open. No service is deployed/restarted and no real RPC/trade is performed.
+
+## Independent Acceptance
+
+Source 3d72a14ebc5df3150fb552d2399a4170b0a899fe / Actions 44245588737 completed
+success on its first run. Downloaded artifact 14403371260 was independently
+audited before successor wiring or acceptance records changed the snapshot.
+Complete concurrent 1939 (333.66 seconds) and serial 1939 (645.91 seconds) have
+identical raw name sets, zero failures/ignored/filtered; all 1926 parent names
+remain and exactly the thirteen source-defined tests are added. Focused owner8/
+shutdown5, bootstrap5, original service-shutdown8/shadow-shutdown4 and all 101
+steps pass. Original/restored compiler checks and all 168 distinct raw field
+spans verify the unchanged 55-type policy plus outside alias.
+
+All 1152 source blobs/modes (13,912,894 bytes) match tree
+38c601a9cfbc918f2f0e8a1aa608b2574f95e129; identity/dependency hashes and original
+generation/import/activation body, same-Arc bootstrap, old release assertions and
+original cleanup reconstruct exactly. One-positive/nine-negative source audit,
+Python policy12/workflow7/provenance pass. SDK6.0.2, main/index/frozen history and
+vendor/lock/manifests/migrations remain. No local service Cargo retry, terminal
+rerun, docs-only CI or production action. Earlier expected/pending language is
+historical source intent, not a new queue. Next original NP-03 path is native SOL
+transfer preparation reads; see SOL_TRANSFER_PREPARATION_SHARED_READS.md. Other
+SDK/independent-operation lifecycle, quotas and original rollout gates remain.

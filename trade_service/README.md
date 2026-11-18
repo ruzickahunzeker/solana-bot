@@ -222,7 +222,9 @@ SDK 原签名/Quote 提交观测续原 NP-03 接原共享读取，保留原 skip
 
 DAMM 买卖最终候选模拟及签名前 preview 续原 NP-03 接同一共享读取，保留零签名消息、quote slot、原四秒期限及前后新鲜度检查，不改签名/账本。`26e4b8b` / Actions `44234932246` 独立验收完整并发/串行各 1897，原 1874 全保留、恰增二十三，159 字段及全部 96 步通过；原请求/消息和端到端合同已核对。尚未部署，后继报价账户/probe 验收见下段和 [DAMM 候选共享读取](docs/optimization/DAMM_CANDIDATE_SHARED_READS.md)。
 
-DAMM 报价账户/probe 现已复用原 runtime，保留原八/九账户、完整同 bank/CPI/净输出、typed 终态及原五秒账户/whole-buy、三十秒 probe、三秒 freshness。`903d646` / Actions `44240714400` 独立验收完整并发/串行各 1926、恰增二十九，55 类型/168 字段及 99 步通过，日志和源码身份已独立核对，见 [报价证据读取](docs/optimization/DAMM_QUOTE_SHARED_READS.md)。当前接续原靓号后台任务持有/关闸/等待：生成/import 原函数不改，超时不丢原句柄，使用现有 task-drain 期限；源码和轻检通过、Rust 验收待执行，不把父批结果算作本批通过，见 [靓号生命周期](docs/optimization/VANITY_TASK_LIFECYCLE.md)。没有本地服务 Cargo 重试、SDK 升级、部署或生产交易。
+DAMM 报价账户/probe 现已复用原 runtime，保留原八/九账户、完整同 bank/CPI/净输出、typed 终态及原五秒账户/whole-buy、三十秒 probe、三秒 freshness。`903d646` / Actions `44240714400` 独立验收完整并发/串行各 1926、恰增二十九，55 类型/168 字段及 99 步通过，日志和源码身份已独立核对，见 [报价证据读取](docs/optimization/DAMM_QUOTE_SHARED_READS.md)。靓号后台任务持有/关闸/等待已由 `3d72a14` / Actions `44245588737` 独立验收完整各1939、恰增十三、101步/168字段；生成/import 原函数不改，超时不丢原句柄，使用现有 task-drain 期限，见 [靓号生命周期](docs/optimization/VANITY_TASK_LIFECYCLE.md)。没有本地服务 Cargo 重试、SDK 升级、部署或生产交易。
+
+当前接续原生 SOL 转账准备读取：原余额/blockhash/手续费/零字节租金四步复用同一 runtime，保留五秒整 lane 预算和原 fallback/金额计算，签名、广播、确认与账本不改。源码/轻检通过、Rust 验收待执行，预期新增21项、完整各1960，不继承父批结果；见 [转账准备边界](docs/optimization/SOL_TRANSFER_PREPARATION_SHARED_READS.md)。
 
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 
@@ -504,7 +506,7 @@ ENABLE_SIMULATE=true
 `TRADE_TASK_DRAIN_TIMEOUT_MS`
 
 普通后台交易任务的优雅退出等待预算，单位毫秒，默认 `30000`，范围 `1` 到 `300000`。
-当前靓号生命周期优化也复用此数值作为自己的独立等待预算，与原交易清理并行等待，不相加成新的全进程期限。信号先关闭靓号创建并设置原协作取消标记；此前已登记的请求/生成/import 仍须等待，超时不声称 blocking 已停止。停止期靓号创建沿用原 `400` 错误形状，GET/取消的原权限和状态规则不变；该源码仍待独立 Rust 验收，未部署。
+当前靓号生命周期优化也复用此数值作为自己的独立等待预算，与原交易清理并行等待，不相加成新的全进程期限。信号先关闭靓号创建并设置原协作取消标记；此前已登记的请求/生成/import 仍须等待，超时不声称 blocking 已停止。停止期靓号创建沿用原 `400` 错误形状，GET/取消的原权限和状态规则不变；该源码已独立离线验收，未部署。
 收到退出信号后停止登记新的普通交易工作；已登记请求仍可派发，交易任务等待结束前保留原 blockhash 刷新和观测资源。
 预算从 HTTP graceful shutdown 返回后开始，不是整个进程或 SDK 后台 worker 的总截止时间。
 超时、任务 panic 或异常丢弃会记录未完成情况并使退出失败，不代表交易未发送，不释放或重建原幂等/签名权威，也不自动重签补单。

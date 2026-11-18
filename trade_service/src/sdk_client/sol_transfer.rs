@@ -3,7 +3,9 @@ use crate::{
     application::sol_transfer_policy::calculate_sol_transfer_amount,
     domain::{sol_transfer::SolTransferSnapshot, submission::SignedSubmission, trade::Address},
 };
-use anyhow::{bail, ensure, Context, Result};
+#[cfg(test)]
+use anyhow::bail;
+use anyhow::{ensure, Context, Result};
 use sol_trade_sdk::swqos::SwqosType;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{
@@ -15,6 +17,8 @@ use solana_sdk::{
 };
 use solana_system_interface::instruction as system_instruction;
 use std::{sync::Arc, time::Duration};
+
+mod preparation;
 
 const PREPARE_TIMEOUT: Duration = Duration::from_secs(5);
 const SEND_TIMEOUT: Duration = Duration::from_secs(12);
@@ -118,6 +122,7 @@ impl SignedSolTransfer {
 impl SdkTradeClient {
     pub(crate) async fn prepare_sol_transfer(
         &self,
+        read_rpc: &crate::adapters::rpc::read_runtime::SharedReadRuntime,
         destination: &Pubkey,
         fixed_lamports: Option<u64>,
         percent: Option<u64>,
@@ -135,12 +140,13 @@ impl SdkTradeClient {
             .iter()
             .filter(|lane| lane.swqos_type == SwqosType::Default)
             .map(|lane| lane.client.get_rpc().clone());
-        prepare_with_rpcs(
+        preparation::prepare(
             source,
             *destination,
             fixed_lamports,
             percent,
             rpcs,
+            read_rpc,
             PREPARE_TIMEOUT,
         )
         .await
@@ -190,6 +196,7 @@ impl SdkTradeClient {
     }
 }
 
+#[cfg(test)]
 async fn prepare_with_rpcs(
     source: Pubkey,
     destination: Pubkey,

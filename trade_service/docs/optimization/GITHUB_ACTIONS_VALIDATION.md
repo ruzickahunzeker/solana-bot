@@ -30,11 +30,19 @@
 
 ## 当前批次
 
-当前后继原 NP-03 靓号任务所有权源码已接线、独立 Rust 验收待执行：预期原
-1926 名称全保留、恰增十三，完整各 1939、101 步及原 55 类型/168 字段；不沿用
-下方父批结果。记录随真实源码提交，不另发文档 CI，见 `VANITY_TASK_LIFECYCLE.md`。
+当前后继原 NP-03 原生 SOL 转账准备读取已接线、独立 Rust 验收待执行：预期原
+1939 名称全保留、恰增二十一，完整各1960、104步及56类型/171字段；不沿用
+父批结果。记录随真实源码提交，不另发文档 CI，见 `SOL_TRANSFER_PREPARATION_SHARED_READS.md`。
 
-最近独立验收为 DAMM 报价账户/probe 源码
+最近独立验收为靓号任务所有权源码 `3d72a14ebc5df3150fb552d2399a4170b0a899fe` /
+[Actions 44245588737](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44245588737)，
+首次终态 success；artifact `14403371260` 下载核对。完整并发1939（333.66秒）/
+串行1939（645.91秒），原1926名称全保留、恰增十三；owner8/shutdown5、原合同、
+101步及55类型/168原始字段通过。全树1152文件/13,912,894字节/模式/身份与
+原生成/import/旧释放断言/原清理重建、一正九负源审计通过，见 `VANITY_TASK_LIFECYCLE.md`。
+main/索引/冻结历史和SDK6.0.2保持，未部署，无本地服务Cargo重试或生产操作。
+
+此前独立验收为 DAMM 报价账户/probe 源码
 `903d646ede784d25f4f7bb90d566f9ce24b05e62` /
 [Actions 44240714400](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44240714400)，
 首次终态 success；artifact `14400459607` 下载逐项核对。完整并发 1926（329.86

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     adapters::persistence::sol_transfer_journal::SqliteSolTransferJournal,
+    adapters::rpc::read_runtime::SharedReadRuntime,
     application::ports::sol_transfer_execution::{
         SolTransferArtifact, SolTransferExecutionWallet, SolTransferRuntime, TransferWalletMetadata,
     },
@@ -21,17 +22,24 @@ use crate::{
 pub(crate) struct SdkSolTransferRuntime {
     wallets: Arc<WalletRegistry>,
     repository: Arc<WalletRepository>,
+    read_rpc: Arc<SharedReadRuntime>,
 }
 impl SdkSolTransferRuntime {
-    pub(crate) fn new(wallets: Arc<WalletRegistry>, repository: Arc<WalletRepository>) -> Self {
+    pub(crate) fn new(
+        wallets: Arc<WalletRegistry>,
+        repository: Arc<WalletRepository>,
+        read_rpc: Arc<SharedReadRuntime>,
+    ) -> Self {
         Self {
             wallets,
             repository,
+            read_rpc,
         }
     }
 }
 pub(crate) struct NativeTransferWallet {
     client: Arc<SdkTradeClient>,
+    read_rpc: Arc<SharedReadRuntime>,
 }
 impl SolTransferRuntime for SdkSolTransferRuntime {
     type Wallet = NativeTransferWallet;
@@ -49,9 +57,10 @@ impl SolTransferRuntime for SdkSolTransferRuntime {
         self.repository.sol_transfer_journal()
     }
     fn resolve(&self, id: &str) -> Option<Self::Wallet> {
-        self.wallets
-            .get(id)
-            .map(|client| NativeTransferWallet { client })
+        self.wallets.get(id).map(|client| NativeTransferWallet {
+            client,
+            read_rpc: self.read_rpc.clone(),
+        })
     }
 }
 impl SolTransferArtifact for SignedSolTransfer {
@@ -76,6 +85,7 @@ impl SolTransferExecutionWallet for NativeTransferWallet {
         let (fixed, percent) = amount.legacy_params();
         self.client
             .prepare_sol_transfer(
+                self.read_rpc.as_ref(),
                 &solana_sdk::pubkey::Pubkey::new_from_array(destination.to_bytes()),
                 fixed,
                 percent,
@@ -110,10 +120,15 @@ mod tests {
     #[tokio::test]
     async fn native_runtime_reuses_registry_and_repository_without_sdk_initialization() {
         let state = crate::http_contract_tests::state().await;
-        let runtime =
-            SdkSolTransferRuntime::new(state.wallets.clone(), state.wallet_repository.clone());
+        let read_rpc = Arc::new(SharedReadRuntime::new(&[]).unwrap());
+        let runtime = SdkSolTransferRuntime::new(
+            state.wallets.clone(),
+            state.wallet_repository.clone(),
+            read_rpc.clone(),
+        );
         assert!(Arc::ptr_eq(&runtime.wallets, &state.wallets));
         assert!(Arc::ptr_eq(&runtime.repository, &state.wallet_repository));
+        assert!(Arc::ptr_eq(&runtime.read_rpc, &read_rpc));
         assert!(runtime.resolve("missing").is_none());
         assert!(runtime.journal().is_none());
         assert!(runtime.metadata("missing").await.is_err());
@@ -124,7 +139,10 @@ mod tests {
     async fn native_runtime_metadata_and_journal_do_not_load_or_decrypt_public_fixture_wallets() {
         let h = crate::application::sol_transfers::test_support::harness().await;
         let state = crate::http_contract_tests::state().await;
-        let runtime = SdkSolTransferRuntime::new(state.wallets.clone(), h.repo.clone());
+        let read_rpc = Arc::new(SharedReadRuntime::new(&[]).unwrap());
+        let runtime =
+            SdkSolTransferRuntime::new(state.wallets.clone(), h.repo.clone(), read_rpc.clone());
+        assert!(Arc::ptr_eq(&runtime.read_rpc, &read_rpc));
         let metadata = runtime.metadata("source").await.unwrap();
         assert_eq!(metadata.pubkey, Address::from_bytes([1; 32]).to_string());
         assert_eq!(metadata.owner_id, "42");

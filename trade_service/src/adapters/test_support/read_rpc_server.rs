@@ -42,6 +42,12 @@ pub(crate) trait DammEvidenceOracle: Send + Sync {
 
 #[derive(Clone)]
 pub(crate) enum Reply {
+    SolTransferPreparation {
+        values: std::collections::HashMap<String, Value>,
+        fail_method: Option<&'static str>,
+        failure: Box<Reply>,
+        normal: Box<Reply>,
+    },
     DammEvidence {
         oracle: Arc<dyn DammEvidenceOracle>,
         other: Box<Reply>,
@@ -296,11 +302,39 @@ async fn serve(
     let is_runtime_preview = preview.is_some();
     let is_damm_quote = matches!(&reply, Reply::DammQuote { .. });
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
+    let is_sol_transfer = matches!(&reply, Reply::SolTransferPreparation { .. });
     let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
     let is_damm_simulation = matches!(&reply, Reply::DammSimulation { .. });
     let is_wsol_broadcast = matches!(&reply, Reply::WsolBroadcast { .. });
     let is_quote_status = matches!(&reply, Reply::QuoteStatus { .. });
     let (reply, parameter_value) = match reply {
+        Reply::SolTransferPreparation {
+            values,
+            fail_method,
+            failure,
+            normal,
+        } => {
+            let method = payload["method"].as_str().unwrap();
+            assert!(matches!(
+                method,
+                "getBalance"
+                    | "getLatestBlockhash"
+                    | "getFeeForMessage"
+                    | "getMinimumBalanceForRentExemption"
+            ));
+            let value = values
+                .get(method)
+                .expect("unscripted SOL transfer preparation method")
+                .clone();
+            (
+                if fail_method == Some(method) {
+                    *failure
+                } else {
+                    *normal
+                },
+                Some(value),
+            )
+        }
         Reply::DammQuote {
             accounts,
             probe,
@@ -405,7 +439,9 @@ async fn serve(
         payload["method"].as_str(),
         Some("getTokenSupply" | "getTokenAccountBalance" | "getBalance")
     );
-    let body_limit = if is_quote_status {
+    let body_limit = if is_sol_transfer {
+        MAX_BODY
+    } else if is_quote_status {
         MAX_BODY
     } else if is_wsol_simulation {
         524_288
@@ -560,6 +596,45 @@ async fn serve(
         assert!(bytes.len() <= 1232);
         let tx: solana_sdk::transaction::Transaction = bincode::deserialize(&bytes).unwrap();
         assert!((1..=2).contains(&tx.message.header.num_required_signatures));
+    } else if is_sol_transfer {
+        match payload["method"].as_str().unwrap() {
+            "getMinimumBalanceForRentExemption" => assert_eq!(payload["params"], json!([0])),
+            "getLatestBlockhash" => assert!(matches!(
+                payload["params"][0]["commitment"].as_str(),
+                Some("processed" | "confirmed" | "finalized")
+            )),
+            "getBalance" | "getFeeForMessage" => {
+                assert!(matches!(
+                    payload["params"][1]["commitment"].as_str(),
+                    Some("processed" | "confirmed" | "finalized")
+                ));
+                if payload["method"] == "getBalance" {
+                    assert_eq!(
+                        payload["params"][0],
+                        solana_sdk::pubkey::Pubkey::new_from_array([1; 32]).to_string()
+                    );
+                } else {
+                    let bytes = base64::Engine::decode(
+                        &base64::engine::general_purpose::STANDARD,
+                        payload["params"][0].as_str().unwrap(),
+                    )
+                    .unwrap();
+                    let source = solana_sdk::pubkey::Pubkey::new_from_array([1; 32]);
+                    let destination = solana_sdk::pubkey::Pubkey::new_from_array([2; 32]);
+                    let expected = solana_sdk::message::Message::new_with_blockhash(
+                        &[solana_system_interface::instruction::transfer(
+                            &source,
+                            &destination,
+                            1,
+                        )],
+                        Some(&source),
+                        &solana_sdk::hash::Hash::new_from_array([6; 32]),
+                    );
+                    assert_eq!(bytes, expected.serialize());
+                }
+            }
+            _ => panic!("SOL transfer preparation fixture cannot accept simulation or sending"),
+        }
     } else if is_wsol_quote {
         match payload["method"].as_str().unwrap() {
             "getMinimumBalanceForRentExemption" => assert_eq!(payload["params"], json!([165])),

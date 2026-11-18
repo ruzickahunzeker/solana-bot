@@ -423,6 +423,7 @@ mod damm_simulation;
 mod native_balances;
 mod quote_balance;
 mod quote_status;
+mod sol_transfers;
 mod wsol_quotes;
 mod wsol_simulation;
 mod wsol_status;

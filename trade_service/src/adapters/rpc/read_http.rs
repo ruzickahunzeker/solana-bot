@@ -33,6 +33,10 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    SolTransferPreparation {
+        id: u64,
+        query: super::sol_transfer_reads::SolTransferQuery,
+    },
     DammQuoteAccounts {
         id: u64,
         query: super::damm_quote_reads::DammQuoteAccounts,
@@ -110,6 +114,7 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::SolTransferPreparation { id, query } => query.body(*id),
             Self::DammQuoteAccounts { id, query } => query.body(*id),
             Self::DammQuoteProbe { id, packet } => packet.body(*id),
             Self::DammCandidateSimulation { id, packet } => packet.body(*id),
@@ -165,6 +170,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::SolTransferPreparation { .. } => "SOL transfer preparation",
             Self::DammQuoteAccounts { .. } => "DAMM quote accounts",
             Self::DammQuoteProbe { .. } => "DAMM quote probe",
             Self::DammCandidateSimulation { .. } => "DAMM simulation",
@@ -234,8 +240,9 @@ impl ReadHttpTransport for ReqwestReadTransport {
         let label = request.label();
         let max_body = request.max_body();
         let builder = self.client.post(url.clone()).json(&request.body());
-        // Fixed DAMM profiles preserve their original allowances, not the 2s default.
+        // Fixed preparation/DAMM profiles preserve their original allowances, not the 2s default.
         let builder = match request {
+            ReadRequest::SolTransferPreparation { .. } => builder.timeout(Duration::from_secs(5)),
             ReadRequest::DammCandidateSimulation { .. } => builder.timeout(Duration::from_secs(4)),
             ReadRequest::DammQuoteAccounts { .. } => builder.timeout(Duration::from_secs(5)),
             ReadRequest::DammQuoteProbe { .. } => builder.timeout(Duration::from_secs(30)),

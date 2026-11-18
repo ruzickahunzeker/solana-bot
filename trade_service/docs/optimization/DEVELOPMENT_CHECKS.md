@@ -114,6 +114,16 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The vanity task lifecycle batch is independently accepted: 3d72a14 / Actions
+44245588737 / artifact14403371260; full concurrent/serial each1939 (333.66/
+645.91 seconds), parent1926 retained, exactly13 new, all101 steps/168 raw field
+spans pass. All1152 blobs/modes (13,912,894 bytes), original body/old assertions
+and identity are independently checked before successor edits. Current native
+SOL preparation adds one selected borrowed scope:56 types/171 fields, expected
+full1960/104 steps. These require this new source's own compiler/runtime result,
+not the accepted55-type/168-field run. No local service Cargo retry. See
+VANITY_TASK_LIFECYCLE.md and SOL_TRANSFER_PREPARATION_SHARED_READS.md.
+
 The DAMM quote accounts/probe batch is independently accepted: 903d646 /
 Actions 44240714400 / artifact 14400459607. Complete concurrent/serial each
 1926 (329.86/636.14 seconds), all 1897 parent names retained, exactly 29 added.
@@ -123,9 +133,8 @@ field spans pass (55 selected types plus outside alias). All 1148 snapshot
 blobs/modes (13,883,013 bytes), identity/dependency hashes, exact original-body/
 old-assertion reconstruction and read-only audit negatives pass before successor
 edits. SDK6.0.2/main/index/frozen history unchanged, no local service Cargo retry
-or production action. Next original vanity lifecycle wiring has local formatting/
-policy/workflow/provenance/source evidence only; expected1939/101 steps is not
-passing evidence. Its private owner adds no compiler-policy entries. See
+or production action. The later vanity lifecycle now has its own independent
+acceptance above; its private owner adds no compiler-policy entries. See
 DAMM_QUOTE_SHARED_READS.md and VANITY_TASK_LIFECYCLE.md.
 
 The DAMM final-candidate simulation/preview batch is independently accepted:
@@ -335,7 +344,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 55 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 56 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 The added quote reader/query/packet entries received their own 55-type/168-field

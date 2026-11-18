@@ -6,13 +6,18 @@
 
 ## 统计口径
 
+- 原 NP-03 靓号生命周期已由 `3d72a14` / Actions `44245588737` / artifact
+  `14403371260` 独立验收完整并发1939（333.66秒）/串行1939（645.91秒），原
+  1926名称全保留、恰增十三、101步/168原始字段通过，源码/全树身份独立核对。
+  当前原生 SOL 转账准备已接线/轻检，未 Rust 验收；预期新增21、完整各1960、
+  104步/171字段，不新增任务或分母，见 `SOL_TRANSFER_PREPARATION_SHARED_READS.md`。
 - 原 NP-03 DAMM 报价账户/probe 已由 `903d646` / Actions `44240714400` / artifact
   `14400459607` 独立验收：完整并发 1926（329.86 秒）/串行 1926（636.14 秒），
   父批 1897 名称全保留、恰增二十九。shared14/SDK adapter11/真实 HTTP4、旧
   runtime5/buy6、55 类型/168 原始字段及全部 99 步通过；原语义/旧断言和完整
   源码身份独立核对。原期限/净输出/同 bank 校验和 typed 终态保留，未部署。
-  当前接续原靓号任务所有权：源码/轻检通过，预期十三新项、完整各 1939 和
-  101 步，尚未 Rust 验收，不继承父批结果；见 `VANITY_TASK_LIFECYCLE.md`。
+  后继原靓号任务所有权已由上方 3d72a14 独立验收，不继承父批结果；见
+  `VANITY_TASK_LIFECYCLE.md`。
 - 原 NP-03 DAMM 候选模拟/签名前 preview 已由 `26e4b8b` / Actions `44234932246` /
   artifact `14397918749` 独立验收：原四秒期限/消息/slot/前后 freshness 保留，
   完整并发 1897（292.52 秒）/串行 1897（561.63 秒），父批 1874 全保留、
@@ -322,7 +327,7 @@
 | 聚合签名前时效 | B3a 共享 prepared 保存原到期快照并在取出待签消息前重查，过期拒绝先于 signer 获取，未过期 Legacy/V0 消息原字节保持 | 完整协议/费用/权限授权、真实节点或检查之后永不跨过期限；不自动重建、重签或重发 |
 | 普通聚合观测/恢复基础 | D1A/D1B1 原观测/恢复核心；D1B2 默认关闭的扫描与局部预算/文件/信号恢复；D1B3 生产 transport 的本地 HTTP/1.1 请求/响应/超时/取消证据通过 | 全部 backend/mode、无签名 signing 中断、真实供应商/TLS/HTTP2/生产调度与全服务 RPC 预算验收；不是新的执行许可 |
 | 协议与参数 | 中央 Registry、SDK 参数映射集中、九类基础 loader fixture、Pool query/warmup/hop 边界 | 九类完整报价/账户扩展/迁移/多跳或全协议实盘验收 |
-| 只读基础边界 | RPC-01A 配置去重；B1 刷新/观测、B2 readiness、C1 原生余额、C2 Quote 查询、A3c 准备余额六类共享 HTTP/冷却；27bd996 普通买入 presence 复用原 preparation 容量/间隔，各有 wire/体积/错误/取消合同；仅当前 URL，旧 oracle 独立保留 | 全服务 RPC/signer 已收口或供应商额度/真实节点验收；存在性提示不是 ATA 完整证据，参数/寻池、独立 quote/WSOL、模拟与 SDK 内部读仍待续 |
+| 只读基础边界 | 十二类预算共用同一 runtime/HTTP/冷却；刷新/观测/readiness/余额/存在性、参数/预热/寻池/两跳、聚合/WSOL/状态/候选/DAMM报价读取已按上方各自源码验收，旧 oracle 与 wire 合同保留；原生 SOL 转账准备接线后未 Rust 验收 | 仍不是全部 RPC/signer 收口或供应商额度/真实节点验收；存在性不是 ATA 完整证据。转账其他读取、SDK opaque 内部、全局配额/缓存及生产门槛继续，不重新排队已验收读取 |
 | 普通准备余额入口 | A3a/B1/B2 的 raw/SDK 输入/模式与 A3c 实际 HTTP 预算，保留时效、整数/比例、原顺序/参数 oracle；坏/过期证据停止，SDK 入口后不回退 | 全方向/费用/min_out/全部账户权限与最终不可变消息授权、实际 signer/SDK 路径/真实节点或已部署 |
 | 普通 SDK 构建入口 | B4a 实际调用链审查、九项无 Keypair/RPC 编译/费用合同，明确版本/ALT/权限提升/字节绑定与编译不提供的保证 | 无 signer 最终协议构建/不可变授权已接真实路径，或签名/广播前账本完成 |
 | DAMM 卖出候选 | B4b 正式/preview nominal profile 接实际 SDK protocol/full callback、原请求/费用/消息/返回签名、取消/单次/时效核对；25 新测试含 384 SDK 指令对照 | 已隔离 SDK 签名能力、全量可信协议授权/全方向已覆盖，或 ordinary signed journal 已实现 |
@@ -341,7 +346,7 @@
 | 子项 | 当前状态 | 缺少的完成条件 |
 | --- | --- | --- |
 | 普通 SDK 完整授权 | 直接 DAMM Durable Live 卖出受控执行/恢复/扫描和准备链已验收；后继 882e514 独立验收 Native SOL/WSOL、既有 USDC 买入的原 owner/CAS/受控签名/固定发送及扫描，完整各 1638 | 真实 provider/节点、生产恢复/发布及其他资产/协议/backend/mode 的全部门槛；原 scope 之外仍有 legacy 路径 |
-| 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；普通后台任务生命周期在 c6f2745、Shadow writer 关闭/排空在 796ba50 验收；旧冗余资源字段不在生产 AppState | 根具体 index/journal/cache/Config、SDK 内部/独立操作任务及全局 RPC/依赖与真实退出仍待续。已验收接受/执行/Bootstrap/普通任务/Shadow 生命周期不重新立项；局部通过不等于额外 fsync、全服务生命周期或原子激活 |
+| 完整架构隔离 | Handler、余额/管理/vanity、普通接受/执行及窄设置已接项目服务/ports，Bootstrap/readiness 与原 Arc 交接已验收；普通后台任务 c6f2745、Shadow writer 796ba50、靓号生命周期3d72a14独立验收；旧冗余资源字段不在生产 AppState | 根具体 index/journal/cache/Config、SDK 内部/其他独立操作任务及全局 RPC/依赖与真实退出仍待续。已验收接受/执行/Bootstrap/普通任务/Shadow/靓号不重新立项；局部通过不等于额外 fsync、全服务生命周期或原子激活 |
 | 全协议能力校准 | Registry 和基础样本存在，已有局部账户证据 | 全方向/Quote/Token 扩展/缓存/迁移池/多跳/权限/费用证据及拒绝矩阵不足 |
 | SDK 来源 | NP-05-A 已核对固定上游 commit/tree、完整清单及既有 DBC 补丁，隔离重放完全一致，read-only 检查/八项负例通过 | 上游 tag/commit 无签名；实际升级/协议演练、完整行为与发布证据仍待续 |
 

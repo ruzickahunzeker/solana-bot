@@ -9,6 +9,8 @@ use solana_client::{
 };
 use std::{future::Future, pin::Pin, sync::Mutex};
 
+mod shared_reads;
+
 #[derive(Clone)]
 struct MemoryRpc {
     calls: Arc<Mutex<Vec<(RpcRequest, Value)>>>,
@@ -539,6 +541,8 @@ async fn native_sol_send_error_timeout_and_confirmation_miss_keep_original_artif
 
 #[tokio::test]
 async fn native_sol_stage_guards_precede_wallet_and_rpc_access_without_sdk_initialization() {
+    let read_rpc =
+        Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap());
     let mut client = SdkTradeClient {
         lanes: vec![],
         sol_hop_cache: tokio::sync::Mutex::new(std::collections::HashMap::new()),
@@ -551,7 +555,7 @@ async fn native_sol_stage_guards_precede_wallet_and_rpc_access_without_sdk_initi
     let expected = crate::domain::execution_policy::BROADCAST_DISABLED_ERROR;
     assert_eq!(
         client
-            .prepare_sol_transfer(&destination(), Some(1), None)
+            .prepare_sol_transfer(read_rpc.as_ref(), &destination(), Some(1), None)
             .await
             .err()
             .unwrap()
@@ -581,7 +585,7 @@ async fn native_sol_stage_guards_precede_wallet_and_rpc_access_without_sdk_initi
     client.broadcast_policy = crate::domain::execution_policy::BroadcastPolicy::Enabled;
     assert_eq!(
         client
-            .prepare_sol_transfer(&destination(), Some(1), None)
+            .prepare_sol_transfer(read_rpc.as_ref(), &destination(), Some(1), None)
             .await
             .err()
             .unwrap()
