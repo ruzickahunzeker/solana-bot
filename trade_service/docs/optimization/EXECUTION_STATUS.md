@@ -8,7 +8,9 @@
 
 - 当前续原 NP-03 [普通存储与登记权限](APP_STATE_RESOURCE_OWNERSHIP.md)：请求
   不暴露具体普通账本、索引、幂等或任务关停能力，原资源及合同行为不改。
-  源码与本地审计通过，待独立 CI；预期新增3、完整各1992、115步、62类型/189字段。
+  首批 `7f6f3c7` / [Actions 44287408599](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44287408599)
+  在类型检查报 `E0277`：隐藏后的 SDK 日志句柄缺 `Send` 边界。后继只声明该原句柄
+  可跨线程移动，运行逻辑和断言不改；仍待独立 CI。预期新增3、完整各1992、115步、62类型/189字段。
 - 原 NP-03 [AppState 资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)已独立验收：
   `65ef56e` / [Actions 44280875076](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44280875076)
   / artifact `14419816862`。并发1989（385.91秒）、串行1989（735.10秒），

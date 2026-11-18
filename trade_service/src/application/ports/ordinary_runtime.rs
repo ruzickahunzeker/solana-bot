@@ -9,7 +9,8 @@ use crate::domain::trade::TradeStatus;
 
 /// Access to the same ordinary-order authority, not a new reservation or journal.
 pub(crate) trait OrdinaryExecutionStorage: OrdinaryTradeJournal {
-    type SdkJournal: OrdinarySdkSubmissionJournal;
+    // Ordinary background execution owns this handle across awaits.
+    type SdkJournal: OrdinarySdkSubmissionJournal + Send;
     fn sdk_journal(&self) -> Option<Self::SdkJournal>;
 }
 

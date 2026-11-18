@@ -34,6 +34,11 @@
 预期保留原1989名称、恰增3、完整各1992、115步、62类型/189字段；
 见 [资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)。本地策略检查不替代云端编译。
 
+首批 `7f6f3c7` / [Actions 44287408599](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44287408599)
+首轮终态 failure，未运行 Rust 测试。生产一处、测试五处均为同一个 `E0277`：
+不透明存储接口的 SDK 日志关联类型缺 `Send`，但被执行任务持有跨 await。
+修正仅补关联类型约束，保留原 SQLite 实现、原任务和测试；不混入 Pump.fun 后续工作。
+
 原 NP-03 AppState 资源所有权 `65ef56e` /
 [Actions 44280875076](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44280875076)
 首次运行 success，artifact `14419816862` 下载独立核对：并发1989（385.91秒）/

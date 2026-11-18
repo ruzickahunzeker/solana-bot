@@ -143,6 +143,11 @@ claim 的身份与 CAS、SQL、JSON 和状态更新逻辑完全保留。
 比较读取来源和写回原记录；并验证替换测试持久化实例不改变既有快照。
 两种存储适配类型不允许进入 Application、Domain、Protocol，待独立 CI。
 
+首批 `7f6f3c7` / [Actions 44287408599](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44287408599)
+停在 Rust 类型检查：`OrdinaryExecutionStorage::SdkJournal` 隐藏后未声明 `Send`，
+后台持有该句柄跨 await，因此生产和测试编译均报 `E0277`。修正只声明同一
+句柄需要 `Send`，不改接口实现、SQL、任务或断言；首批终态不重跑。
+
 ## 请求只登记任务
 
 HTTP 只持有 `TradeTaskAdmission`，不能直接关闭或排空任务组；Bootstrap 给
