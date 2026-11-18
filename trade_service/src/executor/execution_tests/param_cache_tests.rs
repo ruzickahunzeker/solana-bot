@@ -1,7 +1,7 @@
 use super::*;
 use crate::{
     application::{pool_queries::PoolQueryService, ports::pool_queries::PoolReadBackend},
-    domain::trade::Address,
+    domain::trade::{Address, Pool},
     param_cache::ParamCache,
 };
 
@@ -46,6 +46,51 @@ impl PoolReadBackend for ReadBackend {
     }
     async fn sol_hop(&self, _: Address) -> anyhow::Result<Address> {
         panic!("cache test must not discover a route")
+    }
+}
+
+#[tokio::test]
+async fn param_cache_capacity_does_not_change_pool_results_or_original_trade_records() {
+    for mode in [
+        TradePersistenceMode::Memory,
+        TradePersistenceMode::Shadow,
+        TradePersistenceMode::Durable,
+    ] {
+        let mut f = fixture(ExecutionMethod::Sdk, Side::Buy, false, mode).await;
+        let hint = PoolRouteHint {
+            pool: f.command.route.pool,
+            mint: f.command.route.mint,
+            quote_mint: f.command.route.quote_mint,
+            pool_id: f.command.route.pool_id,
+        };
+        let original = Arc::downgrade(&f.state.params);
+        f.state.pool_queries = Arc::new(PoolQueryService::new(
+            ReadBackend(hint.clone()),
+            f.state.params.clone(),
+        ));
+        let key = f.state.pool_queries.warmup(hint.clone()).await.unwrap();
+        assert!(key.as_str() < "zz-capacity-fixture-0000");
+        for index in 0..2048 {
+            f.state.params.insert(
+                format!("zz-capacity-fixture-{index:04}"),
+                Pool::Pump,
+                format!("fixture-mint-{index}"),
+                None,
+            );
+        }
+        assert!(f.state.params.get(&key).is_none());
+        let resolved = f.state.pool_queries.resolve(hint.mint).await.unwrap();
+        assert_eq!(resolved.pool, hint.pool);
+        assert_eq!(resolved.mint, hint.mint);
+        assert_eq!(resolved.quote_mint, hint.quote_mint);
+        assert_eq!(resolved.pool_id, hint.pool_id);
+        assert_eq!(f.state.pool_queries.warmup(hint).await.unwrap(), key);
+        f.execute().await;
+        assert_eq!(f.status(), TradeStatus::Submitted);
+        assert_eq!(f.calls(), 1);
+        assert!(f.state.params.get(&key).is_some());
+        drop(f);
+        assert!(original.upgrade().is_none());
     }
 }
 

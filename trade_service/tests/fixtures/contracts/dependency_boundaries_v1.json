@@ -8,6 +8,12 @@
   "forbidden_types": [
     {"id": "sdk_trade_config", "path": "sol_trade_sdk::common::TradeConfig"},
     {"id": "sdk_infrastructure_config", "path": "sol_trade_sdk::common::InfrastructureConfig"},
+    {"id": "sdk_swqos_config", "path": "sol_trade_sdk::swqos::SwqosConfig"},
+    {"id": "sdk_swqos_type", "path": "sol_trade_sdk::swqos::SwqosType"},
+    {"id": "sdk_swqos_region", "path": "sol_trade_sdk::swqos::SwqosRegion"},
+    {"id": "sdk_swqos_transport", "path": "sol_trade_sdk::swqos::SwqosTransport"},
+    {"id": "sdk_astralane_transport", "path": "sol_trade_sdk::swqos::AstralaneTransport"},
+    {"id": "param_cache", "path": "pump_trade_service::param_cache::ParamCache", "probe": "crate::param_cache::ParamCache"},
     {"id": "pump_native_final_packet", "path": "pump_trade_service::adapters::rpc::pump_native_final::PumpNativeFinalPacket", "probe": "crate::adapters::rpc::pump_native_final::PumpNativeFinalPacket"},
     {"id": "pump_native_final_reply", "path": "pump_trade_service::adapters::rpc::pump_native_final::PumpNativeFinalReply", "probe": "crate::adapters::rpc::pump_native_final::PumpNativeFinalReply"},
     {"id": "pump_native_probe_packet", "path": "pump_trade_service::adapters::rpc::pump_native_probe::PumpNativeProbePacket", "probe": "crate::adapters::rpc::pump_native_probe::PumpNativeProbePacket"},

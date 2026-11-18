@@ -30,10 +30,19 @@
 
 ## 当前批次
 
-当前续原NP03/05 SDK配置投影及公开surface合同，五项新Rust测试待独立CI：预期原
-2065名称保留、完整各2070、config3/surface2、原final-read4/wire3/SDK6、Pump56、
-HTTP208、127步及68类型/207字段。不改原SDK初始化/钱包/Provider顺序或执行权限，
-不新增共享资源；见[资源边界](APP_STATE_RESOURCE_OWNERSHIP.md)。
+当前续原NP03 Provider转换及候选缓存上限：八项新Rust合同待独立CI，预期完整
+各2078、原2070名称全保留/恰增八项、provider5/cache3、原config3/surface2、
+Pump56/HTTP208、129有序步骤及74类型/225字段。已有源码重建/负例/格式/策略
+检查不替代Rust执行；见原[资源边界](APP_STATE_RESOURCE_OWNERSHIP.md)和
+[候选缓存](PARAM_CACHE_RESOURCE_BOUNDARY.md)。不改API/SDK/钱包/账本，不新增权限。
+
+已独立验收的SDK配置投影及公开surface合同：0530bed /
+[Actions44363743712](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44363743712)
+首次success，artifact14457878477下载独立核对：并发2070（394.39秒）、串行2070
+（749.17秒），原2065名称全保留、恰增五项；config3/surface2、原final-read4/
+wire3/SDK6、Pump56、HTTP208、127有序步骤及68类型/207原始编译字段通过。源码/
+锁定依赖身份及原SDK初始化/Provider/钱包行为重建通过。不新增共享资源或执行
+权限；上述后继八项不在本次源码或结果内，不能继承验收。不重跑终态或另发文档CI。
 
 最终模拟f519207 / [Actions44355235997](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44355235997)
 首次运行success，artifact14454946722已下载独立核对：并发2065（394.35秒）/串行

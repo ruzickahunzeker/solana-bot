@@ -6,9 +6,21 @@
 
 ## 当前任务
 
-- 当前续原 NP-03/05 [SDK配置边界](APP_STATE_RESOURCE_OWNERSHIP.md)及
-  [公开SDK兼容门禁](SDK_PROVENANCE.md)：两处原配置构造收口，原初始化/钱包/
-  Provider顺序不变；三项配置合同与两项surface合同待独立CI。未实际共享SDK资源。
+- 当前续原NP03的Provider转换边界：原配置/映射移入SDK adapter，去除
+  adapter对根facade的反向调用，原初始化/选路/错误顺序可逐字还原。五项新合同
+  仅源码/格式/策略检查，尚未Rust运行；不继承已验收父批的结果。
+  见同一[资源边界](APP_STATE_RESOURCE_OWNERSHIP.md)，不新增任务/协议/实盘权限。
+- 同批原NP03的[候选缓存](PARAM_CACHE_RESOURCE_BOUNDARY.md)补1024条元数据上限，
+  保留原实例/键/字段与写入端口，不涉及SDK缓存、报价、授权或账本。容量/并发/
+  三模式执行三项新合同待独立Rust验收；与上述合计八项，预期完整各2078、129步
+  及74类型/225字段，不套用父批结果。
+- 原NP03/05 [SDK配置边界](APP_STATE_RESOURCE_OWNERSHIP.md)及
+  [公开SDK兼容门禁](SDK_PROVENANCE.md)已独立验收：`0530bed` /
+  [Actions44363743712](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44363743712)
+  / artifact14457878477。并发2070（394.39秒）、串行2070（749.17秒），原2065
+  全保留、恰增五项；config3/surface2、Pump56、HTTP208、127有序步骤及68类型/
+  207原始编译字段通过。源码/锁定依赖身份及原初始化/Provider/钱包行为重建通过。
+  未实际共享SDK资源，不重跑终态或另发文档CI，记录随真实后继源码提交。
 - 原 NP-01 [完整消息最终模拟](PUMP_SDK_FINAL_SIMULATION.md)已独立验收：
   `f519207` / [Actions44355235997](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44355235997)
   / artifact14454946722。并发2065（394.35秒）、串行2065（755.19秒），原2052全

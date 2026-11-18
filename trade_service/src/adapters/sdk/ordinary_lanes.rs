@@ -336,7 +336,7 @@ pub(crate) fn ensure_requested_provider(
         (Some(true), Some(MevProvider::Default)) => false,
         (Some(false), _) | (_, Some(MevProvider::Default)) => actual == SwqosType::Default,
         (_, Some(provider)) if provider != MevProvider::Auto => {
-            crate::sdk_client::provider_swqos_type(provider) == Some(actual)
+            super::provider_config::provider_swqos_type(provider) == Some(actual)
         }
         (Some(true), _) => actual != SwqosType::Default,
         _ => true,

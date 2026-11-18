@@ -145,7 +145,9 @@ PY
         step command-defaults cargo test --locked --offline command_defaults -- --test-threads=2
         step sdk-lane-config cargo test --locked --offline sdk_lane_config_ -- --test-threads=2
         step sdk-surface-contract cargo test --locked --offline sdk_surface_contract_ -- --test-threads=2
+        step sdk-provider-config cargo test --locked --offline sdk_provider_config_ -- --test-threads=2
         step param-cache-port cargo test --locked --offline param_cache_port -- --test-threads=2
+        step param-cache-capacity cargo test --locked --offline param_cache_capacity_ -- --test-threads=2
         step http-contract cargo test --locked --offline http_contract_tests -- --test-threads=2
         step api-access-policy cargo test --locked --offline api_access_policy -- --test-threads=2
         step request-settings cargo test --locked --offline request_settings_ -- --test-threads=2

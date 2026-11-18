@@ -44,3 +44,40 @@ artifact `14153850007` 下载核对：param-cache-port 两项、全部步骤通�
 
 full Config、接受/index/journal、blockhash/SDK 参数内部缓存和 bootstrap 仍待继续；
 不能把一个 port/字段收口称为基础设施隔离全部完成。PumpAPI 功能开发保持暂停。
+
+## 2026-11-19 Candidate Metadata Bound
+
+Local original NP-03 continuation, not yet independently Rust-tested or
+published. Current source usage confirms this map is advisory metadata written
+by pool resolve/warmup and ordinary `after_trade`; production has no consumer
+of its `get`. It holds no quote, SDK parameters, signed bytes, idempotency or
+authorization. An unbounded sequence of distinct Mints therefore retained
+metadata indefinitely without helping the trading path.
+
+The same map now retains at most1024 entries. A synchronous write-admission
+mutex serializes distinct-key admission, chooses the oldest `updated_at_ms`
+(key order breaks ties), drops the map read guards and evicts before inserting.
+Updating an existing key does not evict another entry. The lock is never held
+across an await or network call; cloned reads retain the original interface.
+The original fields, key formatting, timestamp source, writer port and shared
+Arc stay unchanged. No TTL, runtime configuration or SDK internal cache is
+added/changed. This is a count bound for address-sized metadata, not a general
+byte bound or a new route cache/verification policy.
+
+Three unexecuted Rust contracts cover actual default capacity and metadata,
+existing-key updates, oldest/tie eviction, four concurrent writers with no
+overshoot and final Arc release; the actual pool service and ordinary executor
+then run under Memory/Shadow/Durable after advisory eviction. Original route
+results/key, one execution, Submitted record and resource release must remain.
+No signer, SDK client or external RPC is used. Existing cache authority tests
+are retained unchanged. The original three-layer compiler gate also forbids
+the concrete ParamCache type; new callers must keep using the existing port.
+
+Read-only source reconstruction verifies the original map/metadata/insert/get
+after removing only bounded admission, retains the old executor tests and
+checks unchanged writer/query/ordinary runtime/bootstrap/journal/SDK loader
+sources. Five deliberately weakened bound/lock/eviction mutations reject.
+Format and policy checks do not substitute for the pending Rust execution.
+This is carried with the provider boundary batch after independently accepting
+0530bed/run44363743712/artifact14457878477 (full2070 each). That accepted
+snapshot does not contain or validate these three cache contracts.

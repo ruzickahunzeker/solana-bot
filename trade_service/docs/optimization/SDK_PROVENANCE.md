@@ -58,7 +58,7 @@ NP-05-A 的固定来源/补丁账本与离线重放现已验收。签名来源�
 
 ## NP-05 Existing Public Surface Follow-Up
 
-Two local unexecuted Rust contracts now pin the locked public `DexType` and
+Two independently accepted Rust contracts now pin the locked public `DexType` and
 factory surface inside the existing SDK adapter tests. The exhaustive match
 has no wildcard, covers all twelve current factory variants and checks names
 and existing immutable builder singleton ownership without calling `swap`,
@@ -75,11 +75,24 @@ SDK builder presence is not permission or chain acceptance. The test table is
 an independent compatibility oracle, never a production lookup.
 
 These two tests are not in final-simulation snapshot `f519207` or its CI. They
-await a later coherent source batch and independent CI; no test has run on the
-small VM. Future SDK variant/factory/projection changes require explicit
+were accepted with the coherent configuration batch0530bed/run44363743712/
+artifact14457878477: config3/surface2, full2070 each (394.39s/749.17s), all2065
+parent names retained plus exactfive,127 zero-exit steps,68types/207 raw fields,
+source/locked identity and original initializer reconstruction passed. No test
+has run on the small VM.
+Future SDK variant/factory/projection changes require explicit
 review, not wildcard support or widening V1 capabilities. Existing vendor,
 manifests, lockfile, protocol definitions, request projection and API remain
 unchanged; no actual SDK upgrade or new protocol activation is performed.
+
+The local provider-conversion follow-up narrows another original SDK facade
+boundary, not the supported provider/protocol set. Six existing service provider
+configs and eight public choices map to the same pinned SDK variants, strings,
+credentials, regional aliases, transports and validation order. Full source
+reconstruction and six changed-policy negatives pass. Five new contracts and
+the expanded SDK SWQoS type gate await the separate coherent successor CI;
+they are not in the accepted parent. Details remain in the existing
+APP_STATE_RESOURCE_OWNERSHIP.md, not a second SDK upgrade or rollout plan.
 
 ## 2026-11-12 本地核对历史
 

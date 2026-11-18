@@ -164,7 +164,8 @@ HTTP 只持有 `TradeTaskAdmission`，不能直接关闭或排空任务组；Boo
 
 ## SDK Configuration Boundary Follow-Up
 
-Local unpublished NP-03 continuation after f519207. The two identical config
+Independently accepted NP-03 continuation0530bed / Actions44363743712 /
+artifact14457878477 after accepted f519207. The two identical config
 builders in `SdkTradeClient::new` now delegate to one small SDK-adapter helper.
 RPC/provider order, backup policy, payer parsing, both original
 `TradingClient::new` calls and Registry startup/add/remove behavior remain
@@ -172,14 +173,20 @@ unchanged. WSOL startup and seed optimization remain disabled, with the same
 SDK defaults/log/MEV/commitment values. This is configuration projection only,
 not shared infrastructure, a new cache, a client initializer or a lifecycle fix.
 
-Three unexecuted Rust contracts compare the exact old builder for24 settings,
+Three Rust contracts compare the exact old builder for24 settings,
 check complete infrastructure identity including auth/region/custom URL/min-tip/
 transport/order/commitment/core/MEV flags, and keep per-client log/min-tip/version
 settings separate from infrastructure identity. Tests do not initialize SDK
 clients, RPCs, wallets or tasks. SDK TradeConfig/InfrastructureConfig are added
-to the existing three-layer forbidden-type gate: expected68 types/207 fields,
-pending actual compiler CI. Two related public-factory contracts are recorded
+to the existing three-layer forbidden-type gate: all68 types/207 raw fields
+rejected in the actual compiler CI. Two related public-factory contracts are recorded
 under existing NP-05 in SDK_PROVENANCE.md, not a new protocol/task.
+
+Matching raw artifact/source audits passed full concurrent2070 (394.39s) and
+serial2070 (749.17s), original2065 names retained plus exactly these five,
+config3/surface2/Pump56/HTTP208 and127 ordered zero-exit steps. Original complete
+initializer/Provider/wallet order reconstructs; four changed-config policy
+negatives reject. This does not prove actual infrastructure reuse or cleanup.
 
 The pinned SDK constructor still creates infrastructure per wallet/RPC/provider
 combination and starts a rent updater without exposing its handle. Public
@@ -196,3 +203,63 @@ Arc drop cancels its background tasks. Any later actual reuse needs Registry
 ownership, complete config equality, wallet/payer isolation, unchanged client
 flags/provider order and failure/concurrency/lifecycle evidence. No such reuse,
 SDK update, production operation or wallet access is performed in this step.
+
+## Provider Configuration Adapter Follow-Up
+
+NP-03 / TS-04/07 continuation after independently accepting the exact0530bed
+run/artifact, not a new protocol or task. Provider mapping and service-setting to
+SDK-setting conversion have moved from the root SDK facade to
+`adapters/sdk/provider_config.rs`. The original lane authorization helper now
+uses its sibling adapter rather than calling back into the root facade.
+The two original SDK initializers, configuration projection, payer parsing,
+RPC/provider order, backup policy, selected-sender checks and execution flow
+remain unchanged. No SDK infrastructure is shared or initialized here.
+
+All original converter bodies, provider names, regional aliases, transport
+defaults, optional Jito auth and validation/error ordering reconstruct exactly.
+Explicit empty auth and custom URLs remain forwarded verbatim; this extraction
+does not silently tighten configuration validation or normalize credentials.
+Default RPC append and REQUIRE_MEV_SUBMIT checks remain in the original
+initializer. The SDK supports more providers than this service exposes; that
+does not open new public choices or alter API/fees/MEV/fallback policy.
+
+Five new unexecuted Rust contracts cover512 subset/global-flag combinations,
+exact six-provider fields and order, disabled invalid values, earliest enabled
+error, token-before-region-before-transport, all regional aliases and distinct
+BlockRazor/Astralane modes, owned verbatim credentials and the eight existing
+public choices against the actual DAMM provider guard. They never construct
+SDK clients, payers, RPCs or workers. The existing three-layer compiler policy
+adds five SDK SWQoS types. The same original NP-03 successor also bounds the
+advisory candidate cache, whose concrete type is forbidden in the same gate;
+combined expected74 types/225 raw fields and eight new Rust tests await CI.
+Cache policy and three contracts are recorded in PARAM_CACHE_RESOURCE_BOUNDARY.md.
+
+Source reconstruction and six rejected policy mutations passed locally, as did
+format and policy checks. These do not replace Rust execution. The accepted
+parent contains neither provider conversion nor cache-bound tests; the coherent
+successor needs independent verification in the same validation branch.
+The original Pump permission/journal, provider/ABI/funding, all-mode safety,
+actual SDK resource ownership and real release gates remain incomplete.
+
+Read-only follow-up checked the current SharedReadRuntime implementation:
+the twelve class slots are independent (Discovery has two, the others one),
+and pacing is per class while429 cooldown is shared per canonical credentialed
+endpoint. This is not a provider-account or cross-process global budget.
+Do not infer that two different RPC keys have independent account quotas, or
+replace the reserved class capacity with one semaphore that can starve the
+500ms blockhash/readiness paths. Actual global admission remains in the
+original NP-03 queue; the candidate metadata bound does not close that gap.
+
+The same read-only review followed WalletRegistry::add and the existing
+WalletManagementService ports. Add checks the map before awaiting SDK client
+construction, then inserts without a second ownership/activation check; two
+same-ID callers can both initialize clients. Create/import and delete also
+await repository/runtime steps independently, so a registry-only loading lock
+would not bind database enabled state to runtime installation. Cancellation
+after SDK initialization begins still has the unowned-worker limitation above.
+This is an identified original wallet activation/lifecycle gap, not a completed
+fix or authorization to change wallet storage. A later fix must use the existing
+repository/runtime ports, preserve existing partial-failure/error contracts,
+test competing activation/disable/cancellation, and distinguish registry
+ownership from actual SDK task cleanup. No extra reservation/journal or SDK
+initializer is introduced by this review; current wallet source is untouched.
