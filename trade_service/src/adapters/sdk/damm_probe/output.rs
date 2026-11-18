@@ -1,3 +1,4 @@
+use crate::adapters::rpc::damm_quote_reads::{simulate_packet, DammQuoteRpc};
 use anyhow::{bail, Context, Result};
 use sol_trade_sdk::instruction::utils::meteora_damm_v2::{accounts, SWAP_MODE_EXACT_IN};
 use solana_sdk::pubkey::Pubkey;
@@ -8,13 +9,13 @@ use std::collections::HashSet;
 
 use super::{
     evidence::{check_snapshot, AccountSnapshot, AssetSnapshot, DammProbeEvidence},
-    simulate_packet, DammOutputEvidence,
+    DammOutputEvidence,
 };
 pub(super) mod trace;
 
 /// Output of this unsigned simulation, never a delta against an earlier RPC bank.
 pub(crate) async fn evidence_damm_probe_output(
-    evidence: &DammProbeEvidence<'_>,
+    evidence: &DammProbeEvidence<'_, impl DammQuoteRpc>,
 ) -> Result<DammOutputEvidence> {
     let prepared = evidence.prepared;
     let intent = prepared.accounts();
@@ -120,7 +121,9 @@ pub(crate) async fn evidence_damm_probe_output(
 }
 
 #[cfg(test)]
-pub(crate) async fn quote_evidenced_damm_probe(evidence: &DammProbeEvidence<'_>) -> Result<u64> {
+pub(crate) async fn quote_evidenced_damm_probe(
+    evidence: &DammProbeEvidence<'_, impl DammQuoteRpc>,
+) -> Result<u64> {
     Ok(evidence_damm_probe_output(evidence).await?.output_units())
 }
 

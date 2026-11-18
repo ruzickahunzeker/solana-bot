@@ -126,6 +126,9 @@ PY
         step damm-candidate-shared cargo test --locked --offline damm_candidate_shared_ -- --test-threads=2
         step damm-candidate-adapter cargo test --locked --offline damm_candidate_adapter_ -- --test-threads=2
         step damm-candidate-wire cargo test --locked --offline damm_candidate_wire_ -- --test-threads=2
+        step damm-quote-shared cargo test --locked --offline damm_quote_read_ -- --test-threads=2
+        step damm-quote-adapter cargo test --locked --offline damm_quote_adapter_ -- --test-threads=2
+        step damm-quote-wire cargo test --locked --offline damm_quote_wire_ -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

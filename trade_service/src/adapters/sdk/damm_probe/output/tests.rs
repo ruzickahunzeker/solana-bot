@@ -20,6 +20,8 @@ use solana_sdk::{
 use spl_token_interface::state::Account as TokenAccount;
 use std::sync::atomic::Ordering;
 
+mod shared_reads;
+
 #[derive(Clone, Copy)]
 enum Encoding {
     Compiled,

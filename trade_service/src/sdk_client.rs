@@ -740,6 +740,7 @@ impl SdkTradeClient {
 
     async fn simulate_damm_v2_sell_output(
         &self,
+        read_rpc: &crate::adapters::rpc::read_runtime::SharedReadRuntime,
         lane: &SdkLane,
         damm: &MeteoraDammV2Params,
         mint: Pubkey,
@@ -752,7 +753,10 @@ impl SdkTradeClient {
             bail!("DAMM v2 quote mint is not in the pool");
         }
         let owner = lane.client.payer.pubkey();
-        let rpc = lane.client.get_rpc();
+        let rpc = crate::adapters::rpc::damm_quote_reads::DammQuoteReader::new(
+            read_rpc,
+            lane.client.get_rpc().url(),
+        );
         let prepared = crate::adapters::sdk::damm_probe::prepare_damm_probe(
             owner,
             damm,
@@ -763,7 +767,7 @@ impl SdkTradeClient {
             lane.client.use_seed_optimize,
         )?;
         let evidence = crate::adapters::sdk::damm_probe::inspect_prepared_damm_probe_at_slot(
-            rpc,
+            &rpc,
             &prepared,
             min_context_slot,
         )

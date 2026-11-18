@@ -1,18 +1,16 @@
 use super::{Funding, PreparedDammBuyProbe};
+use crate::adapters::rpc::damm_quote_reads::{simulate_packet, DammQuoteRpc};
 use crate::adapters::sdk::{
     damm_probe::{
         evidence::{check_snapshot_for_accounts, AccountSnapshot, InputRequirement},
         output::{amount_row, cross_check, net_amount, trace, BalanceCredits, NetAmounts},
         plan::ProbeView,
-        simulate_packet,
     },
     pumpapi_assets::decode_data,
 };
 use anyhow::{ensure, Context, Result};
 use sha2::{Digest, Sha256};
-use solana_account_decoder::{UiAccount, UiAccountEncoding};
-use solana_client::{nonblocking::rpc_client::RpcClient, rpc_config::RpcAccountInfoConfig};
-use solana_commitment_config::CommitmentConfig;
+use solana_account_decoder::UiAccount;
 use solana_program_pack::Pack;
 use solana_sdk::pubkey::Pubkey;
 use std::{
@@ -382,7 +380,7 @@ fn check_native_budget(
 
 #[cfg(test)]
 async fn quote(
-    rpc: &RpcClient,
+    rpc: &impl DammQuoteRpc,
     plan: &PreparedDammBuyProbe,
     minimum_slot: u64,
 ) -> Result<BuyOutputEvidence> {
@@ -394,14 +392,14 @@ async fn quote(
 }
 
 pub(crate) async fn quote_current(
-    rpc: &RpcClient,
+    rpc: &impl DammQuoteRpc,
     plan: &PreparedDammBuyProbe,
 ) -> Result<BuyOutputEvidence> {
     quote_with_context(rpc, plan, None).await
 }
 
 async fn quote_with_context(
-    rpc: &RpcClient,
+    rpc: &impl DammQuoteRpc,
     plan: &PreparedDammBuyProbe,
     minimum_slot: Option<u64>,
 ) -> Result<BuyOutputEvidence> {
@@ -415,7 +413,7 @@ async fn quote_with_context(
 }
 
 async fn quote_inner(
-    rpc: &RpcClient,
+    rpc: &impl DammQuoteRpc,
     plan: &PreparedDammBuyProbe,
     minimum_slot: Option<u64>,
     started: Instant,
@@ -425,18 +423,7 @@ async fn quote_inner(
         keys.iter().collect::<HashSet<_>>().len() == keys.len(),
         "DAMM buy account roles alias each other"
     );
-    let response = rpc
-        .get_multiple_ui_accounts_with_config(
-            &keys,
-            RpcAccountInfoConfig {
-                encoding: Some(UiAccountEncoding::Base64),
-                commitment: Some(CommitmentConfig::processed()),
-                data_slice: None,
-                min_context_slot: minimum_slot,
-            },
-        )
-        .await
-        .map_err(|error| anyhow::anyhow!("{}", crate::sanitize::redact_urls(&error.to_string())))?;
+    let response = rpc.damm_accounts(&keys, minimum_slot).await?;
     ensure!(
         response.context.slot > 0
             && minimum_slot.is_none_or(|minimum| response.context.slot >= minimum),

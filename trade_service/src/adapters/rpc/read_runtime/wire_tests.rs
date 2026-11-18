@@ -12,6 +12,8 @@ const DONE: &str = "SHARED_READ_WIRE_DONE";
 mod aggregator_account_wire;
 #[path = "aggregator_simulation_wire.rs"]
 mod aggregator_simulation_wire;
+#[path = "damm_quote_wire.rs"]
+mod damm_quote_wire;
 #[path = "damm_simulation_wire.rs"]
 mod damm_simulation_wire;
 #[path = "parameter_wire.rs"]
@@ -807,6 +809,10 @@ async fn shared_read_wire_child() {
             "damm-candidate-success" => damm_simulation_wire::success().await,
             "damm-candidate-errors" => damm_simulation_wire::errors().await,
             "damm-candidate-timeout-cancel" => damm_simulation_wire::timeout_cancel().await,
+            "damm-quote-success" => damm_quote_wire::success().await,
+            "damm-quote-errors" => damm_quote_wire::errors().await,
+            "damm-quote-timeout-cancel" => damm_quote_wire::timeout_cancel().await,
+            "damm-quote-long-budgets" => damm_quote_wire::long_budgets().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -1101,4 +1107,21 @@ fn damm_candidate_wire_bad_identity_body_rate_and_redirect_never_retry_or_fallba
 #[test]
 fn damm_candidate_wire_original_deadline_cancel_and_critical_hash_share_existing_quota() {
     run("damm-candidate-timeout-cancel");
+}
+
+#[test]
+fn damm_quote_wire_original_account_probe_requests_results_and_exact_body_bounds() {
+    run("damm-quote-success");
+}
+#[test]
+fn damm_quote_wire_bad_replies_redirect_and_rate_do_not_fallback_or_retry() {
+    run("damm-quote-errors");
+}
+#[test]
+fn damm_quote_wire_account_deadline_cancel_and_hash_use_existing_capacities() {
+    run("damm-quote-timeout-cancel");
+}
+#[test]
+fn damm_quote_wire_fixed_http_allowances_are_not_shrunk_to_generic_or_candidate_limits() {
+    run("damm-quote-long-budgets");
 }

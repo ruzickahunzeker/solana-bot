@@ -70,6 +70,7 @@ impl ReadHttpTransport for Fake {
             });
         }
         let (id,value) = match request {
+            ReadRequest::DammQuoteAccounts { .. } | ReadRequest::DammQuoteProbe { .. } => panic!("quote balance fixture must not read DAMM quote evidence"),
             ReadRequest::DammCandidateSimulation { .. } => panic!("quote fixture must not simulate DAMM candidates"),
             ReadRequest::PreparationAccounts { .. } | ReadRequest::Parameters { .. } | ReadRequest::AggregatorAccount { .. } | ReadRequest::AggregatorSimulation { .. } | ReadRequest::WsolQuote { .. } | ReadRequest::WsolSimulation { .. } => panic!("quote fixture must not read preparation accounts or protocol parameters or aggregator accounts/simulation/WSOL quote/simulation"),
             ReadRequest::TokenSupply{id,..} => (*id,token_amount(u64::MAX,6)),

@@ -62,20 +62,35 @@ pub(super) async fn good() {
             ]
         );
         let requests = c.server.requests.lock().unwrap().clone();
-        assert_eq!(requests.len(), 4);
+        assert_eq!(requests.len(), 6);
         assert_eq!(requests[0]["method"], "getAccountInfo");
         assert_eq!(requests[1]["method"], "getMultipleAccounts");
         assert_eq!(
             requests[2],
             json!({"jsonrpc":"2.0","id":3,"method":"getTokenAccountsByOwner","params":[c.wallet.wallet().to_string(),{"mint":key(4).to_string()},{"encoding":"jsonParsed","dataSlice":null,"commitment":"processed","minContextSlot":null}]})
         );
-        assert_eq!(requests[3]["method"], "simulateTransaction");
-        assert_eq!(requests[3]["id"], 4);
+        assert_eq!(requests[3]["method"], "getMultipleAccounts");
+        assert_eq!(requests[4]["method"], "simulateTransaction");
+        assert_eq!(requests[5]["method"], "simulateTransaction");
+        assert_eq!(
+            (
+                requests[3]["id"].as_u64(),
+                requests[4]["id"].as_u64(),
+                requests[5]["id"].as_u64()
+            ),
+            (Some(4), Some(5), Some(6))
+        );
         assert_eq!(
             base64::engine::general_purpose::STANDARD
-                .decode(requests[3]["params"][0].as_str().unwrap())
+                .decode(requests[5]["params"][0].as_str().unwrap())
                 .unwrap(),
             bincode::serialize(&simulations[1]).unwrap()
+        );
+        assert_eq!(
+            base64::engine::general_purpose::STANDARD
+                .decode(requests[4]["params"][0].as_str().unwrap())
+                .unwrap(),
+            bincode::serialize(&simulations[0]).unwrap()
         );
         let row=sqlx::query("SELECT sdk_prepared_json,unsigned_message FROM ordinary_execution_claims WHERE request_id=?").bind(&c.f.record.request_id).fetch_one(&c.pool).await.unwrap();
         let metadata = SdkPreparedRecord::decode(
@@ -194,6 +209,7 @@ pub(super) async fn cancel() {
                 .unwrap();
             task.abort();
             assert!(matches!(task.await,Err(error) if error.is_cancelled()));
+            await_oracle_drop(&trace).await;
             assert!(trace.dropped.load(Ordering::SeqCst));
             let row=sqlx::query("SELECT submission_stage,signed_signature,signed_transaction FROM ordinary_execution_claims WHERE request_id=?").bind(execution.reservation().request_id()).fetch_one(&pool).await.unwrap();
             let sending = mode == Mode::CancelSend;

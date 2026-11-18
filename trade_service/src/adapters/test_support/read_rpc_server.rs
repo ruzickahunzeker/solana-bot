@@ -27,8 +27,31 @@ pub(crate) trait DammPreviewOracle: Send + Sync {
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Value> + Send + '_>>;
 }
 
+#[derive(Clone, Copy)]
+pub(crate) enum DammEvidenceKind {
+    Accounts,
+    Probe,
+}
+pub(crate) trait DammEvidenceOracle: Send + Sync {
+    fn evidence(
+        &self,
+        kind: DammEvidenceKind,
+        params: Value,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Value> + Send + '_>>;
+}
+
 #[derive(Clone)]
 pub(crate) enum Reply {
+    DammEvidence {
+        oracle: Arc<dyn DammEvidenceOracle>,
+        other: Box<Reply>,
+    },
+    DammQuote {
+        accounts: Value,
+        probe: Value,
+        account_mode: Box<Reply>,
+        probe_mode: Box<Reply>,
+    },
     DammPreview {
         oracle: Arc<dyn DammPreviewOracle>,
         other: Box<Reply>,
@@ -232,6 +255,35 @@ async fn serve(
 ) {
     let payload = read_request(&mut stream).await;
     let id = payload["id"].as_u64().unwrap();
+    let kind = match payload["method"].as_str() {
+        Some("getMultipleAccounts")
+            if payload["params"][0]
+                .as_array()
+                .is_some_and(|a| matches!(a.len(), 8 | 9)) =>
+        {
+            Some(DammEvidenceKind::Accounts)
+        }
+        Some("simulateTransaction") if !payload["params"][1]["accounts"].is_null() => {
+            Some(DammEvidenceKind::Probe)
+        }
+        _ => None,
+    };
+    let (reply, evidence) = match (reply, kind) {
+        (Reply::DammEvidence { oracle, .. }, Some(kind)) => {
+            let mut byte = [0u8; 1];
+            let value = tokio::select! {
+                value=oracle.evidence(kind,payload["params"].clone())=>value,
+                read=stream.read(&mut byte)=>{
+                    assert!(matches!(read,Ok(0)|Err(_)),"unexpected pipelining during blocked quote oracle");
+                    return;
+                }
+            };
+            (Reply::Success, Some(value))
+        }
+        (Reply::DammEvidence { other, .. }, _) => (*other, None),
+        (other, _) => (other, None),
+    };
+    let is_runtime_evidence = evidence.is_some();
     let (reply, preview) = match reply {
         Reply::DammPreview { oracle, .. } if payload["method"] == "simulateTransaction" => {
             assert!(payload["params"][1]["accounts"].is_null());
@@ -242,12 +294,23 @@ async fn serve(
         other => (other, None),
     };
     let is_runtime_preview = preview.is_some();
+    let is_damm_quote = matches!(&reply, Reply::DammQuote { .. });
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
     let is_damm_simulation = matches!(&reply, Reply::DammSimulation { .. });
     let is_wsol_broadcast = matches!(&reply, Reply::WsolBroadcast { .. });
     let is_quote_status = matches!(&reply, Reply::QuoteStatus { .. });
     let (reply, parameter_value) = match reply {
+        Reply::DammQuote {
+            accounts,
+            probe,
+            account_mode,
+            probe_mode,
+        } => match payload["method"].as_str() {
+            Some("getMultipleAccounts") => (*account_mode, Some(accounts)),
+            Some("simulateTransaction") => (*probe_mode, Some(probe)),
+            _ => panic!("DAMM quote fixture cannot submit or query other methods"),
+        },
         Reply::DammSimulation { result, mode } => {
             assert_eq!(payload["method"], "simulateTransaction");
             (*mode, Some(result))
@@ -330,7 +393,7 @@ async fn serve(
         }
         other => (other, None),
     };
-    let parameter_value = parameter_value.or(preview);
+    let parameter_value = parameter_value.or(preview).or(evidence);
     let is_blockhash = payload["method"] == "getLatestBlockhash";
     let is_preparation = parameter_value.is_none()
         && payload["method"] == "getMultipleAccounts"
@@ -410,7 +473,48 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if is_runtime_preview {
+    if is_runtime_evidence {
+        assert_eq!(
+            payload,
+            json!({"jsonrpc":"2.0","id":id,"method":payload["method"],"params":payload["params"]})
+        );
+    } else if is_damm_quote {
+        let config = &payload["params"][1];
+        let keys = if payload["method"] == "getMultipleAccounts" {
+            assert!(config["minContextSlot"].is_null() || config["minContextSlot"] == 123);
+            assert_eq!(
+                *config,
+                json!({"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":config["minContextSlot"]})
+            );
+            &payload["params"][0]
+        } else {
+            assert_eq!(
+                *config,
+                json!({"sigVerify":false,"replaceRecentBlockhash":false,"commitment":"processed","encoding":"base64",
+                "accounts":{"encoding":"base64","addresses":config["accounts"]["addresses"]},"minContextSlot":123,"innerInstructions":true})
+            );
+            let bytes = base64::Engine::decode(
+                &base64::engine::general_purpose::STANDARD,
+                payload["params"][0].as_str().unwrap(),
+            )
+            .unwrap();
+            assert!(bytes.len() <= 1232);
+            let tx: solana_sdk::transaction::Transaction = bincode::deserialize(&bytes).unwrap();
+            assert_eq!(tx.signatures, [solana_sdk::signature::Signature::default()]);
+            assert_eq!(tx.message.header.num_required_signatures, 1);
+            &config["accounts"]["addresses"]
+        };
+        let keys = keys.as_array().unwrap();
+        assert!(matches!(keys.len(), 8 | 9));
+        let addresses = keys
+            .iter()
+            .map(|key| key.as_str().unwrap())
+            .collect::<std::collections::HashSet<_>>();
+        assert_eq!(addresses.len(), keys.len());
+        for address in addresses {
+            assert_eq!(bs58::decode(address).into_vec().unwrap().len(), 32);
+        }
+    } else if is_runtime_preview {
         assert_eq!(
             payload,
             json!({"jsonrpc":"2.0","id":id,"method":"simulateTransaction","params":payload["params"]})

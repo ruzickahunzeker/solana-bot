@@ -1,14 +1,17 @@
 use anyhow::{bail, Result};
+#[cfg(test)]
 use solana_client::{
     nonblocking::rpc_client::RpcClient,
     rpc_config::{RpcSimulateTransactionAccountsConfig, RpcSimulateTransactionConfig},
     rpc_response::{Response, RpcSimulateTransactionResult},
 };
+#[cfg(test)]
 use solana_commitment_config::CommitmentConfig;
 use solana_sdk::{
     hash::Hash, instruction::Instruction, message::Message, pubkey::Pubkey,
     transaction::Transaction,
 };
+#[cfg(test)]
 use solana_transaction_status_client_types::UiTransactionEncoding;
 
 mod buy_plan;
@@ -78,7 +81,8 @@ async fn simulate_prepared_damm_probe(
     .await
 }
 
-async fn simulate_packet(
+#[cfg(test)]
+pub(crate) async fn simulate_packet(
     rpc: &RpcClient,
     transaction: &Transaction,
     accounts: &[Pubkey],

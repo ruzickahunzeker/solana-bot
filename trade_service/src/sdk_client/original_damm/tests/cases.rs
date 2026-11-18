@@ -25,9 +25,18 @@ pub(super) async fn good() {
         ]
     );
     let requests = c.server.requests.lock().unwrap().clone();
-    assert_eq!(requests.len(), 5);
-    assert_eq!(requests[4]["method"], "simulateTransaction");
-    assert_eq!(requests[4]["id"], 5);
+    assert_eq!(requests.len(), 7);
+    assert_eq!(requests[4]["method"], "getMultipleAccounts");
+    assert_eq!(requests[5]["method"], "simulateTransaction");
+    assert_eq!(requests[6]["method"], "simulateTransaction");
+    assert_eq!(
+        (
+            requests[4]["id"].as_u64(),
+            requests[5]["id"].as_u64(),
+            requests[6]["id"].as_u64()
+        ),
+        (Some(5), Some(6), Some(7))
+    );
     let sends = c.trace.sent.lock().unwrap().clone();
     assert_eq!(sends.len(), 1);
     let tx: VersionedTransaction = bincode::deserialize(&sends[0]).unwrap();
@@ -36,9 +45,15 @@ pub(super) async fn good() {
     assert_eq!(simulations[1].message, tx.message);
     assert_eq!(
         base64::engine::general_purpose::STANDARD
-            .decode(requests[4]["params"][0].as_str().unwrap())
+            .decode(requests[6]["params"][0].as_str().unwrap())
             .unwrap(),
         bincode::serialize(&simulations[1]).unwrap()
+    );
+    assert_eq!(
+        base64::engine::general_purpose::STANDARD
+            .decode(requests[5]["params"][0].as_str().unwrap())
+            .unwrap(),
+        bincode::serialize(&simulations[0]).unwrap()
     );
     let row=sqlx::query("SELECT sdk_prepared_json,unsigned_message FROM ordinary_execution_claims WHERE request_id=?")
         .bind(&c.f.record.request_id).fetch_one(&c.pool).await.unwrap();
@@ -134,6 +149,7 @@ pub(super) async fn cancel() {
             .unwrap();
         task.abort();
         assert!(matches!(task.await,Err(error) if error.is_cancelled()));
+        await_oracle_drop(&trace).await;
         assert!(trace.dropped.load(Ordering::SeqCst));
         assert_eq!(
             trace.sent.lock().unwrap().len(),

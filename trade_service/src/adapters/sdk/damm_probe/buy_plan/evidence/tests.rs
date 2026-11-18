@@ -11,6 +11,8 @@ use solana_client::rpc_request::RpcRequest;
 use solana_sdk::{hash::Hash, instruction::Instruction, signature::Signature};
 use std::sync::atomic::Ordering;
 
+mod shared_reads;
+
 const RESERVE: u64 = 2_039_280;
 const FEE: u64 = 5_000;
 const SAME_BANK_WALLET: u64 = 100_000_000;

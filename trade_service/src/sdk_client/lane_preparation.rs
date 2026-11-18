@@ -154,6 +154,7 @@ impl OrdinaryPreparationSource for LanePreparation<'_> {
         let evidence = self
             .wallet
             .simulate_damm_v2_sell_output(
+                self.read_rpc.as_ref(),
                 self.lane,
                 params,
                 trade.mint,
@@ -202,8 +203,11 @@ impl OrdinaryPreparationSource for LanePreparation<'_> {
                 "DAMM buy quote input differs from ordinary preparation",
             ));
         }
-        let quote =
-            Arc::new(DammBuyQuote::read(context, trade, params, self.lane.client.get_rpc()).await?);
+        let reader = crate::adapters::rpc::damm_quote_reads::DammQuoteReader::new(
+            self.read_rpc.as_ref(),
+            self.lane.client.get_rpc().url(),
+        );
+        let quote = Arc::new(DammBuyQuote::read(context, trade, params, &reader).await?);
         let units = quote.output_units();
         let (account_slot, simulation_slot, probe_fee_lamports) = quote.context();
         tracing::debug!(

@@ -6,7 +6,9 @@ use crate::{
             buy_runtime_fixture, change_token, clock, key, Fixture as ProbeFixture,
         },
         test_support::{
-            read_rpc_server::{DammPreviewOracle, LocalServer, Reply},
+            read_rpc_server::{
+                DammEvidenceKind, DammEvidenceOracle, DammPreviewOracle, LocalServer, Reply,
+            },
             IsolatedTestProcess,
         },
     },
@@ -401,6 +403,76 @@ impl DammPreviewOracle for MemoryRpc {
     }
 }
 
+impl DammEvidenceOracle for MemoryRpc {
+    fn evidence(
+        &self,
+        kind: DammEvidenceKind,
+        params: Value,
+    ) -> Pin<Box<dyn Future<Output = Value> + Send + '_>> {
+        Box::pin(async move {
+            let buy = self.buy_result.is_some();
+            let quote = if buy {
+                self.buy_result.as_ref().unwrap()["preTokenBalances"][0]["mint"]
+                    .as_str()
+                    .unwrap()
+                    .parse::<Pubkey>()
+                    .unwrap()
+            } else {
+                USDC_TOKEN_ACCOUNT
+            };
+            let ata = |mint| {
+                sol_trade_sdk::common::fast_fn::get_associated_token_address_with_program_id_fast(
+                    &self.wallet,
+                    &mint,
+                    &spl_token_interface::ID,
+                )
+                .to_string()
+            };
+            let mut keys = vec![
+                key(1).to_string(),
+                key(4).to_string(),
+                quote.to_string(),
+                key(2).to_string(),
+                key(3).to_string(),
+                solana_sdk::sysvar::clock::id().to_string(),
+                ata(if buy { quote } else { key(4) }),
+                ata(if buy { key(4) } else { quote }),
+            ];
+            if buy {
+                keys.push(self.wallet.to_string());
+            }
+            let request = match kind {
+                DammEvidenceKind::Accounts => {
+                    assert_eq!(
+                        params,
+                        json!([keys,{"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":if buy {None} else {Some(123)}}])
+                    );
+                    RpcRequest::GetMultipleAccounts
+                }
+                DammEvidenceKind::Probe => {
+                    assert_eq!(
+                        params[1],
+                        json!({"sigVerify":false,"replaceRecentBlockhash":false,"commitment":"processed","encoding":"base64",
+                        "accounts":{"encoding":"base64","addresses":keys},"minContextSlot":if buy {42} else {123},"innerInstructions":true})
+                    );
+                    RpcRequest::SimulateTransaction
+                }
+            };
+            self.send(request, params).await.unwrap()
+        })
+    }
+}
+
+async fn await_oracle_drop(trace: &Trace) {
+    tokio::time::timeout(Duration::from_secs(1), async {
+        while !trace.dropped.load(Ordering::SeqCst) {
+            tokio::time::sleep(Duration::from_millis(1)).await;
+        }
+    })
+    .await
+    .unwrap();
+}
+
 struct Case {
     wallet: SdkTradeClient,
     f: Fixture,
@@ -461,37 +533,40 @@ impl Case {
             mode,
             trace: trace.clone(),
         };
-        let server = LocalServer::new(Reply::DammPreview {
+        let server = LocalServer::new(Reply::DammEvidence {
             oracle: Arc::new(memory.clone()),
-            other: Box::new(Reply::Parameters {
-                accounts: HashMap::from([
-                    (key(1).to_string(), values[0].clone()),
-                    (key(4).to_string(), values[1].clone()),
-                    (
-                        if native == Some(true) {
-                            WSOL_TOKEN_ACCOUNT
-                        } else {
-                            USDC_TOKEN_ACCOUNT
-                        }
-                        .to_string(),
-                        values[2].clone(),
-                    ),
-                ]),
-                epoch: None,
-                other: Box::new(match mode {
-                    Mode::ParameterRate => Reply::RateLimited(Some("60")),
-                    Mode::ParameterInvalid => Reply::WrongId,
-                    _ => Reply::Preparation {
-                        scan: Box::new(match mode {
-                            Mode::PresenceRate => Reply::RateLimited(Some("60")),
-                            Mode::PresenceInvalid => Reply::WrongId,
-                            Mode::PresenceHold => Reply::SlowHeaders,
-                            _ => Reply::Success,
-                        }),
-                        raw: Box::new(Reply::Success),
-                        scan_value: parsed,
-                        raw_value: json!(raw),
-                    },
+            other: Box::new(Reply::DammPreview {
+                oracle: Arc::new(memory.clone()),
+                other: Box::new(Reply::Parameters {
+                    accounts: HashMap::from([
+                        (key(1).to_string(), values[0].clone()),
+                        (key(4).to_string(), values[1].clone()),
+                        (
+                            if native == Some(true) {
+                                WSOL_TOKEN_ACCOUNT
+                            } else {
+                                USDC_TOKEN_ACCOUNT
+                            }
+                            .to_string(),
+                            values[2].clone(),
+                        ),
+                    ]),
+                    epoch: None,
+                    other: Box::new(match mode {
+                        Mode::ParameterRate => Reply::RateLimited(Some("60")),
+                        Mode::ParameterInvalid => Reply::WrongId,
+                        _ => Reply::Preparation {
+                            scan: Box::new(match mode {
+                                Mode::PresenceRate => Reply::RateLimited(Some("60")),
+                                Mode::PresenceInvalid => Reply::WrongId,
+                                Mode::PresenceHold => Reply::SlowHeaders,
+                                _ => Reply::Success,
+                            }),
+                            raw: Box::new(Reply::Success),
+                            scan_value: parsed,
+                            raw_value: json!(raw),
+                        },
+                    }),
                 }),
             }),
         })

@@ -33,6 +33,14 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    DammQuoteAccounts {
+        id: u64,
+        query: super::damm_quote_reads::DammQuoteAccounts,
+    },
+    DammQuoteProbe {
+        id: u64,
+        packet: super::damm_quote_reads::DammQuotePacket,
+    },
     DammCandidateSimulation {
         id: u64,
         packet: super::damm_sell_simulation::shared::DammSimulationPacket,
@@ -102,6 +110,8 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::DammQuoteAccounts { id, query } => query.body(*id),
+            Self::DammQuoteProbe { id, packet } => packet.body(*id),
             Self::DammCandidateSimulation { id, packet } => packet.body(*id),
             Self::WsolSimulation { id, packet } => packet.body(*id),
             Self::WsolQuote { id, query } => query.body(*id),
@@ -155,6 +165,8 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::DammQuoteAccounts { .. } => "DAMM quote accounts",
+            Self::DammQuoteProbe { .. } => "DAMM quote probe",
             Self::DammCandidateSimulation { .. } => "DAMM simulation",
             Self::WsolSimulation { .. } => "WSOL simulation",
             Self::WsolQuote { .. } => "WSOL quote",
@@ -182,6 +194,8 @@ impl ReadRequest {
                 | Self::AggregatorSimulation { .. }
                 | Self::WsolSimulation { .. }
                 | Self::DammCandidateSimulation { .. }
+                | Self::DammQuoteAccounts { .. }
+                | Self::DammQuoteProbe { .. }
         ) {
             MAX_TOKEN_BODY
         } else {
@@ -220,11 +234,12 @@ impl ReadHttpTransport for ReqwestReadTransport {
         let label = request.label();
         let max_body = request.max_body();
         let builder = self.client.post(url.clone()).json(&request.body());
-        // Only the fixed DAMM profile retains its original four-second HTTP allowance.
-        let builder = if matches!(request, ReadRequest::DammCandidateSimulation { .. }) {
-            builder.timeout(Duration::from_secs(4))
-        } else {
-            builder
+        // Fixed DAMM profiles preserve their original allowances, not the 2s default.
+        let builder = match request {
+            ReadRequest::DammCandidateSimulation { .. } => builder.timeout(Duration::from_secs(4)),
+            ReadRequest::DammQuoteAccounts { .. } => builder.timeout(Duration::from_secs(5)),
+            ReadRequest::DammQuoteProbe { .. } => builder.timeout(Duration::from_secs(30)),
+            _ => builder,
         };
         let mut response = builder
             .send()

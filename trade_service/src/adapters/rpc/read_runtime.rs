@@ -418,6 +418,7 @@ mod tests;
 
 pub(crate) mod aggregator_accounts;
 mod aggregator_simulation;
+mod damm_quotes;
 mod damm_simulation;
 mod native_balances;
 mod quote_balance;

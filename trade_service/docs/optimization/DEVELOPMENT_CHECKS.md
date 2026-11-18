@@ -114,6 +114,23 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The DAMM final-candidate simulation/preview batch is independently accepted:
+26e4b8b / Actions 44234932246 / artifact 14397918749. Complete concurrent/serial
+each 1897 (292.52/561.63 seconds), all 1874 parent names retained, exactly 23
+added. Shared/oracle 12 / actual SDK candidate methods 8 / real HTTP 3 and all
+96 steps pass; original runtime 5 / original buy runtime 6 preserve exact HTTP,
+sign/send/journal witnesses. Original/restored checks and all 159 distinct raw
+field spans verify 52 selected types plus outside alias, including the borrowed
+DammSimulationReader and consumed packet. Policy/workflow/provenance pass.
+All 1141 snapshot blobs/modes (13,804,808 bytes), identity and dependency hashes
+match before acceptance records. Original oracle/SDK method bodies, control,
+sign/journal and old wire/transport contracts are checked after explicit wiring;
+fixture changes only bridge the same original MemoryRpc preview oracle and add
+exact-one-request ID/packet witnesses. Main/index/frozen history remain. No local
+Cargo retry, release build, deployment, real RPC or production data/trade. No
+terminal rerun or docs-only CI. Quote account/probe evidence is the next original
+chain, not accepted by this batch; see DAMM_CANDIDATE_SHARED_READS.md.
+
 The SDK/Quote submission observer batch is independently accepted: e81dda4 /
 Actions 44223334225 / artifact 14392698134. Complete concurrent/serial each 1874
 (292.68/549.27 seconds), all 1850 parent names retained, exactly twenty-four
@@ -304,9 +321,12 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 50 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 55 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
+The added quote reader/query/packet entries still require their own compiler
+validation; the accepted 52-type/159-field candidate run is not evidence for
+the new 55-type/168-field fixture.
 
 `scripts/check_dependency_boundaries.py` is restricted to the isolated GitHub
 job with no runtime inputs. It generates a private Clippy configuration under

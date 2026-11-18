@@ -1,5 +1,6 @@
 pub(crate) mod aggregator_simulation;
 pub(crate) mod blockhash;
+pub(crate) mod damm_quote_reads;
 pub(crate) mod damm_sell_simulation;
 pub(crate) mod discovery_reads;
 pub(crate) mod ordinary_observation;

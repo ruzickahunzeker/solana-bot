@@ -30,6 +30,20 @@
 
 ## 当前批次
 
+续原 NP-03 DAMM 候选模拟/签名前 preview 源码
+`26e4b8b97e424b0808a248c88fb5a5a30359e034` /
+[Actions 44234932246](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44234932246)
+首次运行终态 success（job 28m24s），artifact `14397918749` 下载独立核验：完整
+并发 1897（292.52 秒）/串行 1897（561.63 秒），零失败/忽略/过滤、原始名称
+相同；父批 1874 全保留、恰增二十三。shared/oracle 12/实际候选方法 8/真实
+HTTP 3，旧 original runtime 5/buy runtime 6 及全部 96 步通过；52 类型/159
+原始字段、原源码/恢复检查、policy/workflow/provenance 通过。原 oracle/旧 SDK
+方法/guard/签名发送与账本、旧预算和 HTTP/wire 合同逐字核对，新增精确 ID/
+packet/请求和完整 pipeline 见证通过。全树 1141 文件/13,804,808 字节及模式、
+identity/依赖哈希一致；源码审计一正八负、串行格式两正七负通过，main/索引/
+冻结历史保持。未部署，不本地 Cargo 重试、不重跑终态或另发文档 CI。前面
+三个失败候选留证而非重跑，见 `DAMM_CANDIDATE_SHARED_READS.md`；报价证据链仍未接线。
+
 续原 NP-03 SDK 原签名/Quote 提交观测源码 `e81dda4d4704747e43010d442565dfa1eade2de8` /
 [Actions 44223334225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44223334225)
 首次终态 success（job 29m31s）；artifact `14392698134` 下载独立核验：完整并发

@@ -6,6 +6,14 @@
 
 ## 统计口径
 
+- 原 NP-03 DAMM 候选模拟/签名前 preview 已由 `26e4b8b` / Actions `44234932246` /
+  artifact `14397918749` 独立验收：原四秒期限/消息/slot/前后 freshness 保留，
+  完整并发 1897（292.52 秒）/串行 1897（561.63 秒），父批 1874 全保留、
+  恰增二十三。shared/oracle 12/实际候选方法 8/真实 HTTP 3、旧 actual runtime
+  5/buy runtime 6、52 类型/159 原始字段及全部 96 步通过，原字节不变量、
+  精确新增 HTTP 请求和全树身份已核对。未部署；原报价 probe/账户证据链继续，
+  草稿尚未接线/验收；不重复立项、重跑终态或另发文档 CI，见
+  `DAMM_CANDIDATE_SHARED_READS.md` 和 `DAMM_QUOTE_SHARED_READS.md`。
 - 原 NP-03 SDK 原签名和 Quote 提交观测已由 `e81dda4` / Actions `44223334225` /
   artifact `14392698134` 独立验收：原 skip/总预算/签名/Unknown 和通道控制保留，
   共享间隔不扩预算；完整并发 1874（292.68 秒）/串行 1874（549.27 秒），原

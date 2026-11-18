@@ -43,7 +43,7 @@ impl DammBuyQuote {
         context: DammBuyContext,
         intent: &ExecuteTrade,
         params: &sol_trade_sdk::trading::core::params::MeteoraDammV2Params,
-        rpc: &solana_client::nonblocking::rpc_client::RpcClient,
+        rpc: &impl crate::adapters::rpc::damm_quote_reads::DammQuoteRpc,
     ) -> Result<Self> {
         ensure!(
             context.version == TradeTransactionVersion::V0 && !context.seed_optimized,

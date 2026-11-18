@@ -5,11 +5,10 @@ use sol_trade_sdk::{
     constants::{USDC_TOKEN_ACCOUNT, WSOL_TOKEN_ACCOUNT},
     instruction::utils::{meteora_damm_v2::accounts, meteora_damm_v2_types::pool_account_decode},
 };
-use solana_account_decoder::UiAccountEncoding;
+#[cfg(test)]
+use solana_client::nonblocking::rpc_client::RpcClient;
 #[cfg(test)]
 use solana_client::rpc_response::{Response, RpcSimulateTransactionResult};
-use solana_client::{nonblocking::rpc_client::RpcClient, rpc_config::RpcAccountInfoConfig};
-use solana_commitment_config::CommitmentConfig;
 use solana_sdk::clock::Clock;
 use std::{
     collections::HashSet,
@@ -19,6 +18,7 @@ use std::{
 use super::plan::{PreparedDammProbe, ProbeAccounts};
 #[cfg(test)]
 use super::simulate_prepared_damm_probe;
+use crate::adapters::rpc::damm_quote_reads::DammQuoteRpc;
 // Reuse the existing generic validators without changing the paused backend's code.
 use crate::adapters::sdk::pumpapi_assets::{
     check_mint, check_vault, decode_data, MAX_ACCOUNT_BYTES,
@@ -26,8 +26,8 @@ use crate::adapters::sdk::pumpapi_assets::{
 
 const LABEL: &str = "SDK DAMM v2 quote";
 
-pub(crate) struct DammProbeEvidence<'a> {
-    pub(super) rpc: &'a RpcClient,
+pub(crate) struct DammProbeEvidence<'a, R: DammQuoteRpc> {
+    pub(super) rpc: &'a R,
     pub(super) prepared: &'a PreparedDammProbe,
     pub(super) slot: u64,
     pub(super) started: Instant,
@@ -35,18 +35,18 @@ pub(crate) struct DammProbeEvidence<'a> {
     output_before: u64,
 }
 
-impl DammProbeEvidence<'_> {
+impl<R: DammQuoteRpc> DammProbeEvidence<'_, R> {
     #[cfg(test)]
     pub(crate) fn output_before(&self) -> u64 {
         self.output_before
     }
 }
 
-pub(crate) async fn inspect_prepared_damm_probe_at_slot<'a>(
-    rpc: &'a RpcClient,
+pub(crate) async fn inspect_prepared_damm_probe_at_slot<'a, R: DammQuoteRpc>(
+    rpc: &'a R,
     prepared: &'a PreparedDammProbe,
     min_context_slot: u64,
-) -> Result<DammProbeEvidence<'a>> {
+) -> Result<DammProbeEvidence<'a, R>> {
     if min_context_slot == 0 {
         return Err(crate::domain::preparation_balance::reject_balance(
             "DAMM quote requires a captured nonzero balance slot",
@@ -56,18 +56,18 @@ pub(crate) async fn inspect_prepared_damm_probe_at_slot<'a>(
 }
 
 #[cfg(test)]
-pub(crate) async fn inspect_prepared_damm_probe<'a>(
-    rpc: &'a RpcClient,
+pub(crate) async fn inspect_prepared_damm_probe<'a, R: DammQuoteRpc>(
+    rpc: &'a R,
     prepared: &'a PreparedDammProbe,
-) -> Result<DammProbeEvidence<'a>> {
+) -> Result<DammProbeEvidence<'a, R>> {
     inspect_with_deadline(rpc, prepared, None).await
 }
 
-async fn inspect_with_deadline<'a>(
-    rpc: &'a RpcClient,
+async fn inspect_with_deadline<'a, R: DammQuoteRpc>(
+    rpc: &'a R,
     prepared: &'a PreparedDammProbe,
     min_context_slot: Option<u64>,
-) -> Result<DammProbeEvidence<'a>> {
+) -> Result<DammProbeEvidence<'a, R>> {
     tokio::time::timeout(
         Duration::from_secs(5),
         inspect(rpc, prepared, Instant::now(), min_context_slot),
@@ -76,12 +76,12 @@ async fn inspect_with_deadline<'a>(
     .context("SDK DAMM v2 quote account evidence timed out")?
 }
 
-async fn inspect<'a>(
-    rpc: &'a RpcClient,
+async fn inspect<'a, R: DammQuoteRpc>(
+    rpc: &'a R,
     prepared: &'a PreparedDammProbe,
     started: Instant,
     min_context_slot: Option<u64>,
-) -> Result<DammProbeEvidence<'a>> {
+) -> Result<DammProbeEvidence<'a, R>> {
     let intent = prepared.accounts();
     let expected = &intent.pool;
     if expected.referral_token_account.is_some() {
@@ -100,18 +100,7 @@ async fn inspect<'a>(
     if keys.iter().collect::<HashSet<_>>().len() != keys.len() {
         bail!("SDK DAMM v2 quote account roles alias each other");
     }
-    let response = rpc
-        .get_multiple_ui_accounts_with_config(
-            &keys,
-            RpcAccountInfoConfig {
-                encoding: Some(UiAccountEncoding::Base64),
-                commitment: Some(CommitmentConfig::processed()),
-                data_slice: None,
-                min_context_slot,
-            },
-        )
-        .await
-        .map_err(|error| anyhow::anyhow!("{}", crate::sanitize::redact_urls(&error.to_string())))?;
+    let response = rpc.damm_accounts(&keys, min_context_slot).await?;
     if response.value.len() != keys.len() || response.context.slot == 0 {
         bail!("SDK DAMM v2 quote account count or context is invalid");
     }
@@ -380,7 +369,7 @@ fn prefunded_ata(account: &solana_account_decoder::UiAccount) -> Result<bool> {
 
 #[cfg(test)]
 pub(crate) async fn simulate_evidenced_damm_probe(
-    evidence: &DammProbeEvidence<'_>,
+    evidence: &DammProbeEvidence<'_, RpcClient>,
 ) -> Result<Response<RpcSimulateTransactionResult>> {
     let response =
         simulate_prepared_damm_probe(evidence.rpc, evidence.prepared, evidence.slot).await?;
