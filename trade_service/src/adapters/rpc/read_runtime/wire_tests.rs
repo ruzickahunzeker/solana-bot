@@ -18,6 +18,8 @@ mod parameter_wire;
 mod preparation_wire;
 #[path = "presence_wire.rs"]
 mod presence_wire;
+#[path = "quote_status_wire.rs"]
+mod quote_status_wire;
 #[path = "wsol_preparation_wire.rs"]
 mod wsol_preparation_wire;
 #[path = "wsol_quote_wire.rs"]
@@ -792,6 +794,9 @@ async fn shared_read_wire_child() {
             "wsol-simulation-success" => wsol_simulation_wire::success().await,
             "wsol-simulation-errors" => wsol_simulation_wire::errors().await,
             "wsol-simulation-timeout-cancel" => wsol_simulation_wire::timeout_cancel().await,
+            "quote-status-success" => quote_status_wire::success().await,
+            "quote-status-errors" => quote_status_wire::errors().await,
+            "quote-status-timeout-cancel-rate" => quote_status_wire::timeout_cancel_rate().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -1047,4 +1052,17 @@ fn wsol_simulation_wire_bad_identity_body_429_and_redirect_never_retry_or_fallba
 #[test]
 fn wsol_simulation_wire_timeouts_cancel_and_critical_hash_share_original_runtime() {
     run("wsol-simulation-timeout-cancel");
+}
+
+#[test]
+fn quote_status_wire_original_oracle_exact_params_and_declared_streamed_body_limits() {
+    run("quote-status-success");
+}
+#[test]
+fn quote_status_wire_faults_fall_back_only_to_original_second_node_without_retry_or_redirect() {
+    run("quote-status-errors");
+}
+#[test]
+fn quote_status_wire_one_second_timeouts_cancel_hash_progress_and_bidirectional_cooldown() {
+    run("quote-status-timeout-cancel-rate");
 }

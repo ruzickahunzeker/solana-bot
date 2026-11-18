@@ -200,7 +200,7 @@ fn complete(
         aggregator_quotes.clone(),
     ));
     let quote_reconciliations = Arc::new(QuoteReconciliationService::new(
-        SdkQuoteReconciliationRuntime::new(wallets.clone(), persistence.clone()),
+        SdkQuoteReconciliationRuntime::new(wallets.clone(), persistence.clone(), read_rpc.clone()),
     ));
     let sol_transfers = Arc::new(SolTransferService::new(
         SdkSolTransferRuntime::new(wallets.clone(), wallet_repository.clone()),

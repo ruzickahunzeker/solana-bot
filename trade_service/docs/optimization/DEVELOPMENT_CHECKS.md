@@ -114,12 +114,25 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
-The WSOL broadcast candidate adds WsolBroadcastLane and the borrowed
-WsolBroadcastPacket: expected 47 selected types / 144 scoped fields including
-outside alias. Fourteen new tests and two steps require independent source-only
-CI (expected complete concurrent/serial each 1831 and 86 steps). The 9d40936
-acceptance below is parent evidence only, not evidence for this candidate. No
-local service Cargo retry. See WSOL_BROADCAST_OWNERSHIP.md.
+The standalone Quote status candidate adds RpcQuoteStatusReader and the actual
+QuoteStatusReader wrapper: expected 49 selected types / 150 scoped fields with
+outside alias, nineteen tests and three steps (full suites each 1850, 89 steps).
+Independent offline CI is required; the d1d9038 parent evidence below is not
+evidence for this source. No local service Cargo retry. See QUOTE_STATUS_SHARED_READS.md.
+
+The WSOL broadcast batch is independently accepted: d1d9038 / Actions
+44210742181 / artifact 14386593797, complete concurrent/serial each 1831
+(233.10/447.86 seconds), all 1817 parent names retained, exactly fourteen added.
+Lane 12 / actual adapter 2 and all 86 steps pass. Original/restored compiler
+checks and all 144 distinct raw field spans verify 47 selected types plus outside
+alias, including WsolBroadcastLane and borrowed WsolBroadcastPacket. Python
+policy 12 / workflow 7 and SDK provenance pass. Original root oracles/tests/sign/
+snapshot, Application journal/state flow, old wrapper assertions and HTTP fixture
+branches are independently checked; exact request/receipt witnesses pass. All
+1123 snapshot blobs/modes (13,648,153 bytes) and dependency hashes match before
+acceptance records. Main/index/frozen history unchanged. No local service Cargo
+retry, terminal CI rerun, docs-only CI or production action. See
+WSOL_BROADCAST_OWNERSHIP.md for remaining original resource/rollout gates.
 
 The corrected WSOL simulation batch is independently accepted: 9d40936 / Actions
 44204140210 / artifact 14385056342, complete concurrent/serial each 1817
@@ -266,7 +279,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 45 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 47 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

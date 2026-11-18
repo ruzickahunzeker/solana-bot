@@ -5,6 +5,12 @@ or denominator. Corrected source and independent offline Rust CI accepted, not
 deployed: 9d40936 / Actions 44204140210 / artifact 14385056342. Accepted parent
 cf5e63b evidence is not reused for this batch. No production use is implied.
 
+Follow-up: broadcast ownership is separately accepted in d1d9038 / Actions
+44210742181 / artifact 14386593797 (complete suites each 1831, all 86 steps and
+144 fields). See WSOL_BROADCAST_OWNERSHIP.md. The historical scope below describes
+the simulation batch itself, not a remaining task to repeat. Provider-wide quotas,
+opaque SDK resources and other original gates remain; neither batch is deployed.
+
 ## Actual Paths And Original Policy
 
 Both WsolExecutionWallet simulation methods now delegate to the original

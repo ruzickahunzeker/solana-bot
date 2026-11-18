@@ -214,7 +214,9 @@ WSOL 实际准备入口后续已接原 runtime/五步会话，每次重查余额
 
 WSOL 未签名/已签模拟后续已接同一 runtime/既有模拟配额，保留原校验、请求参数、程序错误映射和签名/账本字节，并拦截缺失显式 err 的不完整响应。修正源码 `9d40936` / Actions `44204140210` 独立验收完整并发/串行各 1817，新增 18、138 字段及全部 84 步骤通过。签名模拟向原 RPC 发送可重放签名包的信任假设不变；广播资源仍保留，尚未部署，见 [WSOL 模拟读取边界](docs/optimization/WSOL_SIMULATION_SHARED_READS.md)。
 
-WSOL 广播续原 NP-03 收口固定原 RPC 和不可变校验包，原预检配置/回执检查及账本顺序保持；十四项新测试和两项专项待独立 CI，预期完整各 1831/144 字段/86 步。不是部署或全局配额完成，见 [WSOL 广播所有权](docs/optimization/WSOL_BROADCAST_OWNERSHIP.md)。
+WSOL 广播续原 NP-03 收口固定原 RPC 和不可变校验包，原预检配置/回执检查及账本顺序保持。`d1d9038` / Actions `44210742181` 独立验收完整并发/串行各 1831，原 1817 全保留、恰增十四，144 字段和全部 86 步骤通过，原始日志与源码身份已核对。未部署，也不是全局配额完成，见 [WSOL 广播所有权](docs/optimization/WSOL_BROADCAST_OWNERSHIP.md)。
+
+独立 Quote 对账状态读取续原 NP-03 接同一 runtime/观测配额，保留原两节点与 parser/missing 政策，并隔离 pacing 与备用节点请求预算；十九项新测试及 150 字段/89 步待独立 CI，不是生产验收，见 [Quote 状态共享读取](docs/optimization/QUOTE_STATUS_SHARED_READS.md)。
 
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 

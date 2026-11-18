@@ -153,6 +153,11 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
         request: ReadRequest,
         deadline: Instant,
     ) -> Result<HttpReply> {
+        let url = self.start_read(class, index, deadline).await?;
+        self.finish_read(class, index, url, request, deadline).await
+    }
+
+    async fn start_read(&self, class: Class, index: usize, deadline: Instant) -> Result<&Url> {
         ensure!(
             Instant::now() < deadline,
             "read RPC deadline expired before admission"
@@ -185,6 +190,21 @@ impl<T: ReadHttpTransport> SharedReadRuntime<T> {
             state.next_start[class.index()] = now + class.interval();
             break;
         }
+        Ok(url)
+    }
+
+    async fn finish_read(
+        &self,
+        class: Class,
+        index: usize,
+        url: &Url,
+        request: ReadRequest,
+        deadline: Instant,
+    ) -> Result<HttpReply> {
+        ensure!(
+            Instant::now() < deadline,
+            "read RPC deadline expired before I/O"
+        );
         let reply = self.transport.fetch(url, &request).await?;
         if reply.status == StatusCode::TOO_MANY_REQUESTS {
             let until =
@@ -400,9 +420,12 @@ pub(crate) mod aggregator_accounts;
 mod aggregator_simulation;
 mod native_balances;
 mod quote_balance;
+mod quote_status;
 mod wsol_quotes;
 mod wsol_simulation;
 mod wsol_status;
 pub(crate) use quote_balance::preparation_scan;
+#[cfg(test)]
+pub(crate) use quote_status::tests as quote_status_fixture;
 mod parameters;
 mod preparation_balance;

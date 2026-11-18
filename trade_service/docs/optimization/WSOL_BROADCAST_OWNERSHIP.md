@@ -1,9 +1,10 @@
 # WSOL Broadcast Ownership
 
 Date: 2026-11-18, Asia/Shanghai. Continues original NP-03 / TS-07/09, without a
-new task or denominator. Source candidate, independent Rust CI still required.
-The accepted parent is 9d40936 / Actions 44204140210; its 1817-test evidence is
-not evidence for the changes below. No deployment or production access.
+new task or denominator. Source and independent offline Rust CI accepted:
+d1d9038 / Actions 44210742181 / artifact 14386593797. The accepted parent is
+9d40936 / Actions 44204140210; its evidence was not reused for this batch.
+No deployment or production access.
 
 ## Actual Boundary
 
@@ -88,3 +89,35 @@ Standalone Quote reconciliation reads, DAMM/opaque SDK reads/tasks, provider-wid
 quotas and NP-01/03/04/05/rollout gates remain. SDK stays 6.0.2. No changes to
 API/amounts/wallet identity, dependency manifests/lock/vendor, migrations or
 production configuration/data/binaries/services. New PumpAPI work stays paused.
+
+## Accepted Evidence
+
+Source `d1d9038fec184cb62519741572d70e81fab4fc57`,
+[Actions 44210742181](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44210742181),
+its first run terminal success (job 21m37s). Downloaded artifact `14386593797`
+independently audited: all 86 steps exit zero. Full concurrent 1831 (233.10
+seconds) and serial 1831 (447.86 seconds), zero failed/ignored/filtered tests,
+identical raw name sets. All 1817 accepted-parent names retained and exactly
+the fourteen source-defined names added. Lane 12 / actual adapter 2 and every
+earlier focused regression pass, including both shared simulation forms and
+the complete 59-name WSOL status contract.
+
+Original/restored compiler checks and all 144 distinct raw field spans pass:
+47 selected types plus outside alias, including the borrowed packet. Python
+policy 12 / workflow 7 and SDK provenance pass. Identity and manifest/lock/
+vendor-manifest hashes match. Before recording acceptance all 1123 snapshot
+blobs/modes (13,648,153 bytes) match the exact source. The root SDK module,
+including all original tests/authorization/sign/snapshot/send-oracle bodies,
+is identical after removing only module registration and cfg/import wiring.
+Existing wrapper assertions and the complete original HTTP fixture behavior
+are identical after removing only the explicitly added variant/dispatch/checks.
+Application/journal/state sequencing, preparation/simulation code and runtime
+capacities/intervals remain byte-identical. Actual production guard/sender wiring
+and no-normalization original request/result witnesses are independently checked.
+
+The old serial discovery child-stderr split is associated only with its exact
+name/pinned fixture/immediate ok; two positive/seven negative format regressions
+pass. No raw logs or name sets are rewritten. Main/index/frozen history remain
+unchanged. No local service Cargo retry, release build, deployment/restart,
+production data access, real RPC or trade. Do not rerun terminal CI or trigger
+documentation-only CI; carry this acceptance record with the next source batch.

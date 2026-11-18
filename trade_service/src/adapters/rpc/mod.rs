@@ -5,6 +5,7 @@ pub(crate) mod discovery_reads;
 pub(crate) mod ordinary_observation;
 pub(crate) mod parameter_reads;
 pub(crate) mod preparation_balance;
+pub(crate) mod quote_status;
 pub(crate) mod read_http;
 pub(crate) mod read_runtime;
 pub(crate) mod readiness;

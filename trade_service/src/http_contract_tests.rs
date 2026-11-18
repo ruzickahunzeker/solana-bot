@@ -226,6 +226,7 @@ pub(crate) async fn state() -> AppState {
             crate::adapters::sdk::quote_reconciliation::SdkQuoteReconciliationRuntime::new(
                 wallets.clone(),
                 persistence.clone(),
+                read_rpc.clone(),
             ),
         ),
     );

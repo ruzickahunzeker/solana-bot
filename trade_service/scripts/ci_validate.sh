@@ -116,6 +116,9 @@ PY
         step wsol-simulation-adapter cargo test --locked --offline wsol_simulation_adapter_ -- --test-threads=2
         step wsol-broadcast-lane cargo test --locked --offline wsol_broadcast_lane_ -- --test-threads=2
         step wsol-broadcast-adapter cargo test --locked --offline wsol_broadcast_adapter_ -- --test-threads=2
+        step quote-status-shared cargo test --locked --offline quote_status_shared_ -- --test-threads=2
+        step quote-status-wire cargo test --locked --offline quote_status_wire_ -- --test-threads=2
+        step quote-status-adapter cargo test --locked --offline quote_status_adapter_ -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

@@ -21,6 +21,10 @@ fn response(id: u64) -> Value {
 }
 #[derive(Clone)]
 pub(crate) enum Reply {
+    QuoteStatus {
+        value: Value,
+        mode: Box<Reply>,
+    },
     WsolBroadcast {
         signature: String,
         mode: Box<Reply>,
@@ -214,7 +218,12 @@ async fn serve(
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
     let is_wsol_broadcast = matches!(&reply, Reply::WsolBroadcast { .. });
+    let is_quote_status = matches!(&reply, Reply::QuoteStatus { .. });
     let (reply, parameter_value) = match reply {
+        Reply::QuoteStatus { value, mode } => {
+            assert_eq!(payload["method"], "getSignatureStatuses");
+            (*mode, Some(value))
+        }
         Reply::WsolBroadcast { signature, mode } => {
             assert_eq!(payload["method"], "sendTransaction");
             (*mode, Some(json!(signature)))
@@ -300,7 +309,9 @@ async fn serve(
         payload["method"].as_str(),
         Some("getTokenSupply" | "getTokenAccountBalance" | "getBalance")
     );
-    let body_limit = if is_wsol_simulation {
+    let body_limit = if is_quote_status {
+        MAX_BODY
+    } else if is_wsol_simulation {
         524_288
     } else if is_wsol_quote {
         MAX_BODY
@@ -412,6 +423,8 @@ async fn serve(
         ));
         assert!(payload["params"][1]["maxRetries"].is_null());
         assert!(payload["params"][1]["minContextSlot"].is_null());
+    } else if is_quote_status {
+        assert_eq!(payload, request(id, &signature()));
     } else if parameter_value.is_some() {
         if payload["method"] == "simulateTransaction" {
             assert_eq!(payload["params"][1]["sigVerify"], false);

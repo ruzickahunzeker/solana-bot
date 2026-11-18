@@ -30,11 +30,23 @@
 
 ## 当前批次
 
-续原 NP-03 WSOL 广播所有权源码待独立验证。原选定 RPC/预检/回执/取消与十二秒
-调用方期限保持，新增固定发送器/借用包门禁；预期完整并发/串行各 1831、父批
-1817 全保留且新增十四、47 类型/144 字段/86 步。新增两个专项，不删旧测试或
-旧专项。先验证来源/完整快照，再只推既有 CI 分支；不使用父批通过替代本批，不
-本地重试 Cargo 或做生产操作。见 `WSOL_BROADCAST_OWNERSHIP.md`。
+续原 NP-03 独立 Quote 状态读取源码待独立验证。预期完整并发/串行各 1850，
+原 1831 名称全部保留且恰增十九；shared/oracle 14、真实 HTTP 3、实际 adapter 2，
+49 类型/150 原始字段和 89 步。原 WSOL 广播父批证据不替代本批；仅推既有
+隔离 CI 分支，不本地重试 Cargo，不做生产操作，见 `QUOTE_STATUS_SHARED_READS.md`。
+
+续原 NP-03 WSOL 广播所有权源码 `d1d9038fec184cb62519741572d70e81fab4fc57` /
+[Actions 44210742181](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44210742181)
+首次终态 success（job 21m37s）；artifact `14386593797` 下载独立核验：完整并发
+1831（233.10 秒）/串行 1831（447.86 秒），零失败/忽略/过滤且原始名称相同；
+父批 1817 全保留、恰增十四。lane 12/实际 adapter 2、原全部专项和全部 86 步
+通过；47 类型/144 原始字段拒绝和原源码/恢复成功，Python policy 十二项/
+workflow 七项及 SDK provenance 通过。原 root oracle/全部旧测试/签名/快照/
+Application 账本顺序、旧 wrapper 断言及 HTTP 夹具原分支已核对，精确请求/
+回执见证通过。全树 1123 文件/13,648,153 字节及模式、identity/依赖哈希一致，
+原 main/索引/冻结历史保持；旧串行 stderr 精确关联及两正七负格式回归通过。
+不重跑终态或另发文档 CI，不本地 Cargo 重试或做生产操作，未部署，见
+`WSOL_BROADCAST_OWNERSHIP.md`。
 
 续原 WSOL 未签名/已签模拟修正源码 `9d4093617be00634c2e05a453daf9ff6e0bb1bb9` /
 [Actions 44204140210](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44204140210)
