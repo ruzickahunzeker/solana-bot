@@ -158,6 +158,8 @@ PY
         step pump-native-wire cargo test --locked --offline pump_native_wire_ -- --test-threads=2
         step pump-native-adapter cargo test --locked --offline pump_native_adapter_ -- --test-threads=2
         step pump-post-bank cargo test --locked --offline native_post_bank_ -- --test-threads=2
+        step pump-swap-constraints cargo test --locked --offline native_swap_constraints_ -- --test-threads=2
+        step pump-envelope cargo test --locked --offline native_envelope_ -- --test-threads=2
         step ordinary-runtime cargo test --locked --offline ordinary_runtime -- --test-threads=2
         step backend-contracts cargo test --locked --offline backend_contract -- --test-threads=2
         step trade-task-lifecycle cargo test --locked --offline trade_tasks -- --test-threads=2

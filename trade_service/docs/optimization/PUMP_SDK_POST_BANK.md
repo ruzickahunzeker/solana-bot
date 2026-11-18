@@ -3,7 +3,7 @@
 Follow-up after independently accepted shared-request snapshot `03299ad` /
 Actions `44327646677` / artifact `14440796497`: full2039 each and thirteen new
 shared/HTTP/SDK tests. That snapshot does not include or validate this source.
-Five new Rust tests are prepared, not executed locally. This remains the
+Five new Rust tests passed independent CI below, never executed locally. This remains the
 original test-gated ordinary SDK work, not a new protocol/API or rollout task.
 
 ## One Existing Decoder
@@ -42,7 +42,7 @@ Recipient owner/data policy, deployed ABI and actual provider support still
 need independent evidence. This result is not a trusted quote, complete spend
 authorization, positive live min-out, signing permit or signed journal record.
 
-## Offline Acceptance Pending
+## Independent Offline Acceptance
 
 The original three SDK bridge tests keep their names, exact packet/result and
 old failure/no-I/O assertions. Positive replies now contain actual generated
@@ -52,9 +52,15 @@ identity errors, indexed/native/token/metadata contradictions, terminal-buy
 versus preparation rules, missing fields, stale origin and instruction drift.
 Old unbound-model tests remain unchanged.
 
-Expected successor evidence, not results: full2044 each, parent2039 retained
-plus exactly5, post-bank5, Pump42, HTTP208,120 ordered steps and64 types/195
-raw field rejections. The parent shared read7/wire3/adapter3 must still run.
+Correction `9e1305f` / Actions `44339297404` completed successfully. Artifact
+`14447005729` was downloaded and independently checked: concurrent2044
+(389.05s)/serial2044 (743.91s), all2039 parent names retained plus exactly5;
+post-bank5, Pump42, HTTP208,120 ordered zero-exit steps and64 types/195 raw
+compiler fields. Original shared read7/wire3/adapter3 remain. Source/locked
+dependency identity, original decoder/probe/bridge assertions reconstruction
+and ten rejected source mutations passed. This accepts the post-bank prototype
+only; the separate eight-test [swap/message successor](PUMP_SDK_SWAP_CONSTRAINTS.md)
+was excluded and still needs its own independent CI. No terminal rerun.
 No local service Rust compile/link/test, SDK upgrade, release/deploy/restart,
 real RPC, production wallet/database access, transaction or PumpAPI integration.
 
@@ -71,4 +77,4 @@ separate 8195-byte case for the encoded-size rejection. All five test names and
 original guards remain; the metadata matrix now has nine cases. No production,
 decoder, RPC, fee or assertion policy is relaxed. The subsequent local swap
 constraints prototype is held out. Do not rerun the failed snapshot or inherit
-its results; the correction still requires its own complete CI acceptance.
+its results; the correction has its own independent complete acceptance above.

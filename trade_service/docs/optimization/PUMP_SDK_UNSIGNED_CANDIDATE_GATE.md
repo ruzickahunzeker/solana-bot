@@ -117,18 +117,21 @@ unfunded fees, unexpected funds movement, stale evidence and Token-2022 are
 explicit rejection cases. No native System CPI transfer is universally required
 as a payout witness. This only checks the supplied response's consistency.
 
-No simulation request or post-account proof is connected yet. Provider support,
-request ID/packet binding, returned account owners/data and current epoch,
-deployed ABI, blockhash validity, actual fees/rent and fee tier remain unproven.
-The observation is not a trusted quote or signing permit. Next bind the
-response to the fixed shared-runtime request and revalidate returned accounts,
-then bind a separately justified positive live minimum into a complete
-immutable candidate and the existing original signed-byte journal. None of
-those gates is removed by this test-only validator. Non-native settlement,
-sharing, Token-2022 output, ATA create/close, extra budget/tip instructions and
-production integration remain outside its profile.
+The original nine-test snapshot did not connect a simulation request or
+post-account proof. Subsequent separate acceptance below supplies fixed
+request binding and simulated account/epoch cross-checks, not real provider
+support, deployed ABI, blockhash validity, actual fees/rent or fee-tier policy.
+The observation is still not a trusted quote or signing permit. A justified
+positive minimum, complete message authorization, final simulation and original
+signed-byte journal must be bound without reopening any execution owner.
+Non-native settlement, sharing, Token-2022 output, ATA create/close and
+production integration remain outside this original profile.
 
 A separate [shared-request follow-up](PUMP_SDK_SHARED_PROBE.md) now connects
 the prototype to a fixed request/reply binding on the existing read runtime.
-Its thirteen tests have not run, it is not in the nine-test correction's CI,
-and it does not complete post-account proof or any trusted quote/signing gate.
+Its thirteen tests were independently accepted in03299ad / Actions44327646677,
+not in the original nine-test correction's CI. The [post-bank successor](PUMP_SDK_POST_BANK.md)
+was independently accepted in9e1305f / Actions44339297404 / artifact14447005729,
+full2044 each. Neither grants trusted quote/signing authority. The current
+[swap/message constraints](PUMP_SDK_SWAP_CONSTRAINTS.md) adds positive minima
+and complete unsigned templates only; eight new tests await independent CI.

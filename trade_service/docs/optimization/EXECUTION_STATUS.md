@@ -1,19 +1,23 @@
 # Trade Service 当前执行状态
 
-更新日期：2026-11-18（Asia/Shanghai）。唯一主计划：[Trade Service 优化计划](../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
+更新日期：2026-11-19（Asia/Shanghai）。唯一主计划：[Trade Service 优化计划](../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
 本页只保留当前检查点；[完整历史](EXECUTION_HISTORY_20261115.md) 是冻结证据，不是待执行队列。
 目标由用户明确恢复为 active；计划或历史记录不能自行暂停/恢复目标。
 
 ## 当前任务
 
-- 当前续同一 NP-01 [模拟后账户](PUMP_SDK_POST_BANK.md)：首批9029053 /
-  Actions44335341139终态failure，artifact14440804968已下载。超限夹具8193字节
-  与上限8192字节的Base64长度相同，原解码器正确在解码长度关卡拒绝，但预期文案
-  不匹配。修正仅区分解码长度与编码长度超限两条测试，五项名称保持；不重跑首批，
-  不混入后继swap constraints，修正版待独立完整CI。
-  复用原八账户解码，绑定Clock/epoch、账户数据与同次模拟余额，保留原时效与准备
-  阶段完成曲线拒绝规则。接收者owner仅捕获元数据，未认可为协议许可；真实provider/
-  ABI、接收者策略、费用/rent、最终min-out、完整候选与原签名字节账本仍未完成。
+- 当前续同一 NP-01 [最小输出与完整无签名消息](PUMP_SDK_SWAP_CONSTRAINTS.md)：
+  正整数净输出/slippage、同次响应资金预算、原精确输入/角色/时效与完整消息模板，
+  复用原组装/编译 helper，固定小费/compute budget，不新增客户端/缓存/发送通道。
+  八项新Rust测试待独立CI，不继承父批结果。实际最终模拟、provider/ABI/接收者策略、
+  费用/rent及协议专用授权/原签名字节账本接线仍未完成，未新增实盘能力。
+- 原 NP-01 [模拟后账户](PUMP_SDK_POST_BANK.md)已独立验收：
+  `9e1305f` / [Actions44339297404](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44339297404)
+  / artifact14447005729。并发2044（389.05秒）、串行2044（743.91秒），原2039全
+  保留、恰增5；post-bank5/Pump42、原read7/wire3/adapter3、HTTP208、120步与
+  64类型/195字段及源码身份通过。原解码器/旧断言重建与十负例源审计通过。
+  首批9029053仅超限夹具预期文案不匹配，修正只区分两道长度关卡，不重跑首批。
+  同次账户/余额与Clock证据不等于接收者策略、可信报价或签名授权；未部署。
 - 原 NP-01/03 [共享请求绑定](PUMP_SDK_SHARED_PROBE.md)已独立验收：
   `03299ad` / [Actions 44327646677](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44327646677)
   / artifact `14440796497`。并发2039（359.38秒）、串行2039（699.35秒），原2026

@@ -30,15 +30,23 @@
 
 ## 当前批次
 
-当前续原NP-01模拟后账户校验，五项新Rust测试待独立CI：预期原2039名称保留、完整
-各2044、post-bank5、原read7/wire3/adapter3、Pump42、HTTP208、120步骤与64类型/195字段。
-不改RPC/profile/SDK/公开API，只加强原测试构建；见[边界](PUMP_SDK_POST_BANK.md)。
+当前续原NP-01最小输出/同次响应预算与完整无签名消息模板，八项新Rust测试待独立CI：
+预期原2044名称保留、完整各2052、constraints4/envelope4、post-bank5、Pump50、原
+read7/wire3/adapter3、HTTP208、122步骤及64类型/195字段。复用原helper，不改SDK/
+公开API/RPC profile或原签名账本；见[边界](PUMP_SDK_SWAP_CONSTRAINTS.md)。
+
+模拟后账户修正版9e1305f / [Actions44339297404](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44339297404)
+首次运行success，artifact14447005729已下载独立核对：并发2044（389.05秒）/串行
+2044（743.91秒），原2039全保留、恰增5；post-bank5/Pump42、read7/wire3/adapter3、
+HTTP208、全部120有序步骤及64类型/195原始字段通过。源码/锁定依赖身份、原解码器/
+probe/共享桥接旧断言重建及十负例源审计通过。不重跑终态或另发文档CI；记录随真实
+后继源码提交，八项新测试未在本次运行中，不继承验收。
 
 首批9029053 / Actions44335341139终态failure，artifact14440804968已下载核对。
 唯一失败测试是metadata超限夹具的预期文案：8193和8192字节编码长度相同，原解码
 长度校验正确拒绝。修正版仅保留8193字节的正确预期，并加8195字节覆盖编码超限；
 五个新测试名和原解码器保持，后继swap constraints不进入修复。不重跑首批，修正版
-完整/串行/专项结果须独立验证，当前不计为通过。
+由上述9e1305f独立完成完整/串行/专项验证，不把首批失败记为通过。
 
 共享批次 `03299ad` / [Actions 44327646677](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44327646677)
 首次运行success，artifact `14440796497`已下载独立核对：完整并发2039（359.38秒）/

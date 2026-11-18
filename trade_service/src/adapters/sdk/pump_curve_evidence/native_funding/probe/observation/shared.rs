@@ -54,4 +54,5 @@ impl NativeQuoteProbe {
     }
 }
 
+mod constraints;
 mod tests;
