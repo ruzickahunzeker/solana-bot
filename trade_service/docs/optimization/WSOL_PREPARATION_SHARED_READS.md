@@ -124,10 +124,12 @@ CI; carry acceptance records with the next actual source batch.
 
 ## Remaining Original Gates
 
-The subsequent original unsigned/signed simulation entry is now implemented,
-pending its own independent CI; see WSOL_SIMULATION_SHARED_READS.md. Both wrappers
+The subsequent original unsigned/signed simulation entry is independently accepted
+in 9d40936 / Actions 44204140210 / artifact 14385056342: concurrent/serial each
+1817, parent 1799 retained, exactly eighteen added, all 138 fields/84 steps pass.
+See WSOL_SIMULATION_SHARED_READS.md. Both wrappers
 use the original shared simulation quota with original validation/request/error
-policies. This preparation batch's accepted run does not cover that source.
+policies. This preparation batch's accepted run was not reused for that source.
 
 WSOL unsigned/signed simulation and submission RPC ownership, standalone Quote
 reconciliation status, DAMM/SDK-internal/opaque tasks, provider-wide quotas and

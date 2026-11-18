@@ -45,6 +45,8 @@
     {"id": "aggregator_simulation_session", "path": "pump_trade_service::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "probe": "crate::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession", "static_lifetime": true},
     {"id": "message", "path": "solana_sdk::message::Message"},
     {"id": "wsol_simulation_packet", "path": "pump_trade_service::sdk_client::wsol_conversion::simulation::WsolSimulationPacket", "probe": "crate::sdk_client::wsol_conversion::simulation::WsolSimulationPacket"},
+    {"id": "wsol_broadcast_lane", "path": "pump_trade_service::sdk_client::wsol_conversion::broadcast::WsolBroadcastLane", "probe": "crate::sdk_client::wsol_conversion::broadcast::WsolBroadcastLane"},
+    {"id": "wsol_broadcast_packet", "path": "pump_trade_service::sdk_client::wsol_conversion::broadcast::WsolBroadcastPacket", "probe": "crate::sdk_client::wsol_conversion::broadcast::WsolBroadcastPacket", "static_lifetime": true},
     {"id": "wsol_signed", "path": "pump_trade_service::sdk_client::wsol_conversion::SignedWsolTransaction", "probe": "crate::sdk_client::wsol_conversion::SignedWsolTransaction"},
     {"id": "wsol_signed_wrapper", "path": "pump_trade_service::adapters::sdk::wsol_conversion::SignedWsol", "probe": "crate::adapters::sdk::wsol_conversion::SignedWsol"},
     {"id": "wsol_unsigned", "path": "pump_trade_service::sdk_client::wsol_conversion::UnsignedWsolTransaction", "probe": "crate::sdk_client::wsol_conversion::UnsignedWsolTransaction"},

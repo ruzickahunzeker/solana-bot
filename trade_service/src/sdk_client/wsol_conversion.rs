@@ -4,12 +4,14 @@ use super::SdkTradeClient;
 use crate::application::wsol_failure::WsolFailure;
 use crate::application::wsol_submission_types::{WsolDirection as Direction, WsolQuoteSnapshot};
 mod authorization;
+pub(crate) mod broadcast;
 mod instructions;
 pub(crate) mod preparation;
 #[cfg(test)]
 pub(crate) mod queries;
 pub(crate) mod simulation;
 use anyhow::{bail, Context, Result};
+#[cfg(test)]
 use solana_client::nonblocking::rpc_client::RpcClient;
 #[cfg(test)]
 use solana_client::rpc_response::RpcSimulateTransactionResult;
@@ -17,10 +19,10 @@ use solana_client::rpc_response::RpcSimulateTransactionResult;
 use solana_commitment_config::CommitmentConfig;
 #[cfg(test)]
 use solana_program_pack::Pack;
+#[cfg(test)]
+use solana_sdk::signature::Signature;
 use solana_sdk::signature::{Keypair, Signer};
-use solana_sdk::{
-    message::Message, pubkey::Pubkey, signature::Signature, transaction::Transaction,
-};
+use solana_sdk::{message::Message, pubkey::Pubkey, transaction::Transaction};
 #[cfg(test)]
 use spl_associated_token_account_interface::address::get_associated_token_address_with_program_id;
 
@@ -313,6 +315,7 @@ impl SdkTradeClient {
         Ok(signed)
     }
 
+    #[cfg(test)]
     pub(crate) async fn send_signed_wsol(
         &self,
         signed: &SignedWsolTransaction,

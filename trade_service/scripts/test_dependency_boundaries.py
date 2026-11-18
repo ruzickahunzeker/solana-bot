@@ -33,6 +33,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertIn("wsol_status_reader", types)
         self.assertTrue({"wsol_unsigned", "wsol_prepared"} <= types)
         self.assertTrue({"wsol_simulation_packet", "wsol_signed", "wsol_signed_wrapper"} <= types)
+        self.assertTrue({"wsol_broadcast_lane", "wsol_broadcast_packet"} <= types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):
@@ -83,6 +84,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertIn("Option<crate::adapters::rpc::aggregator_simulation::AggregatorSimulationReadSession<'static>>", line)
         self.assertNotIn("<'static>", source.decode().splitlines()[expected["aggregator_simulation_plan"] - 1])
         self.assertIn("WsolQuoteReadSession<'static>>", source.decode().splitlines()[expected["wsol_quote_session"] - 1])
+        self.assertIn("WsolBroadcastPacket<'static>>", source.decode().splitlines()[expected["wsol_broadcast_packet"] - 1])
 
     def test_static_lifetime_metadata_cannot_inject_rust_or_replace_path_validation(self):
         policy = boundaries.read_policy()

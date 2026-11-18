@@ -21,6 +21,10 @@ fn response(id: u64) -> Value {
 }
 #[derive(Clone)]
 pub(crate) enum Reply {
+    WsolBroadcast {
+        signature: String,
+        mode: Box<Reply>,
+    },
     WsolSimulation {
         value: Value,
         mode: Box<Reply>,
@@ -209,7 +213,12 @@ async fn serve(
     let id = payload["id"].as_u64().unwrap();
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
+    let is_wsol_broadcast = matches!(&reply, Reply::WsolBroadcast { .. });
     let (reply, parameter_value) = match reply {
+        Reply::WsolBroadcast { signature, mode } => {
+            assert_eq!(payload["method"], "sendTransaction");
+            (*mode, Some(json!(signature)))
+        }
         Reply::WsolSimulation { value, mode } => {
             assert_eq!(payload["method"], "simulateTransaction");
             (*mode, Some(json!({"context":{"slot":42},"value":value})))
@@ -393,6 +402,16 @@ async fn serve(
             )),
             _ => panic!("WSOL quote fixture cannot accept simulation or sending"),
         }
+    } else if is_wsol_broadcast {
+        assert_eq!(payload["method"], "sendTransaction");
+        assert_eq!(payload["params"][1]["encoding"], "base64");
+        assert_eq!(payload["params"][1]["skipPreflight"], false);
+        assert!(matches!(
+            payload["params"][1]["preflightCommitment"].as_str(),
+            Some("processed" | "confirmed" | "finalized")
+        ));
+        assert!(payload["params"][1]["maxRetries"].is_null());
+        assert!(payload["params"][1]["minContextSlot"].is_null());
     } else if parameter_value.is_some() {
         if payload["method"] == "simulateTransaction" {
             assert_eq!(payload["params"][1]["sigVerify"], false);

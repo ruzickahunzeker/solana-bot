@@ -212,6 +212,10 @@ WSOL 签名状态读取后续已接同一个 runtime/原 Observation 配额，�
 
 WSOL 实际准备入口后续已接原 runtime/五步会话，每次重查余额/ATA/租金/hash/fee，原授权/金额/临时 signer/签名发送保持。`cf5e63b` / Actions `44195580476` 独立验收完整并发/串行各 1799，新增 16、129 字段及全部 81 步骤通过。准备包装仍持原 RPC 供后续模拟/发送，不能据此宣称整条 WSOL 链路已迁移；尚未部署，见 [WSOL 准备读取边界](docs/optimization/WSOL_PREPARATION_SHARED_READS.md)。
 
+WSOL 未签名/已签模拟后续已接同一 runtime/既有模拟配额，保留原校验、请求参数、程序错误映射和签名/账本字节，并拦截缺失显式 err 的不完整响应。修正源码 `9d40936` / Actions `44204140210` 独立验收完整并发/串行各 1817，新增 18、138 字段及全部 84 步骤通过。签名模拟向原 RPC 发送可重放签名包的信任假设不变；广播资源仍保留，尚未部署，见 [WSOL 模拟读取边界](docs/optimization/WSOL_SIMULATION_SHARED_READS.md)。
+
+WSOL 广播续原 NP-03 收口固定原 RPC 和不可变校验包，原预检配置/回执检查及账本顺序保持；十四项新测试和两项专项待独立 CI，预期完整各 1831/144 字段/86 步。不是部署或全局配额完成，见 [WSOL 广播所有权](docs/optimization/WSOL_BROADCAST_OWNERSHIP.md)。
+
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 
 聚合预检的 Mint/ATA 与 ALT 读取已接原共享 runtime/HTTP/冷却，三条入口共用同一资源；保留原 Token 程序、ATA 和 ALT 政策。`10c5b4b` / Actions `44164727015` 独立验收完整并发/串行各 1729，新增 16、108 字段及全部 69 步骤通过；后继模拟读取已由上方独立验收，尚未部署。见 [聚合账户读取边界](docs/optimization/AGGREGATOR_ACCOUNT_SHARED_READS.md)。

@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use solana_client::nonblocking::rpc_client::RpcClient;
 use std::sync::Arc;
 
 use crate::{
@@ -12,7 +11,8 @@ use crate::{
     domain::trade::Address,
     sdk_client::{
         wsol_conversion::{
-            preparation, simulation, SignedWsolTransaction, UnsignedWsolTransaction,
+            broadcast::WsolBroadcastLane, preparation, simulation, SignedWsolTransaction,
+            UnsignedWsolTransaction,
         },
         SdkTradeClient,
     },
@@ -45,11 +45,11 @@ pub(crate) struct WsolWallet {
 }
 pub(crate) struct PreparedWsol {
     unsigned: UnsignedWsolTransaction,
-    rpc: Arc<RpcClient>,
+    rpc: WsolBroadcastLane,
 }
 pub(crate) struct SignedWsol {
     artifact: SignedWsolTransaction,
-    rpc: Arc<RpcClient>,
+    rpc: WsolBroadcastLane,
 }
 impl PreparedWsol {
     async fn simulate<T: crate::adapters::rpc::read_http::ReadHttpTransport>(
@@ -125,7 +125,10 @@ impl WsolExecutionWallet for WsolWallet {
             quote,
         )
         .await?;
-        Ok(PreparedWsol { unsigned, rpc })
+        Ok(PreparedWsol {
+            unsigned,
+            rpc: WsolBroadcastLane::from_selected(rpc),
+        })
     }
     async fn simulate_unsigned(
         &self,
@@ -146,7 +149,7 @@ impl WsolExecutionWallet for WsolWallet {
     async fn broadcast(&self, signed: &Self::Signed) -> Result<String> {
         Ok(self
             .client
-            .send_signed_wsol(&signed.artifact, &signed.rpc)
+            .broadcast_signed_wsol(&signed.artifact, &signed.rpc)
             .await?
             .to_string())
     }
@@ -155,6 +158,63 @@ impl WsolExecutionWallet for WsolWallet {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn wsol_broadcast_adapter_actual_wallet_guard_rejects_before_empty_sdk_wallet_or_rpc_access(
+    ) {
+        use crate::sdk_client::wsol_conversion::{
+            broadcast::tests::disabled_client, simulation::tests as fixture,
+        };
+        let legacy = fixture::Legacy::new(serde_json::Value::Null);
+        let signed = SignedWsol {
+            artifact: fixture::signed(true),
+            rpc: WsolBroadcastLane::from_selected(Arc::new(
+                legacy.client(solana_commitment_config::CommitmentConfig::confirmed()),
+            )),
+        };
+        let before = signed.signed_bytes().to_vec();
+        let wallet = WsolWallet {
+            client: Arc::new(disabled_client()),
+            read_rpc: Arc::new(
+                crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap(),
+            ),
+        };
+        assert_eq!(
+            wallet.broadcast(&signed).await.unwrap_err().to_string(),
+            crate::domain::execution_policy::BROADCAST_DISABLED_ERROR
+        );
+        assert_eq!(signed.signed_bytes(), before);
+        assert!(legacy.calls.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn wsol_broadcast_adapter_original_selected_lane_moves_through_wrappers_without_new_rpc_owner()
+    {
+        use crate::sdk_client::wsol_conversion::simulation::tests as fixture;
+        let legacy = fixture::Legacy::new(serde_json::Value::Null);
+        let rpc = Arc::new(legacy.client(solana_commitment_config::CommitmentConfig::finalized()));
+        let weak = Arc::downgrade(&rpc);
+        let prepared = PreparedWsol {
+            unsigned: fixture::unsigned(true),
+            rpc: WsolBroadcastLane::from_selected(rpc),
+        };
+        assert_eq!(weak.strong_count(), 1);
+        // Only ownership is tested here; no signer is initialized or called.
+        let signed = SignedWsol {
+            artifact: fixture::signed(true),
+            rpc: prepared.rpc,
+        };
+        drop(prepared.unsigned);
+        assert_eq!(weak.strong_count(), 1);
+        assert_eq!(signed.rpc.url(), fixture::URL);
+        assert_eq!(
+            signed.rpc.commitment(),
+            solana_commitment_config::CommitmentConfig::finalized()
+        );
+        assert!(legacy.calls.lock().unwrap().is_empty());
+        drop(signed);
+        assert!(weak.upgrade().is_none());
+    }
 
     #[tokio::test]
     async fn wsol_simulation_adapter_both_real_wrapper_paths_use_selected_shared_runtime_not_execution_rpc(
@@ -171,7 +231,9 @@ mod tests {
             let quote = fixture::quote(&unsigned);
             let prepared = PreparedWsol {
                 unsigned,
-                rpc: Arc::new(legacy.client(CommitmentConfig::confirmed())),
+                rpc: WsolBroadcastLane::from_selected(Arc::new(
+                    legacy.client(CommitmentConfig::confirmed()),
+                )),
             };
             let report = prepared.simulate(&runtime, &quote).await;
             if error.is_null() {
@@ -181,7 +243,7 @@ mod tests {
             }
             let signed = SignedWsol {
                 artifact: fixture::signed(true),
-                rpc: prepared.rpc.clone(),
+                rpc: prepared.rpc,
             };
             let before = signed.artifact.signed_bytes().to_vec();
             assert_eq!(signed.simulate(&runtime).await.unwrap(), error.is_null());

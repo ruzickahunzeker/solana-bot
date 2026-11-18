@@ -114,6 +114,29 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The WSOL broadcast candidate adds WsolBroadcastLane and the borrowed
+WsolBroadcastPacket: expected 47 selected types / 144 scoped fields including
+outside alias. Fourteen new tests and two steps require independent source-only
+CI (expected complete concurrent/serial each 1831 and 86 steps). The 9d40936
+acceptance below is parent evidence only, not evidence for this candidate. No
+local service Cargo retry. See WSOL_BROADCAST_OWNERSHIP.md.
+
+The corrected WSOL simulation batch is independently accepted: 9d40936 / Actions
+44204140210 / artifact 14385056342, complete concurrent/serial each 1817
+(270.55/504.81 seconds), all 1799 accepted-parent names retained, exactly eighteen
+added. Shared/oracle 14 / real HTTP 3 / actual adapter 1 and all 84 steps pass.
+Original/restored checks and all 138 distinct raw field spans verify 45 selected
+concrete types plus outside alias, including packet/signed artifact/wrapper.
+Python policy 12 / workflow 7 and SDK provenance pass. Exact request/result
+witnesses, missing-err rejection, original oracles/tests/sign/send/state flow and
+runtime budgets are checked; all 1119 snapshot blobs/modes (13,609,187 bytes) and
+manifest/lock/vendor-manifest hashes match. Main/index/frozen history remain.
+Earlier 2a1cc27 was cancelled for missing-err review; 33cece1 failed SDK-fixture
+private-field construction and is corrected through the existing test API,
+not a visibility grant. No local service Cargo retry, production action, terminal
+CI rerun or documentation-only CI. See WSOL_SIMULATION_SHARED_READS.md for
+remaining broadcast ownership/other gates and unchanged signed-provider trust.
+
 The WSOL preparation batch is independently accepted: cf5e63b / Actions 44195580476 /
 artifact 14381545057, complete concurrent/serial each 1799 (263.49/485.64 seconds),
 all 1783 parent names retained and exactly sixteen added. Shared/oracle 12 /
@@ -243,7 +266,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 42 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 45 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

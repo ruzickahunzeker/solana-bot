@@ -1,8 +1,9 @@
 # WSOL Simulation Read Boundary
 
 Date: 2026-11-18, Asia/Shanghai. Continues original NP-03 / TS-07/09; no new task
-or denominator. Source implemented, independent offline Rust CI pending. Accepted
-parent cf5e63b is not evidence for this batch. No deployment or production use.
+or denominator. Corrected source and independent offline Rust CI accepted, not
+deployed: 9d40936 / Actions 44204140210 / artifact 14385056342. Accepted parent
+cf5e63b evidence is not reused for this batch. No production use is implied.
 
 ## Actual Paths And Original Policy
 
@@ -109,7 +110,41 @@ identity, manifest/lock/vendor hashes and original oracle/body invariants before
 acceptance. Do not reuse parent's 129-field run. No local service Cargo retry
 after the recorded 2200 MiB failure: source-only offline/loopback-only CI only.
 
-## Remaining Original Gates
+## Accepted Evidence
+
+Corrected source `9d4093617be00634c2e05a453daf9ff6e0bb1bb9`,
+[Actions 44204140210](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44204140210),
+its first run terminal success in 28m35s; downloaded artifact `14385056342`
+independently audited. All 84 steps exit zero. Full concurrent 1817 (270.55
+seconds) and serial 1817 (504.81 seconds), zero failed/ignored/filtered tests,
+identical raw name sets. All 1799 accepted-parent names remain and exactly the
+eighteen source-defined names are added. Shared/oracle 14 / real HTTP 3 / actual
+adapter 1 and all earlier focused regressions pass, including status contract 59.
+Original/restored compiler checks and all 138 distinct raw field spans pass on
+this source: 45 selected concrete types plus outside alias. Python policy 12 /
+workflow 7 and SDK provenance pass; identity and manifest/lock/vendor-manifest
+hashes match.
+
+Before recording acceptance all 1119 snapshot blobs/modes (13,609,187 bytes)
+match the source. The entire original root SDK module, including unsigned/signed
+simulate and config oracles, original tests, validation/sign/send bodies, matches
+after removing only the new module registration and test-only cfg/import wiring.
+Authorization, preparation/oracles, instruction builder, Application journal/state
+flow and original runtime capacities/intervals remain exact. Both real wrappers
+actually use shared transport while original execution-RPC counters remain zero.
+Exact no-normalization request and full-result witnesses execute, signed bytes
+stay unchanged, and explicit err/missing-units/raw-u64 and original permissive
+missing-err behavior are independently exercised. Missing err fails closed in both
+forms without changing conforming response semantics or old program-error mapping.
+
+The known old serial discovery child-stderr split is associated only with its
+exact test/pinned fixture/immediate ok; two positive/seven negative audit-format
+regressions pass. No raw logs are rewritten or test names omitted. Main/index/
+frozen history remain unchanged. No local service Cargo retry, release build,
+deployment/restart, production data access, real RPC or trade. Do not rerun terminal
+CI or trigger documentation-only CI; carry records with the next actual source batch.
+
+## Candidate History
 
 First candidate 2a1cc27 / Actions 44202635009 was cancelled during validation after
 review found missing err could deserialize to None and imply success. The corrected
@@ -124,6 +159,8 @@ now uses the existing cfg(test) HttpReply::for_test API, retaining private field
 and production code. The core fake uses the existing default Retry-After policy;
 the real wire fixture still verifies an explicit header. Do not rerun that
 terminal candidate or count its partial checks as this batch's acceptance.
+
+## Remaining Original Gates
 
 Actual WSOL broadcast RPC ownership/SDK internals, standalone Quote reconciliation
 status, DAMM/opaque reads/tasks, provider-wide quotas and NP-01/03/04/05/rollout

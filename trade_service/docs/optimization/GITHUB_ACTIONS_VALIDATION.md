@@ -30,17 +30,30 @@
 
 ## 当前批次
 
-续原 WSOL 未签名/已签模拟源码待独立 CI：预期完整并发/串行各 1817，父批
-1799 名称全保留且恰增十八项；45 类型/138 字段及 84 步骤。原 RpcClient 精确
-请求与结果 witness、两条实际 wrapper/原 RPC 零请求和真实 HTTP 见
-`WSOL_SIMULATION_SHARED_READS.md`，不套用下方父批证据，不做生产操作。
+续原 NP-03 WSOL 广播所有权源码待独立验证。原选定 RPC/预检/回执/取消与十二秒
+调用方期限保持，新增固定发送器/借用包门禁；预期完整并发/串行各 1831、父批
+1817 全保留且新增十四、47 类型/144 字段/86 步。新增两个专项，不删旧测试或
+旧专项。先验证来源/完整快照，再只推既有 CI 分支；不使用父批通过替代本批，不
+本地重试 Cargo 或做生产操作。见 `WSOL_BROADCAST_OWNERSHIP.md`。
+
+续原 WSOL 未签名/已签模拟修正源码 `9d4093617be00634c2e05a453daf9ff6e0bb1bb9` /
+[Actions 44204140210](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44204140210)
+本源码首次运行 success（28m35s）；下载 artifact `14385056342` 独立核验：完整
+并发 1817（270.55 秒）/串行 1817（504.81 秒），零失败/忽略/过滤且名称相同，
+父批 1799 全保留、恰增十八项。shared/oracle 14/真实 HTTP 3/实际 adapter 1、
+原全部专项及 84 步骤通过；45 类型/138 原始字段拒绝和原源码/恢复成功，Python
+policy 十二项、workflow 七项和 SDK provenance 通过。精确新旧请求/结果、实际
+wrapper 原 RPC 零请求、缺失 err 拦截和原字节不变量已核对，全树 1119 文件/
+13,609,187 字节及模式匹配快照，identity/依赖哈希一致；旧串行 stderr 精确关联
+及两正七负格式回归通过，未改日志或省略名称。不本地 Cargo 重试、不重跑终态或
+另发文档 CI、不做生产操作，不套用下方父批证据，见 `WSOL_SIMULATION_SHARED_READS.md`。
 首轮 `2a1cc27` / Actions `44202635009` 在验证时因缺失 err 的可选解码风险被主动
 取消；修正后要求明确 err（允许 null），补负例及旧客户端容忍行为对照。不重跑
 原候选，不将部分日志或旧通过记录当成修正源码验收。
 `33cece1` / Actions `44203291583` 终态 failure：前十项检查通过，测试类型检查
 报 E0451（夹具跨模块构造私有 HttpReply 字段）；字段门禁和 Rust 测试未运行。
 修正仅改为既有 cfg(test) 构造接口，保留可见性/生产代码与真实 wire header 验证，
-不重跑该终态候选，需新源码独立验收。
+不重跑该终态候选；修正源码已在上方 9d40936 独立验收。
 
 续原 WSOL 准备读取源码 `cf5e63bca191362bf7f234af942b63f73ffc8e16` /
 [Actions 44195580476](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44195580476)
