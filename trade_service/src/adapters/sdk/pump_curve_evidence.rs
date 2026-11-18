@@ -34,6 +34,7 @@ struct PumpCurveEvidence {
     curve: CurvePrefix,
     base_mint_layout: BaseMintLayout,
     global_fee_recipient: Pubkey,
+    global_data: Vec<u8>,
     sharing: SharingPrefix,
 }
 
@@ -132,7 +133,7 @@ impl PumpCurveAccounts {
         }
         let base_mint_layout =
             decode_base_mint(base.as_ref().context("Pump.fun mint is missing")?)?;
-        let global_fee_recipient =
+        let (global_fee_recipient, global_data) =
             decode_global(global.as_ref().context("Pump.fun Global is missing")?)?;
         let sharing = decode_sharing(sharing.as_ref(), self.keys()[1], self.keys.sharing_bump())?;
         Ok(PumpCurveEvidence {
@@ -153,6 +154,7 @@ impl PumpCurveAccounts {
             },
             base_mint_layout,
             global_fee_recipient,
+            global_data,
             sharing,
         })
     }
@@ -208,7 +210,7 @@ fn decode_base_mint(account: &UiAccount) -> anyhow::Result<BaseMintLayout> {
     })
 }
 
-fn decode_global(account: &UiAccount) -> anyhow::Result<Pubkey> {
+fn decode_global(account: &UiAccount) -> anyhow::Result<(Pubkey, Vec<u8>)> {
     let data = decode_data(
         account,
         accounts::PUMPFUN,
@@ -219,10 +221,10 @@ fn decode_global(account: &UiAccount) -> anyhow::Result<Pubkey> {
         .get(41..73)
         .context("Pump.fun Global prefix is truncated")?
         .try_into()?;
-    if !data.starts_with(&pumpfun::GLOBAL_ACCOUNT_DISCRIMINATOR) || data[8] != 1 || fee == [0; 32] {
+    if !data.starts_with(&pumpfun::GLOBAL_ACCOUNT_DISCRIMINATOR) || data[8] > 1 || fee == [0; 32] {
         bail!("Pump.fun Global prefix is invalid");
     }
-    Ok(Pubkey::new_from_array(fee))
+    Ok((Pubkey::new_from_array(fee), data))
 }
 
 fn decode_sharing(

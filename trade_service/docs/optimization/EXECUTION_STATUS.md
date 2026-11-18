@@ -6,9 +6,14 @@
 
 ## 当前任务
 
-- 当前续原 NP-01 [Pump.fun 金额与角色](PUMP_SDK_AMOUNT_WIRE.md)：五项新增真实 SDK
-  指令 builder 测试待独立 CI，区分精确输入/固定输出、绑定原快照关键账户/权限、
-  cashback 标志和固定程序/PDA；不授权费用收款账户，不接生产或签名入口。
+- 当前续原 NP-01 [Pump.fun 原生费用地址](PUMP_SDK_NATIVE_DESTINATIONS.md)：三项新测试
+  待独立 CI；同 bank Global 前缀、主收款地址/buyback 集合与 creator PDA，以及重复
+  账户导致编译后权限提升的拒绝。仅测试构建，不证明实际费率/报价或开放签名。
+- 原 NP-01 [Pump.fun 金额与角色](PUMP_SDK_AMOUNT_WIRE.md)已独立验收：
+  `9bb5330` / [Actions 44303096331](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44303096331)
+  / artifact `14429825256`。并发2014（372.34秒）、串行2014（709.76秒），原2009
+  名称保留、恰增5；Pump专项22、HTTP208、116步骤、62类型/189字段及源码身份通过。
+  区分精确输入/固定输出，绑定原快照账户/权限/cashback/固定角色；未接生产或签名。
 - 原 NP-01 [Pump.fun 离线账户与资金证据](PUMP_SDK_ACCOUNT_EVIDENCE.md)已独立验收：
   `be136c0` / [Actions 44297259103](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44297259103)
   / artifact `14427210893`。并发2009（365.26秒）、串行2009（707.51秒），原1992

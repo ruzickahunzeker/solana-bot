@@ -291,6 +291,7 @@ impl NativeFundingSnapshot {
 }
 
 mod budget;
+mod destinations;
 #[cfg(test)]
 mod instruction_tests;
 #[cfg(test)]

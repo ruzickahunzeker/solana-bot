@@ -17,6 +17,13 @@ use solana_sdk::signature::Signer;
 use spl_token_interface::state::{Account, AccountState};
 
 fn funding(params: &SwapParams) -> NativeFundingSnapshot {
+    funding_with_global(params, None)
+}
+
+pub(super) fn funding_with_global(
+    params: &SwapParams,
+    supplied_global: Option<UiAccount>,
+) -> NativeFundingSnapshot {
     let buy = matches!(params.trade_type, TradeType::Buy);
     let base = if buy {
         params.output_mint
@@ -54,7 +61,7 @@ fn funding(params: &SwapParams) -> NativeFundingSnapshot {
     let values = [
         curve,
         mint,
-        global,
+        supplied_global.or(global),
         sharing,
         token(plan.keys()[0]),
         token(wallet),
@@ -72,7 +79,7 @@ fn funding(params: &SwapParams) -> NativeFundingSnapshot {
     plan.decode(plan.keys(), 175, 174, &values).unwrap()
 }
 
-async fn build(params: &SwapParams) -> Instruction {
+pub(super) async fn build(params: &SwapParams) -> Instruction {
     let instructions = if matches!(params.trade_type, TradeType::Buy) {
         PumpFunInstructionBuilder
             .build_buy_instructions(params)

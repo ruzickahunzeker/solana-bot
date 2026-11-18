@@ -268,7 +268,7 @@ fn validates_mint_and_global_prefix_without_deriving_fee_permission() {
     values[1] = Some(ui(spl_token_2022_interface::ID, &wrong_type));
     assert!(decode(&sol(), &values).is_err());
     values[1] = Some(ui(spl_token_interface::ID, &mint(true)));
-    for (i, n) in [(0, 0), (8, 0), (8, 2)] {
+    for (i, n) in [(0, 0), (8, 2)] {
         let mut invalid = global();
         invalid[i] = n;
         values[2] = Some(ui(accounts::PUMPFUN, &invalid));
@@ -277,6 +277,10 @@ fn validates_mint_and_global_prefix_without_deriving_fee_permission() {
             .to_string()
             .contains("Global"));
     }
+    let mut unused_initialized = global();
+    unused_initialized[8] = 0;
+    values[2] = Some(ui(accounts::PUMPFUN, &unused_initialized));
+    assert_eq!(decode(&sol(), &values).unwrap().global_fee_recipient, FEE);
     let mut invalid = global();
     invalid[41..73].fill(0);
     for bad in [
