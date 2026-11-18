@@ -134,4 +134,7 @@ not in the original nine-test correction's CI. The [post-bank successor](PUMP_SD
 was independently accepted in9e1305f / Actions44339297404 / artifact14447005729,
 full2044 each. Neither grants trusted quote/signing authority. The current
 [swap/message constraints](PUMP_SDK_SWAP_CONSTRAINTS.md) adds positive minima
-and complete unsigned templates only; eight new tests await independent CI.
+and complete unsigned templates only; eight tests were independently accepted
+ina2a9f27 / Actions44348156801 / artifact14450265978, full2052 each. The
+[final-simulation follow-up](PUMP_SDK_FINAL_SIMULATION.md) retains thirteen
+unexecuted tests and does not inherit any previous quote/signing permission.

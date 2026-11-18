@@ -45,6 +45,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertIn("trade_task_admission", types)
         self.assertTrue({"ordinary_storage", "ordinary_storage_ref"} <= types)
         self.assertTrue({"pump_native_probe_packet", "pump_native_probe_reply"} <= types)
+        self.assertTrue({"pump_native_final_packet", "pump_native_final_reply"} <= types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):

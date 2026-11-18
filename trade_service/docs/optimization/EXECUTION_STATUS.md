@@ -6,11 +6,16 @@
 
 ## 当前任务
 
-- 当前续同一 NP-01 [最小输出与完整无签名消息](PUMP_SDK_SWAP_CONSTRAINTS.md)：
-  正整数净输出/slippage、同次响应资金预算、原精确输入/角色/时效与完整消息模板，
-  复用原组装/编译 helper，固定小费/compute budget，不新增客户端/缓存/发送通道。
-  八项新Rust测试待独立CI，不继承父批结果。实际最终模拟、provider/ABI/接收者策略、
-  费用/rent及协议专用授权/原签名字节账本接线仍未完成，未新增实盘能力。
+- 当前续同一 NP-01 [完整消息最终模拟](PUMP_SDK_FINAL_SIMULATION.md)：固定零签名
+  请求/回复绑定、原deadline/共享配额与同次余额/fee/tip/净输出>=min、旧账户解码
+  已接测试原型，原无小费检查可重建；十三项新Rust测试待独立CI。未新增签名权限。
+  原provider/ABI/接收者策略、真实节点/费用/rent与协议专用原签名字节账本仍未完成。
+- 原 NP-01 [最小输出与完整无签名消息](PUMP_SDK_SWAP_CONSTRAINTS.md)已独立验收：
+  `a2a9f27` / [Actions44348156801](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44348156801)
+  / artifact14450265978。并发2052（351.28秒）、串行2052（677.53秒），原2044全
+  保留、恰增8；constraints4/envelope4、Pump50、HTTP208、122步及64类型/195字段。
+  原SDK桥接/旧源码重建、27负例源审计、源码与锁定依赖身份通过。仅测试构建中的
+  模板/预算验收，后继13项最终模拟不在该CI，不继承验收；未部署或发送交易。
 - 原 NP-01 [模拟后账户](PUMP_SDK_POST_BANK.md)已独立验收：
   `9e1305f` / [Actions44339297404](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44339297404)
   / artifact14447005729。并发2044（389.05秒）、串行2044（743.91秒），原2039全

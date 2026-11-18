@@ -26,6 +26,15 @@ pub(super) struct NativePostBank {
 
 impl NativeQuoteProbe {
     pub(super) fn inspect_post_bank(&self, response: &Value) -> Result<NativePostBank> {
+        self.inspect_post_bank_message(response, &self.transaction.message, 11)
+    }
+
+    pub(super) fn inspect_post_bank_message(
+        &self,
+        response: &Value,
+        message: &Message,
+        expected_count: usize,
+    ) -> Result<NativePostBank> {
         self.packet()?;
         ensure!(
             response.get("value").and_then(|value| value.get("err")) == Some(&Value::Null),
@@ -48,7 +57,7 @@ impl NativeQuoteProbe {
             .as_ref()
             .context("native Pump post bank omitted accounts")?;
         ensure!(
-            values.len() == 11,
+            matches!(expected_count, 11 | 12) && values.len() == expected_count,
             "native Pump post bank account count differs"
         );
         let before = &self.funding;
@@ -87,7 +96,7 @@ impl NativeQuoteProbe {
             ) == self.transaction.message,
             "native Pump frozen instruction and packet differ"
         );
-        let keys = &self.transaction.message.account_keys;
+        let keys = &message.account_keys;
         let index = |key| {
             keys.iter()
                 .position(|actual| *actual == key)

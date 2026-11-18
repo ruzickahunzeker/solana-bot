@@ -30,10 +30,17 @@
 
 ## 当前批次
 
-当前续原NP-01最小输出/同次响应预算与完整无签名消息模板，八项新Rust测试待独立CI：
-预期原2044名称保留、完整各2052、constraints4/envelope4、post-bank5、Pump50、原
-read7/wire3/adapter3、HTTP208、122步骤及64类型/195字段。复用原helper，不改SDK/
-公开API/RPC profile或原签名账本；见[边界](PUMP_SDK_SWAP_CONSTRAINTS.md)。
+当前续原NP-01完整消息最终模拟，十三项新Rust测试待独立CI：预期原2052名称保留、
+完整各2065、final-read4/wire3/SDK6、Pump56、HTTP208、125步骤及66类型/201字段。
+复用原runtime/账户解码与资金检查，不改SDK/公开API/原发现profile或原签名账本，
+不新增客户端/配额/重试；见[边界](PUMP_SDK_FINAL_SIMULATION.md)。
+
+最小输出/无签名消息a2a9f27 / [Actions44348156801](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44348156801)
+首次运行success，artifact14450265978已下载独立核对：并发2052（351.28秒）/串行
+2052（677.53秒），原2044全保留、恰增8；constraints4/envelope4、post-bank5/Pump50、
+原read7/wire3/adapter3、HTTP208、全部122有序步骤及64类型/195字段通过。源码/
+锁定依赖、原桥接/旧源码重建及27负例源审计通过。不重跑或另发文档CI；十三项
+新最终模拟测试不在本次运行中，记录随真实后继源码提交，不继承父批验收。
 
 模拟后账户修正版9e1305f / [Actions44339297404](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44339297404)
 首次运行success，artifact14447005729已下载独立核对：并发2044（389.05秒）/串行

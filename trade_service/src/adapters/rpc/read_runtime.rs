@@ -433,4 +433,5 @@ pub(crate) use quote_balance::preparation_scan;
 pub(crate) use quote_status::tests as quote_status_fixture;
 mod parameters;
 mod preparation_balance;
+mod pump_native_final;
 mod pump_native_probe;

@@ -7,7 +7,7 @@ full2044 each, parent2039 retained plus5,120 steps and64 types/195 fields.
 Matching raw artifacts and source reconstruction/ten rejected mutations were
 checked before these records. None of that run's results can validate this
 source, which was deliberately excluded from the correction. Eight successor
-tests still await their own independent CI.
+tests were independently accepted below, not in the post-bank correction.
 
 ## Amount And Packet Binding
 
@@ -75,7 +75,7 @@ the final provider's fee or blockhash validity. A later final simulation must
 verify actual balances/fee/rent/output for the complete message. All remaining
 policy/ABI/signing gates below still apply.
 
-## Verification Pending
+## Independent Offline Verification
 
 Four swap tests cover exact input/message roles across both sides and slippage
 boundaries; same-response prefunding including a sell payout below its network
@@ -89,16 +89,20 @@ prefunding, invalid tip/provider/alias routes, ten packet/fee/context damages
 and expiry. Complete envelopes are also rejected by the unchanged discovery
 RPC profile. These are fixtures, not claims of live provider compatibility.
 
-Expected future evidence only: parent2044 names retained plus exactly8, full
-concurrent/serial2052 each, constraints4/envelope4, post-bank5, Pump50, original
-read7/wire3/adapter3, HTTP208,122 ordered steps,64 types/195 compiler fields.
-No Rust compile, link or test is run locally; only formatting and source/policy
-checks. Publication waits for independently accepted post-bank evidence.
+Snapshot `a2a9f27` / Actions44348156801 completed successfully. Artifact
+14450265978 was downloaded and independently checked: concurrent2052 (351.28s),
+serial2052 (677.53s), parent2044 retained plus exactly8, constraints4/envelope4,
+post-bank5/Pump50, original read7/wire3/adapter3, HTTP208,122 ordered zero-exit
+steps and64 types/195 raw compiler fields. Source/locked fingerprints, original
+bridge/old source reconstruction and27 rejected source mutations passed. No
+local service Rust compile/link/test and no terminal rerun. Records accompany
+the real [final-simulation successor](PUMP_SDK_FINAL_SIMULATION.md); its thirteen
+new tests were excluded and still require independent CI.
 
 ## Remaining Gates
 
 Recipient owner/data policy, actual provider support, deployed ABI, current
-fee/rent/blockhash validity, complete envelope, final simulation and the
+fee/rent/blockhash validity, final simulation and the
 original controlled signer/journal remain unfinished. Existing DAMM nominal
 records accept DAMM profiles; they must not be reused as Pump permission.
 Any later Pump record needs an audited protocol-specific version under that

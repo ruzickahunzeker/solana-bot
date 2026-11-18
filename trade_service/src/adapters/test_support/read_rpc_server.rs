@@ -42,6 +42,10 @@ pub(crate) trait DammEvidenceOracle: Send + Sync {
 
 #[derive(Clone)]
 pub(crate) enum Reply {
+    PumpNativeFinal {
+        result: Value,
+        mode: Box<Reply>,
+    },
     PumpNativeProbe {
         result: Value,
         mode: Box<Reply>,
@@ -313,6 +317,7 @@ async fn serve(
         other => (other, None),
     };
     let is_runtime_preview = preview.is_some();
+    let is_pump_native_final = matches!(&reply, Reply::PumpNativeFinal { .. });
     let is_pump_native_probe = matches!(&reply, Reply::PumpNativeProbe { .. });
     let is_damm_quote = matches!(&reply, Reply::DammQuote { .. });
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
@@ -327,6 +332,7 @@ async fn serve(
         _ => None,
     };
     let (reply, parameter_value) = match reply {
+        Reply::PumpNativeFinal { result, mode } => (*mode, Some(result)),
         Reply::PumpNativeProbe { result, mode } => (*mode, Some(result)),
         Reply::FixedAccountSnapshot { result, mode, .. } => (*mode, Some(result)),
         Reply::SolTransferConfirmation { value, mode } => (*mode, Some(value)),
@@ -541,6 +547,38 @@ async fn serve(
             payload,
             json!({"jsonrpc":"2.0","id":id,"method":"getMultipleAccounts","params":[
             keys,{"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":minimum}]})
+        );
+    } else if is_pump_native_final {
+        assert_eq!(payload["method"], "simulateTransaction");
+        let config = &payload["params"][1];
+        assert_eq!(
+            *config,
+            json!({"sigVerify":false,"replaceRecentBlockhash":false,
+            "commitment":"processed","encoding":"base64",
+            "accounts":{"encoding":"base64","addresses":config["accounts"]["addresses"]},
+            "minContextSlot":config["minContextSlot"],"innerInstructions":true})
+        );
+        assert!(config["minContextSlot"].as_u64().unwrap() > 0);
+        let bytes = base64::Engine::decode(
+            &base64::engine::general_purpose::STANDARD,
+            payload["params"][0].as_str().unwrap(),
+        )
+        .unwrap();
+        assert!(bytes.len() <= 1232);
+        let tx: solana_sdk::transaction::VersionedTransaction =
+            bincode::deserialize(&bytes).unwrap();
+        assert_eq!(tx.signatures, [solana_sdk::signature::Signature::default()]);
+        let solana_sdk::message::VersionedMessage::Legacy(message) = tx.message else {
+            panic!("final fixture requires legacy")
+        };
+        assert!(matches!(message.instructions.len(), 3 | 4));
+        assert_eq!(
+            config["accounts"]["addresses"].as_array().unwrap().len(),
+            if message.instructions.len() == 4 {
+                12
+            } else {
+                11
+            }
         );
     } else if is_pump_native_probe {
         assert_eq!(payload["method"], "simulateTransaction");

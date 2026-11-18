@@ -151,4 +151,5 @@ impl NativeEnvelopeTemplate {
     }
 }
 
+mod simulation;
 mod tests;
