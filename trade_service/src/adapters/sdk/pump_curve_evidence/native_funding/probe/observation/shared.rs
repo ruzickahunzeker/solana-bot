@@ -1,3 +1,4 @@
+use super::post_bank::NativePostBank;
 use super::{NativeProbeObservation, NativeQuoteProbe};
 use crate::adapters::rpc::{
     pump_native_probe::{PumpNativeProbePacket, EVIDENCE_ACCOUNTS},
@@ -6,6 +7,11 @@ use crate::adapters::rpc::{
 };
 use anyhow::{ensure, Result};
 use solana_sdk::pubkey::Pubkey;
+
+struct NativeBankObservation {
+    observation: NativeProbeObservation,
+    bank: NativePostBank,
+}
 
 impl NativeQuoteProbe {
     fn evidence_accounts(&self) -> [Pubkey; EVIDENCE_ACCOUNTS] {
@@ -21,12 +27,12 @@ impl NativeQuoteProbe {
         })
     }
 
-    // The response is request-bound, but post-account proofs still gate a trusted quote.
+    // The bank and response are bound; recipient policy and final authorization remain unproven.
     async fn shared_observation<T: ReadHttpTransport>(
         self,
         runtime: &SharedReadRuntime<T>,
         url: &str,
-    ) -> Result<NativeProbeObservation> {
+    ) -> Result<NativeBankObservation> {
         self.packet()?;
         ensure!(
             self.funding.curve.base_mint_layout.program == spl_token_interface::ID,
@@ -42,7 +48,9 @@ impl NativeQuoteProbe {
         )?;
         let reply = runtime.pump_native_probe(url, packet).await?;
         let response = reply.for_probe(self.packet()?, &keys, minimum)?;
-        self.inspect_observation(response)
+        let bank = self.inspect_post_bank(&response)?;
+        let observation = self.inspect_observation(response)?;
+        Ok(NativeBankObservation { observation, bank })
     }
 }
 

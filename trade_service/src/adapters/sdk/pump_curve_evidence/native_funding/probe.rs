@@ -10,6 +10,7 @@ use std::{num::NonZeroU64, time::Instant};
 struct NativeQuoteProbe {
     funding: NativeFundingSnapshot,
     transaction: Transaction,
+    instruction: Instruction,
     input: NonZeroU64,
 }
 
@@ -63,7 +64,8 @@ impl NativeFundingSnapshot {
         instruction.data[16..24].copy_from_slice(&1u64.to_le_bytes());
         self.inspect_native_destinations(&instruction)?;
         let wallet = self.keys[6];
-        let message = Message::new_with_blockhash(&[instruction], Some(&wallet), &blockhash);
+        let message =
+            Message::new_with_blockhash(&[instruction.clone()], Some(&wallet), &blockhash);
         ensure!(
             message.header.num_required_signatures == 1
                 && message.account_keys.first() == Some(&wallet),
@@ -78,6 +80,7 @@ impl NativeFundingSnapshot {
         Ok(NativeQuoteProbe {
             funding: self,
             transaction,
+            instruction,
             input,
         })
     }

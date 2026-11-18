@@ -48,17 +48,25 @@ the original signed journal remain gates before production integration.
 
 ## Verification Status
 
-Thirteen tests are prepared: seven packet/shared-runtime tests, three real
+Thirteen tests cover seven packet/shared-runtime tests, three real
 loopback HTTP tests and three actual-SDK-prototype bridge tests. They cover
 exact request/response binding, signed/invalid packets, ID/version/result/error
 conflicts, missing outcome/slot/account positions,512KiB limits, redirects,
 cooldown without fallback, deadline/cancellation and same-response output.
-Full Rust execution is pending; local formatting and policy checks do not
-replace it. Expected independent successor acceptance: full2039 each, all2026
-parent names retained plus exactly13; read7/wire3/adapter3, Pump37, HTTP208,
-119 ordered steps and64/195 gate. These figures are expectations, not results.
+Independent `03299ad` / Actions `44327646677` completed successfully. Artifact
+`14440796497` was downloaded and audited: full concurrent2039 (359.38s),
+serial2039 (699.35s), all2026 parent names retained plus exactly13; focused
+read7/wire3/adapter3, Pump37, HTTP208,119 ordered zero-exit steps and64 types/195
+raw compiler field rejections. Source identity/locked dependencies, original
+runtime/HTTP/fixture/observation reconstruction and ten rejected source
+mutations were verified. No local service Rust execution or terminal rerun.
 
 The shared profile is not in the parent's CI. Do not inherit its result,
 rerun terminal tasks, change API/validation/persistence, enable PumpAPI or use a
 production wallet/database/RPC. SDK remains6.0.2; no release/deploy/restart or
 transaction has been performed.
+
+The [post-bank follow-up](PUMP_SDK_POST_BANK.md) tightens the test-gated
+SDK bridge using the existing decoder and actual returned account bytes, with
+five more tests. It is not in this shared-profile CI and has no Rust acceptance
+yet. Recipient policy and final authorization remain distinct unfinished gates.

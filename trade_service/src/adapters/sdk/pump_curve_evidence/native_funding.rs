@@ -34,6 +34,12 @@ struct NativeFundingPlan {
     side: Side,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum NativeBankPhase {
+    Preparation,
+    AfterSimulation,
+}
+
 #[derive(Debug)]
 struct NativeFundingSnapshot {
     started: Instant,
@@ -99,6 +105,17 @@ impl NativeFundingPlan {
         minimum: u64,
         values: &[Option<UiAccount>],
     ) -> Result<NativeFundingSnapshot> {
+        self.decode_bank(request, slot, minimum, values, NativeBankPhase::Preparation)
+    }
+
+    fn decode_bank(
+        &self,
+        request: &[Pubkey],
+        slot: u64,
+        minimum: u64,
+        values: &[Option<UiAccount>],
+        phase: NativeBankPhase,
+    ) -> Result<NativeFundingSnapshot> {
         let started = Instant::now();
         ensure!(
             request == self.keys().as_slice() && minimum > 0,
@@ -114,8 +131,13 @@ impl NativeFundingPlan {
             &values[..ACCOUNT_COUNT],
         )?;
         ensure!(
-            !curve.curve.complete,
+            phase == NativeBankPhase::AfterSimulation || !curve.curve.complete,
             "native Pump funding curve is complete"
+        );
+        ensure!(
+            !curve.curve.complete
+                || (self.side == Side::Buy && curve.curve.real_token_reserves == 0),
+            "native Pump completed post curve has inconsistent side or remaining real tokens"
         );
         ensure!(
             curve.base_mint_layout.program == self.base_program,

@@ -6,11 +6,16 @@
 
 ## 当前任务
 
-- 当前续同一 NP-01/03 [共享请求绑定](PUMP_SDK_SHARED_PROBE.md)：原模拟配额/
-  HTTP/冷却接固定零签名Pump请求，冻结消息/11个返回位置/最低slot与原截止时间，
-  新增13项测试待独立CI（read7/wire3/adapter3）。原请求/校验和模拟净输出方法保持。
-  只验证请求绑定及返回形状，真实provider、账户owner/data/epoch、费用/ABI、最终
-  min-out、完整候选与原签名字节账本仍未完成；不构成可信报价或实盘许可。
+- 当前续同一 NP-01 [模拟后账户](PUMP_SDK_POST_BANK.md)：五项新测试待独立CI，
+  复用原八账户解码，绑定Clock/epoch、账户数据与同次模拟余额，保留原时效与准备
+  阶段完成曲线拒绝规则。接收者owner仅捕获元数据，未认可为协议许可；真实provider/
+  ABI、接收者策略、费用/rent、最终min-out、完整候选与原签名字节账本仍未完成。
+- 原 NP-01/03 [共享请求绑定](PUMP_SDK_SHARED_PROBE.md)已独立验收：
+  `03299ad` / [Actions 44327646677](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44327646677)
+  / artifact `14440796497`。并发2039（359.38秒）、串行2039（699.35秒），原2026
+  名称全保留、恰增13；read7/wire3/adapter3、Pump37、HTTP208、119步骤及64类型/
+  195字段通过。复用原配额/HTTP/冷却，固定消息/11位置/最低slot/时效；只证明请求
+  绑定和返回形状，不证明账户owner/data或可信报价，未部署、不重跑。
 - 原 NP-01 [无签名报价探测](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)已独立验收：
   `45d18c0` / [Actions 44319842306](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44319842306)
   / artifact `14437675802`。并发2026（374.16秒）、串行2026（721.32秒），原2017

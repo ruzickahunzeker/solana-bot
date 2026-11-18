@@ -30,9 +30,15 @@
 
 ## 当前批次
 
-当前续原 NP-01/03 的 Pump.fun 共享请求绑定，13项新Rust测试待独立CI：预期保留
-原2026名称、完整各2039、read7/wire3/adapter3、Pump37、HTTP208、119步骤、
-64类型/195字段。复用原runtime与配额，不改SDK/公开API/生产交易；见[边界](PUMP_SDK_SHARED_PROBE.md)。
+当前续原NP-01模拟后账户校验，五项新Rust测试待独立CI：预期原2039名称保留、完整
+各2044、post-bank5、原read7/wire3/adapter3、Pump42、HTTP208、120步骤与64类型/195字段。
+不改RPC/profile/SDK/公开API，只加强原测试构建；见[边界](PUMP_SDK_POST_BANK.md)。
+
+共享批次 `03299ad` / [Actions 44327646677](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44327646677)
+首次运行success，artifact `14440796497`已下载独立核对：完整并发2039（359.38秒）/
+串行2039（699.35秒）、原2026全保留/恰增13；read7/wire3/adapter3、Pump37、HTTP208、
+全部119有序步骤及64类型/195原始字段通过。原runtime/HTTP/夹具/观察校验还原、十负例
+源审计和源码/依赖身份通过。后继账户校验不继承本次结果，不重跑终态或另发文档CI。
 
 首批 `9808224` / [Actions 44318458423](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44318458423)
 终态 failure。原test-gated destination方法对子级兄弟probe不可见，两个E0624同源；
