@@ -253,5 +253,6 @@ fn decode_sharing(
     })
 }
 
+mod instruction_amounts;
 mod native_funding;
 mod tests;

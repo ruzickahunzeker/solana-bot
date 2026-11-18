@@ -1,5 +1,8 @@
 //! Native SOL V1 funding evidence only. It does not authorize a message or a signer.
-use super::{read_bank, PumpCurveAccounts, PumpCurveEvidence, ACCOUNT_COUNT};
+use super::{
+    instruction_amounts::{PumpWireAmounts, TradeAmounts, WireLayout},
+    read_bank, PumpCurveAccounts, PumpCurveEvidence, ACCOUNT_COUNT,
+};
 use crate::{
     adapters::{
         rpc::{
@@ -15,7 +18,12 @@ use anyhow::{ensure, Context, Result};
 use bincode::Options;
 use sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT;
 use solana_account_decoder::UiAccount;
-use solana_sdk::{clock::Clock, pubkey::Pubkey, sysvar};
+use solana_sdk::{
+    clock::Clock,
+    instruction::{AccountMeta, Instruction},
+    pubkey::Pubkey,
+    sysvar,
+};
 
 use std::time::Instant;
 
@@ -28,6 +36,7 @@ struct NativeFundingPlan {
 
 #[derive(Debug)]
 struct NativeFundingSnapshot {
+    keys: [Pubkey; NATIVE_ACCOUNTS],
     curve: PumpCurveEvidence,
     side: Side,
     epoch: u64,
@@ -169,6 +178,7 @@ impl NativeFundingPlan {
             "native Pump wallet",
         )?;
         Ok(NativeFundingSnapshot {
+            keys: *self.keys(),
             curve,
             side: self.side,
             epoch: clock.epoch,
@@ -179,6 +189,109 @@ impl NativeFundingPlan {
     }
 }
 
+impl NativeFundingSnapshot {
+    // Checks only critical funding roles; fees, creator accounts and the full message remain unapproved.
+    fn inspect_native_roles(&self, instruction: &Instruction) -> Result<PumpWireAmounts> {
+        use sol_trade_sdk::instruction::utils::pumpfun::{
+            accounts, get_bonding_curve_v2_pda, get_user_volume_accumulator_pda,
+        };
+        ensure!(
+            instruction.program_id == accounts::PUMPFUN,
+            "native Pump instruction program differs"
+        );
+        let wire = PumpWireAmounts::decode(&instruction.data)?;
+        ensure!(
+            wire.layout == WireLayout::NativeV1,
+            "native Pump evidence cannot validate a V2 instruction"
+        );
+        let buy = match (self.side, wire.amounts) {
+            (Side::Buy, TradeAmounts::BuyExactInput { .. }) => true,
+            (Side::Sell, TradeAmounts::SellExactInput { .. }) => false,
+            _ => anyhow::bail!("native Pump instruction amount mode differs from funding intent"),
+        };
+        ensure!(
+            wire.track_volume == buy.then_some(self.curve.curve.cashback),
+            "native Pump volume flag differs from the bank curve"
+        );
+        let count = if buy {
+            18
+        } else {
+            16 + usize::from(self.curve.curve.cashback)
+        };
+        ensure!(
+            instruction.accounts.len() == count,
+            "native Pump instruction account count differs"
+        );
+        for (index, expected) in [
+            (0, AccountMeta::new_readonly(self.keys[2], false)),
+            (2, AccountMeta::new_readonly(self.keys[1], false)),
+            (3, AccountMeta::new(self.keys[0], false)),
+            (4, AccountMeta::new(self.keys[4], false)),
+            (5, AccountMeta::new(self.keys[5], false)),
+            (6, AccountMeta::new(self.keys[6], true)),
+            (
+                if buy { 8 } else { 9 },
+                AccountMeta::new_readonly(self.curve.base_mint_layout.program, false),
+            ),
+        ] {
+            ensure!(
+                instruction.accounts[index] == expected,
+                "native Pump funding role or privilege differs"
+            );
+            ensure!(
+                instruction
+                    .accounts
+                    .iter()
+                    .filter(|meta| meta.pubkey == expected.pubkey)
+                    .count()
+                    == 1,
+                "native Pump funding role is aliased"
+            );
+        }
+        let curve_v2 =
+            get_bonding_curve_v2_pda(&self.keys[1]).context("native Pump secondary curve PDA")?;
+        let mut fixed_roles = vec![
+            (
+                7,
+                AccountMeta::new_readonly(solana_system_interface::program::ID, false),
+            ),
+            (10, accounts::EVENT_AUTHORITY_META),
+            (11, accounts::PUMPFUN_META),
+            (if buy { 14 } else { 12 }, accounts::FEE_CONFIG_META),
+            (if buy { 15 } else { 13 }, accounts::FEE_PROGRAM_META),
+            (count - 2, AccountMeta::new_readonly(curve_v2, false)),
+        ];
+        if buy {
+            fixed_roles.push((12, accounts::GLOBAL_VOLUME_ACCUMULATOR_META));
+        }
+        if buy || self.curve.curve.cashback {
+            let user_volume = get_user_volume_accumulator_pda(&self.keys[6])
+                .context("native Pump user volume PDA")?;
+            fixed_roles.push((
+                if buy { 13 } else { 14 },
+                AccountMeta::new(user_volume, false),
+            ));
+        }
+        for (index, expected) in fixed_roles {
+            ensure!(
+                instruction.accounts[index] == expected,
+                "native Pump fixed program or derived role differs"
+            );
+        }
+        ensure!(
+            instruction
+                .accounts
+                .iter()
+                .enumerate()
+                .all(|(i, meta)| meta.is_signer == (i == 6)),
+            "native Pump instruction contains an unexpected signer"
+        );
+        Ok(wire)
+    }
+}
+
 mod budget;
+#[cfg(test)]
+mod instruction_tests;
 #[cfg(test)]
 mod tests;

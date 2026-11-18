@@ -30,9 +30,16 @@
 
 ## 当前批次
 
-当前续原 NP-01 的 Pump.fun 离线证据批次，十七项新 Rust 测试待 CI：预期保留
-原1992名称、完整各2009、116有序步骤、62类型/189字段。仅测试构建的固定账户
-读取和校验，不改生产交易或 SDK；见 [账户证据](PUMP_SDK_ACCOUNT_EVIDENCE.md)。
+当前续原 NP-01 的 Pump.fun 金额/角色批次，五项新 Rust 测试待 CI：预期保留
+原2009名称、完整各2014、现有 Pump 专项22、116有序步骤、62类型/189字段。
+仅测试构建，不改生产交易或 SDK；见 [金额字节](PUMP_SDK_AMOUNT_WIRE.md)。
+
+原 Pump.fun 账户/资金证据 `be136c0` /
+[Actions 44297259103](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44297259103)
+首次运行 success，artifact `14427210893` 下载独立审计通过：专项17、完整并发2009
+（365.26秒）、串行2009（707.51秒）、父1992全保留且恰增17；HTTP208、116有序
+步骤及62类型/189原始字段；固定依赖指纹、源码身份和原始测试名核对通过。
+新模块仅测试启用，原服务器测试行为可原字节还原，未部署或发送交易。
 
 原 NP-03 普通存储与登记权限 `1d45d25` /
 [Actions 44289227980](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44289227980)

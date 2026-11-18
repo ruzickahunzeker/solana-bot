@@ -6,9 +6,14 @@
 
 ## 当前任务
 
-- 当前续原 NP-01 [Pump.fun 离线账户与资金证据](PUMP_SDK_ACCOUNT_EVIDENCE.md)：
-  固定四/八账户共享读取、IDL 前缀/规范 PDA、同 bank Clock/epoch、原生资金与支出
-  上限模型已有源码，十七项新增测试待独立 CI。仅测试构建，不接生产入口，不恢复 PumpAPI。
+- 当前续原 NP-01 [Pump.fun 金额与角色](PUMP_SDK_AMOUNT_WIRE.md)：五项新增真实 SDK
+  指令 builder 测试待独立 CI，区分精确输入/固定输出、绑定原快照关键账户/权限、
+  cashback 标志和固定程序/PDA；不授权费用收款账户，不接生产或签名入口。
+- 原 NP-01 [Pump.fun 离线账户与资金证据](PUMP_SDK_ACCOUNT_EVIDENCE.md)已独立验收：
+  `be136c0` / [Actions 44297259103](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44297259103)
+  / artifact `14427210893`。并发2009（365.26秒）、串行2009（707.51秒），原1992
+  名称保留、恰增17；专项17、HTTP208、116有序步骤、62类型/189字段及身份核对通过。
+  固定四/八账户、真实 Clock/epoch 与整数预算只在测试构建；未接实盘或恢复 PumpAPI。
 - 原 NP-03 [普通存储与登记权限](APP_STATE_RESOURCE_OWNERSHIP.md)已独立验收：
   `1d45d25` / [Actions 44289227980](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44289227980)
   / artifact `14421994464`。并发1992（384.69秒）、串行1992（733.56秒），原1989

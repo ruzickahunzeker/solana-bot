@@ -57,10 +57,14 @@ close refund is credited. The ceilings are supplied test bounds, not proven
 quotes, and this model grants no signing authority. Three tests cover exact
 balance, absent/existing ATA, direction mismatch, rounding and overflow.
 
-Seventeen Rust tests are expected in the focused CI step (six decoder/IDL,
-four loopback, four native funding decoder and three budget tests).
-Rust execution results are pending and will be recorded against the submitted
-commit, not inherited from the storage validation batch.
+Seventeen Rust tests ran in the focused CI step (six decoder/IDL, four loopback,
+four native funding decoder and three budget tests). Commit `be136c0` /
+[Actions 44297259103](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44297259103)
+completed successfully on its first attempt. Artifact `14427210893` was downloaded
+and independently checked: full concurrent 2009 (365.26s), serial 2009 (707.51s),
+all parent 1992 names retained with exactly 17 additions, focused 17, HTTP 208,
+116 ordered zero-exit steps, 62 types/189 raw field rejections, source and locked
+dependency identity. This does not validate any unpublished later source.
 
 Next: validate quote mint/account extensions against bounded bank evidence, then
 transaction policy, including min-out, fees, account permissions and the final
