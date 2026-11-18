@@ -179,7 +179,9 @@ async fn preflight_missing_loaded_wallet_baseline_precedes_cache_and_keeps_auth_
     for disabled in [false, true] {
         let mut state = state().await;
         if disabled {
-            Arc::get_mut(&mut state.config).unwrap().security.broadcast = BroadcastPolicy::Disabled;
+            state.edit_fixture_config(|config| {
+                config.security.broadcast = BroadcastPolicy::Disabled
+            });
         }
         let quote = bound();
         let cached = state
@@ -244,8 +246,9 @@ async fn preflight_http_returns_complete_report_and_keeps_nonexecutable_results_
         for nonexecutable in [false, true] {
             let (mut state, trace, cached) = with_preflight_source().await;
             if disabled {
-                Arc::get_mut(&mut state.config).unwrap().security.broadcast =
-                    BroadcastPolicy::Disabled;
+                state.edit_fixture_config(|config| {
+                    config.security.broadcast = BroadcastPolicy::Disabled
+                });
             }
             trace.nonexecutable.store(nonexecutable, Ordering::SeqCst);
             let response = json_body(

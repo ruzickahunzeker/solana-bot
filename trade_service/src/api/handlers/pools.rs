@@ -22,7 +22,9 @@ pub(crate) async fn warmup(
     headers: HeaderMap,
     Json(request): Json<WarmupRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
+    if let Err(response) =
+        auth::authorize_trade(state.request_settings.api_access_policy(), &headers, peer)
+    {
         return response;
     }
 
@@ -55,7 +57,9 @@ pub(crate) async fn resolve_pool(
     headers: HeaderMap,
     Json(request): Json<ResolvePoolRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
+    if let Err(response) =
+        auth::authorize_trade(state.request_settings.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     let mint = match parse_resolve_mint(&request.mint) {
@@ -74,10 +78,12 @@ pub(crate) async fn resolve_sol_hop(
     headers: HeaderMap,
     Json(request): Json<ResolveSolHopRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
+    if let Err(response) =
+        auth::authorize_trade(state.request_settings.api_access_policy(), &headers, peer)
+    {
         return response;
     }
-    if !state.config.stonkfun_via_sol.enabled {
+    if !state.request_settings.stonkfun_via_sol_enabled() {
         return (
             StatusCode::OK,
             Json(ResolveSolHopResponse {

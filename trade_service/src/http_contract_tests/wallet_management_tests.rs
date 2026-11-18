@@ -251,11 +251,12 @@ async fn wallet_management_http_auth_extractors_and_broadcast_policy_stay_outsid
     use crate::{config::security::WalletAdminAuth, domain::execution_policy::BroadcastPolicy};
     let backend = Backend::new();
     let mut state = setup(&backend).await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.security.wallet_admin = WalletAdminAuth::Separate {
-        token: "test-wallet-admin-only".into(),
-    };
-    config.security.broadcast = BroadcastPolicy::Disabled;
+    state.edit_fixture_config(|config| {
+        config.security.wallet_admin = WalletAdminAuth::Separate {
+            token: "test-wallet-admin-only".into(),
+        };
+        config.security.broadcast = BroadcastPolicy::Disabled;
+    });
     let app = http::router(state);
     let admin = "Bearer test-wallet-admin-only";
     for (method, path, body) in [

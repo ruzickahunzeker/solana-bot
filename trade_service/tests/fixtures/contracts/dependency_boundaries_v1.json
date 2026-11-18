@@ -32,6 +32,7 @@
     {"id": "http_headers", "path": "axum::http::HeaderMap"},
     {"id": "app_state", "path": "pump_trade_service::AppState", "probe": "crate::AppState"},
     {"id": "config", "path": "pump_trade_service::config::Config", "probe": "crate::config::Config"},
+    {"id": "request_settings", "path": "pump_trade_service::config::request_settings::RequestSettings", "probe": "crate::config::request_settings::RequestSettings"},
     {"id": "trade_index", "path": "pump_trade_service::state::TradeStore", "probe": "crate::state::TradeStore"},
     {"id": "trade_storage", "path": "pump_trade_service::persistence::TradePersistence", "probe": "crate::persistence::TradePersistence"},
     {"id": "blockhash_cache", "path": "pump_trade_service::blockhash_cache::BlockhashCache", "probe": "crate::blockhash_cache::BlockhashCache"},

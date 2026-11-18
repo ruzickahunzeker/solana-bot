@@ -347,10 +347,11 @@ async fn ordinary_intake_storage_failures_preserve_durable_shadow_and_best_effor
 #[tokio::test]
 async fn ordinary_intake_all_existing_normalized_samples_match_original_dto_command_mapping() {
     let mut f = Fixture::new(TradePersistenceMode::Memory).await;
-    let config = Arc::get_mut(&mut f.state.config).unwrap();
-    config.stonkfun_via_sol.enabled = true;
-    config.default_tip_sol = 0.0001;
-    config.pumpapi.default_priority_fee_sol = 0.0002;
+    f.state.edit_fixture_config(|config| {
+        config.stonkfun_via_sol.enabled = true;
+        config.default_tip_sol = 0.0001;
+        config.pumpapi.default_priority_fee_sol = 0.0002;
+    });
     let fixtures: serde_json::Value = serde_json::from_str(include_str!(
         "../../../tests/fixtures/contracts/trade_normalization_v1.json"
     ))

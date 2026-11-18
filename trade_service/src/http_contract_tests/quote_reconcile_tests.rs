@@ -89,7 +89,9 @@ async fn quote_reconcile_http_keeps_full_v1_response_and_no_store_even_when_broa
     for disabled in [false, true] {
         let (mut state, h) = injected(true).await;
         if disabled {
-            Arc::get_mut(&mut state.config).unwrap().security.broadcast = BroadcastPolicy::Disabled;
+            state.edit_fixture_config(|config| {
+                config.security.broadcast = BroadcastPolicy::Disabled
+            });
         }
         let app = http::router(state.clone());
         let value = body(send(&app, "GET", &path(), LOCAL, Some(TOKEN), None).await).await;

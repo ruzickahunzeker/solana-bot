@@ -8,6 +8,7 @@ mod quote_reconcile_tests;
 mod quote_route_group_tests;
 mod quote_submit_tests;
 mod readiness_tests;
+mod request_settings_tests;
 mod sol_transfer_execution_tests;
 mod sol_transfer_tests;
 mod state_resource_tests;
@@ -283,6 +284,9 @@ pub(crate) async fn state() -> AppState {
                 ),
                 None::<crate::adapters::persistence::wsol_conversion::SqliteWsolJournal>,
             ),
+        ),
+        request_settings: Arc::new(
+            crate::config::request_settings::RequestSettings::from_config(&config),
         ),
         config,
         wallets,
@@ -759,13 +763,15 @@ async fn submission_status_route_is_protected_and_requires_explicit_identity() {
 
 async fn separate_admin_state() -> AppState {
     let mut state = state().await;
-    Arc::get_mut(&mut state.config).unwrap().security = crate::config::SecurityConfig::parse(
-        None,
-        Some("separate"),
-        Some("admin-contract-test-only"),
-        "http-contract-test-only",
-    )
-    .unwrap();
+    state.edit_fixture_config(|config| {
+        config.security = crate::config::SecurityConfig::parse(
+            None,
+            Some("separate"),
+            Some("admin-contract-test-only"),
+            "http-contract-test-only",
+        )
+        .unwrap();
+    });
     state
 }
 
@@ -974,11 +980,12 @@ async fn api_access_policy_config_projection_borrows_only_original_access_values
 #[tokio::test]
 async fn hard_broadcast_policy_blocks_transfer_and_wsol_before_storage_or_wallet_access() {
     let mut state = state().await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.security.broadcast = crate::domain::execution_policy::BroadcastPolicy::Disabled;
-    config.conversion_live_enabled = true;
-    config.conversion_quotes_enabled = true;
-    config.enable_simulate = false;
+    state.edit_fixture_config(|config| {
+        config.security.broadcast = crate::domain::execution_policy::BroadcastPolicy::Disabled;
+        config.conversion_live_enabled = true;
+        config.conversion_quotes_enabled = true;
+        config.enable_simulate = false;
+    });
     let app = http::router(state.clone());
     for (path, body) in [
         (
@@ -1046,10 +1053,9 @@ async fn broadcast_policy_resolves_missing_and_explicit_simulation_without_mev_b
         models::{ExecutionMethod, MevProvider, TradeRequest},
         validation::{validate_execution_policy, validate_trade},
     };
-    let mut state = state().await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
+    let mut config = (*state().await.config).clone();
     let request: TradeRequest = serde_json::from_value(trade()).unwrap();
-    let mut normalized = validate_trade(&request, config).unwrap();
+    let mut normalized = validate_trade(&request, &config).unwrap();
     for disabled in [false, true] {
         config.security.broadcast = if disabled {
             BroadcastPolicy::Disabled
@@ -1073,7 +1079,7 @@ async fn broadcast_policy_resolves_missing_and_explicit_simulation_without_mev_b
                         || ((method != ExecutionMethod::Sdk || aggregator)
                             && simulate.unwrap_or(default_simulate));
                     assert_eq!(
-                        validate_execution_policy(&normalized, config).is_ok(),
+                        validate_execution_policy(&normalized, &config).is_ok(),
                         expected
                     );
                 }
@@ -1090,7 +1096,7 @@ async fn executor_checks_policy_even_when_http_is_bypassed() {
         validation::validate_trade,
     };
     let mut state = state().await;
-    Arc::get_mut(&mut state.config).unwrap().security.broadcast = BroadcastPolicy::Disabled;
+    state.edit_fixture_config(|config| config.security.broadcast = BroadcastPolicy::Disabled);
     let request: TradeRequest = serde_json::from_value(trade()).unwrap();
     let normalized = validate_trade(&request, &state.config).unwrap();
     let record = state

@@ -1,5 +1,8 @@
 # NP-03 / TS-09-A 生产 AppState 资源所有权
 
+原 NP-03 的生产请求配置已从完整启动配置拆出，验证进度见
+[AppState 请求配置](APP_STATE_REQUEST_SETTINGS.md)。本页既有资源与任务交接不变。
+
 日期：2026-11-14。状态：源码与离线验证通过，未部署；不是完整 AppState 或基础设施隔离完成。
 
 后续 NP-01-B3a 已完成下述 Quote 签名边界过期复现与最小修复，见 `QUOTE_SIGNING_FRESHNESS.md`；其并发/串行各 989、HTTP 196 不改本页 986 的历史检查点含义。
@@ -9,7 +12,7 @@
 - 逐项核对生产读取点后，将 `AppState.wallets`、`wallet_repository`、`aggregator_quotes`、`conversions` 四个旧句柄限定为 `cfg(test)`。普通生产构建不包含这些字段；测试保留原名称以兼容已有夹具。
 - bootstrap 仍创建并注入原 registry/repository/cache/store Arcs，未重新建立运行时、缓存、数据库或幂等权威，未调整服务初始化次序。
 - 实际请求通过已接入的项目服务使用原资源；四个冗余字段不再作为生产 AppState 的绕过入口。
-- full Config、普通 admission/index/persistence、参数/blockhash cache 和项目服务 ports 仍在 AppState。此项不能冒充这些剩余资源或接受入口均已隔离。
+- 在此历史检查点，full Config、普通 admission/index/persistence、参数/blockhash cache 和项目服务 ports 仍在 AppState。后继 `APP_STATE_REQUEST_SETTINGS.md` 只拆了 full Config；此项不代表其他具体资源均已隔离。
 
 ## 两项新增合同
 
@@ -67,3 +70,18 @@ git diff --check                                             # passed
 后继本批源码接入原 NP-03 的普通任务登记/有界等待，但不把它当全服务/SDK worker supervisor，
 也不释放 owner 或换 key/路线/backend 重签。新关闭窗口和参数的实际边界见
 `ORDINARY_TRADE_TASK_LIFECYCLE.md`；17 项新测试已由 c6f2745 独立 CI 验收，不改线上配置或服务状态。
+
+## SDK 生命周期边界
+
+这是原 NP-03 余项的源码核对，与 NP-01 的签名前授权/原字节账本共用既有验收，
+不新增一套任务跟踪器，不调整 SDK 6.0.2。
+
+| 边界 | 现有所有权 | 下一项证明 |
+| --- | --- | --- |
+| 应用任务 | `TradeTasks` 记录 admission 和 executor，`service_shutdown::finish` 等待它们，然后关闭原读取和 Shadow 资源 | 已验收的 drain 不重做，不把执行 future 已返回当成 provider 已完成 |
+| Opaque SDK 买卖 | `lane_execution` 只将一个已选 sender 交给 SDK；`async_executor.rs` 创建进程级队列/runtime。Job 自持 payer、指令和 sender。五秒结果等待到期可早于 worker 完成；`wait_for_all_submits` 也有界 | 使用阻塞的离线 sender 见证应用调用结束后工作仍可能存在，且外层不换 lane、重签或重发。不添加虚假的 cancel/join；实现上优先继续代替 opaque 签发入口 |
+| 受控 DAMM Durable Live | 原 journal/owner 读回绑定签名字节后走受控 sender；不是 SDK 全量买卖入口 | 保留既有原字节和未知结果合同；不把它声称为所有协议、存储模式或 signer 都已覆盖 |
+| Provider 连接 | Temporal ping/QUIC driver 与 Astralane ping 拥有各自 SDK 句柄、停机或 Drop 行为。应用没有通用的 await/join 权限 | 独立核对连接保活的生命周期和耗时，不能从 Registry/Router 的 Weak 释放推导后台任务已停止。供应商送达及真实关停仍需单独授权 |
+
+就地复用原 owner、测试 transport 与 no-fallback 合同。若固定 SDK 没有任务完成或取消接口，
+保留未验证状态，不能通过扩大超时或改文案冒充退出完成。未运行真钱包、节点或交易。

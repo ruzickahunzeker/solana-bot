@@ -1,8 +1,8 @@
 # SOL Transfer Broadcast Ownership
 
-Continues the existing NP-03 independent-operation ownership work. The new
-module and tests are wired; independent Rust acceptance is pending. The
-confirmation baseline `c9394e7` passed acceptance in Actions `44257386302`.
+Continues the existing NP-03 independent-operation ownership work. Independent
+offline Rust acceptance passed at `f0c7a73`. The confirmation baseline
+`c9394e7` passed acceptance in Actions `44257386302`.
 
 ## Invariants
 
@@ -42,3 +42,13 @@ the authorized source-only CI after wiring: three new names, 1,981 per suite,
 confirmation parent. Local formatting, source comparison,
 workflow/policy and SDK provenance checks pass. Do not build locally, modify SDK
 dependencies, deploy, restart or use production wallets, databases or RPCs.
+
+[Actions 44262897322](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44262897322)
+succeeded on the first attempt at `f0c7a73dac3cc1db29fabf761e373836cbd4a06f`.
+Artifact `14410522852` independently verified all 108 zero-exit steps,
+57 types and 174 compiler-rejected fields, three focused witnesses, identical
+concurrent/serial test names (1,981 each), and no loss of the 1,978 parent
+names. Concurrent finished in 344.02s; serial in 667.31s. The immutable
+tree matched 1,169 blobs and 14,028,424 bytes, with the exact 12 changed paths
+and original modes. The six modified source/runner paths preserve the original
+send, guards, confirmation oracle, and assertions. No runtime action taken.

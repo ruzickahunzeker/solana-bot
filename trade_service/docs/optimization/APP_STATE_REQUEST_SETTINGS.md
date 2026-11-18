@@ -1,0 +1,56 @@
+# AppState Request Settings
+
+Continues the original NP-03/TS-09-A `AppState` ownership work. Production
+wiring and three test witnesses are in place; cloud acceptance is pending.
+This does not replace the trade store, claim authority, cache, worker or any
+existing Application port.
+
+## Boundary
+
+Previously, production request state kept `Arc<Config>`, including startup
+wallet inputs, provider settings, storage configuration and runtime construction
+options. The new request state retains only:
+
+| Consumer | Required settings |
+| --- | --- |
+| HTTP auth | trade token, client IP list, admin mode/token |
+| Ordinary admission and execution | existing `TradeIntakeSettings` and `OrdinaryExecutionSettings` projections |
+| Ordinary response | existing response wait in milliseconds |
+| Pools and capabilities | existing `TradeValidationSettings.via_sol_enabled` |
+| Native transfer and WSOL submission | existing broadcast and feature policies |
+
+Produce one immutable `RequestSettings` during bootstrap. Request state carries
+one shared handle; it does not retain startup `Config` or gain another runtime
+source. Only the required HTTP auth values are copied once; all request
+authentication continues to borrow those values. Do not log or serialize this
+settings record. Ownership separation does not guarantee secret zeroization or
+remove credentials from their actual wallet storage, registry or client owners.
+
+Keep the `Config` parser, startup resource initialization, default values and
+shutdown settings unchanged. `main` can extract its existing shutdown deadlines
+and stop retaining the full startup config after the listening log. There is no
+reload behavior, new configuration key or new privilege. Preserve auth and
+validation order, capability payloads, trade identity/hash, amount defaults,
+receipt wait behavior, and every table/codec unchanged.
+
+## Fixtures And Acceptance
+
+Keep test-only `Config` for the old decode/hash/default oracles and resource
+fixture identity assertions. Production handlers and executor must call the
+same narrow settings in test binaries; do not use `cfg(test)` to read the full
+config inside those getters. Convert the request/execute fixture mutations to
+an explicit test-only reprojection helper, preserving original assertions and
+one snapshot per cloned state. Record plain-config mutations used only for
+old oracles separately rather than silently altering their expected paths.
+
+Direct witnesses verify that the narrow settings survive release of the source
+`Arc<Config>` and that the five flags, broadcast and all scalar defaults project
+without coupling. An actual HTTP fixture must verify that the router uses the
+same projection and that updating a test fixture cannot mutate earlier clones.
+Require existing auth/HTTP/intake/execution/persistence suites plus the new tests
+and an independent compiler boundary check. The credential-bearing projection
+must not enter Application, Domain or Protocol; each gets only its applicable
+policy or existing port. Expect three added tests, retention of every broadcast
+baseline test, and three extra type-rejection fields. No local service Cargo check/link,
+release build, credential access, production settings inspection, SDK change,
+service restart, deployment or trade is part of this work.

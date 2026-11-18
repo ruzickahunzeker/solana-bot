@@ -30,8 +30,16 @@
 
 ## 当前批次
 
-当前原 NP-03 SOL 转账广播所有权待独立验收：原1978名称全保留、恰增3，完整各
-1981、108步、57类型/174字段，不沿用父批结果。见 `SOL_TRANSFER_BROADCAST_OWNERSHIP.md`。
+后继原 NP-03 AppState 请求配置源码已接，基于已验收转账广播快照发布独立源码批。
+本批预期保留广播基线原1981名称，恰增3，完整各1984、109步、58类型/177字段；
+见 [请求配置](APP_STATE_REQUEST_SETTINGS.md)。本地策略检查不替代云端编译。
+
+原 NP-03 SOL 转账广播所有权 `f0c7a73dac3cc1db29fabf761e373836cbd4a06f` /
+[Actions 44262897322](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44262897322)
+首次运行 success；artifact `14410522852` 下载核对。完整并发1981（344.02秒）/
+串行1981（667.31秒），原1978名称全保留、恰增3、108步、57类型/174原始字段。
+1169文件/14,028,424字节/模式及六处拆分回归用固定提交重建。未重跑、未部署。
+见 [转账广播所有权](SOL_TRANSFER_BROADCAST_OWNERSHIP.md)。
 
 最近独立验收：转账确认 `c9394e7` / [Actions 44257386302](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44257386302)
 及 artifact `14408765651`。完整各1978、保留1960并恰增18、107步和174字段通过；

@@ -40,6 +40,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertTrue({"damm_quote_reader", "damm_quote_accounts", "damm_quote_packet"} <= types)
         self.assertIn("sol_transfer_session", types)
         self.assertIn("sol_transfer_confirmation_reader", types)
+        self.assertIn("request_settings", types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):
@@ -74,6 +75,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         for key, line in expected.items():
             self.assertIn(f"pub {key}: Option<", lines[line - 1])
         self.assertIn("HiddenSdkClient", lines[expected["sdk_client"] - 1])
+        self.assertIn("Option<crate::config::request_settings::RequestSettings>", lines[expected["request_settings"] - 1])
 
     def test_missing_rejection_or_unrelated_compiler_error_cannot_pass(self):
         expected = {"src/application/mod.rs": {"sdk": 3}, "src/domain/mod.rs": {"sdk": 4}}

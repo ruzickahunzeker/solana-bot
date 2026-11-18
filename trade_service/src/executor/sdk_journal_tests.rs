@@ -347,7 +347,8 @@ async fn sdk_runtime_dispatch_disabled_policy_stops_before_claim_or_wallet_resol
         Pool::MeteoraDammV2,
     )
     .await;
-    Arc::make_mut(&mut f.state.config).security.broadcast = BroadcastPolicy::Disabled;
+    f.state
+        .edit_fixture_config(|config| config.security.broadcast = BroadcastPolicy::Disabled);
     run(&f).await;
     assert_eq!(trace.resolves.load(Ordering::SeqCst), 0);
     assert_eq!(
@@ -486,7 +487,9 @@ async fn sdk_runtime_dispatch_buy_disabled_policy_and_stale_hash_never_enter_sdk
             )
             .await;
             if disabled {
-                Arc::make_mut(&mut f.state.config).security.broadcast = BroadcastPolicy::Disabled;
+                f.state.edit_fixture_config(|config| {
+                    config.security.broadcast = BroadcastPolicy::Disabled
+                });
             } else {
                 f.state.blockhash_cache = Arc::new(crate::BlockhashCache::default());
             }

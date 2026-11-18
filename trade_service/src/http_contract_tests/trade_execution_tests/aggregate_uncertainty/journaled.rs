@@ -326,9 +326,7 @@ async fn journaled_http_preserves_wire_and_original_signature_without_exposing_o
 #[tokio::test]
 async fn signed_blob_write_failure_does_not_send_or_blindly_mirror_unpersisted_signature() {
     let (mut state, trace, evidence) = setup(Receipt::Match).await;
-    Arc::get_mut(&mut state.config)
-        .unwrap()
-        .trade_response_wait_ms = 30;
+    state.edit_fixture_config(|config| config.trade_response_wait_ms = 30);
     let pool = state.persistence.pool_for_tests();
     sqlx::raw_sql("CREATE TRIGGER deny_signed_blob BEFORE UPDATE OF signed_transaction ON ordinary_execution_claims WHEN NEW.signed_transaction IS NOT NULL BEGIN SELECT RAISE(ABORT,'synthetic signed write failure'); END;").execute(&pool).await.unwrap();
     let app = http::router(state.clone());

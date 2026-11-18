@@ -35,7 +35,7 @@ async fn fixture() -> (AppState, Arc<ConversionStore>) {
     let mut config = (*state.config).clone();
     config.conversion_quotes_enabled = true;
     config.conversion_live_enabled = true;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     let store = Arc::new(ConversionStore::new("sqlite::memory:").await.unwrap());
     store.save_quote(&quote()).await.unwrap();
     state.conversions = Some(store.clone());
@@ -102,7 +102,7 @@ async fn application_fixture() -> (
     let mut config = (*state.config).clone();
     config.conversion_live_enabled = true;
     config.conversion_quotes_enabled = true;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     state.conversions = Some(shared.store.clone());
     state.wsol_submissions = service;
     let wire = WsolSubmission::from(&crate::application::wsol_submission::tests::input());
@@ -728,7 +728,7 @@ async fn wsol_store_and_live_policy_errors_precede_keys_and_wallets() {
     let mut state = state().await;
     let mut config = (*state.config).clone();
     config.conversion_live_enabled = true;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     let app = http::router(state);
     let input = submission(json!({"idempotency_key":""}));
     error_body(
@@ -1025,7 +1025,7 @@ async fn query_fixture(
     let mut config = (*state.config).clone();
     config.security.broadcast = crate::domain::execution_policy::BroadcastPolicy::Disabled;
     config.conversion_live_enabled = false;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     state.conversions = Some(shared.store.clone());
     state.wsol_queries = queries;
     (http::router(state), shared)
@@ -1100,7 +1100,7 @@ async fn wsol_recovery_router_during_inflight_submit_and_cancellation_does_not_a
     let mut state = state().await;
     let mut config = (*state.config).clone();
     config.conversion_live_enabled = true;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     state.wsol_submissions = submissions;
     state.wsol_queries = queries;
     let app = http::router(state);
@@ -1337,7 +1337,7 @@ async fn wsol_recovery_router_recovers_lost_reservation_ack_after_file_reopen_wi
     let mut initial_state = state().await;
     let mut config = (*initial_state.config).clone();
     config.conversion_live_enabled = true;
-    initial_state.config = Arc::new(config);
+    initial_state.replace_fixture_config(Arc::new(config));
     initial_state.wsol_submissions = submit;
     let app = http::router(initial_state);
     let response = post(
@@ -1603,7 +1603,7 @@ async fn wsol_status_router_validates_actual_rpc_shape_and_explicit_finality_wit
         let mut config = (*state.config).clone();
         config.conversion_live_enabled = false;
         config.security.broadcast = crate::domain::execution_policy::BroadcastPolicy::Disabled;
-        state.config = Arc::new(config);
+        state.replace_fixture_config(Arc::new(config));
         let request: WsolSubmission = serde_json::from_value(submission(json!({}))).unwrap();
         let (original, _) = store.reserve_live(&request, &quote(), 1).await.unwrap();
         let signature = solana_sdk::signature::Signature::from([7; 64]).to_string();

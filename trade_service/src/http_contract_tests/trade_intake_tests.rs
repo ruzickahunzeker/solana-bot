@@ -77,9 +77,10 @@ impl OrdinaryExecutionWallet for Backend {
 #[tokio::test]
 async fn ordinary_intake_http_retains_wallet_identity_lease_through_dispatch_and_response_wait() {
     let mut state = state().await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.trade_response_wait_ms = 5000;
-    config.blockhash_max_age_ms = u64::MAX;
+    state.edit_fixture_config(|config| {
+        config.trade_response_wait_ms = 5000;
+        config.blockhash_max_age_ms = u64::MAX;
+    });
     state.blockhash_cache = Arc::new(BlockhashCache::with_snapshot_for_tests(
         Blockhash::from_bytes([9; 32]),
         crate::state::now_ms(),
@@ -128,9 +129,10 @@ fn task_request(key: &str) -> Value {
 
 async fn task_fixture(mode: TradePersistenceMode, wait: u64) -> (AppState, Arc<Trace>) {
     let mut state = state().await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.trade_response_wait_ms = wait;
-    config.blockhash_max_age_ms = u64::MAX;
+    state.edit_fixture_config(|config| {
+        config.trade_response_wait_ms = wait;
+        config.blockhash_max_age_ms = u64::MAX;
+    });
     state.blockhash_cache = Arc::new(BlockhashCache::with_snapshot_for_tests(
         Blockhash::from_bytes([9; 32]),
         crate::state::now_ms(),

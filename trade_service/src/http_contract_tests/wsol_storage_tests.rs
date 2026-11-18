@@ -27,7 +27,7 @@ impl Fixture {
         let mut config = (*state.config).clone();
         config.conversion_live_enabled = true;
         config.conversion_quotes_enabled = true;
-        state.config = Arc::new(config);
+        state.replace_fixture_config(Arc::new(config));
         state.conversions = Some(store);
         state.wsol_submissions = submissions;
         state.wsol_queries = queries;

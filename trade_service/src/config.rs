@@ -6,6 +6,7 @@ use std::net::{IpAddr, SocketAddr};
 
 use crate::wallet_crypto;
 pub(crate) mod ordinary_observation;
+pub(crate) mod request_settings;
 mod rpc;
 pub(crate) mod security;
 pub(crate) mod shutdown;

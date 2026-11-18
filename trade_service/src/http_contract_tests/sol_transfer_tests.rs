@@ -103,10 +103,8 @@ async fn legacy_transfer_auth_extractors_broadcast_policy_and_key_error_priority
         "idempotency_key must be 1..128 characters",
     )
     .await;
-    state.config = Arc::new({
-        let mut config = (*state.config).clone();
+    state.edit_fixture_config(|config| {
         config.security.broadcast = crate::domain::execution_policy::BroadcastPolicy::Disabled;
-        config
     });
     let app = http::router(state);
     error_body(
@@ -254,10 +252,8 @@ async fn legacy_transfer_reserves_exact_units_before_missing_runtime_and_duplica
         let mut request = transfer(json!({"to_address":format!(" \t{}\n", address(2))}));
         let id = if mode == 4 { "system" } else { "source" };
         if mode == 4 {
-            state.config = Arc::new({
-                let mut config = (*state.config).clone();
+            state.edit_fixture_config(|config| {
                 config.allow_internal_system_wallet_transfer = true;
-                config
             });
         }
         if mode == 1 || mode == 2 {

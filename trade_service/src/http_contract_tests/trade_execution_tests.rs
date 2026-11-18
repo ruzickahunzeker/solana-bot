@@ -206,10 +206,11 @@ impl OrdinaryExecutionWallet for Wallet {
 
 async fn with_backend(mode: TradePersistenceMode) -> (AppState, Arc<Trace>) {
     let mut state = state().await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.trade_response_wait_ms = 5_000;
-    config.blockhash_max_age_ms = u64::MAX;
-    config.pumpapi.enabled = true;
+    state.edit_fixture_config(|config| {
+        config.trade_response_wait_ms = 5_000;
+        config.blockhash_max_age_ms = u64::MAX;
+        config.pumpapi.enabled = true;
+    });
     if mode != TradePersistenceMode::Memory {
         state.persistence = Arc::new(
             TradePersistence::new(&TradePersistenceConfig {
@@ -506,8 +507,9 @@ async fn pumpapi_h2a_unsigned_preview_http_status_null_signature_and_replay_are_
         for success in [false, true] {
             for side in ["buy", "sell"] {
                 let (mut state, trace) = with_backend(mode).await;
-                Arc::get_mut(&mut state.config).unwrap().security.broadcast =
-                    BroadcastPolicy::Disabled;
+                state.edit_fixture_config(|config| {
+                    config.security.broadcast = BroadcastPolicy::Disabled
+                });
                 *trace.preview_outcome.lock().unwrap() = Some(success);
                 let app = http::router(state.clone());
                 let mut body = buy("unsigned-preview");
@@ -1244,7 +1246,7 @@ async fn real_ordinary_sol_buy_router_preserves_sol_units_and_rejects_cross_quot
 #[tokio::test]
 async fn disabled_policy_rejects_valid_identity_before_order_reservation_or_backend() {
     let (mut state, trace) = with_backend(TradePersistenceMode::Memory).await;
-    Arc::get_mut(&mut state.config).unwrap().security.broadcast = BroadcastPolicy::Disabled;
+    state.edit_fixture_config(|config| config.security.broadcast = BroadcastPolicy::Disabled);
     let app = http::router(state.clone());
     error_body(
         send(
@@ -1325,9 +1327,7 @@ async fn pending_submission_returns_202_and_original_order_can_be_queried_after_
     ] {
         for wait_ms in [0, 1] {
             let (mut state, trace) = with_backend(mode).await;
-            Arc::get_mut(&mut state.config)
-                .unwrap()
-                .trade_response_wait_ms = wait_ms;
+            state.edit_fixture_config(|config| config.trade_response_wait_ms = wait_ms);
             let gate = Arc::new(Notify::new());
             *trace.gate.lock().unwrap() = Some(gate.clone());
             let app = http::router(state);

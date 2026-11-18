@@ -409,9 +409,7 @@ fn assert_one_submission(trace: &Trace, evidence: &Evidence) {
 async fn ordinary_aggregate_claim_storage_failure_preserves_pending_http_order_and_key() {
     let (mut state, trace, evidence) =
         with_legacy_backend(TradePersistenceMode::Durable, Receipt::Match).await;
-    Arc::get_mut(&mut state.config)
-        .unwrap()
-        .trade_response_wait_ms = 30;
+    state.edit_fixture_config(|config| config.trade_response_wait_ms = 30);
     let pool = state.persistence.pool_for_tests();
     sqlx::raw_sql("CREATE TRIGGER deny_ordinary_claim BEFORE INSERT ON ordinary_execution_claims BEGIN SELECT RAISE(ABORT,'synthetic claim storage failure'); END;")
         .execute(&pool).await.unwrap();

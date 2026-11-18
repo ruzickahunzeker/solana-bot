@@ -78,7 +78,7 @@ async fn execute_with_claims<C: OrdinaryExecutionClaimer>(
         state.ordinary_execution.as_ref(),
         state.ordinary_sol_buy.as_ref(),
         state.param_cache_writer.as_ref(),
-        state.config.ordinary_execution_settings(),
+        state.request_settings.execution(),
     )
     .execute(execution, claims)
     .await;

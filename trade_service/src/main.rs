@@ -80,6 +80,8 @@ use crate::wallets::WalletRegistry;
 #[derive(Clone)]
 pub struct AppState {
     pub(crate) trade_tasks: crate::infrastructure::trade_tasks::TradeTasks,
+    pub(crate) request_settings: Arc<config::request_settings::RequestSettings>,
+    #[cfg(test)]
     pub config: Arc<Config>,
     // Fixture handles only; production services own their original runtime resources.
     #[cfg(test)]
@@ -130,7 +132,7 @@ impl AppState {
             self.idempotency.as_ref(),
             self.wallet_identity.as_ref(),
             &crate::adapters::sdk::address_parser::SdkAddressParser,
-            self.config.trade_intake_settings(),
+            self.request_settings.intake(),
             crate::state::new_request_id,
             crate::state::now_ms,
         )
@@ -188,6 +190,8 @@ async fn main() -> anyhow::Result<()> {
         wallet_admin_auth_mode = config.security.wallet_admin.mode_name(),
         "trade service listening"
     );
+    let shutdown = config.shutdown;
+    drop(config);
     let observation_worker = observation_plan.map(|plan| plan.start());
     let result = axum::serve(
         listener,
@@ -202,14 +206,14 @@ async fn main() -> anyhow::Result<()> {
     let (cleanup, vanity_cleanup) = tokio::join!(
         crate::infrastructure::service_shutdown::finish(
             &trade_tasks,
-            std::time::Duration::from_millis(config.shutdown.trade_task_drain_timeout_ms),
+            std::time::Duration::from_millis(shutdown.trade_task_drain_timeout_ms),
             blockhash_refresher,
             observation_worker,
             persistence.as_ref(),
-            std::time::Duration::from_millis(config.shutdown.shadow_drain_timeout_ms),
+            std::time::Duration::from_millis(shutdown.shadow_drain_timeout_ms),
         ),
         vanity_worker.shutdown(std::time::Duration::from_millis(
-            config.shutdown.trade_task_drain_timeout_ms
+            shutdown.trade_task_drain_timeout_ms
         )),
     );
     result?;

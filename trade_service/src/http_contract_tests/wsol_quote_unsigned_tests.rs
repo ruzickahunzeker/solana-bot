@@ -35,7 +35,7 @@ async fn quote_fixture(mode: usize) -> (Router, Arc<queries::Shared>) {
     let mut state = state().await;
     let mut config = (*state.config).clone();
     config.security.broadcast = BroadcastPolicy::Disabled;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     state.wsol_queries = service;
     (http::router(state), shared)
 }
@@ -46,7 +46,7 @@ async fn simulation_fixture(mode: usize) -> (Router, Arc<submissions::Shared>) {
     let mut config = (*state.config).clone();
     config.security.broadcast = BroadcastPolicy::Disabled;
     config.conversion_live_enabled = false;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     state.wsol_submissions = service;
     (http::router(state), shared)
 }

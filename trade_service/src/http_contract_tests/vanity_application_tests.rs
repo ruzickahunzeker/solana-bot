@@ -126,11 +126,12 @@ async fn vanity_application_http_keeps_extractor_admin_loopback_and_broadcast_po
     use crate::{config::security::WalletAdminAuth, domain::execution_policy::BroadcastPolicy};
     let worker = Worker::new();
     let mut state = setup(&worker).await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.security.wallet_admin = WalletAdminAuth::Separate {
-        token: "vanity-test-admin-only".into(),
-    };
-    config.security.broadcast = BroadcastPolicy::Disabled;
+    state.edit_fixture_config(|config| {
+        config.security.wallet_admin = WalletAdminAuth::Separate {
+            token: "vanity-test-admin-only".into(),
+        };
+        config.security.broadcast = BroadcastPolicy::Disabled;
+    });
     let app = http::router(state);
     let admin = "Bearer vanity-test-admin-only";
     for (method, path, body) in [

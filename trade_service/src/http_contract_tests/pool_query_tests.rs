@@ -76,10 +76,7 @@ fn pool_query_response_v1_baseline() {
 #[tokio::test]
 async fn invalid_query_parameters_fail_before_sdk_access() {
     let mut state = state().await;
-    Arc::get_mut(&mut state.config)
-        .unwrap()
-        .stonkfun_via_sol
-        .enabled = true;
+    state.edit_fixture_config(|config| config.stonkfun_via_sol.enabled = true);
     let app = http::router(state.clone());
     for (path, body, message) in [
         (
@@ -455,10 +452,7 @@ async fn resolve_and_warmup_failure_preserve_old_cache_and_502_contract() {
 #[tokio::test]
 async fn enabled_sol_hop_returns_original_shape_without_metadata_cache_write() {
     let (mut state, calls) = with_backend(hint(Pool::Pump), None).await;
-    Arc::get_mut(&mut state.config)
-        .unwrap()
-        .stonkfun_via_sol
-        .enabled = true;
+    state.edit_fixture_config(|config| config.stonkfun_via_sol.enabled = true);
     let response = send(
         &http::router(state.clone()),
         "POST",
@@ -483,10 +477,7 @@ async fn sol_hop_failure_keeps_200_unavailable_and_url_redaction() {
         ("hop-url", "RPC <redacted-url> timed out"),
     ] {
         let (mut state, calls) = with_backend(hint(Pool::Pump), Some(failure)).await;
-        Arc::get_mut(&mut state.config)
-            .unwrap()
-            .stonkfun_via_sol
-            .enabled = true;
+        state.edit_fixture_config(|config| config.stonkfun_via_sol.enabled = true);
         let response = send(
             &http::router(state),
             "POST",
@@ -541,10 +532,7 @@ async fn unauthorized_or_disabled_queries_never_invoke_backend_or_cache() {
 #[tokio::test]
 async fn sol_hop_keeps_literal_quote_address_instead_of_applying_warmup_aliases() {
     let (mut state, calls) = with_backend(hint(Pool::Pump), None).await;
-    Arc::get_mut(&mut state.config)
-        .unwrap()
-        .stonkfun_via_sol
-        .enabled = true;
+    state.edit_fixture_config(|config| config.stonkfun_via_sol.enabled = true);
     let response = send(
         &http::router(state),
         "POST",
@@ -564,10 +552,7 @@ async fn sol_hop_keeps_literal_quote_address_instead_of_applying_warmup_aliases(
 #[tokio::test]
 async fn read_input_boundary_retains_required_errors_and_resolve_vs_warmup_alias_policy() {
     let (mut state, calls) = with_backend(hint(Pool::Pump), None).await;
-    Arc::get_mut(&mut state.config)
-        .unwrap()
-        .stonkfun_via_sol
-        .enabled = true;
+    state.edit_fixture_config(|config| config.stonkfun_via_sol.enabled = true);
     let app = http::router(state);
     for (path, body, message) in [
         (
@@ -696,15 +681,16 @@ async fn pool_read_routes_preserve_methods_and_json_extraction_before_authentica
 async fn pool_read_routes_use_trade_credentials_independently_of_admin_and_broadcast_policy() {
     for disabled in ["false", "true"] {
         let (mut state, calls) = with_backend(hint(Pool::Pump), None).await;
-        let config = Arc::get_mut(&mut state.config).unwrap();
-        config.stonkfun_via_sol.enabled = true;
-        config.security = SecurityConfig::parse(
-            Some(disabled),
-            Some("separate"),
-            Some("admin-contract-test-only"),
-            "http-contract-test-only",
-        )
-        .unwrap();
+        state.edit_fixture_config(|config| {
+            config.stonkfun_via_sol.enabled = true;
+            config.security = SecurityConfig::parse(
+                Some(disabled),
+                Some("separate"),
+                Some("admin-contract-test-only"),
+                "http-contract-test-only",
+            )
+            .unwrap();
+        });
         for app in [
             http::router(state.clone()),
             crate::api::routes::pool_routes().with_state(state.clone()),
@@ -795,10 +781,7 @@ async fn standalone_pool_route_group_preserves_failure_responses_without_exposin
         ),
     ] {
         let (mut state, calls) = with_backend(hint(Pool::Pump), Some(failure)).await;
-        Arc::get_mut(&mut state.config)
-            .unwrap()
-            .stonkfun_via_sol
-            .enabled = true;
+        state.edit_fixture_config(|config| config.stonkfun_via_sol.enabled = true);
         let app = crate::api::routes::pool_routes().with_state(state.clone());
         assert_eq!(
             json_body(

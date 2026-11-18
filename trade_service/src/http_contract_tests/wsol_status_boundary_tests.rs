@@ -15,7 +15,7 @@ async fn fixture(store: Option<Arc<ConversionStore>>) -> (Router, Arc<queries::S
     let mut config = (*state.config).clone();
     config.security.broadcast = BroadcastPolicy::Disabled;
     config.conversion_live_enabled = false;
-    state.config = Arc::new(config);
+    state.replace_fixture_config(Arc::new(config));
     state.conversions = Some(shared.store.clone());
     state.wsol_queries = service;
     (http::router(state), shared)

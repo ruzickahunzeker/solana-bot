@@ -357,7 +357,7 @@ async fn quote_submit_http_auth_json_and_method_rejections_do_not_resolve_wallet
 #[tokio::test]
 async fn quote_submit_http_unsigned_simulation_ignores_live_policy_without_creating_live_record() {
     let (mut state, h) = injected().await;
-    Arc::get_mut(&mut state.config).unwrap().security.broadcast = BroadcastPolicy::Disabled;
+    state.edit_fixture_config(|config| config.security.broadcast = BroadcastPolicy::Disabled);
     h.trace.faults.lock().unwrap().forbidden = true;
     let app = http::router(state);
     let response = body(

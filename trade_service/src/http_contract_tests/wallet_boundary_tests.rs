@@ -695,11 +695,12 @@ async fn standalone_wallet_groups_keep_separate_admin_credentials_distinct_from_
 {
     use crate::config::security::WalletAdminAuth;
     let mut state = state().await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.security.wallet_admin = WalletAdminAuth::Separate {
-        token: "wallet-test-admin-only".into(),
-    };
-    config.security.broadcast = crate::domain::execution_policy::BroadcastPolicy::Disabled;
+    state.edit_fixture_config(|config| {
+        config.security.wallet_admin = WalletAdminAuth::Separate {
+            token: "wallet-test-admin-only".into(),
+        };
+        config.security.broadcast = crate::domain::execution_policy::BroadcastPolicy::Disabled;
+    });
     let admin = "Bearer wallet-test-admin-only";
     let groups = crate::api::routes::wallet_routes()
         .merge(crate::api::routes::wallet_balance_routes())

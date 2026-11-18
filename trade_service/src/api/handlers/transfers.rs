@@ -12,7 +12,7 @@ use crate::{
         middleware::auth,
         response::error,
     },
-    application::sol_transfers::{SolTransferPolicy, TransferFailureKind},
+    application::sol_transfers::TransferFailureKind,
     AppState,
 };
 
@@ -24,14 +24,11 @@ pub(crate) async fn transfer_sol(
     Json(request): Json<SolTransferRequest>,
 ) -> Response {
     if let Err(response) =
-        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        auth::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }
-    let policy = SolTransferPolicy {
-        broadcast: state.config.security.broadcast,
-        allow_system_wallet: state.config.allow_internal_system_wallet_transfer,
-    };
+    let policy = state.request_settings.sol_transfer_policy();
     match state
         .sol_transfers
         .submit(&wallet_id, request.input(), policy)

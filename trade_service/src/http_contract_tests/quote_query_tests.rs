@@ -525,7 +525,7 @@ async fn quote_http_auth_and_extractors_never_touch_source_identity_or_cache() {
 #[tokio::test]
 async fn quote_http_read_only_queries_preserve_explicit_wallet_ids_under_broadcast_disable() {
     let (mut state, trace) = with_quote_sources().await;
-    Arc::get_mut(&mut state.config).unwrap().security.broadcast = BroadcastPolicy::Disabled;
+    state.edit_fixture_config(|config| config.security.broadcast = BroadcastPolicy::Disabled);
     let app = http::router(state.clone());
     assert_eq!(
         send(

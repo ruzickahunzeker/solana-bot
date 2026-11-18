@@ -244,6 +244,10 @@ fn complete(
                     .map(crate::adapters::persistence::wsol_conversion::SqliteWsolJournal::new),
             ),
         ),
+        request_settings: Arc::new(config::request_settings::RequestSettings::from_config(
+            &config,
+        )),
+        #[cfg(test)]
         config: config.clone(),
         #[cfg(test)]
         wallets: wallets.clone(),

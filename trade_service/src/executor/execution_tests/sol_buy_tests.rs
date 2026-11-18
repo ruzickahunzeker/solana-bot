@@ -284,10 +284,9 @@ async fn ordinary_sol_buy_disabled_broadcast_retains_live_rejection_and_simulati
     for method in [ExecutionMethod::Sdk, ExecutionMethod::Pumpapi] {
         for simulate in [false, true] {
             let mut a = aggregate_fixture(method, simulate, TradePersistenceMode::Memory).await;
-            Arc::get_mut(&mut a.f.state.config)
-                .unwrap()
-                .security
-                .broadcast = BroadcastPolicy::Disabled;
+            a.f.state.edit_fixture_config(|config| {
+                config.security.broadcast = BroadcastPolicy::Disabled
+            });
             a.f.execute().await;
             assert_eq!(
                 a.f.status(),

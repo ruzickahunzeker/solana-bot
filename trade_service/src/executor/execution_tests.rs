@@ -159,11 +159,12 @@ async fn fixture(
     mode: TradePersistenceMode,
 ) -> Fixture {
     let mut state = crate::http_contract_tests::state().await;
-    let config = Arc::get_mut(&mut state.config).unwrap();
-    config.pumpapi.enabled = true;
-    config.wait_tx_confirmed = true;
-    config.mev_submit_verify_ms = 171;
-    config.blockhash_max_age_ms = u64::MAX;
+    state.edit_fixture_config(|config| {
+        config.pumpapi.enabled = true;
+        config.wait_tx_confirmed = true;
+        config.mev_submit_verify_ms = 171;
+        config.blockhash_max_age_ms = u64::MAX;
+    });
     let request: TradeRequest = serde_json::from_value(serde_json::json!({
         "side":side,"pool":"pump","mint":"11111111111111111111111111111111",
         "wallet_id":"fixture-wallet","execution_method":method,"simulate":simulate,
@@ -363,9 +364,8 @@ async fn blockhash_is_required_only_for_sdk_and_after_wallet_resolution() {
         for expired in [false, true] {
             let mut f = fixture(method, Side::Buy, false, TradePersistenceMode::Durable).await;
             f.state.blockhash_cache = if expired {
-                Arc::get_mut(&mut f.state.config)
-                    .unwrap()
-                    .blockhash_max_age_ms = 0;
+                f.state
+                    .edit_fixture_config(|config| config.blockhash_max_age_ms = 0);
                 Arc::new(BlockhashCache::with_snapshot_for_tests(
                     Blockhash::from_bytes([41; 32]),
                     now_ms().saturating_sub(10_000),
@@ -416,10 +416,9 @@ async fn disabled_broadcast_rejects_before_wallet_resolution_with_original_simul
     for method in [ExecutionMethod::Sdk, ExecutionMethod::Pumpapi] {
         for simulate in [false, true] {
             let mut f = fixture(method, Side::Buy, simulate, TradePersistenceMode::Memory).await;
-            Arc::get_mut(&mut f.state.config)
-                .unwrap()
-                .security
-                .broadcast = BroadcastPolicy::Disabled;
+            f.state.edit_fixture_config(|config| {
+                config.security.broadcast = BroadcastPolicy::Disabled
+            });
             f.execute().await;
             let allowed = method == ExecutionMethod::Pumpapi && simulate;
             assert_eq!(

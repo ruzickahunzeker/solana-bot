@@ -18,7 +18,6 @@ use crate::{
     application::{
         wsol_failure::{WsolFailure, WsolFailureKind},
         wsol_recovery::WsolRecoveryFailure,
-        wsol_submission::WsolSubmitPolicy,
     },
     AppState,
 };
@@ -30,7 +29,7 @@ pub(crate) async fn wsol_recover(
     Query(query): Query<WsolRecoveryQuery>,
 ) -> Response {
     if let Err(response) =
-        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        auth::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }
@@ -76,7 +75,7 @@ pub(crate) async fn wsol_quote(
     Json(request): Json<WsolQuoteRequest>,
 ) -> Response {
     if let Err(response) =
-        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        auth::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }
@@ -97,7 +96,7 @@ pub(crate) async fn wsol_simulate(
     Json(request): Json<WsolSubmission>,
 ) -> Response {
     if let Err(response) =
-        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        auth::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }
@@ -118,17 +117,14 @@ pub(crate) async fn wsol_submit(
     Json(request): Json<WsolSubmission>,
 ) -> Response {
     if let Err(response) =
-        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        auth::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }
-    if let Err(err) = state.config.security.broadcast.ensure_allowed() {
+    if let Err(err) = state.request_settings.broadcast().ensure_allowed() {
         return error(StatusCode::FORBIDDEN, err.to_string());
     }
-    let policy = WsolSubmitPolicy {
-        broadcast: state.config.security.broadcast,
-        live_enabled: state.config.conversion_live_enabled,
-    };
+    let policy = state.request_settings.wsol_submit_policy();
     match state.wsol_submissions.submit(request.input(), policy).await {
         Ok(result) => Json(WsolSubmissionResult::from(result)).into_response(),
         Err(err) => operation_error(err),
@@ -186,7 +182,7 @@ pub(crate) async fn wsol_status(
     Query(owner): Query<WsolOwnerQuery>,
 ) -> Response {
     if let Err(response) =
-        auth::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        auth::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }

@@ -228,13 +228,15 @@ async fn failed_auth_never_invokes_the_readonly_source() {
 #[tokio::test]
 async fn separate_admin_token_still_cannot_query_trade_readiness() {
     let (mut state, calls) = with_source(snapshot()).await;
-    Arc::get_mut(&mut state.config).unwrap().security = crate::config::SecurityConfig::parse(
-        None,
-        Some("separate"),
-        Some("admin-contract-test-only"),
-        "http-contract-test-only",
-    )
-    .unwrap();
+    state.edit_fixture_config(|config| {
+        config.security = crate::config::SecurityConfig::parse(
+            None,
+            Some("separate"),
+            Some("admin-contract-test-only"),
+            "http-contract-test-only",
+        )
+        .unwrap();
+    });
     let app = http::router(state);
     error_body(
         send(
@@ -292,13 +294,15 @@ async fn wallet_and_lane_metadata_keep_their_distinct_values_and_order() {
 #[tokio::test]
 async fn system_routes_preserve_public_health_protected_heads_and_method_rejections() {
     let (mut state, calls) = with_source(snapshot()).await;
-    Arc::get_mut(&mut state.config).unwrap().security = SecurityConfig::parse(
-        Some("true"),
-        Some("separate"),
-        Some("admin-contract-test-only"),
-        "http-contract-test-only",
-    )
-    .unwrap();
+    state.edit_fixture_config(|config| {
+        config.security = SecurityConfig::parse(
+            Some("true"),
+            Some("separate"),
+            Some("admin-contract-test-only"),
+            "http-contract-test-only",
+        )
+        .unwrap();
+    });
     for app in [
         http::router(state.clone()),
         crate::api::routes::system_routes().with_state(state.clone()),
@@ -368,10 +372,7 @@ async fn system_routes_preserve_public_health_protected_heads_and_method_rejecti
 async fn standalone_system_route_group_keeps_payloads_without_exposing_other_operations() {
     for enabled in [false, true] {
         let (mut state, calls) = with_source(snapshot()).await;
-        Arc::get_mut(&mut state.config)
-            .unwrap()
-            .stonkfun_via_sol
-            .enabled = enabled;
+        state.edit_fixture_config(|config| config.stonkfun_via_sol.enabled = enabled);
         let app = crate::api::routes::system_routes().with_state(state.clone());
         for (path, mut expected) in [
             ("/health", json!({"ok": true})),

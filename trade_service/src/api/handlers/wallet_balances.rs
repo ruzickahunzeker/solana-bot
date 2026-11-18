@@ -21,7 +21,7 @@ pub(crate) async fn quote_balance(
     Query(owner): Query<OwnerQuery>,
 ) -> Response {
     if let Err(response) =
-        access::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        access::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }
@@ -42,7 +42,7 @@ pub(crate) async fn wallet_balances(
     Query(owner): Query<OwnerQuery>,
 ) -> Response {
     if let Err(response) =
-        access::authorize_internal(state.config.api_access_policy(), &headers, peer)
+        access::authorize_internal(state.request_settings.api_access_policy(), &headers, peer)
     {
         return response;
     }

@@ -172,10 +172,11 @@ async fn sdk_recovery_context_replays_original_defaults_and_literal_key_not_curr
     let (mut c, key) = signing_case_with_defaults(None, true).await;
     save_signed(&c, &key).await;
     let before = snapshot(&c).await;
-    let config = Arc::make_mut(&mut c.f.state.config);
-    config.default_slippage_percent = 99.0;
-    config.default_tip_sol = 10.0;
-    config.enable_simulate = true;
+    c.f.state.edit_fixture_config(|config| {
+        config.default_slippage_percent = 99.0;
+        config.default_tip_sol = 10.0;
+        config.enable_simulate = true;
+    });
     let captured = c
         .store
         .capture_observation(&c.f.record.request_id)

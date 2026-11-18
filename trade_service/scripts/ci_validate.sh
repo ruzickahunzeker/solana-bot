@@ -146,6 +146,7 @@ PY
         step param-cache-port cargo test --locked --offline param_cache_port -- --test-threads=2
         step http-contract cargo test --locked --offline http_contract_tests -- --test-threads=2
         step api-access-policy cargo test --locked --offline api_access_policy -- --test-threads=2
+        step request-settings cargo test --locked --offline request_settings_ -- --test-threads=2
         step validation-settings cargo test --locked --offline validation::settings_tests -- --test-threads=2
         step bootstrap-assembly cargo test --locked --offline bootstrap::tests -- --test-threads=2
         step readiness-settings cargo test --locked --offline readiness_settings -- --test-threads=2

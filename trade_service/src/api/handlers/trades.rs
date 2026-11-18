@@ -23,7 +23,9 @@ pub(crate) async fn create_trade(
     headers: HeaderMap,
     Json(request): Json<TradeRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
+    if let Err(response) =
+        auth::authorize_trade(state.request_settings.api_access_policy(), &headers, peer)
+    {
         return response;
     }
 
@@ -93,7 +95,10 @@ async fn accept_trade_for_wallet(
 
     let response_record = state
         .trade_queries()
-        .wait(&record.request_id, state.config.trade_response_wait_ms)
+        .wait(
+            &record.request_id,
+            state.request_settings.trade_response_wait_ms(),
+        )
         .await
         .unwrap_or(record);
     let http_status = if is_pending_status(response_record.status) {
@@ -115,7 +120,9 @@ pub(crate) async fn create_batch_trades(
     headers: HeaderMap,
     Json(batch): Json<BatchTradeRequest>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
+    if let Err(response) =
+        auth::authorize_trade(state.request_settings.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     if batch.wallet_ids.is_empty() {
@@ -153,7 +160,9 @@ pub(crate) async fn list_trades(
     headers: HeaderMap,
     Query(query): Query<ListTradesQuery>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
+    if let Err(response) =
+        auth::authorize_trade(state.request_settings.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     let records: anyhow::Result<Vec<TradeRecord>> = state.trade_queries().recent(query.limit).await;
@@ -172,7 +181,9 @@ pub(crate) async fn get_trade(
     headers: HeaderMap,
     Path(request_id): Path<String>,
 ) -> Response {
-    if let Err(response) = auth::authorize_trade(state.config.api_access_policy(), &headers, peer) {
+    if let Err(response) =
+        auth::authorize_trade(state.request_settings.api_access_policy(), &headers, peer)
+    {
         return response;
     }
     match state.trade_queries().get(&request_id).await {
