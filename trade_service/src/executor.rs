@@ -48,6 +48,17 @@ mod journal_tests;
 mod sdk_journal_tests;
 
 #[cfg(test)]
+async fn execute_with_claims<C: OrdinaryExecutionClaimer>(
+    state: AppState,
+    execution: &AdmittedTrade,
+    claims: &C,
+) {
+    ExecutionResources::from_state(&state)
+        .execute(execution, claims)
+        .await;
+}
+
+#[cfg(test)]
 pub(crate) async fn execute_trade(state: AppState, request_id: String, command: TradeCommand) {
     let Some(record) = state.trades.get(&request_id) else {
         return;

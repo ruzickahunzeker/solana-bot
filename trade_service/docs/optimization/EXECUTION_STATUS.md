@@ -10,6 +10,8 @@
   Blockhash、普通后台任务不持有 HTTP 状态、原任务组和持久化独立交接给关停流程；
   两项离线见证区分 SDK worker 与应用排空。源码与本地审计通过，待独立 CI。
   预期新增5、完整各1989、113步、59类型/180字段，不借用上批结果。
+  首批 `3eef0d6` 的类型检查发现 13 处旧 claim/SDK journal 测试仍调用被移除的 helper；
+  修正只恢复 `cfg(test)` 转接到同一执行路径，不改原测试或生产代码。
 - 原 NP-03 / TS-09-A [AppState 请求配置](APP_STATE_REQUEST_SETTINGS.md)已独立验收：
   `839cd85` / [Actions 44272714261](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44272714261)
   / artifact `14415756815`。并发1984（383.21秒）、串行1984（729.06秒），

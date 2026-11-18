@@ -34,6 +34,11 @@
 预期保留原1984名称、恰增5、完整各1989、113步、59类型/180字段；
 见 [资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)。本地策略检查不替代云端编译。
 
+首批资源快照 `3eef0d6` / [Actions 44279040611](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44279040611)
+停在测试类型检查；artifact `14415623129` 核对 13 处同一 `E0425`。
+后继仅恢复 `cfg(test)` 的 `execute_with_claims` 转接，旧测试的注入方式与断言保留；
+未运行首批 Rust 测试，不重试终态。存储接口后继源码不进入此修复快照。
+
 原 NP-03 AppState 请求配置 `839cd85bdbd520f06df0cde0bd0448642427286c` /
 [Actions 44272714261](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44272714261)
 首次运行 success，artifact `14415756815` 下载核对。完整并发1984（383.21秒）/
