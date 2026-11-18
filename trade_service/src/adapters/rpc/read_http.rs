@@ -33,6 +33,10 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    PumpNativeProbe {
+        id: u64,
+        packet: super::pump_native_probe::PumpNativeProbePacket,
+    },
     SolTransferConfirmation {
         id: u64,
         signature: solana_sdk::signature::Signature,
@@ -118,6 +122,7 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::PumpNativeProbe { id, packet } => packet.body(*id),
             Self::SolTransferConfirmation { id, signature } => {
                 json!({"jsonrpc":"2.0","id":id,"method":"getSignatureStatuses","params":[[signature.to_string()]]})
             }
@@ -177,6 +182,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::PumpNativeProbe { .. } => "native Pump probe",
             Self::SolTransferConfirmation { .. } => "SOL transfer confirmation",
             Self::SolTransferPreparation { .. } => "SOL transfer preparation",
             Self::DammQuoteAccounts { .. } => "DAMM quote accounts",
@@ -204,7 +210,8 @@ impl ReadRequest {
         }
         if matches!(
             self,
-            Self::TokenAccounts { .. }
+            Self::PumpNativeProbe { .. }
+                | Self::TokenAccounts { .. }
                 | Self::AggregatorSimulation { .. }
                 | Self::WsolSimulation { .. }
                 | Self::DammCandidateSimulation { .. }

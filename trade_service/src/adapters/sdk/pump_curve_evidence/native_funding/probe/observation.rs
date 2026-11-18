@@ -195,4 +195,5 @@ impl NativeQuoteProbe {
     }
 }
 
+mod shared;
 mod tests;

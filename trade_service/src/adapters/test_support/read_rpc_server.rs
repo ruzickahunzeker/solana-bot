@@ -42,6 +42,10 @@ pub(crate) trait DammEvidenceOracle: Send + Sync {
 
 #[derive(Clone)]
 pub(crate) enum Reply {
+    PumpNativeProbe {
+        result: Value,
+        mode: Box<Reply>,
+    },
     SolTransferConfirmation {
         value: Value,
         mode: Box<Reply>,
@@ -309,6 +313,7 @@ async fn serve(
         other => (other, None),
     };
     let is_runtime_preview = preview.is_some();
+    let is_pump_native_probe = matches!(&reply, Reply::PumpNativeProbe { .. });
     let is_damm_quote = matches!(&reply, Reply::DammQuote { .. });
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let is_sol_transfer = matches!(&reply, Reply::SolTransferPreparation { .. });
@@ -322,6 +327,7 @@ async fn serve(
         _ => None,
     };
     let (reply, parameter_value) = match reply {
+        Reply::PumpNativeProbe { result, mode } => (*mode, Some(result)),
         Reply::FixedAccountSnapshot { result, mode, .. } => (*mode, Some(result)),
         Reply::SolTransferConfirmation { value, mode } => (*mode, Some(value)),
         Reply::SolTransferPreparation {
@@ -536,6 +542,30 @@ async fn serve(
             json!({"jsonrpc":"2.0","id":id,"method":"getMultipleAccounts","params":[
             keys,{"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":minimum}]})
         );
+    } else if is_pump_native_probe {
+        assert_eq!(payload["method"], "simulateTransaction");
+        let config = &payload["params"][1];
+        assert_eq!(
+            *config,
+            json!({"sigVerify":false,"replaceRecentBlockhash":false,
+            "commitment":"processed","encoding":"base64",
+            "accounts":{"encoding":"base64","addresses":config["accounts"]["addresses"]},
+            "minContextSlot":config["minContextSlot"],"innerInstructions":true})
+        );
+        assert!(config["minContextSlot"].as_u64().unwrap() > 0);
+        assert_eq!(
+            config["accounts"]["addresses"].as_array().unwrap().len(),
+            11
+        );
+        let bytes = base64::Engine::decode(
+            &base64::engine::general_purpose::STANDARD,
+            payload["params"][0].as_str().unwrap(),
+        )
+        .unwrap();
+        assert!(bytes.len() <= 1232);
+        let tx: solana_sdk::transaction::Transaction = bincode::deserialize(&bytes).unwrap();
+        assert_eq!(tx.signatures, [solana_sdk::signature::Signature::default()]);
+        assert_eq!(tx.message.instructions.len(), 1);
     } else if is_runtime_evidence {
         assert_eq!(
             payload,

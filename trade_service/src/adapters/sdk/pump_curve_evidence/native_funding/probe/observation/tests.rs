@@ -5,7 +5,7 @@ use sol_trade_sdk::swqos::TradeType;
 use solana_sdk::hash::Hash;
 use std::time::{Duration, Instant};
 
-async fn observed(side: TradeType) -> (NativeQuoteProbe, Value) {
+pub(super) async fn observed(side: TradeType) -> (NativeQuoteProbe, Value) {
     let (bank, ix, input) = fixture(side).await;
     let probe = bank
         .prepare_quote_probe(ix, input, Hash::new_from_array([10; 32]))

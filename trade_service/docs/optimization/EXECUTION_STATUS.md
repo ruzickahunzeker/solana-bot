@@ -6,14 +6,17 @@
 
 ## 当前任务
 
-- 当前续同一 NP-01 [无签名报价探测](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)：
-  消费原快照、精确输入、零签名冻结消息、请求起点/三秒时效，另加同次响应净输出/
-  索引/费用/守恒检查，九项新测试源码已备（4+5）。响应尚未绑定真实请求，不是可信报价。
-  该后继待独立 CI，不能继承费用地址的通过结果；
-  同次模拟的真实请求/账户证据、费用、最终 min-out、完整候选和原签名字节账本门槛继续保留。
-  首批9808224 / Actions44318458423终态失败：兄弟模块无法调用私有方法，
-  两处E0624同源。仅补原测试模块内pub(super)可见性与记录，不重跑失败快照；
-  后继共享RPC改动留本地，未混入本次修正。
+- 当前续同一 NP-01/03 [共享请求绑定](PUMP_SDK_SHARED_PROBE.md)：原模拟配额/
+  HTTP/冷却接固定零签名Pump请求，冻结消息/11个返回位置/最低slot与原截止时间，
+  新增13项测试待独立CI（read7/wire3/adapter3）。原请求/校验和模拟净输出方法保持。
+  只验证请求绑定及返回形状，真实provider、账户owner/data/epoch、费用/ABI、最终
+  min-out、完整候选与原签名字节账本仍未完成；不构成可信报价或实盘许可。
+- 原 NP-01 [无签名报价探测](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)已独立验收：
+  `45d18c0` / [Actions 44319842306](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44319842306)
+  / artifact `14437675802`。并发2026（374.16秒）、串行2026（721.32秒），原2017
+  名称全保留、恰增9（4+5）；Pump专项34、HTTP208、116步骤及62类型/189字段通过。
+  同次响应整数净输出/资金守恒、消息与时效仅为测试构建证据；当批响应未绑定请求。
+  首批9808224因两个同源E0624失败，后继只补原测试模块内pub(super)，未重跑首批。
 - 原 NP-01 [Pump.fun 原生费用地址](PUMP_SDK_NATIVE_DESTINATIONS.md)已独立验收：
   `69e1230` / [Actions 44310987087](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44310987087)
   / artifact `14432369441`。并发2017（385.06秒）、串行2017（733.08秒），原2014

@@ -6,6 +6,8 @@
     {"name": "protocol", "path": "src/protocol/mod.rs"}
   ],
   "forbidden_types": [
+    {"id": "pump_native_probe_packet", "path": "pump_trade_service::adapters::rpc::pump_native_probe::PumpNativeProbePacket", "probe": "crate::adapters::rpc::pump_native_probe::PumpNativeProbePacket"},
+    {"id": "pump_native_probe_reply", "path": "pump_trade_service::adapters::rpc::pump_native_probe::PumpNativeProbeReply", "probe": "crate::adapters::rpc::pump_native_probe::PumpNativeProbeReply"},
     {"id": "sdk_client", "path": "sol_trade_sdk::TradingClient"},
     {"id": "dex_params", "path": "sol_trade_sdk::trading::core::params::DexParamEnum"},
     {"id": "pump_params", "path": "sol_trade_sdk::trading::core::params::PumpFunParams"},

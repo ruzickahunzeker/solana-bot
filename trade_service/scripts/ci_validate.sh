@@ -154,6 +154,9 @@ PY
         step ordinary-intake cargo test --locked --offline ordinary_intake -- --test-threads=2
         step ordinary-storage-ownership cargo test --locked --offline ordinary_storage_ownership_ -- --test-threads=2
         step pump-curve-evidence cargo test --locked --offline pump_curve_evidence:: -- --test-threads=2
+        step pump-native-read cargo test --locked --offline pump_native_read_ -- --test-threads=2
+        step pump-native-wire cargo test --locked --offline pump_native_wire_ -- --test-threads=2
+        step pump-native-adapter cargo test --locked --offline pump_native_adapter_ -- --test-threads=2
         step ordinary-runtime cargo test --locked --offline ordinary_runtime -- --test-threads=2
         step backend-contracts cargo test --locked --offline backend_contract -- --test-threads=2
         step trade-task-lifecycle cargo test --locked --offline trade_tasks -- --test-threads=2

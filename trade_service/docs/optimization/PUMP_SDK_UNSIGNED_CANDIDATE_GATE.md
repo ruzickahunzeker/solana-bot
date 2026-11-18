@@ -54,9 +54,16 @@ service `adapters/sdk/ordinary_params.rs`, `preparation_input.rs` and
 
 Follow-up after the independently accepted destination correction `69e1230` /
 Actions `44310987087` / artifact `14432369441` (full2017 each). That snapshot
-does not include or validate this probe. Nine new Rust tests await independent
-CI, not executed locally:
+does not include or validate this probe. Nine new Rust tests were independently
+accepted as `45d18c0` / Actions `44319842306` / artifact `14437675802`:
 four packet/account-age contracts and five response-consistency contracts.
+
+Matching artifact/source audits verified full concurrent2026 (374.16s),
+serial2026 (721.32s), all2017 parent names retained plus exactly nine; Pump34,
+HTTP208,116 ordered zero-exit steps and62 types/189 raw compiler field
+rejections. Original reader/decoder and old tests were reconstructed unchanged;
+twelve weakened-source mutations were rejected. No local service Rust build or
+test execution occurred. This accepts only the test-gated unbound model below.
 
 First snapshot `9808224` / Actions `44318458423` failed at test type checking:
 two `E0624` diagnostics share one cause, the sibling probe could not call the
@@ -120,3 +127,8 @@ immutable candidate and the existing original signed-byte journal. None of
 those gates is removed by this test-only validator. Non-native settlement,
 sharing, Token-2022 output, ATA create/close, extra budget/tip instructions and
 production integration remain outside its profile.
+
+A separate [shared-request follow-up](PUMP_SDK_SHARED_PROBE.md) now connects
+the prototype to a fixed request/reply binding on the existing read runtime.
+Its thirteen tests have not run, it is not in the nine-test correction's CI,
+and it does not complete post-account proof or any trusted quote/signing gate.

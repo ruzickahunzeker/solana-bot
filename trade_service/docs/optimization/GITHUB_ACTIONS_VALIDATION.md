@@ -30,14 +30,20 @@
 
 ## 当前批次
 
-当前续原 NP-01 的 Pump.fun 无签名探测/响应一致性批次，九项新 Rust 测试待 CI：
-预期保留原2017名称、完整各2026、Pump专项34、HTTP208、116步骤、62类型/189字段。
-仅测试构建，不改生产交易或 SDK；见 [探测边界](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)。
+当前续原 NP-01/03 的 Pump.fun 共享请求绑定，13项新Rust测试待独立CI：预期保留
+原2026名称、完整各2039、read7/wire3/adapter3、Pump37、HTTP208、119步骤、
+64类型/195字段。复用原runtime与配额，不改SDK/公开API/生产交易；见[边界](PUMP_SDK_SHARED_PROBE.md)。
 
 首批 `9808224` / [Actions 44318458423](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44318458423)
 终态 failure。原test-gated destination方法对子级兄弟probe不可见，两个E0624同源；
 没有运行Rust测试。修正仅为原方法增加pub(super)可见性并记录，不改变校验/断言，
 不把本地后继RPC profile、配额或能力门禁混入，不重跑失败快照。
+
+修正版 `45d18c0` / [Actions 44319842306](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44319842306)
+首次运行success，artifact `14437675802`下载独立核对：完整并发2026（374.16秒）/
+串行2026（721.32秒）、原2017全保留/恰增9；Pump专项34、HTTP208、全部116有序
+步骤、62类型/189原始字段与源码/依赖身份通过。原读取/旧测试还原和十二负例源审计通过。
+不重跑终态；后继共享请求绑定13项须独立验收，不继承该结果，不另发文档CI。
 
 首批 `4949bee` / [Actions 44309369766](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44309369766)
 终态 failure，artifact `14429547710` 已下载。唯一 Rust 错误 `E0599` 来自测试
