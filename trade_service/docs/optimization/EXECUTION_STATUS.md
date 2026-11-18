@@ -14,6 +14,11 @@
   保留原实例/键/字段与写入端口，不涉及SDK缓存、报价、授权或账本。容量/并发/
   三模式执行三项新合同待独立Rust验收；与上述合计八项，预期完整各2078、129步
   及74类型/225字段，不套用父批结果。
+- 首批`3721cf1` / Actions44371523601 / artifact14459603617终态failure：类型检查、
+  链接及74类型/225字段已过，Provider五项专项和原cache-port两项通过；缓存专项
+  1过2失败，未执行完整套件。原因是容量夹具给不同Mint复用同一Pool ID，而原CPMM
+  键按Pool ID构成，实际只有一个键。修正仅生成不同夹具池地址并断言键唯一，
+  原缓存实现/键/旧断言不改；后继NP04七项本地测试隔离，不进入这次修正，不重跑首批。
 - 原NP03/05 [SDK配置边界](APP_STATE_RESOURCE_OWNERSHIP.md)及
   [公开SDK兼容门禁](SDK_PROVENANCE.md)已独立验收：`0530bed` /
   [Actions44363743712](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44363743712)

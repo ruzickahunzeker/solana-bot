@@ -81,3 +81,14 @@ Format and policy checks do not substitute for the pending Rust execution.
 This is carried with the provider boundary batch after independently accepting
 0530bed/run44363743712/artifact14457878477 (full2070 each). That accepted
 snapshot does not contain or validate these three cache contracts.
+
+First provider/cache snapshot3721cf1/run44371523601 failed only two capacity
+fixtures, not a service type error: actual compiler/link and74type/225field
+gates passed; provider5 and original cache-port2 passed, capacity1 passed/2
+failed before full suites. Matching artifact14459603617 was downloaded.
+The existing CPMM key uses the supplied pool ID, so varying only Mint while
+reusing one pool produced one key and concurrent overwrites. Correction varies
+the public fixture pool address per index and explicitly asserts unique keys.
+Original cache implementation/key/writer and every old assertion remain;
+later independent-backend source is held out. Do not rerun the terminal job
+or treat this partial result as complete2078 acceptance.

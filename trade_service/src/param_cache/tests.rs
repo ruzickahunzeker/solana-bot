@@ -7,11 +7,13 @@ use crate::{
 fn hint(index: usize) -> PoolRouteHint {
     let mut bytes = [0x31; 32];
     bytes[..8].copy_from_slice(&(index as u64).to_le_bytes());
+    let mut pool = [0x49; 32];
+    pool[..8].copy_from_slice(&(index as u64).to_le_bytes());
     PoolRouteHint {
         pool: Pool::RaydiumCpmm,
         mint: Address::from_bytes(bytes),
         quote_mint: Address::from_bytes([0x72; 32]),
-        pool_id: Some(Address::from_bytes([0x49; 32])),
+        pool_id: Some(Address::from_bytes(pool)),
     }
 }
 
@@ -31,6 +33,10 @@ fn param_cache_capacity_keeps_original_fields_and_evicts_only_on_new_key_pressur
         cache.entries.get_mut(&key).unwrap().updated_at_ms = 100;
         keys.push(key);
     }
+    assert_eq!(
+        keys.iter().collect::<std::collections::BTreeSet<_>>().len(),
+        MAX_CANDIDATE_ENTRIES
+    );
     assert_eq!(cache.entries.len(), MAX_CANDIDATE_ENTRIES);
     let mut ordered = keys.clone();
     ordered.sort();

@@ -36,6 +36,13 @@ Pump56/HTTP208、129有序步骤及74类型/225字段。已有源码重建/负�
 检查不替代Rust执行；见原[资源边界](APP_STATE_RESOURCE_OWNERSHIP.md)和
 [候选缓存](PARAM_CACHE_RESOURCE_BOUNDARY.md)。不改API/SDK/钱包/账本，不新增权限。
 
+首批3721cf1 / [Actions44371523601](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44371523601)
+终态failure，artifact14459603617已下载核对：类型检查/链接、74类型/225字段、
+Provider五项及cache-port两项通过；缓存专项1过2失败，完整两套未执行。
+原CPMM缓存按Pool ID建键，容量夹具却复用同一池，导致仅一个键及并发覆盖。
+修正只改变公开夹具Pool ID生成并增加唯一键断言，生产缓存/原键/旧断言保持；
+本地后继NP04的runner/module与七项测试留在修正快照之外，不重跑首批。
+
 已独立验收的SDK配置投影及公开surface合同：0530bed /
 [Actions44363743712](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44363743712)
 首次success，artifact14457878477下载独立核对：并发2070（394.39秒）、串行2070
