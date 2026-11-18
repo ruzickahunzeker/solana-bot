@@ -7,7 +7,9 @@
 ## 当前任务
 
 - 当前续原 NP-01 [Pump.fun 原生费用地址](PUMP_SDK_NATIVE_DESTINATIONS.md)：三项新测试
-  待独立 CI；同 bank Global 前缀、主收款地址/buyback 集合与 creator PDA，以及重复
+  首批 `4949bee` / Actions `44309369766` 已终态失败：测试缺少 `Signer` 导入
+  导致唯一 `E0599`，未执行 Rust 测试；修正仅补测试导入与记录，不重跑旧快照。
+  三项测试仍待修正版独立 CI；同 bank Global 前缀、主收款地址/buyback 集合与 creator PDA，以及重复
   账户导致编译后权限提升的拒绝。仅测试构建，不证明实际费率/报价或开放签名。
 - 原 NP-01 [Pump.fun 金额与角色](PUMP_SDK_AMOUNT_WIRE.md)已独立验收：
   `9bb5330` / [Actions 44303096331](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44303096331)

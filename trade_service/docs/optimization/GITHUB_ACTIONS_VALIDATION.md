@@ -34,6 +34,12 @@
 原2014名称、完整各2017、Pump专项25、116步骤、62类型/189字段。仅测试构建，
 不改生产交易或 SDK；见 [费用地址](PUMP_SDK_NATIVE_DESTINATIONS.md)。
 
+首批 `4949bee` / [Actions 44309369766](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44309369766)
+终态 failure，artifact `14429547710` 已下载。唯一 Rust 错误 `E0599` 来自测试
+缺少 `solana_sdk::signature::Signer` 导入；未执行 Rust 测试，不能计为三项或完整
+套件通过。修正版仅补该导入与本记录，后续无签名报价探测源码留在本地，不混入。
+不重跑首批，不变更 SDK、生产行为、旧断言或工作流。
+
 原金额/角色证据 `9bb5330` /
 [Actions 44303096331](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44303096331)
 首次运行 success，artifact `14429825256` 下载独立审计通过：完整并发2014（372.34秒）/

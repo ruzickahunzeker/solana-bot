@@ -12,6 +12,7 @@ use sol_trade_sdk::{
     swqos::TradeType,
 };
 use solana_account_decoder::UiAccount;
+use solana_sdk::signature::Signer;
 
 fn global(primary: Pubkey) -> Vec<u8> {
     let idl: Value = serde_json::from_str(include_str!(

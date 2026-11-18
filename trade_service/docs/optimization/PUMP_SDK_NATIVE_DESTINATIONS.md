@@ -49,6 +49,13 @@ destination metas; and incomplete Global/sharing/mode/layout/rate failures.
 The original prefix test also gains the valid unused-false case. Rust execution
 is pending, not inferred from the parent CI or formatting check.
 
+The first published snapshot `4949bee` / Actions `44309369766` ended in failure:
+the unsigned message test omitted the `Signer` trait import for the existing
+fixture payer's public key. This is the sole `E0599`; no Rust tests ran. The
+correction adds only that test import and these records. The separate local
+unsigned quote probe is not included. Do not rerun the terminal snapshot or
+infer test acceptance from successful production type checking.
+
 This is destination identity evidence only. It does not establish the active
 fee tier, transfer fee/net output, deployed program ABI, current recipient account
 owners/existence, creator-sharing semantics, rent/total-spend adequacy, final
