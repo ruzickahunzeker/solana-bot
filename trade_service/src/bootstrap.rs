@@ -31,6 +31,7 @@ use crate::{
     config::{self, Config},
     conversion::ConversionStore,
     idempotency::IdempotencyStore,
+    infrastructure::{service_shutdown::OrdinaryShutdown, trade_tasks::TradeTasks},
     param_cache::ParamCache,
     persistence::TradePersistence,
     state::TradeStore,
@@ -42,6 +43,7 @@ use crate::{
 
 pub(crate) struct Bootstrapped {
     pub(crate) state: AppState,
+    pub(crate) ordinary_shutdown: OrdinaryShutdown,
     pub(crate) wallets: Arc<WalletRegistry>,
     pub(crate) wallet_repository: Arc<WalletRepository>,
     pub(crate) vanity_worker: Arc<WalletOps>,
@@ -208,8 +210,9 @@ fn complete(
         SdkAddressParser,
     ));
     let wallet_management = SdkWalletManagement::new(wallet_repository.clone(), wallets.clone());
+    let trade_tasks = TradeTasks::default();
     let state = AppState {
-        trade_tasks: Default::default(),
+        trade_tasks: trade_tasks.clone(),
         vanity_tasks: Arc::new(VanityService::new(wallet_ops.clone())),
         wallet_management: Arc::new(WalletManagementService::new(
             wallet_management.clone(),
@@ -253,13 +256,13 @@ fn complete(
         wallets: wallets.clone(),
         #[cfg(test)]
         wallet_repository: wallet_repository.clone(),
-        blockhash_cache,
+        cached_blockhash: blockhash_cache,
         #[cfg(test)]
         params: params.clone(),
         param_cache_writer: params,
         trades: Arc::new(TradeStore::default()),
         idempotency: Arc::new(IdempotencyStore::default()),
-        persistence,
+        persistence: persistence.clone(),
         #[cfg(test)]
         aggregator_quotes,
         #[cfg(test)]
@@ -277,6 +280,7 @@ fn complete(
     };
     Ok(Bootstrapped {
         state,
+        ordinary_shutdown: OrdinaryShutdown::new(trade_tasks, persistence),
         wallets,
         wallet_repository,
         blockhash_refresher,

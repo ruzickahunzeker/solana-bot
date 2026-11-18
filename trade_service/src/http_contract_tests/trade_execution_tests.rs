@@ -232,7 +232,7 @@ async fn with_backend(mode: TradePersistenceMode) -> (AppState, Arc<Trace>) {
     });
     state.ordinary_execution = Arc::new(Backend(trace.clone()));
     state.ordinary_sol_buy = Arc::new(AggregateBackend(trace.clone()));
-    state.blockhash_cache = Arc::new(BlockhashCache::with_snapshot_for_tests(
+    state.cached_blockhash = Arc::new(BlockhashCache::with_snapshot_for_tests(
         Blockhash::from_bytes([42; 32]),
         crate::state::now_ms(),
     ));

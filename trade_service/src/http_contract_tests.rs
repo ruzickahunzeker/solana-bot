@@ -93,6 +93,10 @@ impl crate::application::ports::ordinary_execution::OrdinaryExecutionBackend
 }
 
 pub(crate) async fn state() -> AppState {
+    state_with_blockhash().await.0
+}
+
+pub(crate) async fn state_with_blockhash() -> (AppState, Arc<BlockhashCache>) {
     let provider = ProviderConfig {
         enabled: false,
         auth_token: None,
@@ -244,7 +248,8 @@ pub(crate) async fn state() -> AppState {
         wallets.clone(),
     );
     let params = Arc::new(crate::param_cache::ParamCache::default());
-    AppState {
+    let blockhash = Arc::new(BlockhashCache::default());
+    let state = AppState {
         trade_tasks: Default::default(),
         vanity_tasks: Arc::new(crate::application::vanity::VanityService::new(wallet_ops)),
         wallet_management: Arc::new(
@@ -292,7 +297,7 @@ pub(crate) async fn state() -> AppState {
         wallets,
         wallet_repository,
         persistence,
-        blockhash_cache: Arc::new(BlockhashCache::default()),
+        cached_blockhash: blockhash.clone(),
         params: params.clone(),
         param_cache_writer: params,
         trades: Arc::default(),
@@ -309,7 +314,8 @@ pub(crate) async fn state() -> AppState {
         quote_reconciliations,
         sol_transfers,
         wallet_identity,
-    }
+    };
+    (state, blockhash)
 }
 
 fn trade() -> Value {

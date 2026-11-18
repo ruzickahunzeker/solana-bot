@@ -190,7 +190,7 @@ async fn aggregate_fixture(
 ) -> AggregateFixture {
     let mut f = fixture(method, Side::Buy, simulate, mode).await;
     f.command.aggregator_sol = true;
-    f.state.blockhash_cache = Arc::default();
+    f.state.cached_blockhash = Arc::new(BlockhashCache::default());
     let trace = Arc::new(AggregateTrace {
         events: Mutex::default(),
         commands: Mutex::default(),

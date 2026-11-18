@@ -30,9 +30,15 @@
 
 ## 当前批次
 
-后继原 NP-03 AppState 请求配置源码已接，基于已验收转账广播快照发布独立源码批。
-本批预期保留广播基线原1981名称，恰增3，完整各1984、109步、58类型/177字段；
-见 [请求配置](APP_STATE_REQUEST_SETTINGS.md)。本地策略检查不替代云端编译。
+当前原 NP-03 AppState 资源所有权源码已接，单一 cache/账本/任务组及关停顺序不改。
+预期保留原1984名称、恰增5、完整各1989、113步、59类型/180字段；
+见 [资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)。本地策略检查不替代云端编译。
+
+原 NP-03 AppState 请求配置 `839cd85bdbd520f06df0cde0bd0448642427286c` /
+[Actions 44272714261](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44272714261)
+首次运行 success，artifact `14415756815` 下载核对。完整并发1984（383.21秒）/
+串行1984（729.06秒），原1981名称全保留、恰增3、HTTP207、109步、58类型/177字段。
+源提交、固定依赖指纹、原始诊断和步骤顺序匹配。见 [请求配置](APP_STATE_REQUEST_SETTINGS.md)。
 
 首批 `1453907` / [Actions 44267836123](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44267836123)
 首次终态 failure，artifact `14410854771` 独立核对：前77步、编译及177字段均过，

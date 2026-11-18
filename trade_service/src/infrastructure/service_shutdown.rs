@@ -1,16 +1,51 @@
 use super::trade_tasks::TradeTasks;
 use crate::{
     adapters::ordinary_observation_worker::ObservationWorker, blockhash_cache::BlockhashRefresher,
+    persistence::TradePersistence,
 };
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
+
+pub(crate) struct OrdinaryShutdown {
+    tasks: TradeTasks,
+    persistence: Arc<TradePersistence>,
+}
+
+impl OrdinaryShutdown {
+    pub(crate) fn new(tasks: TradeTasks, persistence: Arc<TradePersistence>) -> Self {
+        Self { tasks, persistence }
+    }
+
+    pub(crate) fn stop_intake(&self) -> impl FnOnce() + Send + 'static + use<> {
+        let tasks = self.tasks.clone();
+        move || tasks.close()
+    }
+
+    pub(crate) async fn finish(
+        &self,
+        deadline: Duration,
+        blockhash: BlockhashRefresher,
+        observation: Option<ObservationWorker>,
+        shadow_deadline: Duration,
+    ) -> anyhow::Result<()> {
+        finish(
+            &self.tasks,
+            deadline,
+            blockhash,
+            observation,
+            self.persistence.as_ref(),
+            shadow_deadline,
+        )
+        .await
+    }
+}
 
 /// Keep original refresh/observation resources alive until the trade drain has finished or expired.
-pub(crate) async fn finish(
+async fn finish(
     tasks: &TradeTasks,
     deadline: Duration,
     blockhash: BlockhashRefresher,
     observation: Option<ObservationWorker>,
-    persistence: &crate::persistence::TradePersistence,
+    persistence: &TradePersistence,
     shadow_deadline: Duration,
 ) -> anyhow::Result<()> {
     let report = tasks.drain(deadline).await;

@@ -88,10 +88,10 @@ async fn accept_trade_for_wallet(
         crate::application::trade_intake::IntakeDecision::Created(execution) => execution,
     };
 
-    let state_for_task = state.clone();
-    task_ticket.spawn(record.request_id.clone(), async move {
-        executor::execute_admitted_trade(state_for_task, execution).await;
-    });
+    task_ticket.spawn(
+        record.request_id.clone(),
+        executor::execute_admitted_trade(&state, execution),
+    );
 
     let response_record = state
         .trade_queries()

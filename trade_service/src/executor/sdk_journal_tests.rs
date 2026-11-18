@@ -141,7 +141,7 @@ async fn setup_payment(
         "idempotency_key":" original-sdk-runtime-literal "
     })).unwrap();
     let mut f = admit_request(state, request).await;
-    f.state.blockhash_cache = Arc::new(crate::BlockhashCache::with_snapshot_for_tests(
+    f.state.cached_blockhash = Arc::new(crate::BlockhashCache::with_snapshot_for_tests(
         Blockhash::from_bytes([42; 32]),
         crate::state::now_ms(),
     ));
@@ -250,7 +250,7 @@ async fn sdk_runtime_dispatch_stale_hash_preserves_rejected_status_in_the_origin
         Pool::MeteoraDammV2,
     )
     .await;
-    f.state.blockhash_cache = Arc::new(crate::BlockhashCache::default());
+    f.state.cached_blockhash = Arc::new(crate::BlockhashCache::default());
     run(&f).await;
     let record = f
         .state
@@ -313,7 +313,7 @@ async fn sdk_runtime_dispatch_failed_rejection_write_never_falls_back_or_overwri
         Pool::MeteoraDammV2,
     )
     .await;
-    f.state.blockhash_cache = Arc::new(crate::BlockhashCache::default());
+    f.state.cached_blockhash = Arc::new(crate::BlockhashCache::default());
     sqlx::raw_sql("CREATE TRIGGER deny_sdk_rejection BEFORE UPDATE OF submission_stage ON ordinary_execution_claims WHEN NEW.submission_stage='rejected' BEGIN SELECT RAISE(ABORT,'synthetic rejection write failure'); END")
         .execute(&f.state.persistence.pool_for_tests()).await.unwrap();
     run(&f).await;
@@ -491,7 +491,7 @@ async fn sdk_runtime_dispatch_buy_disabled_policy_and_stale_hash_never_enter_sdk
                     config.security.broadcast = BroadcastPolicy::Disabled
                 });
             } else {
-                f.state.blockhash_cache = Arc::new(crate::BlockhashCache::default());
+                f.state.cached_blockhash = Arc::new(crate::BlockhashCache::default());
             }
             run(&f).await;
             // Preserve the original order: policy precedes resolution, hash follows resolution.

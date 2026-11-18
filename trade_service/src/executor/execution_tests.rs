@@ -192,7 +192,7 @@ async fn fixture(
             .unwrap(),
         );
     }
-    state.blockhash_cache = Arc::new(BlockhashCache::with_snapshot_for_tests(
+    state.cached_blockhash = Arc::new(BlockhashCache::with_snapshot_for_tests(
         Blockhash::from_bytes([42; 32]),
         now_ms(),
     ));
@@ -340,7 +340,7 @@ async fn missing_wallet_stops_before_blockhash_or_backend_calls() {
     )
     .await;
     f.trace.available.store(false, Ordering::SeqCst);
-    f.state.blockhash_cache = Arc::default();
+    f.state.cached_blockhash = Arc::new(BlockhashCache::default());
     f.execute().await;
     assert_eq!(f.status(), TradeStatus::Failed);
     assert_eq!(f.resolves(), 1);
@@ -363,7 +363,7 @@ async fn blockhash_is_required_only_for_sdk_and_after_wallet_resolution() {
     for method in [ExecutionMethod::Sdk, ExecutionMethod::Pumpapi] {
         for expired in [false, true] {
             let mut f = fixture(method, Side::Buy, false, TradePersistenceMode::Durable).await;
-            f.state.blockhash_cache = if expired {
+            f.state.cached_blockhash = if expired {
                 f.state
                     .edit_fixture_config(|config| config.blockhash_max_age_ms = 0);
                 Arc::new(BlockhashCache::with_snapshot_for_tests(
@@ -371,7 +371,7 @@ async fn blockhash_is_required_only_for_sdk_and_after_wallet_resolution() {
                     now_ms().saturating_sub(10_000),
                 ))
             } else {
-                Arc::default()
+                Arc::new(BlockhashCache::default())
             };
             f.execute().await;
             assert_eq!(f.resolves(), 1);

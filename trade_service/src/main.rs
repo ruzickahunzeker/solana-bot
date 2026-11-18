@@ -48,6 +48,7 @@ use crate::adapters::persistence::trade_reads::StoredTradeReadSource;
 #[cfg(test)]
 use crate::aggregator_quote::QuoteStore;
 use crate::application::pool_queries::PoolQueries;
+use crate::application::ports::blockhash::CachedBlockhashRead;
 use crate::application::ports::ordinary_execution::OrdinaryExecutionBackend;
 use crate::application::ports::ordinary_sol_buy::OrdinarySolBuyBackend;
 use crate::application::ports::trade_reads::TradeRecordReadSource;
@@ -62,6 +63,7 @@ use crate::application::trade_queries::TradeQueryService;
 use crate::application::vanity::VanityTasks;
 use crate::application::wallet_balances::WalletBalanceQueries;
 use crate::application::wallet_management::WalletManagement;
+#[cfg(test)]
 use crate::blockhash_cache::BlockhashCache;
 #[cfg(test)]
 use crate::conversion::ConversionStore;
@@ -88,7 +90,7 @@ pub struct AppState {
     pub wallets: Arc<WalletRegistry>,
     #[cfg(test)]
     pub wallet_repository: Arc<WalletRepository>,
-    pub blockhash_cache: Arc<BlockhashCache>,
+    pub(crate) cached_blockhash: Arc<dyn CachedBlockhashRead>,
     #[cfg(test)]
     pub params: Arc<ParamCache>,
     pub(crate) param_cache_writer:
@@ -160,6 +162,7 @@ async fn main() -> anyhow::Result<()> {
     let config = Arc::new(Config::from_env()?);
     let bootstrap::Bootstrapped {
         state,
+        ordinary_shutdown,
         wallets,
         wallet_repository,
         blockhash_refresher,
@@ -167,9 +170,7 @@ async fn main() -> anyhow::Result<()> {
         vanity_worker,
     } = bootstrap::initialize(config.clone()).await?;
 
-    let trade_tasks = state.trade_tasks.clone();
-    let persistence = state.persistence.clone();
-    let intake_stop = trade_tasks.clone();
+    let intake_stop = ordinary_shutdown.stop_intake();
     let vanity_stop = vanity_worker.clone();
     let app: Router = http::router(state).layer(TraceLayer::new_for_http());
     let listener = TcpListener::bind(config.trade_http_addr)
@@ -199,17 +200,15 @@ async fn main() -> anyhow::Result<()> {
     )
     .with_graceful_shutdown(async move {
         shutdown_signal().await;
-        intake_stop.close();
+        intake_stop();
         vanity_stop.request_stop();
     })
     .await;
     let (cleanup, vanity_cleanup) = tokio::join!(
-        crate::infrastructure::service_shutdown::finish(
-            &trade_tasks,
+        ordinary_shutdown.finish(
             std::time::Duration::from_millis(shutdown.trade_task_drain_timeout_ms),
             blockhash_refresher,
             observation_worker,
-            persistence.as_ref(),
             std::time::Duration::from_millis(shutdown.shadow_drain_timeout_ms),
         ),
         vanity_worker.shutdown(std::time::Duration::from_millis(

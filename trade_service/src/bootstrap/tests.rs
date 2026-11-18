@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    application::ports::blockhash::LatestBlockhashReader,
+    application::ports::blockhash::{CachedBlockhashRead, LatestBlockhashReader},
     config::{TradePersistenceMode, WalletStorageMode},
     domain::blockhash::Blockhash,
 };
@@ -8,13 +8,13 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use tokio::sync::Notify;
 
 async fn resources() -> Resources {
-    let state = crate::http_contract_tests::state().await;
+    let (state, blockhash_cache) = crate::http_contract_tests::state_with_blockhash().await;
     Resources {
         config: state.config.clone(),
         wallets: state.wallets.clone(),
         wallet_repository: state.wallet_repository.clone(),
         read_rpc: Arc::new(SharedReadRuntime::new(&[]).unwrap()),
-        blockhash_cache: state.blockhash_cache.clone(),
+        blockhash_cache,
         persistence: state.persistence.clone(),
         wallet_ops: Arc::new(
             WalletOps::new(state.wallet_repository.clone(), state.wallets.clone())
@@ -80,10 +80,10 @@ async fn bootstrap_assembly_uses_original_resources_and_hands_off_live_refresher
         &persistence.upgrade().unwrap(),
         &boot.state.persistence
     ));
-    assert!(Arc::ptr_eq(
-        &cache.upgrade().unwrap(),
-        &boot.state.blockhash_cache
-    ));
+    {
+        let expected: Arc<dyn CachedBlockhashRead> = cache.upgrade().unwrap();
+        assert!(Arc::ptr_eq(&expected, &boot.state.cached_blockhash));
+    }
     let loaded = boot.state.wallet_management.loaded();
     assert_eq!(loaded.default_wallet_id, "fixture-wallet");
     assert!(loaded.wallets.is_empty());
@@ -91,6 +91,7 @@ async fn bootstrap_assembly_uses_original_resources_and_hands_off_live_refresher
     assert_eq!(trace.calls.load(Ordering::SeqCst), 1);
     let Bootstrapped {
         state,
+        ordinary_shutdown,
         wallets: held_wallets,
         wallet_repository: held_repository,
         blockhash_refresher,
@@ -99,6 +100,7 @@ async fn bootstrap_assembly_uses_original_resources_and_hands_off_live_refresher
     } = boot;
     drop((
         state,
+        ordinary_shutdown,
         held_wallets,
         held_repository,
         observation_plan,
@@ -142,6 +144,7 @@ async fn bootstrap_assembly_retains_only_supplied_conversion_store_until_state_d
         }
         let Bootstrapped {
             state,
+            ordinary_shutdown,
             wallets,
             wallet_repository,
             blockhash_refresher,
@@ -150,6 +153,7 @@ async fn bootstrap_assembly_retains_only_supplied_conversion_store_until_state_d
         } = boot;
         drop((
             state,
+            ordinary_shutdown,
             wallets,
             wallet_repository,
             observation_plan,
@@ -192,6 +196,51 @@ async fn bootstrap_assembly_failure_aborts_original_refresher_and_releases_resou
     assert!(runtime.upgrade().is_none());
     assert!(wallets.upgrade().is_none());
     assert!(cache.upgrade().is_none());
+}
+
+#[tokio::test]
+async fn trade_shutdown_handoff_drains_original_resources_after_request_state_drop() {
+    use std::time::Duration;
+
+    let mut resources = resources().await;
+    resources.persistence = Arc::new(
+        TradePersistence::new(&crate::config::TradePersistenceConfig {
+            mode: TradePersistenceMode::Shadow,
+            database_url: "sqlite::memory:".into(),
+            busy_timeout_ms: 100,
+        })
+        .await
+        .unwrap(),
+    );
+    let persistence = Arc::downgrade(&resources.persistence);
+    let (refresher, trace) = refresher(resources.blockhash_cache.clone()).await;
+    let Bootstrapped {
+        state,
+        ordinary_shutdown,
+        blockhash_refresher,
+        ..
+    } = complete(resources, refresher).unwrap();
+
+    let ticket = state.trade_tasks.register().unwrap();
+    ordinary_shutdown.stop_intake()();
+    assert!(state.trade_tasks.register().is_none());
+    drop(state);
+    let original = persistence.upgrade().unwrap();
+    assert!(!original.shadow_is_closed_for_tests());
+    let incomplete = ordinary_shutdown
+        .finish(
+            Duration::ZERO,
+            blockhash_refresher,
+            None,
+            Duration::from_secs(2),
+        )
+        .await
+        .unwrap_err();
+    assert!(incomplete.to_string().contains("active=1, admitting=1"));
+    assert!(trace.dropped.load(Ordering::SeqCst));
+    assert!(original.shadow_is_closed_for_tests());
+    drop((ticket, original, ordinary_shutdown));
+    assert!(persistence.upgrade().is_none());
 }
 
 #[tokio::test]

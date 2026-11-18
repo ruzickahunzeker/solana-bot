@@ -1,7 +1,7 @@
 # AppState Request Settings
 
 Continues the original NP-03/TS-09-A `AppState` ownership work. Production
-wiring and three test witnesses are in place; cloud acceptance is pending.
+wiring and three test witnesses passed independent offline CI at `839cd85`.
 This does not replace the trade store, claim authority, cache, worker or any
 existing Application port.
 
@@ -64,3 +64,12 @@ HTTP test names passing. Artifact `14410854771` retains that evidence. The
 successor checks the timestamp against the request interval and compares every
 other field unchanged. It changes no production code and must pass its own
 CI; the stopped run did not execute the full suites and will not be rerun.
+
+The corrected [run 44272714261](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44272714261)
+at `839cd85bdbd520f06df0cde0bd0448642427286c` passed on its first attempt.
+Artifact `14415756815` independently verifies 109 ordered steps, 207 HTTP
+contracts, all three focused witnesses, and matching concurrent/serial names
+(1,984 each, 383.21s and 729.06s). All 1,981 accepted broadcast baseline names
+remain. The 58-type policy produced all 177 intended compiler rejection fields
+and clean original/restored builds. The correction changed no production code.
+No SDK change or runtime action was taken.

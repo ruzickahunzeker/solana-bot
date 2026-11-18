@@ -81,7 +81,7 @@ async fn ordinary_intake_http_retains_wallet_identity_lease_through_dispatch_and
         config.trade_response_wait_ms = 5000;
         config.blockhash_max_age_ms = u64::MAX;
     });
-    state.blockhash_cache = Arc::new(BlockhashCache::with_snapshot_for_tests(
+    state.cached_blockhash = Arc::new(BlockhashCache::with_snapshot_for_tests(
         Blockhash::from_bytes([9; 32]),
         crate::state::now_ms(),
     ));
@@ -133,7 +133,7 @@ async fn task_fixture(mode: TradePersistenceMode, wait: u64) -> (AppState, Arc<T
         config.trade_response_wait_ms = wait;
         config.blockhash_max_age_ms = u64::MAX;
     });
-    state.blockhash_cache = Arc::new(BlockhashCache::with_snapshot_for_tests(
+    state.cached_blockhash = Arc::new(BlockhashCache::with_snapshot_for_tests(
         Blockhash::from_bytes([9; 32]),
         crate::state::now_ms(),
     ));
@@ -322,6 +322,65 @@ async fn trade_tasks_http_request_cancellation_does_not_cancel_the_accepted_exec
     assert_eq!(queried["status"], "submitted");
     assert_eq!(queried["signature"], "synthetic-intake-result");
     assert_eq!(trace.calls.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test]
+async fn execution_task_ownership_releases_http_settings_and_finishes_in_original_journal() {
+    use crate::domain::trade::TradeStatus;
+    use std::time::Duration;
+
+    let (state, trace) = task_fixture(TradePersistenceMode::Durable, 0).await;
+    let tasks = state.trade_tasks.clone();
+    let settings = Arc::downgrade(&state.request_settings);
+    let directory = Arc::downgrade(&state.wallet_identity);
+    let original_journal = Arc::downgrade(&state.persistence);
+    let index = Arc::downgrade(&state.trades);
+    let reservations = Arc::downgrade(&state.idempotency);
+    let app = http::router(state);
+    let body = json_body(
+        send(
+            &app,
+            "POST",
+            "/v1/trades",
+            LOCAL,
+            Some(TOKEN),
+            Some(task_request("execution-resource-owner")),
+        )
+        .await,
+        StatusCode::ACCEPTED,
+    )
+    .await;
+    let id = body["request_id"].as_str().unwrap();
+    tokio::time::timeout(Duration::from_secs(2), trace.entered.notified())
+        .await
+        .unwrap();
+    drop(app);
+
+    assert!(settings.upgrade().is_none());
+    assert!(directory.upgrade().is_none());
+    assert_eq!(trace.dropped.load(Ordering::SeqCst), 1);
+    let in_flight = tasks.drain(Duration::ZERO).await;
+    assert!(in_flight.timed_out);
+    assert_eq!(in_flight.request_ids, [id]);
+    assert!(index.upgrade().is_some());
+    assert!(reservations.upgrade().is_some());
+    let journal = original_journal.upgrade().unwrap();
+    let before = journal.get(id).await.unwrap().unwrap();
+    assert_eq!(before.status, TradeStatus::Submitting);
+    assert!(before.signature.is_none());
+
+    trace.release.notify_one();
+    let drained = tasks.drain(Duration::from_secs(2)).await;
+    assert!(drained.clean(), "{drained:?}");
+    let after = journal.get(id).await.unwrap().unwrap();
+    assert_eq!(after.request_id, id);
+    assert_eq!(after.status, TradeStatus::Submitted);
+    assert_eq!(after.signature.as_deref(), Some("synthetic-intake-result"));
+    assert_eq!(trace.calls.load(Ordering::SeqCst), 1);
+    assert!(index.upgrade().is_none());
+    assert!(reservations.upgrade().is_none());
+    drop(journal);
+    assert!(original_journal.upgrade().is_none());
 }
 
 #[tokio::test]

@@ -41,6 +41,7 @@
     {"id": "sdk_wallet", "path": "pump_trade_service::sdk_client::SdkTradeClient", "probe": "crate::sdk_client::SdkTradeClient"},
     {"id": "trade_tasks", "path": "pump_trade_service::infrastructure::trade_tasks::TradeTasks", "probe": "crate::infrastructure::trade_tasks::TradeTasks"},
     {"id": "dispatch_ticket", "path": "pump_trade_service::infrastructure::trade_tasks::DispatchTicket", "probe": "crate::infrastructure::trade_tasks::DispatchTicket"},
+    {"id": "ordinary_shutdown", "path": "pump_trade_service::infrastructure::service_shutdown::OrdinaryShutdown", "probe": "crate::infrastructure::service_shutdown::OrdinaryShutdown"},
     {"id": "damm_buy_quote", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuyQuote", "probe": "crate::adapters::sdk::damm_probe::DammBuyQuote"},
     {"id": "damm_buy_message", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuyMessage", "probe": "crate::adapters::sdk::damm_probe::DammBuyMessage"},
     {"id": "damm_buy_candidate", "path": "pump_trade_service::adapters::sdk::damm_probe::DammBuyCandidate", "probe": "crate::adapters::sdk::damm_probe::DammBuyCandidate"},

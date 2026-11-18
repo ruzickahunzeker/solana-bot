@@ -85,3 +85,41 @@ git diff --check                                             # passed
 
 就地复用原 owner、测试 transport 与 no-fallback 合同。若固定 SDK 没有任务完成或取消接口，
 保留未验证状态，不能通过扩大超时或改文案冒充退出完成。未运行真钱包、节点或交易。
+
+后继源码补两项离线见证，待独立 CI 验收。测试使用固定 SDK 的
+`execute_parallel` 与生产的 lane 编排、结果分类和 `TradeTasks::drain`；跳过
+高层协议构建，合成包只进入内存。分别在原发送器进入后取消 caller，以及让 SDK
+自然等待超时并获得应用层 clean drain。两条路径都要求原发送器仍未完成、释放后
+仅完成一次，且无备用 lane/观测/重发；第二条仍为 `Unknown`，没有凭空补入签名。
+此证据是行为基线，不是生命周期修复，也不代表 SDK/provider 提供 cancel 或 join。
+
+## AppState 的只读 Blockhash
+
+根请求状态只接原 Application `CachedBlockhashRead`，不再持有
+具体 `BlockhashCache` 类型。Bootstrap 将同一个 Arc 转成只读端口给 ordinary
+executor，原 readiness adapter 和 refresher 继续用原对象；不分配第二个 cache，
+不改 TTL、刷新过程、时钟、槽位或读取/拒绝顺序。保留原组装指针和释放断言。
+新增离线见证使用一个门控 hash：更新前两处均见空，原刷新后执行端口能取得该 hash、
+实际 readiness 聚合读到 freshness；只读端口仍持有原分配，最后释放后可回收。
+此处未改变 TradeStore、journal、idempotency 或 RPC 冷却；验收待独立 CI。
+
+## 后台执行不持有 HTTP 状态
+
+普通订单在原 ticket 上派发时只移动原 journal/index/幂等、只读 Blockhash、两种执行端口、
+参数 writer 和复制的执行策略，不克隆完整 `AppState`。HTTP 认证、钱包准入目录、
+报价和管理服务不随后台任务延长生命周期；实际执行立即使用原对象配置和原任务登记。
+原拒绝/重复处理、wallet identity lease、claim、HTTP 等待、存储与关停顺序保持。
+
+新增真实 HTTP + Durable 夹具：执行端口阻塞后释放 Router，确认认证投影和准入目录已回收，
+同时原 journal 仍记录 Submitting、等待中的 ticket 和原幂等/index 仍存活；释放后任务
+只完成一次，原 journal 转为 Submitted，随后原资源可释放。使用纯内存 fixture，
+不调用 SDK、供应商或真实交易，不声称覆盖 SDK 进程级 worker 的退出。
+
+## 关停句柄独立交接
+
+Bootstrap 将同一任务组和同一持久化实例交给 `OrdinaryShutdown`；main 不再通过
+`AppState` 获取这两个句柄。信号只携带关闸动作，原 helper 继续先等待已登记
+的工作，后停止刷新/观察、排空 Shadow；预算起点、超时和错误优先级保持。
+新 Bootstrap 测试释放请求状态后，验证关闸作用于原任务组，原未完成票据仍计入
+退出报告，并且原 refresher 和 Shadow writer 均由同一个关停句柄收尾。
+只使用离线夹具和内存数据库；不声称已完成生产落盘或 SDK 全局任务退出。

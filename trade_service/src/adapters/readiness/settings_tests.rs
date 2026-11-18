@@ -89,18 +89,19 @@ async fn readiness_settings_projection_copies_only_three_values_without_resource
 #[tokio::test]
 async fn readiness_settings_actual_source_keeps_original_cache_and_store_without_retaining_config()
 {
-    let state = crate::http_contract_tests::state().await;
+    let (state, blockhash) = crate::http_contract_tests::state_with_blockhash().await;
     let config = Arc::downgrade(&state.config);
-    let cache = Arc::downgrade(&state.blockhash_cache);
+    let cache = Arc::downgrade(&blockhash);
     let store = Arc::downgrade(&state.persistence);
     let (observer, calls) = fixed(false);
     let source = RuntimeReadinessSource::new(
         state.config.readiness_settings(),
         observer,
-        state.blockhash_cache.clone(),
+        blockhash.clone(),
         state.persistence.clone(),
     );
-    assert!(Arc::ptr_eq(&source.blockhash_cache, &state.blockhash_cache));
+    assert!(Arc::ptr_eq(&source.blockhash_cache, &blockhash));
+    drop(blockhash);
     assert!(Arc::ptr_eq(&source.persistence, &state.persistence));
     drop(state);
     assert!(config.upgrade().is_none());
@@ -113,6 +114,65 @@ async fn readiness_settings_actual_source_keeps_original_cache_and_store_without
     drop(source);
     assert!(cache.upgrade().is_none());
     assert!(store.upgrade().is_none());
+}
+
+#[tokio::test]
+async fn app_state_blockhash_read_shares_refresh_and_release_with_readiness() {
+    use crate::application::ports::blockhash::LatestBlockhashReader;
+    use std::time::Duration;
+    use tokio::sync::{oneshot, Mutex};
+
+    struct OneRefresh(Mutex<Option<oneshot::Receiver<Blockhash>>>);
+    impl LatestBlockhashReader for OneRefresh {
+        async fn latest_blockhash(&self) -> anyhow::Result<Blockhash> {
+            let first = self.0.lock().await.take();
+            match first {
+                Some(first) => Ok(first.await?),
+                None => std::future::pending().await,
+            }
+        }
+    }
+
+    let (state, blockhash) = crate::http_contract_tests::state_with_blockhash().await;
+    let cache = Arc::downgrade(&blockhash);
+    let execution = state.cached_blockhash.clone();
+    let (observer, _) = fixed(true);
+    let mut settings = state.config.readiness_settings();
+    settings.blockhash_max_age_ms = u64::MAX;
+    let readiness = ReadinessService::new(RuntimeReadinessSource::new(
+        settings,
+        observer,
+        blockhash.clone(),
+        state.persistence.clone(),
+    ));
+    let (update, first) = oneshot::channel();
+    let refresher = blockhash.spawn_refresher(OneRefresh(Mutex::new(Some(first))), 400);
+    drop(state);
+
+    assert_eq!(execution.fresh_hash(u64::MAX), None);
+    let before = readiness.inspect().await;
+    assert!(!before.ready);
+    assert_eq!(before.snapshot.blockhash_age_ms, None);
+
+    let hash = Blockhash::from_bytes([21; 32]);
+    update.send(hash).unwrap();
+    tokio::time::timeout(Duration::from_secs(2), async {
+        while execution.fresh_hash(u64::MAX) != Some(hash) {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .unwrap();
+    let refreshed = readiness.inspect().await;
+    assert!(refreshed.ready && refreshed.snapshot.has_blockhash);
+    assert!(refreshed.snapshot.blockhash_age_ms.is_some());
+
+    refresher.shutdown().await.unwrap();
+    drop(readiness);
+    assert!(cache.upgrade().is_some());
+    assert_eq!(execution.fresh_hash(u64::MAX), Some(hash));
+    drop(execution);
+    assert!(cache.upgrade().is_none());
 }
 
 #[tokio::test]

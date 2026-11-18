@@ -149,11 +149,13 @@ PY
         step request-settings cargo test --locked --offline request_settings_ -- --test-threads=2
         step validation-settings cargo test --locked --offline validation::settings_tests -- --test-threads=2
         step bootstrap-assembly cargo test --locked --offline bootstrap::tests -- --test-threads=2
+        step app-state-blockhash cargo test --locked --offline app_state_blockhash_read_ -- --test-threads=2
         step readiness-settings cargo test --locked --offline readiness_settings -- --test-threads=2
         step ordinary-intake cargo test --locked --offline ordinary_intake -- --test-threads=2
         step ordinary-runtime cargo test --locked --offline ordinary_runtime -- --test-threads=2
         step backend-contracts cargo test --locked --offline backend_contract -- --test-threads=2
         step trade-task-lifecycle cargo test --locked --offline trade_tasks -- --test-threads=2
+        step execution-task-ownership cargo test --locked --offline execution_task_ownership_ -- --test-threads=2
         step vanity-lifecycle cargo test --locked --offline vanity_lifecycle_ -- --test-threads=2
         step vanity-shutdown cargo test --locked --offline vanity_shutdown_ -- --test-threads=2
         step sol-transfer-shared cargo test --locked --offline sol_transfer_read_ -- --test-threads=2
@@ -164,6 +166,7 @@ PY
         step sol-transfer-confirm-wire cargo test --locked --offline sol_transfer_confirm_wire_ -- --test-threads=2
         step sol-transfer-broadcast cargo test --locked --offline sol_transfer_broadcast_ownership_ -- --test-threads=2
         step service-shutdown cargo test --locked --offline service_shutdown -- --test-threads=2
+        step trade-shutdown-handoff cargo test --locked --offline trade_shutdown_handoff_ -- --test-threads=2
         step task-drain-settings cargo test --locked --offline trade_task_drain_configuration -- --test-threads=2
         step shadow-drain cargo test --locked --offline shadow_drain -- --test-threads=2
         step shadow-shutdown cargo test --locked --offline shadow_shutdown -- --test-threads=2
@@ -174,6 +177,7 @@ PY
         step damm-candidate cargo test --locked --offline damm_sell_message -- --test-threads=2
         step damm-probe cargo test --locked --offline damm_probe -- --test-threads=2
         step sdk-lanes cargo test --locked --offline ordinary_lanes -- --test-threads=2
+        step sdk-worker-lifecycle cargo test --locked --offline sdk_worker_lifecycle_ -- --test-threads=2
         step full-concurrent cargo test --locked --offline -- --test-threads=2
         step full-serial cargo test --locked --offline -- --test-threads=1
         git diff --exit-code -- Cargo.toml Cargo.lock vendor src tools
