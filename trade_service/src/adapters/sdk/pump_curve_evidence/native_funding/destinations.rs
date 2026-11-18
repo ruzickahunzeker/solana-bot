@@ -105,7 +105,7 @@ impl NativeFundingSnapshot {
         })
     }
 
-    fn inspect_native_destinations(&self, instruction: &Instruction) -> Result<()> {
+    pub(super) fn inspect_native_destinations(&self, instruction: &Instruction) -> Result<()> {
         self.inspect_native_roles(instruction)?;
         ensure!(
             instruction

@@ -34,6 +34,11 @@
 预期保留原2017名称、完整各2026、Pump专项34、HTTP208、116步骤、62类型/189字段。
 仅测试构建，不改生产交易或 SDK；见 [探测边界](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)。
 
+首批 `9808224` / [Actions 44318458423](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44318458423)
+终态 failure。原test-gated destination方法对子级兄弟probe不可见，两个E0624同源；
+没有运行Rust测试。修正仅为原方法增加pub(super)可见性并记录，不改变校验/断言，
+不把本地后继RPC profile、配额或能力门禁混入，不重跑失败快照。
+
 首批 `4949bee` / [Actions 44309369766](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44309369766)
 终态 failure，artifact `14429547710` 已下载。唯一 Rust 错误 `E0599` 来自测试
 缺少 `solana_sdk::signature::Signer` 导入；未执行 Rust 测试，不能计为三项或完整

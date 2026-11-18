@@ -58,6 +58,14 @@ does not include or validate this probe. Nine new Rust tests await independent
 CI, not executed locally:
 four packet/account-age contracts and five response-consistency contracts.
 
+First snapshot `9808224` / Actions `44318458423` failed at test type checking:
+two `E0624` diagnostics share one cause, the sibling probe could not call the
+private destination inspector. The correction only makes that existing method
+`pub(super)` inside the original test-gated native module and records this
+failure. No test assertion or production scope changes; no Rust tests ran.
+The terminal snapshot is not rerun. Later shared-RPC work is held locally and
+is not included in the correction.
+
 The existing test-gated native funding snapshot owns the original bank evidence
 and a monotonic timestamp captured before its shared parameter request. Waiting
 for RPC admission, HTTP and decoding consumes the same three-second freshness
