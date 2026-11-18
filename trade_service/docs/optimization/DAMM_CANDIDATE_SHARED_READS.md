@@ -81,3 +81,10 @@ type checking: the old Quote balance fake's exhaustive enum match lacked the
 new request variant. Add an explicit panic-only DAMM arm; no old fixture behavior
 or assertion is relaxed. No Rust test suite ran. Preserve that run as evidence,
 do not rerun it, and require independent validation of the corrected source.
+
+Second candidate c71e57b / Actions 44230719819 passed type checking, all 159
+boundary rejections and prior focused steps, then failed one new shared test:
+the fixture compared the canonical root URL (trailing slash) with noncanonical
+text. Fix the synthetic backup constant to its canonical URL, retaining the
+exact endpoint assertion. Production code is unchanged; shared tests were 11/12,
+not accepted. Preserve this terminal run; require a new-source full validation.

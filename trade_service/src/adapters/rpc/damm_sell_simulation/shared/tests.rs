@@ -15,7 +15,7 @@ use std::{
 use tokio::sync::Notify;
 
 pub(crate) const URL: &str = "https://damm.example.invalid/?key=fixture-secret";
-const BACKUP: &str = "https://backup.example.invalid";
+const BACKUP: &str = "https://backup.example.invalid/";
 
 pub(crate) fn transaction() -> VersionedTransaction {
     let payer = Pubkey::new_from_array([1; 32]);
