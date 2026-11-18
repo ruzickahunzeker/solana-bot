@@ -137,4 +137,33 @@ full2044 each. Neither grants trusted quote/signing authority. The current
 and complete unsigned templates only; eight tests were independently accepted
 ina2a9f27 / Actions44348156801 / artifact14450265978, full2052 each. The
 [final-simulation follow-up](PUMP_SDK_FINAL_SIMULATION.md) retains thirteen
-unexecuted tests and does not inherit any previous quote/signing permission.
+independently accepted tests inf519207 / Actions44355235997 /
+artifact14454946722, full2065 each. It does not grant quote/signing permission.
+
+## Original Journal Integration Review
+
+Read-only caller review after publishing f519207 confirmed the remaining
+boundary is not merely a new Pool enum arm. `SdkPreparedRecord` currently
+accepts only strict DAMM buy/sell profiles, and `prepared_candidate` dispatches
+semantic message reconstruction by those types. `claim_operation` selects the
+original SDK owner only for eligible direct DAMM operations. The original
+controller then authorizes before preparation, after independent readback,
+before signing and before consuming/broadcasting the persisted original bytes.
+Unknown outcomes remain original-signature reconciliation, never a new owner.
+
+A Pump extension must retain that same authority, owner/CAS ordering, row/key/
+hash and readback checks, and add its own strict profile/reconstruction and
+admitted-intent binding. Existing JSON profiles must encode identically and
+remain readable. New profile data needs explicit compatibility/rollback
+evidence even if it fits the existing nullable JSON column without new DDL.
+Restoring historical metadata must not grant freshness, business authorization,
+signing permission or a recovered execution owner. No such extension is
+implemented or enabled by this review.
+
+Do not broaden the Pool-based owner selector yet: the current prototype is
+classic-token/native/existing-ATA and excludes rent/setup/close effects. A new
+buy commonly needs ATA/volume setup; unsupported profiles cannot silently
+become a regression or fall back to another execution after owner/signing
+acquisition. Preparation, supported-profile selection and fail-closed policy
+must be reviewed together before changing actual execution dispatch. This
+remains the existing NP-01 queue, not a parallel journal or a new task.

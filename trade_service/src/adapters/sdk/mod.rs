@@ -1,6 +1,7 @@
 pub(crate) mod address_parser;
 pub(crate) mod aggregator_accounts;
 pub(crate) mod aggregator_simulation;
+pub(crate) mod client_config;
 mod damm_instructions;
 pub(crate) mod damm_probe;
 pub(crate) mod damm_sell_message;

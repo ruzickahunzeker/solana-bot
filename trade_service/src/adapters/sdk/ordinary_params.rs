@@ -140,3 +140,6 @@ fn should_wait_lane_confirmation(swqos_type: SwqosType, wait_tx_confirmed: bool)
     let _ = swqos_type;
     wait_tx_confirmed
 }
+
+#[cfg(test)]
+mod sdk_surface_tests;

@@ -6,10 +6,16 @@
 
 ## 当前任务
 
-- 当前续同一 NP-01 [完整消息最终模拟](PUMP_SDK_FINAL_SIMULATION.md)：固定零签名
-  请求/回复绑定、原deadline/共享配额与同次余额/fee/tip/净输出>=min、旧账户解码
-  已接测试原型，原无小费检查可重建；十三项新Rust测试待独立CI。未新增签名权限。
-  原provider/ABI/接收者策略、真实节点/费用/rent与协议专用原签名字节账本仍未完成。
+- 当前续原 NP-03/05 [SDK配置边界](APP_STATE_RESOURCE_OWNERSHIP.md)及
+  [公开SDK兼容门禁](SDK_PROVENANCE.md)：两处原配置构造收口，原初始化/钱包/
+  Provider顺序不变；三项配置合同与两项surface合同待独立CI。未实际共享SDK资源。
+- 原 NP-01 [完整消息最终模拟](PUMP_SDK_FINAL_SIMULATION.md)已独立验收：
+  `f519207` / [Actions44355235997](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44355235997)
+  / artifact14454946722。并发2065（394.35秒）、串行2065（755.19秒），原2052全
+  保留、恰增13；read4/wire3/SDK6、Pump56、HTTP208、125步及66类型/201字段通过。
+  同次最终消息/净输出/fee/tip与原时效、旧无小费数学/账户解码/原发现/HTTP/夹具
+  重建和22负例源审计通过。仍仅测试原型，无新签名权限或生产节点验收；原
+  provider/ABI/接收者策略、真实费用/rent与协议专用原签名字节账本接线仍未完成。
 - 原 NP-01 [最小输出与完整无签名消息](PUMP_SDK_SWAP_CONSTRAINTS.md)已独立验收：
   `a2a9f27` / [Actions44348156801](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44348156801)
   / artifact14450265978。并发2052（351.28秒）、串行2052（677.53秒），原2044全

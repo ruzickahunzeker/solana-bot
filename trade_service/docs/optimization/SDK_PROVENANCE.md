@@ -56,6 +56,31 @@ python3 trade_service/scripts/check_sdk_provenance.py \
 NP-05-A 的固定来源/补丁账本与离线重放现已验收。签名来源信任、实际新版本适配/演练、
 全协议行为矩阵与真实发布门槛仍未完成；没有因此升级 SDK、修改公开 API 或接入 Router。
 
+## NP-05 Existing Public Surface Follow-Up
+
+Two local unexecuted Rust contracts now pin the locked public `DexType` and
+factory surface inside the existing SDK adapter tests. The exhaustive match
+has no wildcard, covers all twelve current factory variants and checks names
+and existing immutable builder singleton ownership without calling `swap`,
+creating `TradingClient`/RPC/Keypair or starting workers. This is not a second
+runtime registry or a claim that all SDK tasks/resources are supervised.
+
+The service projection is checked against the original fifteen definitions:
+nine existing entries, four builder-present/adapter-pending entries, and two
+without a claimed builder. `StonkFunSwap` deliberately retains the StonkFun
+factory despite CPMM parameters; it must not be silently remapped. Every
+observe-only entry must remain rejected as a TradeRequest Pool and expose no
+buy/sell/direct-quote/SOL-route permission in both feature-switch projections.
+SDK builder presence is not permission or chain acceptance. The test table is
+an independent compatibility oracle, never a production lookup.
+
+These two tests are not in final-simulation snapshot `f519207` or its CI. They
+await a later coherent source batch and independent CI; no test has run on the
+small VM. Future SDK variant/factory/projection changes require explicit
+review, not wildcard support or widening V1 capabilities. Existing vendor,
+manifests, lockfile, protocol definitions, request projection and API remain
+unchanged; no actual SDK upgrade or new protocol activation is performed.
+
 ## 2026-11-12 本地核对历史
 
 以下保留当时未联网的记录，其“未核实”由上面的固定版本核对接续，不代表仍待重复调查。

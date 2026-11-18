@@ -46,8 +46,8 @@ admission and unregistered endpoints before I/O. Three real-loopback HTTP
 tests cover exact512KiB boundaries, packet/role/slot/expiry rebinding, bad
 HTTP/redirect/disconnect/overflow, shared429 cooldown without backup, two-second
 timeout, cancellation, shorter original expiry and sequential100ms pacing.
-These seven Rust tests have not run locally or in any published CI snapshot.
-Only formatting and source/policy checks may be run on this VM.
+These seven Rust tests passed independent CI below, never run locally. Only
+formatting and source/policy checks are run on this VM.
 
 ## Complete Message Effects Bridge
 
@@ -85,18 +85,23 @@ native baseline rather than quote50M/preparation20M; sixteen malformed
 fee/minimum/tip/token/account/context cases; small native sell payout below
 fee and no output-credit prefunding; minimum-1/minimum/minimum+1 with matching
 token account bytes; expired/altered/unsupported no-I/O cases; cancellation/
-RPC errors without fallback. These six plus the seven reads remain unexecuted
-Rust tests; no previous CI contains them.
+RPC errors without fallback. These six plus the seven reads were independently
+accepted as the complete thirteen-test batch below, not in earlier snapshots.
 
 The final typed request must remain separate from discovery, but validation
 must not create a second parser, client, cache or journal. Missing fields,
 expired evidence, inconsistent fee/data/balances and changed message/context
 must be terminal rejections without signing, retries or automatic resubmission.
-The combined source requires one independent CI after accepting its exact
-parent, plus raw artifact/source audits. Expected evidence only: full2065 each,
-parent2052 retained plus exactly13, read4/wire3/SDK6, Pump56, HTTP208,
-125 ordered steps and66 types/201 raw compiler fields. Formatting, policy and
-source restoration checks are not Rust acceptance.
+The combined source `f519207` / Actions44355235997 completed successfully.
+Artifact14454946722 was downloaded and independently checked: concurrent2065
+(394.35s), serial2065 (755.19s), parent2052 retained plus exactly13;
+read4/wire3/SDK6, Pump56, HTTP208,125 ordered zero-exit steps and66 types/201
+raw compiler fields. Matching source/locked hashes and original decoder/math/
+discovery/HTTP/runtime/fixture/template reconstruction with22 rejected source
+mutations passed. No terminal rerun or local service Rust compile/link/test.
+The separate five-test config/surface successor was excluded; records are
+carried with that real source, not a docs-only CI. This accepts the test-gated
+final simulation only, not a trusted live quote or signer/journal integration.
 
 Recipient-policy/deployed-ABI/provider evidence, exact final fee/rent policy
 and a protocol-specific nominal record under the original signer/journal

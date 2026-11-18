@@ -1,5 +1,4 @@
 use anyhow::{anyhow, bail, Context};
-use sol_trade_sdk::common::TradeConfig;
 #[cfg(test)]
 use sol_trade_sdk::common::{spl_token, spl_token_2022};
 use sol_trade_sdk::swqos::{
@@ -502,16 +501,13 @@ impl SdkTradeClient {
             if use_mev_on_rpc {
                 for swqos_config in &swqos_configs {
                     let swqos_type = swqos_config.swqos_type();
-                    let trade_config = TradeConfig::builder(
+                    let trade_config = crate::adapters::sdk::client_config::lane_config(
                         rpc_url.clone(),
-                        vec![swqos_config.clone()],
+                        swqos_config.clone(),
                         commitment.clone(),
-                    )
-                    .create_wsol_ata_on_startup(false)
-                    .use_seed_optimize(false)
-                    .log_enabled(enable_sdk_log)
-                    .mev_protection(mev.enable_mev_protection)
-                    .build();
+                        enable_sdk_log,
+                        mev.enable_mev_protection,
+                    );
                     let client = TradingClient::new(payer.clone(), trade_config).await;
                     lanes.push(SdkLane {
                         swqos_type,
@@ -521,16 +517,13 @@ impl SdkTradeClient {
                 }
             }
 
-            let trade_config = TradeConfig::builder(
+            let trade_config = crate::adapters::sdk::client_config::lane_config(
                 rpc_url.clone(),
-                vec![SwqosConfig::Default(rpc_url.clone())],
+                SwqosConfig::Default(rpc_url.clone()),
                 commitment.clone(),
-            )
-            .create_wsol_ata_on_startup(false)
-            .use_seed_optimize(false)
-            .log_enabled(enable_sdk_log)
-            .mev_protection(mev.enable_mev_protection)
-            .build();
+                enable_sdk_log,
+                mev.enable_mev_protection,
+            );
             let client = TradingClient::new(payer.clone(), trade_config).await;
             lanes.push(SdkLane {
                 swqos_type: SwqosType::Default,

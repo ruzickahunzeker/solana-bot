@@ -161,3 +161,38 @@ HTTP 只持有 `TradeTaskAdmission`，不能直接关闭或排空任务组；Boo
 串行1992（733.56秒），原1989名称全保留、恰增三项；HTTP208、115有序步骤、
 62类型/189字段拒绝、原源码与依赖身份通过。修正相对首批只有原关联类型的
 `Send` 声明和记录；原任务体、十三个 claim 夹具调用和同一存储权威保持。
+
+## SDK Configuration Boundary Follow-Up
+
+Local unpublished NP-03 continuation after f519207. The two identical config
+builders in `SdkTradeClient::new` now delegate to one small SDK-adapter helper.
+RPC/provider order, backup policy, payer parsing, both original
+`TradingClient::new` calls and Registry startup/add/remove behavior remain
+unchanged. WSOL startup and seed optimization remain disabled, with the same
+SDK defaults/log/MEV/commitment values. This is configuration projection only,
+not shared infrastructure, a new cache, a client initializer or a lifecycle fix.
+
+Three unexecuted Rust contracts compare the exact old builder for24 settings,
+check complete infrastructure identity including auth/region/custom URL/min-tip/
+transport/order/commitment/core/MEV flags, and keep per-client log/min-tip/version
+settings separate from infrastructure identity. Tests do not initialize SDK
+clients, RPCs, wallets or tasks. SDK TradeConfig/InfrastructureConfig are added
+to the existing three-layer forbidden-type gate: expected68 types/207 fields,
+pending actual compiler CI. Two related public-factory contracts are recorded
+under existing NP-05 in SDK_PROVENANCE.md, not a new protocol/task.
+
+The pinned SDK constructor still creates infrastructure per wallet/RPC/provider
+combination and starts a rent updater without exposing its handle. Public
+`from_infrastructure` resets some client fields and does not reproduce
+`new`'s global logging/clock/INSTANCE effects. The SDK INSTANCE can retain one
+payer; only its definition, not any service/SDK caller, was found by a full
+source search. This is not proof of key-memory cleanup. Reuse must also handle
+partial provider initialization: caching an incomplete SDK result could prevent
+later wallet additions from recovering a provider, unlike today's fresh init.
+
+Do not copy the SDK initializer, use a hash string as full configuration
+identity, merge different credential/transport/MEV contexts, or claim that an
+Arc drop cancels its background tasks. Any later actual reuse needs Registry
+ownership, complete config equality, wallet/payer isolation, unchanged client
+flags/provider order and failure/concurrency/lifecycle evidence. No such reuse,
+SDK update, production operation or wallet access is performed in this step.
