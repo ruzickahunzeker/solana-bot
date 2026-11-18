@@ -15,9 +15,9 @@ pub(super) async fn confirm<T: ReadHttpTransport>(
     }
     SolTransferConfirmationReader::new(
         runtime,
-        signed.prepared.rpc.url(),
+        signed.prepared.broadcast.url(),
         *signature,
-        signed.prepared.rpc.commitment(),
+        signed.prepared.broadcast.commitment(),
     )
     .confirm(timeout)
     .await

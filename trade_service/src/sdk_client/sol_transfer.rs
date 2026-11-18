@@ -18,15 +18,18 @@ use solana_sdk::{
 use solana_system_interface::instruction as system_instruction;
 use std::{sync::Arc, time::Duration};
 
+mod broadcast;
 mod confirmation;
 mod preparation;
+
+use broadcast::{broadcast_signed, SolTransferBroadcastLane};
 
 const PREPARE_TIMEOUT: Duration = Duration::from_secs(5);
 const SEND_TIMEOUT: Duration = Duration::from_secs(12);
 const CONFIRM_TIMEOUT: Duration = Duration::from_secs(15);
 
 pub(crate) struct PreparedSolTransfer {
-    rpc: Arc<RpcClient>,
+    broadcast: SolTransferBroadcastLane,
     message: Message,
     blockhash: Hash,
     snapshot: SolTransferSnapshot,
@@ -247,7 +250,7 @@ async fn prepare_with_rpcs(
         &blockhash,
     );
     Ok(PreparedSolTransfer {
-        rpc,
+        broadcast: SolTransferBroadcastLane::from_selected(rpc),
         message,
         blockhash,
         rent_exempt_minimum: rent,
@@ -264,34 +267,17 @@ async fn prepare_with_rpcs(
     })
 }
 
-async fn broadcast_signed(
-    signed: &SignedSolTransfer,
-    wallet: &Pubkey,
-    timeout: Duration,
-) -> Result<Signature> {
-    signed.ensure_source(wallet)?;
-    let snapshot = signed.snapshot();
-    let balance = snapshot.balance_before_lamports;
-    let amount = snapshot.amount_lamports;
-    let fee = snapshot.fee_lamports;
-    let reserve = snapshot.reserve_lamports;
-    // The F2-C application compares this receipt with submission().signature after durable recording.
-    tokio::time::timeout(timeout, signed.prepared.rpc.send_transaction(&signed.transaction))
-        .await.context("SOL transfer submission timed out")?.with_context(|| format!(
-            "SOL transfer submission failed: balance={balance}, amount={amount}, fee={fee}, reserve={reserve} lamports",
-        ))
-}
-
 #[cfg(test)]
 async fn confirm_signed(
     signed: &SignedSolTransfer,
     signature: &Signature,
     timeout: Duration,
 ) -> bool {
-    matches!(
-        tokio::time::timeout(timeout, signed.prepared.rpc.confirm_transaction(signature)).await,
-        Ok(Ok(true))
-    )
+    signed
+        .prepared
+        .broadcast
+        .confirm_original(signature, timeout)
+        .await
 }
 
 #[cfg(test)]

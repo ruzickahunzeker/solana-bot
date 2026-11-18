@@ -161,6 +161,7 @@ PY
         step sol-transfer-confirm-read cargo test --locked --offline sol_transfer_confirm_read_ -- --test-threads=2
         step sol-transfer-confirm-adapter cargo test --locked --offline sol_transfer_confirm_adapter_ -- --test-threads=2
         step sol-transfer-confirm-wire cargo test --locked --offline sol_transfer_confirm_wire_ -- --test-threads=2
+        step sol-transfer-broadcast cargo test --locked --offline sol_transfer_broadcast_ownership_ -- --test-threads=2
         step service-shutdown cargo test --locked --offline service_shutdown -- --test-threads=2
         step task-drain-settings cargo test --locked --offline trade_task_drain_configuration -- --test-threads=2
         step shadow-drain cargo test --locked --offline shadow_drain -- --test-threads=2

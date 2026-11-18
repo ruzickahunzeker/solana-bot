@@ -47,13 +47,13 @@ impl RpcSender for Endpoint {
 }
 
 #[derive(Clone)]
-struct Transport {
+pub(super) struct Transport {
     primary: Endpoint,
     backup: Endpoint,
     entered: Arc<Notify>,
 }
 impl Transport {
-    fn new(primary: MemoryRpc, backup: MemoryRpc) -> Self {
+    pub(super) fn new(primary: MemoryRpc, backup: MemoryRpc) -> Self {
         Self {
             primary: Endpoint {
                 rpc: primary,
@@ -66,10 +66,10 @@ impl Transport {
             entered: Arc::default(),
         }
     }
-    fn runtime(&self) -> SharedReadRuntime<Self> {
+    pub(super) fn runtime(&self) -> SharedReadRuntime<Self> {
         SharedReadRuntime::with_test_transport(&[PRIMARY.into(), BACKUP.into()], self.clone())
     }
-    fn endpoints(&self, commitment: CommitmentConfig) -> Vec<Arc<RpcClient>> {
+    pub(super) fn endpoints(&self, commitment: CommitmentConfig) -> Vec<Arc<RpcClient>> {
         vec![
             self.primary.client(commitment),
             self.backup.client(commitment),
@@ -172,7 +172,7 @@ async fn sol_transfer_adapter_native_amount_fee_rent_commitment_and_message_matc
                 .await
                 .unwrap();
                 assert_same(&prepared, &original);
-                assert!(Arc::ptr_eq(&prepared.rpc, &rpc));
+                assert!(prepared.broadcast.is_selected(&rpc));
                 assert_eq!(calls(&transport.primary.rpc), calls(&original_rpc));
                 assert!(transport.backup.rpc.methods().is_empty());
                 transport.primary.rpc.read_only();
@@ -227,7 +227,7 @@ async fn sol_transfer_adapter_rpc_failure_uses_original_whole_lane_fallback_not_
         .await
         .unwrap();
         assert_same(&prepared, &original);
-        assert!(Arc::ptr_eq(&prepared.rpc, &selected));
+        assert!(prepared.broadcast.is_selected(&selected));
         assert_eq!(calls(&transport.primary.rpc), calls(&original_primary));
         assert_eq!(calls(&transport.backup.rpc), calls(&original_backup));
         transport.primary.rpc.read_only();
@@ -426,7 +426,7 @@ async fn sol_transfer_adapter_failed_original_lane_does_not_fund_from_earlier_ba
     assert_same(&prepared, &original);
     assert_eq!(prepared.snapshot.balance_before_lamports, 2_000_000);
     assert_eq!(prepared.snapshot.amount_lamports, 1_995_000);
-    assert!(Arc::ptr_eq(&prepared.rpc, &selected));
+    assert!(prepared.broadcast.is_selected(&selected));
     assert_eq!(calls(&transport.primary.rpc), calls(&original_primary));
     assert_eq!(calls(&transport.backup.rpc), calls(&original_backup));
     transport.primary.rpc.read_only();

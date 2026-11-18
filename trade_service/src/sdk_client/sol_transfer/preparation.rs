@@ -55,7 +55,7 @@ pub(super) async fn prepare<T: ReadHttpTransport>(
         &blockhash,
     );
     Ok(PreparedSolTransfer {
-        rpc,
+        broadcast: SolTransferBroadcastLane::from_selected(rpc),
         message,
         blockhash,
         rent_exempt_minimum: rent,

@@ -1,7 +1,7 @@
 # SOL Transfer Confirmation Shared Reads
 
 Continues the existing NP-03 independent-operation read boundary. Production
-wiring is complete; source-only Rust acceptance is pending. This is not a
+wiring and source-only acceptance are complete, see below. This is not a
 change to the public API, journal or submission policy.
 
 ## Preserve The Actual Contract
@@ -58,3 +58,16 @@ evidence is required for the focused suites, full concurrent/serial suites and
 the updated type gate. No local service check/link, SDK upgrade, deployment,
 restart or production operation. Broadcast RPC ownership is a separate
 remaining item, not completed by the confirmation reader.
+
+## Independent Acceptance
+
+Snapshot `c9394e7310d9f428bf262a284a6f51d3b29a035c`, Actions `44257386302`,
+artifact `14408765651`: all 107 steps passed. Concurrent 1,978 (360.21 s) and
+serial 1,978 (697.06 s) retained all 1,960 parent tests and added exactly 18.
+Focused groups passed 12 read, 3 adapter and 3 loopback tests. Original and
+restored compiler checks and all 174 raw field rejections passed for 57 types
+plus the outside alias. Verified the complete 1,166-file snapshot (14,016,617
+bytes) before the successor, and reproduced source checks from the exact
+commit after local successor wiring. No local service Cargo test, deployment,
+production data access, or real RPC/broadcast. The next work is
+[broadcast ownership](SOL_TRANSFER_BROADCAST_OWNERSHIP.md).

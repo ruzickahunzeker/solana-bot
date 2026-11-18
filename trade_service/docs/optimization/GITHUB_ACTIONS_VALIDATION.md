@@ -30,10 +30,14 @@
 
 ## 当前批次
 
-当前原 NP-03 SOL 转账确认读取待独立验收：原1960名称全保留、恰增18，完整各
-1978、107步、57类型/174字段，不沿用父批结果。见 `SOL_TRANSFER_CONFIRMATION_SHARED_READS.md`。
+当前原 NP-03 SOL 转账广播所有权待独立验收：原1978名称全保留、恰增3，完整各
+1981、108步、57类型/174字段，不沿用父批结果。见 `SOL_TRANSFER_BROADCAST_OWNERSHIP.md`。
 
-最近独立验收：转账准备 `a5420ba` / [Actions 44252423493](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44252423493)
+最近独立验收：转账确认 `c9394e7` / [Actions 44257386302](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44257386302)
+及 artifact `14408765651`。完整各1978、保留1960并恰增18、107步和174字段通过；
+1166文件/14,016,617字节快照与原始日志已核对。见 `SOL_TRANSFER_CONFIRMATION_SHARED_READS.md`。
+
+此前独立验收：转账准备 `a5420ba` / [Actions 44252423493](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44252423493)
 及 artifact `14405719189`。完整各1960、保留1939并恰增21、104步和171字段通过；
 原始产物和1159文件/13,977,673字节快照独立核对。首候选 `67d1d39` 只修三个
 旧测试构造参数后新运行，不重跑终态。见 `SOL_TRANSFER_PREPARATION_SHARED_READS.md`。
