@@ -6,7 +6,7 @@ use crate::{
             buy_runtime_fixture, change_token, clock, key, Fixture as ProbeFixture,
         },
         test_support::{
-            read_rpc_server::{LocalServer, Reply},
+            read_rpc_server::{DammPreviewOracle, LocalServer, Reply},
             IsolatedTestProcess,
         },
     },
@@ -384,6 +384,23 @@ impl RpcSender for MemoryRpc {
     }
 }
 
+impl DammPreviewOracle for MemoryRpc {
+    fn preview(&self, params: Value) -> Pin<Box<dyn Future<Output = Value> + Send + '_>> {
+        Box::pin(async move {
+            let slot = if self.buy_result.is_some() { 43 } else { 124 };
+            assert_eq!(
+                params[1],
+                json!({"sigVerify":false,"replaceRecentBlockhash":false,
+                "commitment":"processed","encoding":"base64","accounts":null,
+                "minContextSlot":slot,"innerInstructions":true})
+            );
+            self.send(RpcRequest::SimulateTransaction, params)
+                .await
+                .unwrap()
+        })
+    }
+}
+
 struct Case {
     wallet: SdkTradeClient,
     f: Fixture,
@@ -434,51 +451,53 @@ impl Case {
         if mode == Mode::BadRaw {
             raw[0]["owner"] = json!(key(99).to_string());
         }
-        let server = LocalServer::new(Reply::Parameters {
-            accounts: HashMap::from([
-                (key(1).to_string(), values[0].clone()),
-                (key(4).to_string(), values[1].clone()),
-                (
-                    if native == Some(true) {
-                        WSOL_TOKEN_ACCOUNT
-                    } else {
-                        USDC_TOKEN_ACCOUNT
-                    }
-                    .to_string(),
-                    values[2].clone(),
-                ),
-            ]),
-            epoch: None,
-            other: Box::new(match mode {
-                Mode::ParameterRate => Reply::RateLimited(Some("60")),
-                Mode::ParameterInvalid => Reply::WrongId,
-                _ => Reply::Preparation {
-                    scan: Box::new(match mode {
-                        Mode::PresenceRate => Reply::RateLimited(Some("60")),
-                        Mode::PresenceInvalid => Reply::WrongId,
-                        Mode::PresenceHold => Reply::SlowHeaders,
-                        _ => Reply::Success,
-                    }),
-                    raw: Box::new(Reply::Success),
-                    scan_value: parsed,
-                    raw_value: json!(raw),
-                },
+        let trace = Arc::new(Trace::default());
+        let mut memory = MemoryRpc {
+            url: "memory://original-damm-fixture".into(),
+            wallet,
+            values: values.clone(),
+            buy_result,
+            buy_message,
+            mode,
+            trace: trace.clone(),
+        };
+        let server = LocalServer::new(Reply::DammPreview {
+            oracle: Arc::new(memory.clone()),
+            other: Box::new(Reply::Parameters {
+                accounts: HashMap::from([
+                    (key(1).to_string(), values[0].clone()),
+                    (key(4).to_string(), values[1].clone()),
+                    (
+                        if native == Some(true) {
+                            WSOL_TOKEN_ACCOUNT
+                        } else {
+                            USDC_TOKEN_ACCOUNT
+                        }
+                        .to_string(),
+                        values[2].clone(),
+                    ),
+                ]),
+                epoch: None,
+                other: Box::new(match mode {
+                    Mode::ParameterRate => Reply::RateLimited(Some("60")),
+                    Mode::ParameterInvalid => Reply::WrongId,
+                    _ => Reply::Preparation {
+                        scan: Box::new(match mode {
+                            Mode::PresenceRate => Reply::RateLimited(Some("60")),
+                            Mode::PresenceInvalid => Reply::WrongId,
+                            Mode::PresenceHold => Reply::SlowHeaders,
+                            _ => Reply::Success,
+                        }),
+                        raw: Box::new(Reply::Success),
+                        scan_value: parsed,
+                        raw_value: json!(raw),
+                    },
+                }),
             }),
         })
         .await;
-        let trace = Arc::new(Trace::default());
-        let rpc = Arc::new(RpcClient::new_sender(
-            MemoryRpc {
-                url: server.url.clone(),
-                wallet,
-                values,
-                buy_result,
-                buy_message,
-                mode,
-                trace: trace.clone(),
-            },
-            RpcClientConfig::default(),
-        ));
+        memory.url = server.url.clone();
+        let rpc = Arc::new(RpcClient::new_sender(memory, RpcClientConfig::default()));
         let infrastructure = Arc::new(TradingInfrastructure {
             rpc,
             swqos_clients: Arc::new(vec![Arc::new(MetadataSender)]),

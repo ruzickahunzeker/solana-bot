@@ -19,8 +19,20 @@ fn request(id: u64, signature: &str) -> Value {
 fn response(id: u64) -> Value {
     json!({"jsonrpc":"2.0","id":id,"result":{"context":{"slot":123},"value":[{"slot":123,"confirmations":null,"status":{"Ok":null},"err":null,"confirmationStatus":"finalized"}]}})
 }
+
+pub(crate) trait DammPreviewOracle: Send + Sync {
+    fn preview(
+        &self,
+        params: Value,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Value> + Send + '_>>;
+}
+
 #[derive(Clone)]
 pub(crate) enum Reply {
+    DammPreview {
+        oracle: Arc<dyn DammPreviewOracle>,
+        other: Box<Reply>,
+    },
     DammSimulation {
         result: Value,
         mode: Box<Reply>,
@@ -220,6 +232,16 @@ async fn serve(
 ) {
     let payload = read_request(&mut stream).await;
     let id = payload["id"].as_u64().unwrap();
+    let (reply, preview) = match reply {
+        Reply::DammPreview { oracle, .. } if payload["method"] == "simulateTransaction" => {
+            assert!(payload["params"][1]["accounts"].is_null());
+            let value = oracle.preview(payload["params"].clone()).await;
+            (Reply::Success, Some(value))
+        }
+        Reply::DammPreview { other, .. } => (*other, None),
+        other => (other, None),
+    };
+    let is_runtime_preview = preview.is_some();
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
     let is_damm_simulation = matches!(&reply, Reply::DammSimulation { .. });
@@ -308,6 +330,7 @@ async fn serve(
         }
         other => (other, None),
     };
+    let parameter_value = parameter_value.or(preview);
     let is_blockhash = payload["method"] == "getLatestBlockhash";
     let is_preparation = parameter_value.is_none()
         && payload["method"] == "getMultipleAccounts"
@@ -387,7 +410,12 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if is_damm_simulation {
+    if is_runtime_preview {
+        assert_eq!(
+            payload,
+            json!({"jsonrpc":"2.0","id":id,"method":"simulateTransaction","params":payload["params"]})
+        );
+    } else if is_damm_simulation {
         let config = &payload["params"][1];
         assert_eq!(
             *config,

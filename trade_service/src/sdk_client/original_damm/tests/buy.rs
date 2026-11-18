@@ -62,12 +62,20 @@ pub(super) async fn good() {
             ]
         );
         let requests = c.server.requests.lock().unwrap().clone();
-        assert_eq!(requests.len(), 3);
+        assert_eq!(requests.len(), 4);
         assert_eq!(requests[0]["method"], "getAccountInfo");
         assert_eq!(requests[1]["method"], "getMultipleAccounts");
         assert_eq!(
             requests[2],
             json!({"jsonrpc":"2.0","id":3,"method":"getTokenAccountsByOwner","params":[c.wallet.wallet().to_string(),{"mint":key(4).to_string()},{"encoding":"jsonParsed","dataSlice":null,"commitment":"processed","minContextSlot":null}]})
+        );
+        assert_eq!(requests[3]["method"], "simulateTransaction");
+        assert_eq!(requests[3]["id"], 4);
+        assert_eq!(
+            base64::engine::general_purpose::STANDARD
+                .decode(requests[3]["params"][0].as_str().unwrap())
+                .unwrap(),
+            bincode::serialize(&simulations[1]).unwrap()
         );
         let row=sqlx::query("SELECT sdk_prepared_json,unsigned_message FROM ordinary_execution_claims WHERE request_id=?").bind(&c.f.record.request_id).fetch_one(&c.pool).await.unwrap();
         let metadata = SdkPreparedRecord::decode(

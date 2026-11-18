@@ -88,3 +88,15 @@ the fixture compared the canonical root URL (trailing slash) with noncanonical
 text. Fix the synthetic backup constant to its canonical URL, retaining the
 exact endpoint assertion. Production code is unchanged; shared tests were 11/12,
 not accepted. Preserve this terminal run; require a new-source full validation.
+
+Third candidate ed92781 / Actions 44232289823 passed all 23 new focused tests
+(shared 12, adapter 8, wire 3), type/boundary and preceding focused steps. It
+failed old original-runtime contracts because their loopback fixture only knew
+the earlier parameter/status requests, while the migrated preview now correctly
+arrives over shared HTTP. Add an opt-in preview-only fixture wrapper delegating
+to the exact original MemoryRpc simulation oracle, keeping its message/config,
+trace, program-error and signature/journal assertions. Expected HTTP count grows
+by exactly one (sell 4->5, buy 3->4); assert its exact ID and packet against the
+original simulated message. Original raw RPC implementation remains exact. No
+production fix, assertion removal or timeout increase; full acceptance remains
+pending on the corrected source. Retain the terminal failure, never rerun it.

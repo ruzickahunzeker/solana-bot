@@ -24,13 +24,22 @@ pub(super) async fn good() {
             RpcRequest::SendTransaction
         ]
     );
-    assert_eq!(c.server.requests.lock().unwrap().len(), 4);
+    let requests = c.server.requests.lock().unwrap().clone();
+    assert_eq!(requests.len(), 5);
+    assert_eq!(requests[4]["method"], "simulateTransaction");
+    assert_eq!(requests[4]["id"], 5);
     let sends = c.trace.sent.lock().unwrap().clone();
     assert_eq!(sends.len(), 1);
     let tx: VersionedTransaction = bincode::deserialize(&sends[0]).unwrap();
     let simulations = c.trace.simulations.lock().unwrap().clone();
     assert_eq!(simulations.len(), 2);
     assert_eq!(simulations[1].message, tx.message);
+    assert_eq!(
+        base64::engine::general_purpose::STANDARD
+            .decode(requests[4]["params"][0].as_str().unwrap())
+            .unwrap(),
+        bincode::serialize(&simulations[1]).unwrap()
+    );
     let row=sqlx::query("SELECT sdk_prepared_json,unsigned_message FROM ordinary_execution_claims WHERE request_id=?")
         .bind(&c.f.record.request_id).fetch_one(&c.pool).await.unwrap();
     let metadata = SdkPreparedRecord::decode(
