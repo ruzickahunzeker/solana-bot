@@ -242,7 +242,7 @@ async fn native_post_bank_rejects_wrong_owners_ata_authorities_clock_and_frozen_
 #[tokio::test]
 async fn native_post_bank_cross_checks_all_returned_message_lamports_token_data_and_recipient_metadata(
 ) {
-    for damage in 0..8 {
+    for damage in 0..9 {
         let (probe, response) = observed(TradeType::Buy).await;
         let mut values = accounts(&probe, &response);
         let reason = match damage {
@@ -271,9 +271,16 @@ async fn native_post_bank_cross_checks_all_returned_message_lamports_token_data_
                     values[10].as_mut().unwrap(),
                     &vec![0; MAX_ACCOUNT_BYTES + 1],
                 );
-                "data exceeds size limit"
+                "length is inconsistent"
             }
             6 => {
+                with_bytes(
+                    values[10].as_mut().unwrap(),
+                    &vec![0; MAX_ACCOUNT_BYTES + 3],
+                );
+                "data exceeds size limit"
+            }
+            7 => {
                 let account = values[5].as_mut().unwrap();
                 let mut state = Account::unpack(&bytes(account)).unwrap();
                 state.amount += 1;

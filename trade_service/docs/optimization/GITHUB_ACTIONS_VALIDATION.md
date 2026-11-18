@@ -34,6 +34,12 @@
 各2044、post-bank5、原read7/wire3/adapter3、Pump42、HTTP208、120步骤与64类型/195字段。
 不改RPC/profile/SDK/公开API，只加强原测试构建；见[边界](PUMP_SDK_POST_BANK.md)。
 
+首批9029053 / Actions44335341139终态failure，artifact14440804968已下载核对。
+唯一失败测试是metadata超限夹具的预期文案：8193和8192字节编码长度相同，原解码
+长度校验正确拒绝。修正版仅保留8193字节的正确预期，并加8195字节覆盖编码超限；
+五个新测试名和原解码器保持，后继swap constraints不进入修复。不重跑首批，修正版
+完整/串行/专项结果须独立验证，当前不计为通过。
+
 共享批次 `03299ad` / [Actions 44327646677](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44327646677)
 首次运行success，artifact `14440796497`已下载独立核对：完整并发2039（359.38秒）/
 串行2039（699.35秒）、原2026全保留/恰增13；read7/wire3/adapter3、Pump37、HTTP208、

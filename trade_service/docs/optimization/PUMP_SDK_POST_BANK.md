@@ -57,3 +57,18 @@ plus exactly5, post-bank5, Pump42, HTTP208,120 ordered steps and64 types/195
 raw field rejections. The parent shared read7/wire3/adapter3 must still run.
 No local service Rust compile/link/test, SDK upgrade, release/deploy/restart,
 real RPC, production wallet/database access, transaction or PumpAPI integration.
+
+## First Run Fixture Correction
+
+Snapshot `9029053` / Actions `44335341139` ended in failure; artifact
+`14440804968` is retained. The metadata size negative expected the encoded-size
+guard for 8193 decoded bytes. Both 8192 and 8193 bytes occupy 10924 base64
+characters, so the original decoder correctly rejected the latter at its
+decoded-length guard instead. No invalid account was accepted.
+
+The isolated correction expects that decoded-length rejection and adds a
+separate 8195-byte case for the encoded-size rejection. All five test names and
+original guards remain; the metadata matrix now has nine cases. No production,
+decoder, RPC, fee or assertion policy is relaxed. The subsequent local swap
+constraints prototype is held out. Do not rerun the failed snapshot or inherit
+its results; the correction still requires its own complete CI acceptance.
