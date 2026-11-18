@@ -17,15 +17,19 @@ async fn request_settings_router_uses_its_own_projected_access_and_capability_va
         (&original, old_token, new_token, false),
         (&updated, new_token, old_token, true),
     ] {
+        let before = crate::state::now_ms();
         let body = json_body(
             send(app, "GET", path, LOCAL, good, None).await,
             StatusCode::OK,
         )
         .await;
-        assert_eq!(
-            body,
-            serde_json::to_value(crate::protocol_capabilities::current(via_sol)).unwrap()
-        );
+        let after = crate::state::now_ms();
+        let generated = u128::from(body["generated_at_ms"].as_u64().unwrap());
+        assert!((before..=after).contains(&generated));
+        let mut expected =
+            serde_json::to_value(crate::protocol_capabilities::current(via_sol)).unwrap();
+        expected["generated_at_ms"] = body["generated_at_ms"].clone();
+        assert_eq!(body, expected);
         error_body(
             send(app, "GET", path, LOCAL, bad, None).await,
             StatusCode::UNAUTHORIZED,

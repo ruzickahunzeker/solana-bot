@@ -54,3 +54,13 @@ policy or existing port. Expect three added tests, retention of every broadcast
 baseline test, and three extra type-rejection fields. No local service Cargo check/link,
 release build, credential access, production settings inspection, SDK change,
 service restart, deployment or trade is part of this work.
+
+The first source-only run [44267836123](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44267836123)
+at `1453907` compiled successfully and passed 77 validation steps, including the
+177-field boundary gate. Its sole HTTP failure was the new capability assertion:
+two independent payload generations differed by one millisecond in
+`generated_at_ms`, with the rest of the response identical and all 206 prior
+HTTP test names passing. Artifact `14410854771` retains that evidence. The
+successor checks the timestamp against the request interval and compares every
+other field unchanged. It changes no production code and must pass its own
+CI; the stopped run did not execute the full suites and will not be rerun.

@@ -34,6 +34,11 @@
 本批预期保留广播基线原1981名称，恰增3，完整各1984、109步、58类型/177字段；
 见 [请求配置](APP_STATE_REQUEST_SETTINGS.md)。本地策略检查不替代云端编译。
 
+首批 `1453907` / [Actions 44267836123](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44267836123)
+首次终态 failure，artifact `14410854771` 独立核对：前77步、编译及177字段均过，
+原206个HTTP名称全过，唯一新增失败的响应只差1ms生成时间。后继按请求时间范围验证该字段，
+其他响应字段及鉴权断言保持；不重跑终态，不将首批算作完整验收。
+
 原 NP-03 SOL 转账广播所有权 `f0c7a73dac3cc1db29fabf761e373836cbd4a06f` /
 [Actions 44262897322](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44262897322)
 首次运行 success；artifact `14410522852` 下载核对。完整并发1981（344.02秒）/
