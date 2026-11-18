@@ -75,3 +75,9 @@ completion. SDK-internal confirmation/tasks, provider-wide quotas, remaining
 NP-01/03/04/05 and rollout gates remain. PumpAPI new integration stays paused;
 Copy Trading/Bridge, manifests/lock/vendor/migrations and production data are out
 of scope. No operational completeness percentage is increased by a pending run.
+
+First candidate 582564f / Actions 44229785442 is terminal failure during test
+type checking: the old Quote balance fake's exhaustive enum match lacked the
+new request variant. Add an explicit panic-only DAMM arm; no old fixture behavior
+or assertion is relaxed. No Rust test suite ran. Preserve that run as evidence,
+do not rerun it, and require independent validation of the corrected source.
