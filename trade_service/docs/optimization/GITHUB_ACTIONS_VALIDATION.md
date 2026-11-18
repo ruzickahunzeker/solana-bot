@@ -30,11 +30,15 @@
 
 ## 当前批次
 
-当前后继原 NP-03 原生 SOL 转账准备读取已接线、独立 Rust 验收待执行：预期原
-1939 名称全保留、恰增二十一，完整各1960、104步及56类型/171字段；不沿用
-父批结果。记录随真实源码提交，不另发文档 CI，见 `SOL_TRANSFER_PREPARATION_SHARED_READS.md`。
+当前原 NP-03 SOL 转账确认读取待独立验收：原1960名称全保留、恰增18，完整各
+1978、107步、57类型/174字段，不沿用父批结果。见 `SOL_TRANSFER_CONFIRMATION_SHARED_READS.md`。
 
-最近独立验收为靓号任务所有权源码 `3d72a14ebc5df3150fb552d2399a4170b0a899fe` /
+最近独立验收：转账准备 `a5420ba` / [Actions 44252423493](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44252423493)
+及 artifact `14405719189`。完整各1960、保留1939并恰增21、104步和171字段通过；
+原始产物和1159文件/13,977,673字节快照独立核对。首候选 `67d1d39` 只修三个
+旧测试构造参数后新运行，不重跑终态。见 `SOL_TRANSFER_PREPARATION_SHARED_READS.md`。
+
+此前独立验收为靓号任务所有权源码 `3d72a14ebc5df3150fb552d2399a4170b0a899fe` /
 [Actions 44245588737](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44245588737)，
 首次终态 success；artifact `14403371260` 下载核对。完整并发1939（333.66秒）/
 串行1939（645.91秒），原1926名称全保留、恰增十三；owner8/shutdown5、原合同、

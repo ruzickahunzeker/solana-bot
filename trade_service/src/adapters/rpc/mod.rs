@@ -13,6 +13,7 @@ pub(crate) mod readiness;
 pub(crate) mod sdk_signature;
 pub(crate) mod signature_status;
 pub(crate) mod sol_hop_reads;
+pub(crate) mod sol_transfer_confirmation;
 pub(crate) mod sol_transfer_reads;
 pub(crate) mod wallet_reads;
 pub(crate) mod wsol_quote_reads;

@@ -118,11 +118,11 @@ The vanity task lifecycle batch is independently accepted: 3d72a14 / Actions
 44245588737 / artifact14403371260; full concurrent/serial each1939 (333.66/
 645.91 seconds), parent1926 retained, exactly13 new, all101 steps/168 raw field
 spans pass. All1152 blobs/modes (13,912,894 bytes), original body/old assertions
-and identity are independently checked before successor edits. Current native
-SOL preparation adds one selected borrowed scope:56 types/171 fields, expected
-full1960/104 steps. These require this new source's own compiler/runtime result,
-not the accepted55-type/168-field run. No local service Cargo retry. See
-VANITY_TASK_LIFECYCLE.md and SOL_TRANSFER_PREPARATION_SHARED_READS.md.
+and identity are independently checked before successor edits. Native SOL
+preparation `a5420ba` independently passed 56 types/171 fields and 1,960 tests
+per suite in 104 steps; see SOL_TRANSFER_PREPARATION_SHARED_READS.md. The
+confirmation reader adds one borrowed type; 57 types/174 fields and the 1,978
+test suites require new evidence. No local service Cargo retry.
 
 The DAMM quote accounts/probe batch is independently accepted: 903d646 /
 Actions 44240714400 / artifact 14400459607. Complete concurrent/serial each
@@ -344,7 +344,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 56 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 57 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 The added quote reader/query/packet entries received their own 55-type/168-field

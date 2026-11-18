@@ -224,7 +224,7 @@ DAMM 买卖最终候选模拟及签名前 preview 续原 NP-03 接同一共享�
 
 DAMM 报价账户/probe 现已复用原 runtime，保留原八/九账户、完整同 bank/CPI/净输出、typed 终态及原五秒账户/whole-buy、三十秒 probe、三秒 freshness。`903d646` / Actions `44240714400` 独立验收完整并发/串行各 1926、恰增二十九，55 类型/168 字段及 99 步通过，日志和源码身份已独立核对，见 [报价证据读取](docs/optimization/DAMM_QUOTE_SHARED_READS.md)。靓号后台任务持有/关闸/等待已由 `3d72a14` / Actions `44245588737` 独立验收完整各1939、恰增十三、101步/168字段；生成/import 原函数不改，超时不丢原句柄，使用现有 task-drain 期限，见 [靓号生命周期](docs/optimization/VANITY_TASK_LIFECYCLE.md)。没有本地服务 Cargo 重试、SDK 升级、部署或生产交易。
 
-当前接续原生 SOL 转账准备读取：原余额/blockhash/手续费/零字节租金四步复用同一 runtime，保留五秒整 lane 预算和原 fallback/金额计算，签名、广播、确认与账本不改。源码/轻检通过、Rust 验收待执行，预期新增21项、完整各1960，不继承父批结果；见 [转账准备边界](docs/optimization/SOL_TRANSFER_PREPARATION_SHARED_READS.md)。
+原生 SOL 转账准备的原四步读取已接同一 runtime，保留五秒整节点预算和原金额/回退策略，`a5420ba` 云端并发、串行各 1960 项通过。后续确认读取只查原签名和原节点，保留原十五秒与 commitment 判断，源码已接，待独立验收。签名、广播、账本和公开 API 未改，未部署。见 [转账准备](docs/optimization/SOL_TRANSFER_PREPARATION_SHARED_READS.md) 和 [转账确认](docs/optimization/SOL_TRANSFER_CONFIRMATION_SHARED_READS.md)。
 
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 

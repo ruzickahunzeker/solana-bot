@@ -9,6 +9,7 @@ use solana_client::{
 };
 use std::{future::Future, pin::Pin, sync::Mutex};
 
+mod shared_confirmation;
 mod shared_reads;
 
 #[derive(Clone)]

@@ -11,12 +11,12 @@ const PRIMARY: &str = "http://native-transfer.invalid/primary";
 const BACKUP: &str = "http://native-transfer.invalid/backup";
 
 #[derive(Clone)]
-struct Endpoint {
-    rpc: MemoryRpc,
-    url: &'static str,
+pub(super) struct Endpoint {
+    pub(super) rpc: MemoryRpc,
+    pub(super) url: &'static str,
 }
 impl Endpoint {
-    fn client(&self, commitment: CommitmentConfig) -> Arc<RpcClient> {
+    pub(super) fn client(&self, commitment: CommitmentConfig) -> Arc<RpcClient> {
         Arc::new(RpcClient::new_sender(
             self.clone(),
             RpcClientConfig {

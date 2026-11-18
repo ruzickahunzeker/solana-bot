@@ -18,6 +18,7 @@ use solana_sdk::{
 use solana_system_interface::instruction as system_instruction;
 use std::{sync::Arc, time::Duration};
 
+mod confirmation;
 mod preparation;
 
 const PREPARE_TIMEOUT: Duration = Duration::from_secs(5);
@@ -189,10 +190,11 @@ impl SdkTradeClient {
 
     pub(crate) async fn confirm_sol_transfer(
         &self,
+        read_rpc: &crate::adapters::rpc::read_runtime::SharedReadRuntime,
         signed: &SignedSolTransfer,
         signature: &Signature,
     ) -> bool {
-        confirm_signed(signed, signature, CONFIRM_TIMEOUT).await
+        confirmation::confirm(signed, signature, read_rpc, CONFIRM_TIMEOUT).await
     }
 }
 
@@ -280,6 +282,7 @@ async fn broadcast_signed(
         ))
 }
 
+#[cfg(test)]
 async fn confirm_signed(
     signed: &SignedSolTransfer,
     signature: &Signature,

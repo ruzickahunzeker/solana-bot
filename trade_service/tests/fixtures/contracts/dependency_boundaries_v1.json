@@ -61,6 +61,7 @@
     {"id": "quote_status_reader", "path": "pump_trade_service::adapters::rpc::quote_status::RpcQuoteStatusReader", "probe": "crate::adapters::rpc::quote_status::RpcQuoteStatusReader"},
     {"id": "quote_status_wrapper", "path": "pump_trade_service::adapters::sdk::quote_reconciliation::QuoteStatusReader", "probe": "crate::adapters::sdk::quote_reconciliation::QuoteStatusReader"},
     {"id": "wsol_quote_session", "path": "pump_trade_service::adapters::rpc::wsol_quote_reads::WsolQuoteReadSession", "probe": "crate::adapters::rpc::wsol_quote_reads::WsolQuoteReadSession", "static_lifetime": true},
-    {"id": "sol_transfer_session", "path": "pump_trade_service::adapters::rpc::sol_transfer_reads::SolTransferReadSession", "probe": "crate::adapters::rpc::sol_transfer_reads::SolTransferReadSession", "static_lifetime": true}
+    {"id": "sol_transfer_session", "path": "pump_trade_service::adapters::rpc::sol_transfer_reads::SolTransferReadSession", "probe": "crate::adapters::rpc::sol_transfer_reads::SolTransferReadSession", "static_lifetime": true},
+    {"id": "sol_transfer_confirmation_reader", "path": "pump_trade_service::adapters::rpc::sol_transfer_confirmation::SolTransferConfirmationReader", "probe": "crate::adapters::rpc::sol_transfer_confirmation::SolTransferConfirmationReader", "static_lifetime": true}
   ]
 }

@@ -33,6 +33,10 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    SolTransferConfirmation {
+        id: u64,
+        signature: solana_sdk::signature::Signature,
+    },
     SolTransferPreparation {
         id: u64,
         query: super::sol_transfer_reads::SolTransferQuery,
@@ -114,6 +118,9 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::SolTransferConfirmation { id, signature } => {
+                json!({"jsonrpc":"2.0","id":id,"method":"getSignatureStatuses","params":[[signature.to_string()]]})
+            }
             Self::SolTransferPreparation { id, query } => query.body(*id),
             Self::DammQuoteAccounts { id, query } => query.body(*id),
             Self::DammQuoteProbe { id, packet } => packet.body(*id),
@@ -170,6 +177,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::SolTransferConfirmation { .. } => "SOL transfer confirmation",
             Self::SolTransferPreparation { .. } => "SOL transfer preparation",
             Self::DammQuoteAccounts { .. } => "DAMM quote accounts",
             Self::DammQuoteProbe { .. } => "DAMM quote probe",
@@ -240,8 +248,9 @@ impl ReadHttpTransport for ReqwestReadTransport {
         let label = request.label();
         let max_body = request.max_body();
         let builder = self.client.post(url.clone()).json(&request.body());
-        // Fixed preparation/DAMM profiles preserve their original allowances, not the 2s default.
+        // Fixed transfer/DAMM profiles preserve their original allowances, not the 2s default.
         let builder = match request {
+            ReadRequest::SolTransferConfirmation { .. } => builder.timeout(Duration::from_secs(15)),
             ReadRequest::SolTransferPreparation { .. } => builder.timeout(Duration::from_secs(5)),
             ReadRequest::DammCandidateSimulation { .. } => builder.timeout(Duration::from_secs(4)),
             ReadRequest::DammQuoteAccounts { .. } => builder.timeout(Duration::from_secs(5)),

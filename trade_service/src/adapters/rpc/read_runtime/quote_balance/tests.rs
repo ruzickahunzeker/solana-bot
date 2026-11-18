@@ -70,6 +70,7 @@ impl ReadHttpTransport for Fake {
             });
         }
         let (id,value) = match request {
+            ReadRequest::SolTransferConfirmation { .. } => panic!("quote balance fixture must not confirm SOL transfers"),
             ReadRequest::SolTransferPreparation { .. } => panic!("quote balance fixture must not read SOL transfer preparation"),
             ReadRequest::DammQuoteAccounts { .. } | ReadRequest::DammQuoteProbe { .. } => panic!("quote balance fixture must not read DAMM quote evidence"),
             ReadRequest::DammCandidateSimulation { .. } => panic!("quote fixture must not simulate DAMM candidates"),

@@ -53,7 +53,7 @@ git diff --check                                             # passed
 | 资源 | 创建/共享位置 | 当前退出责任与已有证据 | 尚缺的范围 |
 | --- | --- | --- | --- |
 | 钱包 Registry/Repository | initialize 创建原实例，SDK/钱包服务共享原 Arcs；main 留日志句柄 | 原资源替换/Weak 释放与 bootstrap 合成组装合同 | 真实 SDK 客户端/密钥内存清理、钱包原子激活和后台任务全部释放 |
-| SharedReadRuntime | initialize 创建一次，现有十二类读取及新 native preparation 都注入同一 Arc | 截至1939的参数/寻池/聚合/WSOL/DAMM等批次有各自预算/冷却/取消合同；转账准备接原 WsolQuote 预算，尚未 Rust 验收 | 转账其他读取、SDK opaque 内部/全服务配额与生产门槛，不重做已验收读取 |
+| SharedReadRuntime | initialize 创建一次，现有十二类读取及转账准备/确认使用同一 Arc | 转账准备复用原 WsolQuote 配额，`a5420ba` 独立验收；确认复用原 Observation，待验收 | 转账广播所有权、SDK opaque 内部/全服务配额与生产门槛，不重做已验收读取 |
 | BlockhashCache/Refresher | 原缓存由 refresher、readiness、AppState 持有，main 接原 refresher owner | 后继普通任务生命周期将原资源保留到 drain 完成/超时后才停止和 await；c6f2745 独立专项与完整各 1498 验收，不借用旧生命周期证据 | 链上有效期/真实节点、异常进程退出与 SDK 内部等其他任务 |
 | ParamCache | complete 创建一次，PoolQueryService 与 executor writer 共享 | 同实例写入/保留键、最后服务释放后回收，见 PARAM_CACHE_RESOURCE_BOUNDARY.md | 缓存版本/全局一致性与 SDK 内部参数缓存 |
 | TradeStore/IdempotencyStore/TradePersistence | initialize 打开原持久化，complete 创建原内存资源；接受/查询/claims/执行共享 | 接受与普通执行服务借用原实例/项目 ports；26be717、26445c5 已验收，原 reservation/hash/JSON 和文件恢复合同继续适用；普通任务与 Shadow 生命周期见下两行 | 根具体资源隔离、全部 backend/mode 的 signed journal 及生产刷盘 |

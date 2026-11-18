@@ -109,7 +109,9 @@ impl SolTransferExecutionWallet for NativeTransferWallet {
         let Ok(signature) = signed.submission().signature.parse() else {
             return false;
         };
-        self.client.confirm_sol_transfer(signed, &signature).await
+        self.client
+            .confirm_sol_transfer(self.read_rpc.as_ref(), signed, &signature)
+            .await
     }
 }
 

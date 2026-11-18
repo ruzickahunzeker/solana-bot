@@ -26,6 +26,8 @@ mod presence_wire;
 mod quote_status_wire;
 #[path = "sdk_observer_wire.rs"]
 mod sdk_observer_wire;
+#[path = "sol_transfer_confirmation_wire.rs"]
+mod sol_transfer_confirmation_wire;
 #[path = "sol_transfer_wire.rs"]
 mod sol_transfer_wire;
 #[path = "wsol_preparation_wire.rs"]
@@ -818,6 +820,9 @@ async fn shared_read_wire_child() {
             "sol-transfer-success" => sol_transfer_wire::success().await,
             "sol-transfer-errors" => sol_transfer_wire::errors().await,
             "sol-transfer-deadlines" => sol_transfer_wire::deadlines().await,
+            "sol-transfer-confirm-success" => sol_transfer_confirmation_wire::success().await,
+            "sol-transfer-confirm-errors" => sol_transfer_confirmation_wire::errors().await,
+            "sol-transfer-confirm-cancel" => sol_transfer_confirmation_wire::cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -1142,4 +1147,17 @@ fn sol_transfer_wire_faults_rate_and_redirect_never_retry_or_switch_endpoints() 
 #[test]
 fn sol_transfer_wire_original_five_second_budget_http_allowance_cancel_and_hash() {
     run("sol-transfer-deadlines");
+}
+
+#[test]
+fn sol_transfer_confirm_wire_original_request_bounds_and_long_allowance() {
+    run("sol-transfer-confirm-success");
+}
+#[test]
+fn sol_transfer_confirm_wire_faults_and_cooldown_never_retry_or_fallback() {
+    run("sol-transfer-confirm-errors");
+}
+#[test]
+fn sol_transfer_confirm_wire_cancel_releases_observation_permit_and_hash_remains_independent() {
+    run("sol-transfer-confirm-cancel");
 }

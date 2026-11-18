@@ -42,6 +42,10 @@ pub(crate) trait DammEvidenceOracle: Send + Sync {
 
 #[derive(Clone)]
 pub(crate) enum Reply {
+    SolTransferConfirmation {
+        value: Value,
+        mode: Box<Reply>,
+    },
     SolTransferPreparation {
         values: std::collections::HashMap<String, Value>,
         fail_method: Option<&'static str>,
@@ -303,11 +307,13 @@ async fn serve(
     let is_damm_quote = matches!(&reply, Reply::DammQuote { .. });
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let is_sol_transfer = matches!(&reply, Reply::SolTransferPreparation { .. });
+    let is_sol_transfer_confirmation = matches!(&reply, Reply::SolTransferConfirmation { .. });
     let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
     let is_damm_simulation = matches!(&reply, Reply::DammSimulation { .. });
     let is_wsol_broadcast = matches!(&reply, Reply::WsolBroadcast { .. });
     let is_quote_status = matches!(&reply, Reply::QuoteStatus { .. });
     let (reply, parameter_value) = match reply {
+        Reply::SolTransferConfirmation { value, mode } => (*mode, Some(value)),
         Reply::SolTransferPreparation {
             values,
             fail_method,
@@ -439,7 +445,7 @@ async fn serve(
         payload["method"].as_str(),
         Some("getTokenSupply" | "getTokenAccountBalance" | "getBalance")
     );
-    let body_limit = if is_sol_transfer {
+    let body_limit = if is_sol_transfer || is_sol_transfer_confirmation {
         MAX_BODY
     } else if is_quote_status {
         MAX_BODY
@@ -662,6 +668,12 @@ async fn serve(
         ));
         assert!(payload["params"][1]["maxRetries"].is_null());
         assert!(payload["params"][1]["minContextSlot"].is_null());
+    } else if is_sol_transfer_confirmation {
+        let signature = solana_sdk::signature::Signature::from([7; 64]);
+        assert_eq!(
+            payload,
+            json!({"jsonrpc":"2.0","id":id,"method":"getSignatureStatuses","params":[[signature.to_string()]]})
+        );
     } else if is_quote_status {
         assert_eq!(payload, request(id, &signature()));
     } else if parameter_value.is_some() {

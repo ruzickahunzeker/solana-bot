@@ -2,7 +2,7 @@
 
 Date: 2026-11-18, Asia/Shanghai. Continues the original NP-03 independent-operation
 read/ownership queue, not a new task, transfer feature or SDK upgrade. Production
-wiring and local source audit are complete; independent Rust acceptance is pending.
+wiring and independent Rust acceptance are complete, see below.
 The preceding vanity source 3d72a14 / Actions 44245588737 / artifact 14403371260
 is independently accepted (1939 each complete suite); do not inherit that evidence.
 
@@ -115,3 +115,18 @@ now reconstructs these full old fixture files as well as the earlier oracle/
 transport/wire contracts; one positive/ten read-only negative mutations pass.
 The corrected source requires a new independent CI run and full acceptance,
 not a retry of the failed terminal job or inherited parent evidence.
+
+## Independent Acceptance
+
+The fixed snapshot `a5420baaa0354395ee40101098ad3ae0fa4b359b`, Actions
+`44252423493`, artifact `14405719189`, passed all 104 steps. Complete suites:
+concurrent 1,960 (353.02 s), serial 1,960 (683.20 s). The independent artifact
+audit verified every one of the 1,939 parent names, exactly 21 new names, all
+171 raw diagnostic field spans and the original/restored compilation checks.
+All 1,159 source blobs and modes (13,977,673 bytes) were verified before
+successor edits. The production preparation change preserves the selected RPC,
+amount policy, signer, broadcast and journal; the three fixture corrections
+retain their original assertions. SDK 6.0.2, manifests, lock, migrations,
+main, real index and frozen history remain unchanged. The next distinct slice
+is [confirmation reads](SOL_TRANSFER_CONFIRMATION_SHARED_READS.md). No local
+service Cargo run, deployment, production access or broadcast.
