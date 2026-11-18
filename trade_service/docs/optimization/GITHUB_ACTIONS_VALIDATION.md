@@ -30,9 +30,15 @@
 
 ## 当前批次
 
-当前原 NP-03 普通存储与登记权限源码已接，仍用同一账本、索引、幂等和任务组。
-预期保留原1989名称、恰增3、完整各1992、115步、62类型/189字段；
-见 [资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)。本地策略检查不替代云端编译。
+当前续原 NP-01 的 Pump.fun 离线证据批次，十七项新 Rust 测试待 CI：预期保留
+原1992名称、完整各2009、116有序步骤、62类型/189字段。仅测试构建的固定账户
+读取和校验，不改生产交易或 SDK；见 [账户证据](PUMP_SDK_ACCOUNT_EVIDENCE.md)。
+
+原 NP-03 普通存储与登记权限 `1d45d25` /
+[Actions 44289227980](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44289227980)
+首次运行 success，artifact `14421994464` 下载独立审计通过：完整并发1992
+（384.69秒）、串行1992（733.56秒），原1989保留、恰增3；HTTP208、115步骤及
+62类型/189字段；源码身份、固定依赖指纹、原测试名及原始诊断核对通过。未部署。
 
 首批 `7f6f3c7` / [Actions 44287408599](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44287408599)
 首轮终态 failure，未运行 Rust 测试。生产一处、测试五处均为同一个 `E0277`：

@@ -6,11 +6,15 @@
 
 ## 当前任务
 
-- 当前续原 NP-03 [普通存储与登记权限](APP_STATE_RESOURCE_OWNERSHIP.md)：请求
-  不暴露具体普通账本、索引、幂等或任务关停能力，原资源及合同行为不改。
-  首批 `7f6f3c7` / [Actions 44287408599](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44287408599)
-  在类型检查报 `E0277`：隐藏后的 SDK 日志句柄缺 `Send` 边界。后继只声明该原句柄
-  可跨线程移动，运行逻辑和断言不改；仍待独立 CI。预期新增3、完整各1992、115步、62类型/189字段。
+- 当前续原 NP-01 [Pump.fun 离线账户与资金证据](PUMP_SDK_ACCOUNT_EVIDENCE.md)：
+  固定四/八账户共享读取、IDL 前缀/规范 PDA、同 bank Clock/epoch、原生资金与支出
+  上限模型已有源码，十七项新增测试待独立 CI。仅测试构建，不接生产入口，不恢复 PumpAPI。
+- 原 NP-03 [普通存储与登记权限](APP_STATE_RESOURCE_OWNERSHIP.md)已独立验收：
+  `1d45d25` / [Actions 44289227980](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44289227980)
+  / artifact `14421994464`。并发1992（384.69秒）、串行1992（733.56秒），原1989
+  名称全保留、恰增3；HTTP208、115步、62类型/189字段及源码身份核对通过。
+  首批 `7f6f3c7` 的 `E0277` 仅补原 SDK 日志关联类型 `Send`，运行逻辑和断言保持。
+  首批终态未重跑；未部署，不把应用任务 drain 当成 SDK worker 可取消。
 - 原 NP-03 [AppState 资源所有权](APP_STATE_RESOURCE_OWNERSHIP.md)已独立验收：
   `65ef56e` / [Actions 44280875076](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44280875076)
   / artifact `14419816862`。并发1989（385.91秒）、串行1989（735.10秒），
@@ -444,7 +448,7 @@
 
 1. 普通任务生命周期、Shadow writer、Record/Tape、买入只读取证/兼容/准备/消息/独立记录、原 journal 类型边界、原意图/历史回放，以及原 owner 的受控买入候选/signer、CAS/签名字节回读、固定 Buy sender/runtime 和 claim/扫描均已按各自源码独立验收，不重复实施或重跑终态 CI。882e514 只完成 Durable Live SDK 直接 DAMM 的两类输入子路径；续下方原 NP-01/03/04/05 剩余范围，不以历史恢复 owner/重签/重发，不另立任务，也不核对/修改线上版本。
 2. 原 NP-03 不重做或重跑上方已验收的读取、生命周期、转账准备、确认和广播。
-   当前独立验收普通存储与登记权限；继续 SDK 内部任务、其他独立操作、全局
+   普通存储与登记权限现已独立验收；继续 SDK 内部任务、其他独立操作、全局
    RPC/cache 配额与退出/刷盘门槛。三层编译门禁不代表全部依赖/能力流完成。不恢复
    owner 或重签/重发。
 3. 原 NP-01 的其他资产/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接买卖子路径不重做，也不冒充全量。其他 Live worker/模拟和 Memory/Shadow 仍须按实际路径验证，不能继承本批的原 owner 保证。

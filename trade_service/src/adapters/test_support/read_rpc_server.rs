@@ -99,6 +99,11 @@ pub(crate) enum Reply {
         epoch: Option<u64>,
         other: Box<Reply>,
     },
+    FixedAccountSnapshot {
+        count: usize,
+        result: Value,
+        mode: Box<Reply>,
+    },
     Success,
     ObservedSignature(String),
     AtLimit,
@@ -312,7 +317,12 @@ async fn serve(
     let is_damm_simulation = matches!(&reply, Reply::DammSimulation { .. });
     let is_wsol_broadcast = matches!(&reply, Reply::WsolBroadcast { .. });
     let is_quote_status = matches!(&reply, Reply::QuoteStatus { .. });
+    let fixed_count = match &reply {
+        Reply::FixedAccountSnapshot { count, .. } => Some(*count),
+        _ => None,
+    };
     let (reply, parameter_value) = match reply {
+        Reply::FixedAccountSnapshot { result, mode, .. } => (*mode, Some(result)),
         Reply::SolTransferConfirmation { value, mode } => (*mode, Some(value)),
         Reply::SolTransferPreparation {
             values,
@@ -515,7 +525,18 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if is_runtime_evidence {
+    if let Some(count) = fixed_count {
+        assert_eq!(payload["method"], "getMultipleAccounts");
+        let keys = payload["params"][0].as_array().unwrap();
+        assert_eq!(keys.len(), count);
+        let minimum = payload["params"][1]["minContextSlot"].as_u64().unwrap();
+        assert!(minimum > 0);
+        assert_eq!(
+            payload,
+            json!({"jsonrpc":"2.0","id":id,"method":"getMultipleAccounts","params":[
+            keys,{"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":minimum}]})
+        );
+    } else if is_runtime_evidence {
         assert_eq!(
             payload,
             json!({"jsonrpc":"2.0","id":id,"method":payload["method"],"params":payload["params"]})

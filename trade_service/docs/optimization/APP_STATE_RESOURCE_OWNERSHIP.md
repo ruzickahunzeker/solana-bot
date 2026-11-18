@@ -141,7 +141,7 @@ claim 的身份与 CAS、SQL、JSON 和状态更新逻辑完全保留。
 
 新增两项离线见证：三种模式下用新接口取得 claim、从旧入口确认不能再占用，
 比较读取来源和写回原记录；并验证替换测试持久化实例不改变既有快照。
-两种存储适配类型不允许进入 Application、Domain、Protocol，待独立 CI。
+两种存储适配类型不允许进入 Application、Domain、Protocol，编译门禁已验收。
 
 首批 `7f6f3c7` / [Actions 44287408599](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44287408599)
 停在 Rust 类型检查：`OrdinaryExecutionStorage::SdkJournal` 隐藏后未声明 `Send`，
@@ -154,4 +154,10 @@ HTTP 只持有 `TradeTaskAdmission`，不能直接关闭或排空任务组；Boo
 `OrdinaryShutdown` 的仍是原 `TradeTasks`。登记复用原流程，已获得的票据仍在线性
 交接路径内。所有拒绝顺序、关闭后的 503、读取路径、排空状态和超时保持不变。
 新测试验证两份登记句柄与原关闸共享状态、最后的原票据仍持有该实例；
-原关停交接和 HTTP 生命周期测试也经新入口。未部署，待 CI。
+原关停交接和 HTTP 生命周期测试也经新入口。未部署。
+
+`1d45d25` / [Actions 44289227980](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44289227980)
+首次运行 success，artifact `14421994464` 下载独立核对：并发1992（384.69秒）/
+串行1992（733.56秒），原1989名称全保留、恰增三项；HTTP208、115有序步骤、
+62类型/189字段拒绝、原源码与依赖身份通过。修正相对首批只有原关联类型的
+`Send` 声明和记录；原任务体、十三个 claim 夹具调用和同一存储权威保持。

@@ -18,6 +18,8 @@ pub(crate) mod preparation_balance;
 pub(crate) mod preparation_input;
 pub(crate) mod prepared_candidate;
 pub(crate) mod protocol_params;
+#[cfg(test)]
+mod pump_curve_evidence;
 pub(crate) mod pumpapi_accounts;
 pub(crate) mod pumpapi_assets;
 pub(crate) mod pumpapi_cpmm;

@@ -153,6 +153,7 @@ PY
         step readiness-settings cargo test --locked --offline readiness_settings -- --test-threads=2
         step ordinary-intake cargo test --locked --offline ordinary_intake -- --test-threads=2
         step ordinary-storage-ownership cargo test --locked --offline ordinary_storage_ownership_ -- --test-threads=2
+        step pump-curve-evidence cargo test --locked --offline pump_curve_evidence:: -- --test-threads=2
         step ordinary-runtime cargo test --locked --offline ordinary_runtime -- --test-threads=2
         step backend-contracts cargo test --locked --offline backend_contract -- --test-threads=2
         step trade-task-lifecycle cargo test --locked --offline trade_tasks -- --test-threads=2

@@ -12,6 +12,9 @@ use solana_client::{
 use solana_sdk::pubkey::Pubkey;
 use std::str::FromStr;
 
+#[cfg(test)]
+pub(crate) mod pump_curve;
+
 #[derive(Clone, Copy)]
 enum Kind {
     Account,
