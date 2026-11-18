@@ -1,8 +1,9 @@
 # SDK And Quote Submission Signature Reads
 
 Date: 2026-11-18, Asia/Shanghai. Continues original NP-03 / TS-07/09, without
-a new task or denominator. Source candidate; independent offline Rust CI required.
-Accepted parent 259b2fe / Actions 44217059338 is not evidence for this source.
+a new task or denominator. Source and independent offline Rust CI accepted:
+e81dda4 / Actions 44223334225 / artifact 14392698134. Accepted parent
+259b2fe / Actions 44217059338 was not used as evidence for this source.
 No SDK upgrade, release build, deployment/restart, production data or real trade.
 
 ## Actual Paths
@@ -105,3 +106,39 @@ rerun or documentation-only CI.
 DAMM and other opaque SDK reads/tasks/confirmers, provider-wide quotas and
 NP-01/03/04/05/rollout gates remain. Manifests/lock/vendor/migrations, API/amounts/
 wallet identity and production state stay unchanged. PumpAPI new work stays paused.
+
+## Accepted Evidence
+
+Source `e81dda4d4704747e43010d442565dfa1eade2de8`,
+[Actions 44223334225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44223334225),
+its first run terminal success (job 29m31s). Downloaded artifact `14392698134`
+independently audited: all 93 steps exit zero. Complete concurrent 1874 (292.68
+seconds) and serial 1874 (549.27 seconds), zero failed/ignored/filtered tests,
+identical raw name sets. All 1850 parent names retained, exactly the twenty-four
+source-defined names added. SDK shared/oracle 12 / Quote submission status 6 /
+real controller with fake invoke 3 / real loopback HTTP 3 and all prior focused
+regressions pass, including standalone Quote status 14/3/2, WSOL status 59 and
+signed/unsigned simulation and original-broadcast suites.
+
+Original/restored compiler checks and all 153 distinct raw field spans pass:
+50 selected types plus outside alias, including SharedReadRuntime itself. Python
+policy 12 / workflow 7 and SDK provenance pass. Identity/manifest/lock/vendor-
+manifest hashes match. Before recording acceptance all 1134 snapshot blobs/modes
+(13,748,624 bytes) match the exact source. Original Raw reader/parser/tests and
+SDK observer body reconstruct exactly after only cfg/import wiring. Every old
+SDK observer/lane test remains exact after its new test-module registration.
+Actual lane guard/prepare/invoke/control and Quote sign/broadcast/message/test
+bodies are exact after only the explicit new observer delegation. Shared read
+runtime/HTTP/budgets, bootstrap/CAS and old wire cases/child deadline remain exact;
+the Quote fixture's existing capacity assertion only gains test visibility.
+
+Exact original request/observation witnesses, short/zero/huge caller budgets,
+reduced request frequency without budget extension, late ready outcomes, dropping
+execution RPCs before I/O and actual Unknown/original-signature/no-next-lane
+controller contracts execute. The known old serial discovery child-stderr split
+is associated only with its exact test/pinned fixture/immediate ok; two positive/
+seven negative format regressions pass. No raw logs or names are rewritten.
+Main/index/frozen history remain unchanged. No local service Cargo retry, release
+build, deployment/restart, production data access, real RPC, production signing or trade.
+Do not rerun terminal CI or trigger documentation-only CI; carry acceptance
+records with the next actual source batch.

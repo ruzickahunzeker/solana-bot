@@ -114,11 +114,21 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
-The SDK/Quote submission observer candidate adds SharedReadRuntime itself to the
-selected concrete-type policy: expected 50 types / 153 scoped fields including
-outside alias. Twenty-four new tests and four steps require independent offline
-CI (full suites each 1874 / 93 steps). Parent 259b2fe evidence below is not
-acceptance for this source; no local Cargo retry. See SDK_SIGNATURE_SHARED_READS.md.
+The SDK/Quote submission observer batch is independently accepted: e81dda4 /
+Actions 44223334225 / artifact 14392698134. Complete concurrent/serial each 1874
+(292.68/549.27 seconds), all 1850 parent names retained, exactly twenty-four
+added. SDK shared/oracle 12 / Quote adapter 6 / actual controller with fake
+invoke 3 / real HTTP 3 and all 93 steps pass. Original/restored checks and all
+153 distinct raw field spans verify 50 selected types plus outside alias,
+including SharedReadRuntime itself. Python policy 12 / workflow 7 and SDK
+provenance pass. Original raw reader/parser/tests and SDK observer remain exact
+after cfg/import wiring; lane guards/invoke/control and Quote sign/send/message,
+shared runtime/HTTP/budgets/CAS and old wire contracts remain exact after explicit
+delegation/module wiring. Request/observation/budget/Unknown/original-signature
+witnesses execute. All 1134 snapshot blobs/modes (13,748,624 bytes) and dependency
+hashes match before acceptance records. Main/index/frozen history unchanged.
+No local Cargo retry, terminal rerun, docs-only CI or production action. See
+SDK_SIGNATURE_SHARED_READS.md for remaining DAMM/opaque SDK/resource/rollout gates.
 
 The standalone Quote status batch is independently accepted: 259b2fe / Actions
 44217059338 / artifact 14390716531. Complete concurrent/serial each 1850

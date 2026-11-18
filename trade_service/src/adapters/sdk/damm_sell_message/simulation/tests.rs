@@ -12,6 +12,8 @@ use crate::{
 use solana_sdk::signature::Signature;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+mod shared_tests;
+
 fn pair() -> (Arc<DammSellMessageProfile>, Arc<DammSellMessageProfile>) {
     let f = fixture(SwqosType::Temporal, false, 50);
     let final_message = f.profile().unwrap();

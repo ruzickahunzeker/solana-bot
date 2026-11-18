@@ -1,7 +1,10 @@
 use super::{lane_preparation::LanePreparation, ExecuteTrade, SdkLane, SdkTradeClient};
 use crate::{
     adapters::{
-        rpc::sdk_signature::observe_sdk_signature_shared,
+        rpc::{
+            damm_sell_simulation::shared::DammSimulationReader, read_runtime::SharedReadRuntime,
+            sdk_signature::observe_sdk_signature_shared,
+        },
         sdk::{
             damm_sell_message::{DammSellContext, DammSellMessageProfile},
             ordinary_lanes::{
@@ -87,6 +90,7 @@ fn buy_context(
 }
 
 async fn invoke_buy(
+    runtime: &SharedReadRuntime,
     client: TradingClient,
     request: TradeBuyParams,
     provider: SwqosType,
@@ -113,9 +117,9 @@ async fn invoke_buy(
             signatures: vec![],
             message: error.to_string(),
         })?;
-        let rpc = client.get_rpc().clone();
+        let rpc = DammSimulationReader::new(runtime, client.get_rpc().url());
         return message
-            .execute(rpc.as_ref(), |middleware| async move {
+            .execute(&rpc, |middleware| async move {
                 let client = client.with_middleware_manager(middleware);
                 decode_sdk_report(client.buy(request).await)
             })
@@ -125,6 +129,7 @@ async fn invoke_buy(
 }
 
 async fn invoke_sell(
+    runtime: &SharedReadRuntime,
     client: TradingClient,
     request: TradeSellParams,
     balance: u64,
@@ -150,9 +155,9 @@ async fn invoke_sell(
             signatures: vec![],
             message: error.to_string(),
         })?;
-        let rpc = client.get_rpc().clone();
+        let rpc = DammSimulationReader::new(runtime, client.get_rpc().url());
         profile
-            .execute(rpc.as_ref(), |middleware| async move {
+            .execute(&rpc, |middleware| async move {
                 let client = client.with_middleware_manager(middleware);
                 decode_sdk_report(client.sell_by_percent(request, balance, percent).await)
             })
@@ -435,7 +440,14 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                         message: "DAMM buy quote is missing or unexpected at SDK entry".into(),
                     });
                 }
-                invoke_buy(client, request, self.provider(), message).await
+                invoke_buy(
+                    self.read_rpc.as_ref(),
+                    client,
+                    request,
+                    self.provider(),
+                    message,
+                )
+                .await
             }
             PreparedLaneRequest::Sell {
                 client,
@@ -476,15 +488,33 @@ impl OrdinarySdkLane for LaneExecution<'_> {
                             signatures: vec![],
                             message: error.to_string(),
                         })?;
-                    let rpc = client.get_rpc().clone();
+                    let rpc =
+                        DammSimulationReader::new(self.read_rpc.as_ref(), client.get_rpc().url());
                     return final_message
-                        .after_unsigned_preview(&preview_message, rpc.as_ref(), || async move {
-                            invoke_sell(client, request, balance, percent, self.provider(), message)
-                                .await
+                        .after_unsigned_preview(&preview_message, &rpc, || async move {
+                            invoke_sell(
+                                self.read_rpc.as_ref(),
+                                client,
+                                request,
+                                balance,
+                                percent,
+                                self.provider(),
+                                message,
+                            )
+                            .await
                         })
                         .await;
                 }
-                invoke_sell(client, request, balance, percent, self.provider(), message).await
+                invoke_sell(
+                    self.read_rpc.as_ref(),
+                    client,
+                    request,
+                    balance,
+                    percent,
+                    self.provider(),
+                    message,
+                )
+                .await
             }
         }
     }

@@ -21,6 +21,10 @@ fn response(id: u64) -> Value {
 }
 #[derive(Clone)]
 pub(crate) enum Reply {
+    DammSimulation {
+        result: Value,
+        mode: Box<Reply>,
+    },
     QuoteStatus {
         value: Value,
         mode: Box<Reply>,
@@ -58,6 +62,7 @@ pub(crate) enum Reply {
     RateLimited(Option<&'static str>),
     Redirect(String),
     SlowHeaders,
+    DelayedHeaders(u64),
     SlowBody,
     Disconnect,
     WrongId,
@@ -217,9 +222,14 @@ async fn serve(
     let id = payload["id"].as_u64().unwrap();
     let is_wsol_quote = matches!(&reply, Reply::WsolQuote { .. });
     let is_wsol_simulation = matches!(&reply, Reply::WsolSimulation { .. });
+    let is_damm_simulation = matches!(&reply, Reply::DammSimulation { .. });
     let is_wsol_broadcast = matches!(&reply, Reply::WsolBroadcast { .. });
     let is_quote_status = matches!(&reply, Reply::QuoteStatus { .. });
     let (reply, parameter_value) = match reply {
+        Reply::DammSimulation { result, mode } => {
+            assert_eq!(payload["method"], "simulateTransaction");
+            (*mode, Some(result))
+        }
         Reply::QuoteStatus { value, mode } => {
             assert_eq!(payload["method"], "getSignatureStatuses");
             (*mode, Some(value))
@@ -377,7 +387,29 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if is_wsol_simulation {
+    if is_damm_simulation {
+        let config = &payload["params"][1];
+        assert_eq!(
+            *config,
+            json!({"sigVerify":false,"replaceRecentBlockhash":false,
+            "commitment":"processed","encoding":"base64","accounts":null,
+            "minContextSlot":123,"innerInstructions":true})
+        );
+        let bytes = base64::Engine::decode(
+            &base64::engine::general_purpose::STANDARD,
+            payload["params"][0].as_str().unwrap(),
+        )
+        .unwrap();
+        assert!(bytes.len() <= 1232);
+        let tx: solana_sdk::transaction::VersionedTransaction =
+            bincode::deserialize(&bytes).unwrap();
+        assert_eq!(tx.signatures, [solana_sdk::signature::Signature::default()]);
+        assert!(matches!(
+            tx.message,
+            solana_sdk::message::VersionedMessage::Legacy(_)
+        ));
+        assert_eq!(tx.message.header().num_required_signatures, 1);
+    } else if is_wsol_simulation {
         let config = &payload["params"][1];
         assert_eq!(config["sigVerify"], false);
         assert_eq!(config["replaceRecentBlockhash"], false);
@@ -558,6 +590,9 @@ async fn serve(
     }
     if matches!(reply, Reply::SlowHeaders) {
         std::future::pending::<()>().await;
+    }
+    if let Reply::DelayedHeaders(ms) = reply {
+        tokio::time::sleep(std::time::Duration::from_millis(ms)).await;
     }
 
     let response_id = if matches!(reply, Reply::WrongId) {

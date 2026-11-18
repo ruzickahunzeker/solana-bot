@@ -218,7 +218,7 @@ WSOL 广播续原 NP-03 收口固定原 RPC 和不可变校验包，原预检配
 
 独立 Quote 对账状态读取续原 NP-03 接同一 runtime/观测配额，保留原两节点与 parser/missing 政策，并隔离 pacing 与备用节点请求预算。`259b2fe` / Actions `44217059338` 独立验收完整并发/串行各 1850，原 1831 全保留、恰增十九，150 字段和全部 89 步通过，原始日志与源码身份已核对。不是生产验收，见 [Quote 状态共享读取](docs/optimization/QUOTE_STATUS_SHARED_READS.md)。
 
-SDK 原签名/Quote 提交观测续原 NP-03 接原共享读取，保留原 skip、总预算、签名与 Unknown/不换 lane；共享一秒间隔可能减少窗口内查询次数，不为见到回执扩预算或重发。二十四项新测试及 153 字段/93 步待独立 CI，见 [SDK 签名共享读取](docs/optimization/SDK_SIGNATURE_SHARED_READS.md)。
+SDK 原签名/Quote 提交观测续原 NP-03 接原共享读取，保留原 skip、总预算、签名与 Unknown/不换 lane；共享一秒间隔可能减少窗口内查询次数，不为见到回执扩预算或重发。`e81dda4` / Actions `44223334225` 独立验收完整并发/串行各 1874，原 1850 全保留、恰增二十四，153 字段及全部 93 步通过，原始日志/源码身份已核对。未部署，见 [SDK 签名共享读取](docs/optimization/SDK_SIGNATURE_SHARED_READS.md)。
 
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 
@@ -517,6 +517,8 @@ Memory/Durable 模式下该步骤不创建队列、不关闭数据库，也不�
 `MEV_SUBMIT_VERIFY_MS`
 
 MEV/SWQoS 提交后查询原签名是否可见的预算，单位毫秒，默认 `1200`。查不到或查询异常不是未发送证明，保留原签名和 `unknown`，不自动换 lane/重签/补单。`0` 关闭 legacy 可见性检查；新增源码 C3c1 的 Durable Live DAMM 卖出在 provider trait 没有可核验回执且预算为 0 时仍为 `unknown`，Default 匹配的 typed RPC 回执不受此限制。新子路径确认模式由共享只读观测执行，详见 [发送与预算](docs/optimization/SDK_ORIGINAL_DAMM_RUNTIME.md)，尚未部署。
+
+Legacy SDK 观测现已在源码中接入共享 Observation 配额：预算包含请求、共享起点等待和本地轮询等待，实际网络请求起点至少相隔一秒。本地 `100 ms` 的空结果轮询等待不代表每 `100 ms` 会发送请求，短窗口可能只查询一次或尚未准入就耗尽；不会为获取回执延长预算。原 skip/零预算规则保留，迟到的响应不能使已耗尽窗口变成成功；仍只跟踪原签名，不扩节点或自动补单。默认配置未修改，仅源码/离线验收，见 [SDK 签名共享读取](docs/optimization/SDK_SIGNATURE_SHARED_READS.md)。
 
 `ENABLE_PUMPAPI_EXECUTOR`
 

@@ -12,6 +12,8 @@ const DONE: &str = "SHARED_READ_WIRE_DONE";
 mod aggregator_account_wire;
 #[path = "aggregator_simulation_wire.rs"]
 mod aggregator_simulation_wire;
+#[path = "damm_simulation_wire.rs"]
+mod damm_simulation_wire;
 #[path = "parameter_wire.rs"]
 mod parameter_wire;
 #[path = "preparation_wire.rs"]
@@ -802,6 +804,9 @@ async fn shared_read_wire_child() {
             "sdk-observer-success" => sdk_observer_wire::success().await,
             "sdk-observer-errors" => sdk_observer_wire::errors().await,
             "sdk-observer-budgets-cancel" => sdk_observer_wire::budgets_cancel().await,
+            "damm-candidate-success" => damm_simulation_wire::success().await,
+            "damm-candidate-errors" => damm_simulation_wire::errors().await,
+            "damm-candidate-timeout-cancel" => damm_simulation_wire::timeout_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -1083,4 +1088,17 @@ fn sdk_observer_wire_bad_replies_or_rate_never_retry_or_query_other_registered_n
 #[test]
 fn sdk_observer_wire_caller_budget_pacing_cancel_and_hash_use_shared_capacity() {
     run("sdk-observer-budgets-cancel");
+}
+
+#[test]
+fn damm_candidate_wire_original_request_body_limits_and_four_second_http_allowance() {
+    run("damm-candidate-success");
+}
+#[test]
+fn damm_candidate_wire_bad_identity_body_rate_and_redirect_never_retry_or_fallback() {
+    run("damm-candidate-errors");
+}
+#[test]
+fn damm_candidate_wire_original_deadline_cancel_and_critical_hash_share_existing_quota() {
+    run("damm-candidate-timeout-cancel");
 }

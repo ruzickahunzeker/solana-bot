@@ -30,11 +30,18 @@
 
 ## 当前批次
 
-续原 NP-03 SDK 原签名/Quote 提交观测源码待独立验证：预期完整并发/串行各 1874，
-原 1850 名称全部保留、恰增二十四；SDK shared/oracle 12、Quote adapter 6、真实
-控制器/假 invoke 3、真实 HTTP 3，50 类型/153 原始字段、93 步。原始网络轮询
-受共享一秒间隔且不延长 caller 预算，签名/Unknown/不换 lane 保留；父批通过不
-代指本批，见 `SDK_SIGNATURE_SHARED_READS.md`。不本地 Cargo 重试或做生产操作。
+续原 NP-03 SDK 原签名/Quote 提交观测源码 `e81dda4d4704747e43010d442565dfa1eade2de8` /
+[Actions 44223334225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44223334225)
+首次终态 success（job 29m31s）；artifact `14392698134` 下载独立核验：完整并发
+1874（292.68 秒）/串行 1874（549.27 秒），零失败/忽略/过滤且原始名称相同；
+原 1850 全保留、恰增二十四。SDK shared/oracle 12/Quote adapter 6/真实控制器
+假 invoke 3/真实 HTTP 3、原全部专项及全部 93 步通过；50 类型/153 原始字段和
+原源码/恢复成功，Python policy 十二项/workflow 七项与 SDK provenance 通过。
+原 reader/parser/observer/测试、真实 guard/invoke/Quote 签名发送与原字节不变量、
+共享 runtime/HTTP/预算/CAS、旧 wire 合同和请求/结果/Unknown/原签名见证已核对。
+全树 1134 文件/13,748,624 字节及模式、identity/依赖哈希一致；main/索引/冻结
+历史保持。旧串行 stderr 精确关联及两正七负格式回归通过；不重跑终态或另发
+文档 CI，不本地 Cargo 重试或做生产操作，未部署，见 `SDK_SIGNATURE_SHARED_READS.md`。
 
 续原 NP-03 独立 Quote 状态读取源码 `259b2fe67a62045a9cb6c5c06c039ab93f80d33b` /
 [Actions 44217059338](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44217059338)

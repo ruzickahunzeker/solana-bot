@@ -1,6 +1,7 @@
 use super::*;
-use crate::adapters::rpc::damm_sell_simulation::simulate_unsigned_at_slot;
-use solana_client::nonblocking::rpc_client::RpcClient;
+use crate::adapters::rpc::damm_sell_simulation::shared::{
+    simulate_unsigned_at_slot, DammSimulator,
+};
 
 fn failure(error: anyhow::Error) -> SdkInvocationFailure {
     SdkInvocationFailure {
@@ -10,7 +11,7 @@ fn failure(error: anyhow::Error) -> SdkInvocationFailure {
 }
 
 impl DammSellCandidate {
-    pub(crate) async fn simulate(&self, rpc: &RpcClient) -> Result<SdkLaneReport> {
+    pub(crate) async fn simulate(&self, rpc: &impl DammSimulator) -> Result<SdkLaneReport> {
         ensure!(
             self.profile.intent.simulate,
             "DAMM simulation requires its own unsigned profile"
@@ -50,7 +51,7 @@ impl DammSellMessageProfile {
 
     pub(crate) async fn execute<F, Fut>(
         self: &Arc<Self>,
-        rpc: &RpcClient,
+        rpc: &impl DammSimulator,
         invoke: F,
     ) -> Result<SdkLaneReport, SdkInvocationFailure>
     where
@@ -71,7 +72,7 @@ impl DammSellMessageProfile {
     pub(crate) async fn after_unsigned_preview<F, Fut>(
         self: &Arc<Self>,
         preview: &Arc<Self>,
-        rpc: &RpcClient,
+        rpc: &impl DammSimulator,
         submit: F,
     ) -> Result<SdkLaneReport, SdkInvocationFailure>
     where
@@ -87,7 +88,7 @@ impl DammSellMessageProfile {
     pub(crate) async fn validate_unsigned_preview(
         self: &Arc<Self>,
         preview: &Arc<Self>,
-        rpc: &RpcClient,
+        rpc: &impl DammSimulator,
     ) -> Result<()> {
         let checked = (|| -> Result<()> {
             ensure!(

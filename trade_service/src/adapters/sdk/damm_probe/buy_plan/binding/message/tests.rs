@@ -9,6 +9,8 @@ use solana_sdk::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 
+mod shared_tests;
+
 pub(super) async fn profile(
     provider: SwqosType,
     simulate: bool,

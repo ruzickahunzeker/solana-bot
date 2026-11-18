@@ -1,17 +1,26 @@
+#[cfg(test)]
 use anyhow::{ensure, Context, Result};
+#[cfg(test)]
 use solana_client::{nonblocking::rpc_client::RpcClient, rpc_config::RpcSimulateTransactionConfig};
+#[cfg(test)]
 use solana_commitment_config::CommitmentConfig;
+#[cfg(test)]
 use solana_sdk::{
     hash::Hash, message::VersionedMessage, signature::Signature, transaction::VersionedTransaction,
 };
+#[cfg(test)]
 use solana_transaction_status_client_types::UiTransactionEncoding;
+#[cfg(test)]
 use std::time::Duration;
+
+pub(crate) mod shared;
 
 pub(crate) struct DammSimulationResult {
     pub(crate) error: Option<String>,
 }
 
 /// Fixed read-only RPC method. No signed transaction or broadcast method is accepted.
+#[cfg(test)]
 pub(crate) async fn simulate_unsigned_at_slot(
     rpc: &RpcClient,
     transaction: &VersionedTransaction,
@@ -32,6 +41,7 @@ async fn simulate_unsigned(
     simulate(rpc, transaction, None).await
 }
 
+#[cfg(test)]
 async fn simulate(
     rpc: &RpcClient,
     transaction: &VersionedTransaction,

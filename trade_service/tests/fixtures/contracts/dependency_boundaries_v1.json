@@ -23,6 +23,8 @@
     {"id": "transaction", "path": "solana_sdk::transaction::VersionedTransaction"},
     {"id": "rpc", "path": "solana_client::nonblocking::rpc_client::RpcClient"},
     {"id": "shared_read_runtime", "path": "pump_trade_service::adapters::rpc::read_runtime::SharedReadRuntime", "probe": "crate::adapters::rpc::read_runtime::SharedReadRuntime"},
+    {"id": "damm_simulation_reader", "path": "pump_trade_service::adapters::rpc::damm_sell_simulation::shared::DammSimulationReader", "probe": "crate::adapters::rpc::damm_sell_simulation::shared::DammSimulationReader", "static_lifetime": true},
+    {"id": "damm_simulation_packet", "path": "pump_trade_service::adapters::rpc::damm_sell_simulation::shared::DammSimulationPacket", "probe": "crate::adapters::rpc::damm_sell_simulation::shared::DammSimulationPacket"},
     {"id": "sqlite_pool", "path": "sqlx::SqlitePool"},
     {"id": "http_headers", "path": "axum::http::HeaderMap"},
     {"id": "app_state", "path": "pump_trade_service::AppState", "probe": "crate::AppState"},

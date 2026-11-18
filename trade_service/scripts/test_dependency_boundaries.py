@@ -36,6 +36,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertTrue({"wsol_broadcast_lane", "wsol_broadcast_packet"} <= types)
         self.assertTrue({"quote_status_reader", "quote_status_wrapper"} <= types)
         self.assertIn("shared_read_runtime", types)
+        self.assertTrue({"damm_simulation_reader", "damm_simulation_packet"} <= types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):
@@ -87,6 +88,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertNotIn("<'static>", source.decode().splitlines()[expected["aggregator_simulation_plan"] - 1])
         self.assertIn("WsolQuoteReadSession<'static>>", source.decode().splitlines()[expected["wsol_quote_session"] - 1])
         self.assertIn("WsolBroadcastPacket<'static>>", source.decode().splitlines()[expected["wsol_broadcast_packet"] - 1])
+        self.assertIn("DammSimulationReader<'static>>", source.decode().splitlines()[expected["damm_simulation_reader"] - 1])
 
     def test_static_lifetime_metadata_cannot_inject_rust_or_replace_path_validation(self):
         policy = boundaries.read_policy()

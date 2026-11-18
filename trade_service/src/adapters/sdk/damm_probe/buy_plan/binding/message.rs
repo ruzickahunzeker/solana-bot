@@ -1,6 +1,6 @@
 use super::*;
 use crate::adapters::{
-    rpc::damm_sell_simulation::simulate_unsigned_at_slot,
+    rpc::damm_sell_simulation::shared::{simulate_unsigned_at_slot, DammSimulator},
     sdk::{
         damm_instructions::{compile_candidate, full_instructions, swap_instruction, tip_lamports},
         ordinary_lanes::{SdkInvocationFailure, SdkLaneReport},
@@ -9,7 +9,6 @@ use crate::adapters::{
 use sol_trade_sdk::{
     common::fast_fn::create_associated_token_account_idempotent_fast, trading::MiddlewareManager,
 };
-use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_sdk::{instruction::Instruction, transaction::VersionedTransaction};
 use std::{future::Future, sync::Arc};
 
@@ -127,7 +126,7 @@ impl DammBuyMessage {
 
     pub(crate) async fn execute<F, Fut>(
         self: &Arc<Self>,
-        rpc: &RpcClient,
+        rpc: &impl DammSimulator,
         invoke: F,
     ) -> Result<SdkLaneReport, SdkInvocationFailure>
     where
@@ -173,7 +172,7 @@ impl DammBuyCandidate {
         self.transaction.message.serialize()
     }
 
-    pub(crate) async fn validate_unsigned_live(&self, rpc: &RpcClient) -> Result<()> {
+    pub(crate) async fn validate_unsigned_live(&self, rpc: &impl DammSimulator) -> Result<()> {
         ensure!(
             !self.profile.quote.intent.simulate,
             "DAMM buy live preview requires its original live profile"

@@ -33,6 +33,10 @@ impl HttpReply {
 }
 
 pub(crate) enum ReadRequest {
+    DammCandidateSimulation {
+        id: u64,
+        packet: super::damm_sell_simulation::shared::DammSimulationPacket,
+    },
     WsolSimulation {
         id: u64,
         packet: crate::sdk_client::wsol_conversion::simulation::WsolSimulationPacket,
@@ -98,6 +102,7 @@ impl ReadRequest {
 
     pub(super) fn body(&self) -> Value {
         match self {
+            Self::DammCandidateSimulation { id, packet } => packet.body(*id),
             Self::WsolSimulation { id, packet } => packet.body(*id),
             Self::WsolQuote { id, query } => query.body(*id),
             Self::AggregatorSimulation {
@@ -150,6 +155,7 @@ impl ReadRequest {
 
     fn label(&self) -> &'static str {
         match self {
+            Self::DammCandidateSimulation { .. } => "DAMM simulation",
             Self::WsolSimulation { .. } => "WSOL simulation",
             Self::WsolQuote { .. } => "WSOL quote",
             Self::AggregatorSimulation { .. } => "aggregator simulation",
@@ -175,6 +181,7 @@ impl ReadRequest {
             Self::TokenAccounts { .. }
                 | Self::AggregatorSimulation { .. }
                 | Self::WsolSimulation { .. }
+                | Self::DammCandidateSimulation { .. }
         ) {
             MAX_TOKEN_BODY
         } else {
@@ -212,10 +219,14 @@ impl ReadHttpTransport for ReqwestReadTransport {
     async fn fetch(&self, url: &Url, request: &ReadRequest) -> Result<HttpReply> {
         let label = request.label();
         let max_body = request.max_body();
-        let mut response = self
-            .client
-            .post(url.clone())
-            .json(&request.body())
+        let builder = self.client.post(url.clone()).json(&request.body());
+        // Only the fixed DAMM profile retains its original four-second HTTP allowance.
+        let builder = if matches!(request, ReadRequest::DammCandidateSimulation { .. }) {
+            builder.timeout(Duration::from_secs(4))
+        } else {
+            builder
+        };
+        let mut response = builder
             .send()
             .await
             .map_err(|_| anyhow::anyhow!("{label} HTTP transport unavailable"))?;

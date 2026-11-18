@@ -6,6 +6,12 @@ new task or denominator. Source and independent offline Rust CI accepted:
 d1d9038 / Actions 44210742181 was not used as acceptance for this source.
 No deployment, production wallet/database access, real RPC or transaction.
 
+Follow-up SDK and Quote submission observation is separately accepted in
+e81dda4 / Actions 44223334225 / artifact 14392698134, complete suites each 1874
+and all 153 fields/93 steps. See SDK_SIGNATURE_SHARED_READS.md. The historical
+remaining list below is not a task to repeat; DAMM/opaque SDK confirmers/tasks,
+global quotas and original rollout gates still remain.
+
 ## Actual Scope
 
 Bootstrap gives the existing shared-read Arc to SdkQuoteReconciliationRuntime.

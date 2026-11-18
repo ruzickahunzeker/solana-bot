@@ -123,6 +123,9 @@ PY
         step sdk-observer-wire cargo test --locked --offline sdk_observer_wire_ -- --test-threads=2
         step sdk-observer-flow cargo test --locked --offline shared_observer_flow_ -- --test-threads=2
         step quote-submit-status cargo test --locked --offline quote_submit_status_shared_ -- --test-threads=2
+        step damm-candidate-shared cargo test --locked --offline damm_candidate_shared_ -- --test-threads=2
+        step damm-candidate-adapter cargo test --locked --offline damm_candidate_adapter_ -- --test-threads=2
+        step damm-candidate-wire cargo test --locked --offline damm_candidate_wire_ -- --test-threads=2
         step sdk-recovery cargo test --locked --offline sdk_recovery -- --test-threads=2
         step sdk-scan cargo test --locked --offline sdk_scan -- --test-threads=2
         step sdk-signing-journal cargo test --locked --offline sdk_submission_journal -- --test-threads=2

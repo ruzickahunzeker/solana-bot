@@ -4,7 +4,9 @@ use super::{
 };
 use crate::{
     adapters::{
-        rpc::read_runtime::SharedReadRuntime,
+        rpc::{
+            damm_sell_simulation::shared::DammSimulationReader, read_runtime::SharedReadRuntime,
+        },
         sdk::{
             damm_probe::{DammBuyCandidate, DammBuyContext, DammBuySignedCandidate},
             damm_sell_message::{DammSellCandidate, DammSellContext, DammSignedCandidate},
@@ -255,9 +257,9 @@ impl SdkTradeClient {
                     let profile = message.context("SDK original live profile missing")?;
                     let preview =
                         preview_message.context("SDK original unsigned preview missing")?;
-                    profile
-                        .validate_unsigned_preview(&preview, client.get_rpc())
-                        .await?;
+                    let reader =
+                        DammSimulationReader::new(runtime.as_ref(), client.get_rpc().url());
+                    profile.validate_unsigned_preview(&preview, &reader).await?;
                     OriginalCandidate::Sell(profile.prepare_live(tip)?)
                 }
                 PreparedLaneRequest::Buy {
@@ -265,7 +267,9 @@ impl SdkTradeClient {
                 } => {
                     let profile = message.context("SDK original buy live profile missing")?;
                     let candidate = profile.prepare_live(tip)?;
-                    candidate.validate_unsigned_live(client.get_rpc()).await?;
+                    let reader =
+                        DammSimulationReader::new(runtime.as_ref(), client.get_rpc().url());
+                    candidate.validate_unsigned_live(&reader).await?;
                     OriginalCandidate::Buy(candidate)
                 }
             };

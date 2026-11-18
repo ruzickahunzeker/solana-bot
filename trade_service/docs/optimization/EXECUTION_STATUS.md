@@ -6,11 +6,28 @@
 
 ## 当前任务
 
-- 续原 NP-03 SDK 原签名观测及 Quote 提交观测：两条实际入口复用原共享状态读取，
+- 续原 NP-03：DAMM 买卖两侧最终候选模拟及签名前 preview 已接原共享读取，
+  本批源码待独立 Rust CI 验收，不能沿用下方 1874 的通过数。保留零签名消息、
+  原 quote slot、四秒总限和前后 freshness 校验；复用既有模拟配额，只给 DAMM
+  固定请求保留四秒 HTTP 上限。预期新增 23 项、52 类型/159 字段及三专项；
+  DAMM 报价 probe/账户证据链不混入本批，仍在原队列。见
+  [DAMM 候选共享读取](DAMM_CANDIDATE_SHARED_READS.md)。
+- 原 NP-03 SDK 原签名观测及 Quote 提交观测本批已独立源码/离线验收：两条实际入口复用原共享状态读取，
   保留原 skip/钱包/RPC 顺序/总预算/Unknown 与签名；原 Raw reader/SDK observer
   及旧测试仅测试保留，签名发送和账本不改。SDK 网络轮询受既有一秒共享间隔约束，
-  不延长总预算或补单；新增迟到结果的 caller-budget 检查。二十四项新测试/四项
-  专项及 50 类型/153 字段待本批独立 CI，预期完整各 1874/93 步，不套父批结果，
+  不延长总预算或补单；新增迟到结果的 caller-budget 检查。
+  `e81dda4d4704747e43010d442565dfa1eade2de8` /
+  [Actions 44223334225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44223334225)
+  首次终态 success；artifact `14392698134` 下载独立核对：完整并发 1874
+  （292.68 秒）/串行 1874（549.27 秒），零失败/忽略/过滤且原始名称相同；父批
+  1850 全保留、恰增二十四。SDK shared/oracle 12/Quote adapter 6/真实控制器假
+  invoke 3/真实 HTTP 3、原全部专项、50 类型/153 原始字段及全部 93 步通过。
+  原 reader/parser/SDK observer 和旧测试、原 guard/prepare/invoke/Quote 签名发送/
+  消息及共享 runtime/HTTP/预算/CAS/旧 wire 合同逐字核对，精确请求/观测/预算和
+  Unknown/原签名/不进入下一 lane 的见证通过。全树 1134 文件/13,748,624 字节
+  及模式、identity/依赖哈希一致，main/索引/冻结历史保持。未部署，不本地 Cargo
+  重试、不重跑终态或另发文档 CI，不新增任务/分母；下一原入口为 DAMM 零签名
+  模拟/报价读取，SDK 内部确认器/任务、全局配额及其他原门槛仍保留，
   见 [SDK 签名共享读取](SDK_SIGNATURE_SHARED_READS.md)。
 - 原 NP-03 独立 Quote 状态读取本批已独立源码/离线验收：实际对账 reader 仅快照原前两 RPC 的 URL，
   接原共享 runtime/Observation 配额和冷却；保留原顺序、missing/error 优先与
@@ -366,7 +383,7 @@
 ## 续作顺序
 
 1. 普通任务生命周期、Shadow writer、Record/Tape、买入只读取证/兼容/准备/消息/独立记录、原 journal 类型边界、原意图/历史回放，以及原 owner 的受控买入候选/signer、CAS/签名字节回读、固定 Buy sender/runtime 和 claim/扫描均已按各自源码独立验收，不重复实施或重跑终态 CI。882e514 只完成 Durable Live SDK 直接 DAMM 的两类输入子路径；续下方原 NP-01/03/04/05 剩余范围，不以历史恢复 owner/重签/重发，不另立任务，也不核对/修改线上版本。
-2. 原 NP-03 已验收的 presence、普通参数/预热/寻池、两跳、聚合账户/模拟、WSOL 报价/状态/准备/模拟/广播所有权及独立 Quote 状态读取不重复实施或重跑，证据见上方各自源码。下一入口为 SDK 原签名观测及其他 Quote 提交观测：保留零预算跳过、原选定单 RPC、原总预算/缺失轮询、slot 零拒绝和未知结果语义，不因共享等待重发或换 lane；现有原签名观测器与共享 Quote helper 的预算差异须先核对。具体资源、DAMM/不透明 SDK 读取任务、全局 RPC/cache 配额及退出/刷盘门槛继续；150 字段门禁不代表所有依赖/能力流完成。任务取消不代表 SDK 副作用取消，不恢复 owner 或重签/重发。
+2. 原 NP-03 已验收的 presence、普通参数/预热/寻池、两跳、聚合账户/模拟、WSOL 报价/状态/准备/模拟/广播所有权、独立 Quote 状态及 SDK 原签名/Quote 提交观测不重复实施或重跑，证据见上方各自源码。下一入口为 DAMM 零签名模拟及报价读取：先核对买卖候选、preview/probe/evidence 的实际调用点，保留原固定零签名消息、min_context_slot/slot/loaded-address 检查、报价/余额新鲜度及调用顺序；原四秒模拟期限不能直接套成现有两秒 profile，也不新建无主 HTTP/配额。SDK 内部确认器/任务、全局 RPC/cache 配额与退出/刷盘门槛继续；153 字段门禁不代表全部依赖/能力流完成。任务取消不代表 SDK 副作用取消，不恢复 owner 或重签/重发。
 3. 原 NP-01 的其他资产/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接买卖子路径不重做，也不冒充全量。其他 Live worker/模拟和 Memory/Shadow 仍须按实际路径验证，不能继承本批的原 owner 保证。
 4. NP-04 本批只证明原 Durable SOL Quote 买入控制器的共同合同，其他业务路径适用性、真实 Router/SDK 不由 fake 证明；NP-05 来源/升级准备和主计划的真实环境/迁移/回滚门槛继续。当前不授权实际 SDK 升级或生产动作。
 
