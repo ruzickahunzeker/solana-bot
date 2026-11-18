@@ -211,7 +211,7 @@ impl ReadHttpTransport for Fake {
 fn lookup(r: Arc<SharedReadRuntime<Fake>>, urls: &[&str]) -> RpcQuoteStatusReader<Fake> {
     RpcQuoteStatusReader::new(r, urls.iter().map(|url| (*url).into()).collect())
 }
-fn released(r: &SharedReadRuntime<Fake>) {
+pub(crate) fn released(r: &SharedReadRuntime<Fake>) {
     assert_eq!(
         r.slots
             .iter()

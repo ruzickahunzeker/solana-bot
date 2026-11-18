@@ -20,6 +20,8 @@ mod preparation_wire;
 mod presence_wire;
 #[path = "quote_status_wire.rs"]
 mod quote_status_wire;
+#[path = "sdk_observer_wire.rs"]
+mod sdk_observer_wire;
 #[path = "wsol_preparation_wire.rs"]
 mod wsol_preparation_wire;
 #[path = "wsol_quote_wire.rs"]
@@ -797,6 +799,9 @@ async fn shared_read_wire_child() {
             "quote-status-success" => quote_status_wire::success().await,
             "quote-status-errors" => quote_status_wire::errors().await,
             "quote-status-timeout-cancel-rate" => quote_status_wire::timeout_cancel_rate().await,
+            "sdk-observer-success" => sdk_observer_wire::success().await,
+            "sdk-observer-errors" => sdk_observer_wire::errors().await,
+            "sdk-observer-budgets-cancel" => sdk_observer_wire::budgets_cancel().await,
             _ => panic!("unknown shared read wire fixture"),
         }
     })
@@ -1065,4 +1070,17 @@ fn quote_status_wire_faults_fall_back_only_to_original_second_node_without_retry
 #[test]
 fn quote_status_wire_one_second_timeouts_cancel_hash_progress_and_bidirectional_cooldown() {
     run("quote-status-timeout-cancel-rate");
+}
+
+#[test]
+fn sdk_observer_wire_original_oracle_exact_params_and_declared_streamed_body_bounds() {
+    run("sdk-observer-success");
+}
+#[test]
+fn sdk_observer_wire_bad_replies_or_rate_never_retry_or_query_other_registered_nodes() {
+    run("sdk-observer-errors");
+}
+#[test]
+fn sdk_observer_wire_caller_budget_pacing_cancel_and_hash_use_shared_capacity() {
+    run("sdk-observer-budgets-cancel");
 }

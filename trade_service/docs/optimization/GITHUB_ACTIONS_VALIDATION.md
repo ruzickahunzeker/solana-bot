@@ -30,10 +30,24 @@
 
 ## 当前批次
 
-续原 NP-03 独立 Quote 状态读取源码待独立验证。预期完整并发/串行各 1850，
-原 1831 名称全部保留且恰增十九；shared/oracle 14、真实 HTTP 3、实际 adapter 2，
-49 类型/150 原始字段和 89 步。原 WSOL 广播父批证据不替代本批；仅推既有
-隔离 CI 分支，不本地重试 Cargo，不做生产操作，见 `QUOTE_STATUS_SHARED_READS.md`。
+续原 NP-03 SDK 原签名/Quote 提交观测源码待独立验证：预期完整并发/串行各 1874，
+原 1850 名称全部保留、恰增二十四；SDK shared/oracle 12、Quote adapter 6、真实
+控制器/假 invoke 3、真实 HTTP 3，50 类型/153 原始字段、93 步。原始网络轮询
+受共享一秒间隔且不延长 caller 预算，签名/Unknown/不换 lane 保留；父批通过不
+代指本批，见 `SDK_SIGNATURE_SHARED_READS.md`。不本地 Cargo 重试或做生产操作。
+
+续原 NP-03 独立 Quote 状态读取源码 `259b2fe67a62045a9cb6c5c06c039ab93f80d33b` /
+[Actions 44217059338](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44217059338)
+首次终态 success（job 27m28s）；artifact `14390716531` 下载独立核验：完整并发
+1850（267.93 秒）/串行 1850（512.67 秒），零失败/忽略/过滤且原始名称相同；
+父批 1831 全保留、恰增十九。shared/oracle 14/真实 HTTP 3/实际 adapter 2、原全部
+专项和全部 89 步通过；49 类型/150 原始字段拒绝及原源码/恢复成功，Python
+policy 十二项/workflow 七项和 SDK provenance 通过。原 parser/reader/测试及其他
+SDK 观测、Application/账本、共享读取原 body 和旧 HTTP/wire 合同已核对，精确
+请求/观测、备用预算与资源身份见证通过。全树 1128 文件/13,703,583 字节及模式、
+identity/依赖哈希一致；main/索引/冻结历史保持。旧串行 stderr 精确关联及两正七负
+格式回归通过。不重跑终态或另发文档 CI，不本地 Cargo 重试或做生产操作，未部署，
+见 `QUOTE_STATUS_SHARED_READS.md`；不继承下方父批证据。
 
 续原 NP-03 WSOL 广播所有权源码 `d1d9038fec184cb62519741572d70e81fab4fc57` /
 [Actions 44210742181](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44210742181)

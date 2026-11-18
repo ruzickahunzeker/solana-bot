@@ -1,18 +1,22 @@
 use anyhow::{bail, Context, Result};
+#[cfg(test)]
 use solana_client::nonblocking::rpc_client::RpcClient;
+#[cfg(test)]
 use solana_sdk::signature::Signature;
 use solana_transaction_status_client_types::{TransactionConfirmationStatus, TransactionStatus};
+#[cfg(test)]
 use std::{sync::Arc, time::Duration};
 
-use crate::{
-    application::ports::reconciliation::SignatureStatusReader,
-    domain::reconciliation::{ChainCommitment, ChainObservation},
-};
+#[cfg(test)]
+use crate::application::ports::reconciliation::SignatureStatusReader;
+use crate::domain::reconciliation::{ChainCommitment, ChainObservation};
 
+#[cfg(test)]
 pub(crate) struct RpcSignatureStatusReader {
     pub rpcs: Vec<Arc<RpcClient>>,
 }
 
+#[cfg(test)]
 impl SignatureStatusReader for RpcSignatureStatusReader {
     async fn lookup_signature(&self, signature: &str) -> Result<Option<ChainObservation>> {
         let parsed = signature

@@ -1,8 +1,9 @@
 # Standalone Quote Status Reads
 
 Date: 2026-11-18, Asia/Shanghai. Continues original NP-03 / TS-07/09, without a
-new task or denominator. Source candidate; independent Rust CI still required.
-Accepted parent d1d9038 / Actions 44210742181 is not acceptance for this source.
+new task or denominator. Source and independent offline Rust CI accepted:
+259b2fe / Actions 44217059338 / artifact 14390716531. The accepted parent
+d1d9038 / Actions 44210742181 was not used as acceptance for this source.
 No deployment, production wallet/database access, real RPC or transaction.
 
 ## Actual Scope
@@ -103,3 +104,36 @@ Other SDK-internal/DAMM reads/tasks, original SDK/Quote send observers, provider
 quotas and NP-01/03/04/05/rollout gates remain. SDK stays 6.0.2; manifests/lock/
 vendor/migrations/API/amounts/wallet identity and production state are unchanged.
 New PumpAPI integration stays paused. This is not all-protocol or live acceptance.
+
+## Accepted Evidence
+
+Source `259b2fe67a62045a9cb6c5c06c039ab93f80d33b`,
+[Actions 44217059338](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44217059338),
+its first run terminal success (job 27m28s). Downloaded artifact `14390716531`
+independently audited: all 89 steps exit zero. Complete concurrent 1850 (267.93
+seconds) and serial 1850 (512.67 seconds), zero failed/ignored/filtered tests,
+identical raw name sets. All 1831 parent names retained and exactly the nineteen
+source-defined names added. Shared/oracle 14 / real HTTP 3 / actual adapter 2
+and all earlier focused regressions pass, including the 59-name WSOL status
+contract and both simulation and original-broadcast suites.
+
+Original/restored compiler checks and all 150 distinct raw field spans pass:
+49 selected concrete types plus outside alias. Python policy 12 / workflow 7
+and SDK provenance pass; identity/manifest/lock/vendor-manifest hashes match.
+Before recording acceptance all 1128 snapshot blobs/modes (13,703,583 bytes)
+match the exact source. The complete original RpcSignatureStatusReader/parser/
+tests and other SDK observers, Application/journal and old runtime tests remain
+exact after only explicit constructor wiring and one added ownership assertion.
+The original shared read body reconstructs byte-for-byte from start/finish,
+apart from the explicit pre-I/O deadline guard; all other budgets/capacities/
+intervals and paths remain exact. Original HTTP fixture and wire tests/child
+deadline are unchanged after removing only this profile's variant/dispatch.
+Actual bootstrap/reader wiring, zero original-client calls, URL/resource ownership,
+exact request/observation witnesses and fresh backup-budget cases execute.
+
+The known serial discovery child-stderr split is associated only with its exact
+test/pinned fixture/immediate ok; two positive/seven negative format regressions
+pass. No raw logs or names are rewritten. Main/index/frozen history remain
+unchanged. No local service Cargo retry, release build, deployment/restart,
+production data access, real RPC or transaction. Do not rerun terminal CI or
+trigger documentation-only CI; carry records with the next source batch.

@@ -114,11 +114,26 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
-The standalone Quote status candidate adds RpcQuoteStatusReader and the actual
-QuoteStatusReader wrapper: expected 49 selected types / 150 scoped fields with
-outside alias, nineteen tests and three steps (full suites each 1850, 89 steps).
-Independent offline CI is required; the d1d9038 parent evidence below is not
-evidence for this source. No local service Cargo retry. See QUOTE_STATUS_SHARED_READS.md.
+The SDK/Quote submission observer candidate adds SharedReadRuntime itself to the
+selected concrete-type policy: expected 50 types / 153 scoped fields including
+outside alias. Twenty-four new tests and four steps require independent offline
+CI (full suites each 1874 / 93 steps). Parent 259b2fe evidence below is not
+acceptance for this source; no local Cargo retry. See SDK_SIGNATURE_SHARED_READS.md.
+
+The standalone Quote status batch is independently accepted: 259b2fe / Actions
+44217059338 / artifact 14390716531. Complete concurrent/serial each 1850
+(267.93/512.67 seconds), all 1831 parent names retained, exactly nineteen added.
+Shared/oracle 14 / real HTTP 3 / actual adapter 2 and all 89 steps pass. Original/
+restored checks and all 150 distinct raw field spans verify 49 selected concrete
+types plus outside alias, including RpcQuoteStatusReader and QuoteStatusReader.
+Python policy 12 / workflow 7 and SDK provenance pass. Original parser/oracle/
+tests, other SDK observers and Application/journal flow remain exact; original
+shared read body reconstructs exactly except the explicit pre-I/O deadline guard.
+All old HTTP/wire contracts and exact request/observation/backup-budget witnesses
+pass. All 1128 snapshot blobs/modes (13,703,583 bytes) and dependency hashes match
+before acceptance records. Main/index/frozen history preserved. No local service
+Cargo retry, terminal CI rerun, docs-only CI or production action. See
+QUOTE_STATUS_SHARED_READS.md for remaining SDK/resource/rollout gates.
 
 The WSOL broadcast batch is independently accepted: d1d9038 / Actions
 44210742181 / artifact 14386593797, complete concurrent/serial each 1831
@@ -279,7 +294,7 @@ verified; earlier 81-field runs remain historical, not evidence for 87.
 
 The compiler gate is a development check, not a runtime permission or a new
 task. Application, Domain and Protocol production modules forbid
-`clippy::disallowed_types`. The current JSON fixture lists 47 selected SDK,
+`clippy::disallowed_types`. The current JSON fixture lists 50 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
 

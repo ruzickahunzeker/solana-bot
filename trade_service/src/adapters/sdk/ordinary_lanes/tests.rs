@@ -1,6 +1,7 @@
 use super::*;
 #[path = "balance_gate_tests.rs"]
 mod balance_gate_tests;
+mod shared_observer;
 use crate::{
     adapters::sdk::ordinary_params::default_fee_strategy,
     application::trade_execution::classify_result,

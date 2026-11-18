@@ -7,6 +7,7 @@ use crate::application::ports::quote_execution::QuoteSubmissionBackend;
 use crate::domain::quote::{BoundQuote, QuotePreflight};
 use crate::domain::submission::SignedSubmission;
 use crate::sdk_client::SdkTradeClient;
+mod status;
 
 pub(crate) struct SdkQuoteSubmission<'a>(
     pub &'a SdkTradeClient,
@@ -144,11 +145,7 @@ impl crate::application::ports::reconciliation::SignatureStatusReader for SdkQuo
         &self,
         signature: &str,
     ) -> Result<Option<crate::domain::reconciliation::ChainObservation>> {
-        crate::adapters::rpc::signature_status::RpcSignatureStatusReader {
-            rpcs: self.0.rpcs(),
-        }
-        .lookup_signature(signature)
-        .await
+        status::lookup_selected(self.1, self.0.rpcs(), signature).await
     }
 }
 

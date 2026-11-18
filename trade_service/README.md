@@ -216,7 +216,9 @@ WSOL 未签名/已签模拟后续已接同一 runtime/既有模拟配额，保�
 
 WSOL 广播续原 NP-03 收口固定原 RPC 和不可变校验包，原预检配置/回执检查及账本顺序保持。`d1d9038` / Actions `44210742181` 独立验收完整并发/串行各 1831，原 1817 全保留、恰增十四，144 字段和全部 86 步骤通过，原始日志与源码身份已核对。未部署，也不是全局配额完成，见 [WSOL 广播所有权](docs/optimization/WSOL_BROADCAST_OWNERSHIP.md)。
 
-独立 Quote 对账状态读取续原 NP-03 接同一 runtime/观测配额，保留原两节点与 parser/missing 政策，并隔离 pacing 与备用节点请求预算；十九项新测试及 150 字段/89 步待独立 CI，不是生产验收，见 [Quote 状态共享读取](docs/optimization/QUOTE_STATUS_SHARED_READS.md)。
+独立 Quote 对账状态读取续原 NP-03 接同一 runtime/观测配额，保留原两节点与 parser/missing 政策，并隔离 pacing 与备用节点请求预算。`259b2fe` / Actions `44217059338` 独立验收完整并发/串行各 1850，原 1831 全保留、恰增十九，150 字段和全部 89 步通过，原始日志与源码身份已核对。不是生产验收，见 [Quote 状态共享读取](docs/optimization/QUOTE_STATUS_SHARED_READS.md)。
+
+SDK 原签名/Quote 提交观测续原 NP-03 接原共享读取，保留原 skip、总预算、签名与 Unknown/不换 lane；共享一秒间隔可能减少窗口内查询次数，不为见到回执扩预算或重发。二十四项新测试及 153 字段/93 步待独立 CI，见 [SDK 签名共享读取](docs/optimization/SDK_SIGNATURE_SHARED_READS.md)。
 
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 

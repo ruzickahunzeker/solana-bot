@@ -35,6 +35,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertTrue({"wsol_simulation_packet", "wsol_signed", "wsol_signed_wrapper"} <= types)
         self.assertTrue({"wsol_broadcast_lane", "wsol_broadcast_packet"} <= types)
         self.assertTrue({"quote_status_reader", "quote_status_wrapper"} <= types)
+        self.assertIn("shared_read_runtime", types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):

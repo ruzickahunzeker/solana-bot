@@ -1,7 +1,7 @@
 use super::{lane_preparation::LanePreparation, ExecuteTrade, SdkLane, SdkTradeClient};
 use crate::{
     adapters::{
-        rpc::sdk_signature::observe_sdk_signature,
+        rpc::sdk_signature::observe_sdk_signature_shared,
         sdk::{
             damm_sell_message::{DammSellContext, DammSellMessageProfile},
             ordinary_lanes::{
@@ -501,8 +501,10 @@ impl OrdinarySdkLane for LaneExecution<'_> {
         {
             return Ok(SdkLaneObservation::Skipped);
         }
-        match observe_sdk_signature(
-            self.lane.client.get_rpc().clone(),
+        let url = self.lane.client.get_rpc().url();
+        match observe_sdk_signature_shared(
+            self.read_rpc.as_ref(),
+            &url,
             signature,
             trade.mev_submit_verify_ms,
         )

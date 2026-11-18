@@ -6,6 +6,12 @@ d1d9038 / Actions 44210742181 / artifact 14386593797. The accepted parent is
 9d40936 / Actions 44204140210; its evidence was not reused for this batch.
 No deployment or production access.
 
+Follow-up standalone Quote status reads are independently accepted in 259b2fe /
+Actions 44217059338 / artifact 14390716531, complete suites each 1850 and all
+150 fields/89 steps. See QUOTE_STATUS_SHARED_READS.md. The scope/remaining list
+below is historical for this broadcast batch, not a task to repeat. Other SDK
+observers/opaque resources, global quotas and rollout gates still remain.
+
 ## Actual Boundary
 
 PreparedWsol and SignedWsol now own WsolBroadcastLane instead of a raw RpcClient.
