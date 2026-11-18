@@ -43,11 +43,19 @@ For the initial standard, native SOL V1 evidence profile:
   malformed bool, unknown layout, unset buyback address or invalid fee field
   cannot produce destination evidence.
 
-Three new tests are prepared: bank-backed destinations in actual SDK buys and
+Three new tests cover bank-backed destinations in actual SDK buys and
 sells; rotated/static recipients, caller-supplied creator hints and damaged
 destination metas; and incomplete Global/sharing/mode/layout/rate failures.
-The original prefix test also gains the valid unused-false case. Rust execution
-is pending, not inferred from the parent CI or formatting check.
+The original prefix test also gains the valid unused-false case.
+
+Correction `69e1230` / Actions `44310987087` completed successfully. Artifact
+`14432369441` was independently downloaded and audited: full concurrent2017
+(385.06s), serial2017 (733.08s), all2014 parent names retained plus exactly three;
+Pump-focused25, HTTP208,116 ordered zero-exit steps,62 types/189 raw compiler
+field rejections and source/dependency identities match. The source audit
+restores previous readers/fixtures and validates every pinned IDL prefix field,
+type/order/1005-byte bound with four rejected layout mutations. This accepts
+only the test-gated destination model, not production integration. No rerun.
 
 The first published snapshot `4949bee` / Actions `44309369766` ended in failure:
 the unsigned message test omitted the `Signer` trait import for the existing
@@ -55,6 +63,12 @@ fixture payer's public key. This is the sole `E0599`; no Rust tests ran. The
 correction adds only that test import and these records. The separate local
 unsigned quote probe is not included. Do not rerun the terminal snapshot or
 infer test acceptance from successful production type checking.
+
+The subsequent local [unsigned probe](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)
+prepares a frozen zero-signature packet and an unbound same-response consistency
+validator, with nine new tests. It is not included in Actions `44310987087` and
+does not inherit destination-test acceptance. Recipient lamport positivity in
+those fixtures is not returned-account ownership or deployed-fee evidence.
 
 This is destination identity evidence only. It does not establish the active
 fee tier, transfer fee/net output, deployed program ABI, current recipient account

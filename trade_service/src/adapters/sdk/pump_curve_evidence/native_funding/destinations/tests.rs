@@ -59,7 +59,9 @@ fn global(primary: Pubkey) -> Vec<u8> {
     data
 }
 
-fn account(primary: Pubkey) -> UiAccount {
+pub(in crate::adapters::sdk::pump_curve_evidence::native_funding) fn account(
+    primary: Pubkey,
+) -> UiAccount {
     ui(accounts::PUMPFUN, &global(primary))
 }
 

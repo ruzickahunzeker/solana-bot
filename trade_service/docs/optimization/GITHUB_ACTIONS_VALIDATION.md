@@ -30,15 +30,21 @@
 
 ## 当前批次
 
-当前续原 NP-01 的 Pump.fun 原生费用地址批次，三项新 Rust 测试待 CI：预期保留
-原2014名称、完整各2017、Pump专项25、116步骤、62类型/189字段。仅测试构建，
-不改生产交易或 SDK；见 [费用地址](PUMP_SDK_NATIVE_DESTINATIONS.md)。
+当前续原 NP-01 的 Pump.fun 无签名探测/响应一致性批次，九项新 Rust 测试待 CI：
+预期保留原2017名称、完整各2026、Pump专项34、HTTP208、116步骤、62类型/189字段。
+仅测试构建，不改生产交易或 SDK；见 [探测边界](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)。
 
 首批 `4949bee` / [Actions 44309369766](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44309369766)
 终态 failure，artifact `14429547710` 已下载。唯一 Rust 错误 `E0599` 来自测试
 缺少 `solana_sdk::signature::Signer` 导入；未执行 Rust 测试，不能计为三项或完整
 套件通过。修正版仅补该导入与本记录，后续无签名报价探测源码留在本地，不混入。
 不重跑首批，不变更 SDK、生产行为、旧断言或工作流。
+
+修正版 `69e1230` / [Actions 44310987087](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44310987087)
+首次运行 success，artifact `14432369441` 已下载独立审计：完整并发2017（385.06秒）/
+串行2017（733.08秒）、原2014全保留/恰增3；Pump专项25、HTTP208、全部116有序步骤、
+62类型/189原始字段和源码/固定依赖身份通过。IDL前缀/旧读取/夹具还原审计通过。
+不重跑终态；九项无签名探测测试不属于费用地址批次，须独立验证，不继承本次结果。
 
 原金额/角色证据 `9bb5330` /
 [Actions 44303096331](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44303096331)

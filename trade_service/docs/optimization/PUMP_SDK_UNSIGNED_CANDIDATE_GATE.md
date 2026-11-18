@@ -1,9 +1,9 @@
 # NP-01 Pump.fun unsigned candidate acceptance
 
 This records the follow-up to [the account snapshot](PUMP_SDK_ACCOUNT_EVIDENCE.md)
-within the existing NP-01 work. It is a source audit, not an implemented
-capability or a new rollout task. PumpAPI, the locked SDK and current routes
-are unchanged.
+within the existing NP-01 work. The source findings and test-only native probe
+below are not an enabled production capability or a new rollout task. PumpAPI,
+the locked SDK and current routes are unchanged.
 
 ## Locked source findings
 
@@ -49,3 +49,66 @@ Source references: vendored `instruction/pumpfun.rs`, `pumpfun_ix_data.rs`,
 `instruction/utils/pumpfun.rs`, `utils/calc/pumpfun.rs`, and `idl/pump.json`;
 service `adapters/sdk/ordinary_params.rs`, `preparation_input.rs` and
 `protocol/registry.rs`.
+
+## Local unsigned quote probe
+
+Follow-up after the independently accepted destination correction `69e1230` /
+Actions `44310987087` / artifact `14432369441` (full2017 each). That snapshot
+does not include or validate this probe. Nine new Rust tests await independent
+CI, not executed locally:
+four packet/account-age contracts and five response-consistency contracts.
+
+The existing test-gated native funding snapshot owns the original bank evidence
+and a monotonic timestamp captured before its shared parameter request. Waiting
+for RPC admission, HTTP and decoding consumes the same three-second freshness
+allowance; decoding does not restart it. Pure fixture decoding records its own
+start. A fake transport test checks the exact eight-account request and that the
+timestamp precedes transport receipt. No second HTTP client or RPC budget is
+introduced.
+
+The private, non-Clone, non-serializable probe consumes that snapshot and one
+instruction from the locked SDK. It requires the existing canonical user ATA,
+verified native destinations/roles and exact input matching an explicit nonzero
+intent. Buy input must fit native balance; sell input must fit token balance.
+It accepts only a nondefault blockhash and compiles exactly that swap with the
+same wallet as sole payer/signer. The unsigned legacy packet must fit 1232 bytes.
+The packet accessor returns only a shared reference and rechecks freshness.
+
+Only the probe's output floor is set to one unit, after amount/layout checks.
+This is a zero-signature quote-discovery packet, never an authorized minimum
+for a live trade. Tests compare the entire compiled message and prove that
+later mutations of the caller's original instruction do not change it. They
+also reject input mismatch, missing ATA, insufficient input balance, default
+hash, malformed wire, unexpected signer, unverified fee address, stale/future
+snapshot and expired packet access.
+
+The private observation validator consumes the probe and retains it alongside
+integer output, nonzero network fee and simulation slot. Its input is still an
+**unbound caller-supplied response**, not a result bound by the shared transport.
+It requires explicit JSON `err: null`, a slot at least as new as the snapshot,
+the unchanged legacy/hash context, complete native pre/post arrays in compiled
+message order and exactly the two expected classic-SPL token rows. Mint, owner,
+program, precision and unique indexes must match the frozen roles. Integer
+amounts, not float/UI display fields, determine output. It verifies native
+conservation including the network fee, unchanged unrelated native accounts,
+nondecreasing pre-existing fee recipients, exact buy spend/sell token input,
+classic-token conservation and positive output. Sell output includes the fee
+even when the payout is smaller than the fee; native totals use `u128`.
+
+This validator never subtracts an earlier RPC balance: tests intentionally make
+the same-response pre balances differ from that earlier snapshot. Missing
+fields, absent/duplicate/wrong token roles, malformed integers, zero output,
+unfunded fees, unexpected funds movement, stale evidence and Token-2022 are
+explicit rejection cases. No native System CPI transfer is universally required
+as a payout witness. This only checks the supplied response's consistency.
+
+No simulation request or post-account proof is connected yet. Provider support,
+request ID/packet binding, returned account owners/data and current epoch,
+deployed ABI, blockhash validity, actual fees/rent and fee tier remain unproven.
+The observation is not a trusted quote or signing permit. Next bind the
+response to the fixed shared-runtime request and revalidate returned accounts,
+then bind a separately justified positive live minimum into a complete
+immutable candidate and the existing original signed-byte journal. None of
+those gates is removed by this test-only validator. Non-native settlement,
+sharing, Token-2022 output, ATA create/close, extra budget/tip instructions and
+production integration remain outside its profile.

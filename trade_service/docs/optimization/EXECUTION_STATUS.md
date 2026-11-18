@@ -6,11 +6,17 @@
 
 ## 当前任务
 
-- 当前续原 NP-01 [Pump.fun 原生费用地址](PUMP_SDK_NATIVE_DESTINATIONS.md)：三项新测试
-  首批 `4949bee` / Actions `44309369766` 已终态失败：测试缺少 `Signer` 导入
-  导致唯一 `E0599`，未执行 Rust 测试；修正仅补测试导入与记录，不重跑旧快照。
-  三项测试仍待修正版独立 CI；同 bank Global 前缀、主收款地址/buyback 集合与 creator PDA，以及重复
-  账户导致编译后权限提升的拒绝。仅测试构建，不证明实际费率/报价或开放签名。
+- 当前续同一 NP-01 [无签名报价探测](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)：
+  消费原快照、精确输入、零签名冻结消息、请求起点/三秒时效，另加同次响应净输出/
+  索引/费用/守恒检查，九项新测试源码已备（4+5）。响应尚未绑定真实请求，不是可信报价。
+  该后继待独立 CI，不能继承费用地址的通过结果；
+  同次模拟的真实请求/账户证据、费用、最终 min-out、完整候选和原签名字节账本门槛继续保留。
+- 原 NP-01 [Pump.fun 原生费用地址](PUMP_SDK_NATIVE_DESTINATIONS.md)已独立验收：
+  `69e1230` / [Actions 44310987087](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44310987087)
+  / artifact `14432369441`。并发2017（385.06秒）、串行2017（733.08秒），原2014
+  名称保留、恰增3；Pump专项25、HTTP208、116步骤、62类型/189字段及源码身份通过。
+  同 bank Global 主地址/buyback 集合、creator PDA 与账户别名拒绝仅为测试构建证据，
+  不证明实际费率/可信报价或开放签名。首批4949bee唯一E0599为测试漏导入，未重跑。
 - 原 NP-01 [Pump.fun 金额与角色](PUMP_SDK_AMOUNT_WIRE.md)已独立验收：
   `9bb5330` / [Actions 44303096331](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44303096331)
   / artifact `14429825256`。并发2014（372.34秒）、串行2014（709.76秒），原2009

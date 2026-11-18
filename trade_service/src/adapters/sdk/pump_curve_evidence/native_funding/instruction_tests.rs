@@ -58,6 +58,8 @@ pub(super) fn funding_with_global(
         .unwrap();
         Some(ui(protocol.token_program, &bytes))
     };
+    let mut wallet_account = ui(solana_system_interface::program::ID, &[]);
+    wallet_account.lamports = 20_000_000;
     let values = [
         curve,
         mint,
@@ -65,7 +67,7 @@ pub(super) fn funding_with_global(
         sharing,
         token(plan.keys()[0]),
         token(wallet),
-        Some(ui(solana_system_interface::program::ID, &[])),
+        Some(wallet_account),
         Some(ui(
             sysvar::id(),
             &bincode::serialize(&Clock {

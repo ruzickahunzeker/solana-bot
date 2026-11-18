@@ -143,4 +143,4 @@ impl NativeFundingSnapshot {
     }
 }
 
-mod tests;
+pub(super) mod tests;

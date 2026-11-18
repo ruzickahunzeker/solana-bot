@@ -36,6 +36,7 @@ struct NativeFundingPlan {
 
 #[derive(Debug)]
 struct NativeFundingSnapshot {
+    started: Instant,
     keys: [Pubkey; NATIVE_ACCOUNTS],
     curve: PumpCurveEvidence,
     side: Side,
@@ -76,12 +77,17 @@ impl NativeFundingPlan {
         minimum_slot: u64,
         deadline: Instant,
     ) -> Result<NativeFundingSnapshot> {
+        let started = Instant::now();
         read_bank(
             runtime,
             url,
             deadline,
             self.keys.query(minimum_slot)?,
-            |slot, values| self.decode(self.keys(), slot, minimum_slot, values),
+            |slot, values| {
+                let mut snapshot = self.decode(self.keys(), slot, minimum_slot, values)?;
+                snapshot.started = started;
+                Ok(snapshot)
+            },
         )
         .await
     }
@@ -93,6 +99,7 @@ impl NativeFundingPlan {
         minimum: u64,
         values: &[Option<UiAccount>],
     ) -> Result<NativeFundingSnapshot> {
+        let started = Instant::now();
         ensure!(
             request == self.keys().as_slice() && minimum > 0,
             "native Pump funding snapshot request is inconsistent"
@@ -178,6 +185,7 @@ impl NativeFundingPlan {
             "native Pump wallet",
         )?;
         Ok(NativeFundingSnapshot {
+            started,
             keys: *self.keys(),
             curve,
             side: self.side,
@@ -294,5 +302,6 @@ mod budget;
 mod destinations;
 #[cfg(test)]
 mod instruction_tests;
+mod probe;
 #[cfg(test)]
 mod tests;
