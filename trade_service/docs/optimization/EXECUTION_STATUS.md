@@ -12,6 +12,10 @@
   轻检和一正十负原字节审计通过，尚待独立 Rust 验收；预期恰增二十一、完整各
   1960、104 步、56 类型/171 字段，不沿用父批，见
   [转账准备读取](SOL_TRANSFER_PREPARATION_SHARED_READS.md)。
+  首候选 `67d1d39` / Actions `44251289587` 已终态失败，artifact `14404017903`：
+  前十步通过，测试类型检查因三个旧夹具漏 runtime 参数出现 E0061；尚无 Rust
+  测试或171字段验收。仅补这三处测试接线，原断言与生产字节保持，待新源码独立
+  验收；不重跑旧终态，失败与修正详见同一工作记录。
 - 原 NP-03 靓号任务生命周期已独立验收：`3d72a14` /
   [Actions 44245588737](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44245588737)
   首次终态 success，artifact `14403371260` 下载逐项核对。完整并发 1939

@@ -234,6 +234,7 @@ pub(crate) async fn state() -> AppState {
         crate::adapters::sdk::sol_transfer::SdkSolTransferRuntime::new(
             wallets.clone(),
             wallet_repository.clone(),
+            read_rpc.clone(),
         ),
         crate::adapters::sdk::address_parser::SdkAddressParser,
     ));

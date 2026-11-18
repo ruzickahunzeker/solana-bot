@@ -94,3 +94,24 @@ static-lifetime denial policy. Actual SDK success comparison spans36 combination
 not just approximate amounts. Full original request arrays are compared, not
 filtered to hide extra RPCs. Local format/policy12/workflow7/provenance and source
 audit one positive/ten read-only negatives pass; no local service Cargo ran.
+
+## First Candidate Failure And Fixture Correction
+
+Source 67d1d3935bb1d9bbf89bed589bc6decf1f8626cb / Actions 44251289587 is terminal
+failure; never rerun it. Artifact14404017903 was downloaded. The first ten
+preflight/policy/namespace/DDL steps pass, then type-check exits101 with exactly
+three E0061 diagnostics: the old shared HTTP state, native-transfer HTTP fixture
+and SDK broadcast-isolation SOL test missed the new read-runtime argument.
+No Rust runtime tests, new171-field gate or complete suites ran; production
+compilation diagnostics alone are not acceptance. Existing warnings are not
+suppressed or fixed as part of this correction.
+
+Only those three test call sites receive the same existing fixture runtime or
+a new empty, network-free test runtime. All old HTTP/auth/status/body and SDK
+isolation assertions remain byte-exact after that explicit argument wiring;
+production preparation/sign/send/confirmation/API/journal/SDK source is unchanged
+from67d1d39. Re-scanned every constructor/preparation call. The source verifier
+now reconstructs these full old fixture files as well as the earlier oracle/
+transport/wire contracts; one positive/ten read-only negative mutations pass.
+The corrected source requires a new independent CI run and full acceptance,
+not a retry of the failed terminal job or inherited parent evidence.

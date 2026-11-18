@@ -41,6 +41,7 @@ async fn fixture() -> (AppState, SqlitePool) {
         crate::adapters::sdk::sol_transfer::SdkSolTransferRuntime::new(
             state.wallets.clone(),
             state.wallet_repository.clone(),
+            Arc::new(crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap()),
         ),
         crate::adapters::sdk::address_parser::SdkAddressParser,
     ));

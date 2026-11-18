@@ -169,10 +169,11 @@ async fn ordinary_scan_observed_quote_preserves_sign_and_send_guards_without_sdk
 #[tokio::test]
 async fn sol_transfer_is_blocked_before_lane_and_amount_resolution() {
     let client = client();
+    let read_rpc = crate::adapters::rpc::read_runtime::SharedReadRuntime::new(&[]).unwrap();
     for (amount, percent) in [(Some(1), None), (None, Some(100))] {
         assert_eq!(
             client
-                .prepare_sol_transfer(&Pubkey::default(), amount, percent)
+                .prepare_sol_transfer(&read_rpc, &Pubkey::default(), amount, percent)
                 .await
                 .err()
                 .unwrap()
