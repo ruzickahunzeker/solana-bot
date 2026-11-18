@@ -6,14 +6,23 @@
 
 ## 当前任务
 
-- 续原 NP-03 DAMM 报价 probe/账户证据链：原八/九账户、完整输出证据和业务校验
-  已接同一借用 runtime/原 lane URL，保留五秒账户/whole-buy、三十秒 probe 和
-  三秒 freshness，不改 API/签名/账本/SDK。原 SDK 请求 oracle 仅测试保留，旧
-  original-runtime 夹具同步接 HTTP 取证，保留全部签名/发送/claim 断言；取消仅
-  添加有界网络 drop 等待。格式/policy/workflow/provenance 本地轻检通过，尚未
-  Rust 验收，不沿用下方 1897。原方法/夹具逐项审计及一正十负校验通过，待独立
-  CI；预期新增 29、
-  55 类型/168 字段/99 步，见 [报价读取边界](DAMM_QUOTE_SHARED_READS.md)。
+- 当前续原 NP-03 靓号独立任务生命周期：同一个原 WalletOps 现持有任务句柄，
+  创建仓储 await 前登记，关闸覆盖迟到登记，原生成/导入/激活函数字节未改。
+  Bootstrap 交接同一 Arc，main 关闭入口并和原清理并行等待；超时/取消不丢
+  句柄或声称 blocking 已停止，不新增配置。源码/轻检及一正九负原字节审计通过，
+  尚待独立 Rust 验收；预期恰增十三、完整各 1939、101 步，原 55 类型/168
+  字段保持。不得沿用父批结果，见 [靓号生命周期](VANITY_TASK_LIFECYCLE.md)。
+- 原 NP-03 DAMM 报价 probe/账户证据链已独立验收：`903d646` /
+  [Actions 44240714400](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44240714400)
+  首次终态 success，artifact `14400459607` 下载独立核对。完整并发 1926
+  （329.86 秒）/串行 1926（636.14 秒），零失败/忽略/过滤且原始名称相同，
+  父批 1897 全保留、恰增二十九。shared/oracle14/实际 SDK quote adapter11/
+  真实 HTTP4、旧 runtime5/buy runtime6、全部 99 步与 55 类型/168 原始字段通过。
+  原八/九账户、完整同 bank/CPI/费用/净输出及 typed 终态校验保留，五秒账户/
+  whole-buy、三十秒 probe 和三秒 freshness 不改；原方法/旧断言重建及一正十负
+  审计通过。全树 1148 文件/13,883,013 字节及模式、identity/依赖哈希一致，
+  main/真实索引/冻结历史保持。未部署，不本地 Cargo 重试、重跑终态或另发
+  文档 CI；见 [报价读取验收](DAMM_QUOTE_SHARED_READS.md)。其余原门槛保留。
 - 原 NP-03 DAMM 最终候选模拟及签名前 preview 已独立源码/离线验收，买卖及
   legacy/original 路径复用原 runtime，保留原消息、slot、四秒总限及前后 freshness。
   `26e4b8b97e424b0808a248c88fb5a5a30359e034` /
@@ -27,7 +36,7 @@
   13,804,808 字节及模式、identity/依赖哈希一致，main/索引/冻结历史保持。
   三个失败候选及仅夹具修正留在 [候选读取记录](DAMM_CANDIDATE_SHARED_READS.md)，
   不重跑终态或另发文档 CI，不本地 Cargo 重试或做生产操作。未部署。
-  下一原入口是 DAMM 报价 probe/账户证据链，其源码接线及待验范围见本页首项，
+  后继 DAMM 报价 probe/账户证据链现已验收，见本页对应项，
   见 [报价读取边界](DAMM_QUOTE_SHARED_READS.md)；不新增任务或分母，其余原门槛保留。
 - 原 NP-03 SDK 原签名观测及 Quote 提交观测本批已独立源码/离线验收：两条实际入口复用原共享状态读取，
   保留原 skip/钱包/RPC 顺序/总预算/Unknown 与签名；原 Raw reader/SDK observer
@@ -400,7 +409,7 @@
 ## 续作顺序
 
 1. 普通任务生命周期、Shadow writer、Record/Tape、买入只读取证/兼容/准备/消息/独立记录、原 journal 类型边界、原意图/历史回放，以及原 owner 的受控买入候选/signer、CAS/签名字节回读、固定 Buy sender/runtime 和 claim/扫描均已按各自源码独立验收，不重复实施或重跑终态 CI。882e514 只完成 Durable Live SDK 直接 DAMM 的两类输入子路径；续下方原 NP-01/03/04/05 剩余范围，不以历史恢复 owner/重签/重发，不另立任务，也不核对/修改线上版本。
-2. 原 NP-03 已验收的 presence、普通参数/预热/寻池、两跳、聚合账户/模拟、WSOL 报价/状态/准备/模拟/广播所有权、独立 Quote 状态、SDK 原签名/Quote 提交观测及 DAMM 最终候选/preview 不重复实施或重跑，证据见上方各自源码。下一入口为 DAMM 报价 probe/账户证据链：草稿保持原八/九账户、完整 CPI/同 bank/费用/净输出和错误分类，保留五秒 account/whole-buy、原默认三十秒 probe 与三秒新鲜度，不直接套成两秒 profile。尚未接线/验收；仅复用原 runtime/配额，不另建网络资源。SDK 内部确认器/任务、全局 RPC/cache 配额与退出/刷盘门槛继续；159 字段门禁不代表全部依赖/能力流完成。任务取消不代表 SDK/远端副作用取消，不恢复 owner 或重签/重发。
+2. 原 NP-03 已验收的 presence、普通参数/预热/寻池、两跳、聚合账户/模拟、WSOL 报价/状态/准备/模拟/广播所有权、独立 Quote 状态、SDK 原签名/Quote 提交观测、DAMM 最终候选/preview 及报价账户/probe 不重复实施或重跑。下一入口为靓号独立任务关闭/等待，源码已接线而未 Rust 验收；不改原生成/import，不把 abort wrapper 当 blocking 取消。SDK 内部确认器/任务、其他独立操作、全局 RPC/cache 配额与退出/刷盘门槛继续；168 字段门禁不代表全部依赖/能力流完成。不恢复 owner 或重签/重发。
 3. 原 NP-01 的其他资产/协议/backend/mode 的不可变构建、完整授权和原签名字节账本继续保留；已验收的 DAMM Durable Live 直接买卖子路径不重做，也不冒充全量。其他 Live worker/模拟和 Memory/Shadow 仍须按实际路径验证，不能继承本批的原 owner 保证。
 4. NP-04 本批只证明原 Durable SOL Quote 买入控制器的共同合同，其他业务路径适用性、真实 Router/SDK 不由 fake 证明；NP-05 来源/升级准备和主计划的真实环境/迁移/回滚门槛继续。当前不授权实际 SDK 升级或生产动作。
 

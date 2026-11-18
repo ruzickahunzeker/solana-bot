@@ -95,8 +95,15 @@ async fn bootstrap_assembly_uses_original_resources_and_hands_off_live_refresher
         wallet_repository: held_repository,
         blockhash_refresher,
         observation_plan,
+        vanity_worker,
     } = boot;
-    drop((state, held_wallets, held_repository, observation_plan));
+    drop((
+        state,
+        held_wallets,
+        held_repository,
+        observation_plan,
+        vanity_worker,
+    ));
     assert!(wallets.upgrade().is_none());
     assert!(repository.upgrade().is_none());
     assert!(persistence.upgrade().is_none());
@@ -139,8 +146,15 @@ async fn bootstrap_assembly_retains_only_supplied_conversion_store_until_state_d
             wallet_repository,
             blockhash_refresher,
             observation_plan,
+            vanity_worker,
         } = boot;
-        drop((state, wallets, wallet_repository, observation_plan));
+        drop((
+            state,
+            wallets,
+            wallet_repository,
+            observation_plan,
+            vanity_worker,
+        ));
         if let Some(store) = store {
             assert!(store.upgrade().is_none());
         }
@@ -204,4 +218,36 @@ async fn bootstrap_initializer_rejects_observation_mode_before_opening_wallet_da
         assert!(!path.exists());
     }
     std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[tokio::test]
+async fn vanity_shutdown_bootstrap_handoff_closes_the_same_original_worker() {
+    let resources = resources().await;
+    let original = resources.wallet_ops.clone();
+    let (refresher, trace) = refresher(resources.blockhash_cache.clone()).await;
+    let boot = complete(resources, refresher).unwrap();
+    assert!(Arc::ptr_eq(&original, &boot.vanity_worker));
+    boot.vanity_worker.request_stop();
+    let error = boot
+        .state
+        .vanity_tasks
+        .create(crate::application::vanity::VanityCreateInput {
+            owner_type: "telegram".into(),
+            owner_id: "public-owner".into(),
+            label: "public handoff".into(),
+            match_side: crate::domain::wallet::VanityMatchSide::Prefix,
+            pattern: "9999".into(),
+            max_attempts: Some(1),
+        })
+        .await
+        .unwrap_err();
+    assert_eq!(error.message, "wallet generation service is stopping");
+    assert_eq!(boot.wallets.wallet_count(), 0);
+    boot.vanity_worker
+        .shutdown(std::time::Duration::from_secs(2))
+        .await
+        .unwrap();
+    assert!(!trace.dropped.load(Ordering::SeqCst));
+    boot.blockhash_refresher.shutdown().await.unwrap();
+    assert!(trace.dropped.load(Ordering::SeqCst));
 }

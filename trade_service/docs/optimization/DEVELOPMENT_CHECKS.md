@@ -114,6 +114,20 @@ is performed. The temporary scope applies only to the development command.
 
 ## Compiler Type Boundaries (NP-03 / TS-09)
 
+The DAMM quote accounts/probe batch is independently accepted: 903d646 /
+Actions 44240714400 / artifact 14400459607. Complete concurrent/serial each
+1926 (329.86/636.14 seconds), all 1897 parent names retained, exactly 29 added.
+Shared/oracle14 / actual SDK adapters11 / real HTTP4, original runtime5/buy6,
+all 99 steps and original/restored compiler checks with all 168 distinct raw
+field spans pass (55 selected types plus outside alias). All 1148 snapshot
+blobs/modes (13,883,013 bytes), identity/dependency hashes, exact original-body/
+old-assertion reconstruction and read-only audit negatives pass before successor
+edits. SDK6.0.2/main/index/frozen history unchanged, no local service Cargo retry
+or production action. Next original vanity lifecycle wiring has local formatting/
+policy/workflow/provenance/source evidence only; expected1939/101 steps is not
+passing evidence. Its private owner adds no compiler-policy entries. See
+DAMM_QUOTE_SHARED_READS.md and VANITY_TASK_LIFECYCLE.md.
+
 The DAMM final-candidate simulation/preview batch is independently accepted:
 26e4b8b / Actions 44234932246 / artifact 14397918749. Complete concurrent/serial
 each 1897 (292.52/561.63 seconds), all 1874 parent names retained, exactly 23
@@ -324,9 +338,9 @@ task. Application, Domain and Protocol production modules forbid
 `clippy::disallowed_types`. The current JSON fixture lists 55 selected SDK,
 chain, RPC, SQL/HTTP and concrete runtime types; it is not a claim that every
 possible dependency or capability leak is covered.
-The added quote reader/query/packet entries still require their own compiler
-validation; the accepted 52-type/159-field candidate run is not evidence for
-the new 55-type/168-field fixture.
+The added quote reader/query/packet entries received their own 55-type/168-field
+validation in 903d646 above, not by inheriting the 52-type/159-field candidate run.
+Successor source changes still need their own independent compiler validation.
 
 `scripts/check_dependency_boundaries.py` is restricted to the isolated GitHub
 job with no runtime inputs. It generates a private Clippy configuration under

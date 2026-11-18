@@ -162,7 +162,7 @@ Readiness 在 RPC 与数据库等待结束后一次采样缓存年龄/新鲜状�
 
 Quote 余额查询仍只用原首个 Default RPC：依次 supply、token scan/两个 ATA 回退、SOL balance，通常三笔、最多五笔，单步最多 2 秒、总计 8 秒。保留原 decimals/raw u64 和饱和合计；错误 Mint/钱包/精度、重复账户和混合未解析扫描报错，不返回部分合计。仅 token scan 的响应上限为 512 KiB、最多 1000 账户，其他方法维持 64 KiB；超限直接拒绝，不靠 ATA 回退掩盖。Reader 只持项目地址/URL/runtime，不再保留 SDK RPC handles。
 
-上述六类 profile 是基础范围；后继参数/预热/寻池、Quote/WSOL 和候选模拟的迁移见下方各自验收记录。DAMM 报价 probe/账户证据及 SDK 内部读取仍未全部统一，也不能控制供应商账户/其他进程额度。观测默认关闭，但未来部署此源码时上述读取实现会生效；没有更换交易发送 client 或修改钱包存储。详见 [共享预算与生命周期](docs/optimization/SHARED_READ_RPC_RUNTIME.md)、[Readiness 合同与时序修复](docs/optimization/READINESS_SHARED_RPC_RUNTIME.md)、[原生余额合同](docs/optimization/NATIVE_BALANCE_SHARED_RPC_RUNTIME.md)、[Quote 余额合同](docs/optimization/QUOTE_BALANCE_SHARED_RPC_RUNTIME.md) 和 [准备余额预算](docs/optimization/PREPARATION_SHARED_RPC_RUNTIME.md)。
+上述六类 profile 是基础范围；后继参数/预热/寻池、Quote/WSOL、候选模拟及 DAMM 报价证据迁移见下方各自验收记录。SDK 内部读取仍未全部统一，也不能控制供应商账户/其他进程额度。观测默认关闭，但未来部署此源码时上述读取实现会生效；没有更换交易发送 client 或修改钱包存储。详见 [共享预算与生命周期](docs/optimization/SHARED_READ_RPC_RUNTIME.md)、[Readiness 合同与时序修复](docs/optimization/READINESS_SHARED_RPC_RUNTIME.md)、[原生余额合同](docs/optimization/NATIVE_BALANCE_SHARED_RPC_RUNTIME.md)、[Quote 余额合同](docs/optimization/QUOTE_BALANCE_SHARED_RPC_RUNTIME.md) 和 [准备余额预算](docs/optimization/PREPARATION_SHARED_RPC_RUNTIME.md)。
 
 ### DAMM 买入准备（源码阶段，未部署）
 
@@ -220,7 +220,9 @@ WSOL 广播续原 NP-03 收口固定原 RPC 和不可变校验包，原预检配
 
 SDK 原签名/Quote 提交观测续原 NP-03 接原共享读取，保留原 skip、总预算、签名与 Unknown/不换 lane；共享一秒间隔可能减少窗口内查询次数，不为见到回执扩预算或重发。`e81dda4` / Actions `44223334225` 独立验收完整并发/串行各 1874，原 1850 全保留、恰增二十四，153 字段及全部 93 步通过，原始日志/源码身份已核对。未部署，见 [SDK 签名共享读取](docs/optimization/SDK_SIGNATURE_SHARED_READS.md)。
 
-DAMM 买卖最终候选模拟及签名前 preview 续原 NP-03 接同一共享读取，保留零签名消息、quote slot、原四秒期限及前后新鲜度检查，不改签名/账本。`26e4b8b` / Actions `44234932246` 独立验收完整并发/串行各 1897，原 1874 全保留、恰增二十三，159 字段及全部 96 步通过；原请求/消息和端到端合同已核对。尚未部署，报价 probe/账户证据链仍在接续范围，见 [DAMM 候选共享读取](docs/optimization/DAMM_CANDIDATE_SHARED_READS.md)。
+DAMM 买卖最终候选模拟及签名前 preview 续原 NP-03 接同一共享读取，保留零签名消息、quote slot、原四秒期限及前后新鲜度检查，不改签名/账本。`26e4b8b` / Actions `44234932246` 独立验收完整并发/串行各 1897，原 1874 全保留、恰增二十三，159 字段及全部 96 步通过；原请求/消息和端到端合同已核对。尚未部署，后继报价账户/probe 验收见下段和 [DAMM 候选共享读取](docs/optimization/DAMM_CANDIDATE_SHARED_READS.md)。
+
+DAMM 报价账户/probe 现已复用原 runtime，保留原八/九账户、完整同 bank/CPI/净输出、typed 终态及原五秒账户/whole-buy、三十秒 probe、三秒 freshness。`903d646` / Actions `44240714400` 独立验收完整并发/串行各 1926、恰增二十九，55 类型/168 字段及 99 步通过，日志和源码身份已独立核对，见 [报价证据读取](docs/optimization/DAMM_QUOTE_SHARED_READS.md)。当前接续原靓号后台任务持有/关闸/等待：生成/import 原函数不改，超时不丢原句柄，使用现有 task-drain 期限；源码和轻检通过、Rust 验收待执行，不把父批结果算作本批通过，见 [靓号生命周期](docs/optimization/VANITY_TASK_LIFECYCLE.md)。没有本地服务 Cargo 重试、SDK 升级、部署或生产交易。
 
 聚合模拟和余额基线已接原 runtime 的固定零签名两步会话，保留原先验基线后模拟、Token/CPI 和报告政策。`2f12c97` / Actions `44173368003` 独立验收完整并发/串行各 1749，新增 20、114 字段及全部 72 步骤通过；不代表已部署或可实盘。见 [聚合模拟读取边界](docs/optimization/AGGREGATOR_SIMULATION_SHARED_READS.md)。
 
@@ -502,6 +504,7 @@ ENABLE_SIMULATE=true
 `TRADE_TASK_DRAIN_TIMEOUT_MS`
 
 普通后台交易任务的优雅退出等待预算，单位毫秒，默认 `30000`，范围 `1` 到 `300000`。
+当前靓号生命周期优化也复用此数值作为自己的独立等待预算，与原交易清理并行等待，不相加成新的全进程期限。信号先关闭靓号创建并设置原协作取消标记；此前已登记的请求/生成/import 仍须等待，超时不声称 blocking 已停止。停止期靓号创建沿用原 `400` 错误形状，GET/取消的原权限和状态规则不变；该源码仍待独立 Rust 验收，未部署。
 收到退出信号后停止登记新的普通交易工作；已登记请求仍可派发，交易任务等待结束前保留原 blockhash 刷新和观测资源。
 预算从 HTTP graceful shutdown 返回后开始，不是整个进程或 SDK 后台 worker 的总截止时间。
 超时、任务 panic 或异常丢弃会记录未完成情况并使退出失败，不代表交易未发送，不释放或重建原幂等/签名权威，也不自动重签补单。

@@ -61,6 +61,7 @@ git diff --check                                             # passed
 | ObservationPlan/Worker | complete 只 prepare，main 成功 bind 后按原开关 start | 普通 drain 之后 request/await 原 worker；另一资源报错也完成 join；c6f2745 四项 helper 合同和全套已通过 | 真实部署调度、断电与全系统 RPC 预算 |
 | 普通交易后台任务 | bootstrap 创建一个共享 TradeTasks；原 Handler 接受 await 前登记，Created 移交原 executor | 线性 ticket 只记录生命周期；17 项新合同与完整各 1498 在 c6f2745 验收，原 ledger/owner 不变 | SDK opaque worker、其他独立操作/靓号任务与真实进程退出尚未覆盖 |
 | 原 Shadow writer | 原 TradePersistence 创建单个 1024 项 FIFO，私有组件持有原 pool/handle；main 留原 persistence Arc | 普通 drain 和原 refresher/observer join 后关闭/等待原队列；796ba50 的专项 13/4、完整各 1515 验收，超时/取消保留同一 handle，无重放 | 仅原 SQL 返回及 FIFO 完成证据，不是 fsync/断电、全部生产者停机或新增 durable authority；不重复实施 |
+| 原靓号任务 | 原 WalletOps 保留唯一 semaphore/map，新增私有句柄 owner；Bootstrap 把同一 Arc 交原服务和 main | 当前源码在仓储 await 前登记；信号关闸并用原取消标记，和原清理并行 await。超时/取消不丢句柄，不 abort wrapper 冒称 blocking 停止 | 原生成/import 主函数保持；预期十三新合同仍待独立 Rust 验收。不是原子取消/加载回滚、完整 SDK supervisor 或生产恢复；见 VANITY_TASK_LIFECYCLE.md |
 
 最初核对时仅有 `axum::serve(...).with_graceful_shutdown`，不能证明脱离 HTTP 的任务完成。
 后继本批源码接入原 NP-03 的普通任务登记/有界等待，但不把它当全服务/SDK worker supervisor，

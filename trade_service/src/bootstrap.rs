@@ -44,6 +44,7 @@ pub(crate) struct Bootstrapped {
     pub(crate) state: AppState,
     pub(crate) wallets: Arc<WalletRegistry>,
     pub(crate) wallet_repository: Arc<WalletRepository>,
+    pub(crate) vanity_worker: Arc<WalletOps>,
     pub(crate) blockhash_refresher: BlockhashRefresher,
     pub(crate) observation_plan: Option<ObservationPlan>,
 }
@@ -209,7 +210,7 @@ fn complete(
     let wallet_management = SdkWalletManagement::new(wallet_repository.clone(), wallets.clone());
     let state = AppState {
         trade_tasks: Default::default(),
-        vanity_tasks: Arc::new(VanityService::new(wallet_ops)),
+        vanity_tasks: Arc::new(VanityService::new(wallet_ops.clone())),
         wallet_management: Arc::new(WalletManagementService::new(
             wallet_management.clone(),
             wallet_management,
@@ -276,6 +277,7 @@ fn complete(
         wallet_repository,
         blockhash_refresher,
         observation_plan,
+        vanity_worker: wallet_ops,
     })
 }
 

@@ -6,6 +6,10 @@ use std::sync::{
 };
 use tokio::sync::Semaphore;
 
+mod lifecycle;
+
+#[cfg(test)]
+mod shutdown_tests;
 #[cfg(test)]
 mod tests;
 
@@ -29,6 +33,7 @@ pub struct WalletOps {
     wallets: Arc<WalletRegistry>,
     vanity_slot: Arc<Semaphore>,
     vanity_jobs: DashMap<String, Arc<VanityRuntime>>,
+    lifecycle: lifecycle::VanityLifecycle,
 }
 
 impl WalletOps {
@@ -44,6 +49,7 @@ impl WalletOps {
             wallets,
             vanity_slot: Arc::new(Semaphore::new(1)),
             vanity_jobs: DashMap::new(),
+            lifecycle: Default::default(),
         })
     }
 
@@ -51,6 +57,7 @@ impl WalletOps {
         self: &Arc<Self>,
         request: VanityCreateCommand,
     ) -> anyhow::Result<VanityJob> {
+        let admission = self.lifecycle.admit().await?;
         let job = self
             .repository
             .create_vanity_job(
@@ -67,11 +74,17 @@ impl WalletOps {
             cancelled: AtomicBool::new(false),
         });
         self.vanity_jobs.insert(job.job_id.clone(), runtime.clone());
+        // Stop may have swept the map while this admitted request awaited its original row.
+        if self.lifecycle.closed() {
+            runtime.cancelled.store(true, Ordering::Relaxed);
+        }
         let service = self.clone();
         let queued_job = job.clone();
-        tokio::spawn(async move {
-            service.run_vanity_job(queued_job, runtime).await;
-        });
+        admission
+            .spawn(async move {
+                service.run_vanity_job(queued_job, runtime).await;
+            })
+            .await;
         Ok(job)
     }
 
@@ -100,6 +113,22 @@ impl WalletOps {
             .update_vanity_job(job_id, "cancel_requested", job.attempts, None, None, None)
             .await?;
         self.get_vanity_job(job_id).await
+    }
+
+    pub(crate) fn request_stop(&self) {
+        self.lifecycle.close();
+        for runtime in &self.vanity_jobs {
+            runtime.cancelled.store(true, Ordering::Relaxed);
+        }
+    }
+
+    pub(crate) async fn shutdown(&self, deadline: std::time::Duration) -> anyhow::Result<()> {
+        self.request_stop();
+        let result = self.lifecycle.drain(deadline).await;
+        if let Err(error) = &result {
+            tracing::warn!(%error, "vanity shutdown incomplete; do not claim generation or persistence was cancelled");
+        }
+        result
     }
 
     async fn run_vanity_job(self: Arc<Self>, job: VanityJob, runtime: Arc<VanityRuntime>) {

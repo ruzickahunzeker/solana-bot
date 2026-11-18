@@ -153,6 +153,8 @@ PY
         step ordinary-runtime cargo test --locked --offline ordinary_runtime -- --test-threads=2
         step backend-contracts cargo test --locked --offline backend_contract -- --test-threads=2
         step trade-task-lifecycle cargo test --locked --offline trade_tasks -- --test-threads=2
+        step vanity-lifecycle cargo test --locked --offline vanity_lifecycle_ -- --test-threads=2
+        step vanity-shutdown cargo test --locked --offline vanity_shutdown_ -- --test-threads=2
         step service-shutdown cargo test --locked --offline service_shutdown -- --test-threads=2
         step task-drain-settings cargo test --locked --offline trade_task_drain_configuration -- --test-threads=2
         step shadow-drain cargo test --locked --offline shadow_drain -- --test-threads=2

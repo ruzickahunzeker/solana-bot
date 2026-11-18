@@ -1,8 +1,9 @@
 # DAMM Quote Evidence Shared Reads
 
 Date: 2026-11-18, Asia/Shanghai. Continues the original NP-03 step, not a new
-task or denominator. Production source wiring and original-body audit are
-complete; independent Rust acceptance is pending. It is not in the preceding accepted
+task or denominator. Production source wiring and independent acceptance are
+complete in 903d646 / Actions 44240714400 / artifact 14400459607 (details below).
+It is not in the preceding accepted
 candidate snapshot 26e4b8b / Actions 44234932246 / artifact 14397918749 (complete
 concurrent/serial each 1897). Do not inherit that result or publish docs-only CI.
 
@@ -118,3 +119,30 @@ reconstruct after the opt-in oracle, exact new witnesses and bounded drop wait.
 Read-only audit has one positive/ten negative mutations. Format, policy12,
 workflow7 and SDK provenance pass locally; independent source-only CI remains
 before acceptance. No local service Cargo check/test/link was run.
+
+## Independent Acceptance
+
+Source 903d646ede784d25f4f7bb90d566f9ce24b05e62 / Actions 44240714400 completed
+success on its first run. Artifact 14400459607 was downloaded and independently
+audited before any acceptance records or successor wiring changed the snapshot.
+All 99 steps exit zero; complete concurrent 1926 (329.86 seconds) and serial
+1926 (636.14 seconds) have identical raw name sets, zero failures/ignored/filtered.
+All 1897 parent names remain, exactly the 29 source-defined tests are added:
+shared/oracle14, actual original SDK quote adapters11, real HTTP4. Original
+runtime5/buy runtime6, preceding candidate12/8/3 and status-contract59 remain.
+Original/restored compiler checks and all 168 distinct raw field spans verify
+55 selected types plus outside alias. Python policy12/workflow7/provenance pass.
+
+All 1148 source blobs/modes (13,883,013 bytes), identity and dependency hashes
+match tree dcc89710e20eebcafe7739a3b1176d71575cecda. Original quote/SDK validator,
+funding/CPI/freshness/error bodies and old fixture assertions reconstruct after
+only explicit generic/read wiring, new request witnesses and bounded disconnect
+handshake. Source audit one positive/ten negative and serial-format two positive/
+seven negative cases pass. Main/index/frozen history, SDK6.0.2 and vendor/lock/
+manifests/migrations remain. No local service Cargo retry, terminal rerun,
+documentation-only CI, deployment, real node or production wallet/data/trade.
+
+Earlier "pending" requirements above describe pre-acceptance source intent, not
+a new work queue. Next original NP-03 item is independent vanity task ownership;
+see VANITY_TASK_LIFECYCLE.md. SDK internals/other independent operations, global
+quotas, remaining NP-01/04/05 and rollout gates are not completed by this batch.

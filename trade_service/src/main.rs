@@ -162,11 +162,13 @@ async fn main() -> anyhow::Result<()> {
         wallet_repository,
         blockhash_refresher,
         observation_plan,
+        vanity_worker,
     } = bootstrap::initialize(config.clone()).await?;
 
     let trade_tasks = state.trade_tasks.clone();
     let persistence = state.persistence.clone();
     let intake_stop = trade_tasks.clone();
+    let vanity_stop = vanity_worker.clone();
     let app: Router = http::router(state).layer(TraceLayer::new_for_http());
     let listener = TcpListener::bind(config.trade_http_addr)
         .await
@@ -194,19 +196,25 @@ async fn main() -> anyhow::Result<()> {
     .with_graceful_shutdown(async move {
         shutdown_signal().await;
         intake_stop.close();
+        vanity_stop.request_stop();
     })
     .await;
-    let cleanup = crate::infrastructure::service_shutdown::finish(
-        &trade_tasks,
-        std::time::Duration::from_millis(config.shutdown.trade_task_drain_timeout_ms),
-        blockhash_refresher,
-        observation_worker,
-        persistence.as_ref(),
-        std::time::Duration::from_millis(config.shutdown.shadow_drain_timeout_ms),
-    )
-    .await;
+    let (cleanup, vanity_cleanup) = tokio::join!(
+        crate::infrastructure::service_shutdown::finish(
+            &trade_tasks,
+            std::time::Duration::from_millis(config.shutdown.trade_task_drain_timeout_ms),
+            blockhash_refresher,
+            observation_worker,
+            persistence.as_ref(),
+            std::time::Duration::from_millis(config.shutdown.shadow_drain_timeout_ms),
+        ),
+        vanity_worker.shutdown(std::time::Duration::from_millis(
+            config.shutdown.trade_task_drain_timeout_ms
+        )),
+    );
     result?;
     cleanup?;
+    vanity_cleanup?;
     Ok(())
 }
 

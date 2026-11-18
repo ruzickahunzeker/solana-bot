@@ -30,6 +30,21 @@
 
 ## 当前批次
 
+当前后继原 NP-03 靓号任务所有权源码已接线、独立 Rust 验收待执行：预期原
+1926 名称全保留、恰增十三，完整各 1939、101 步及原 55 类型/168 字段；不沿用
+下方父批结果。记录随真实源码提交，不另发文档 CI，见 `VANITY_TASK_LIFECYCLE.md`。
+
+最近独立验收为 DAMM 报价账户/probe 源码
+`903d646ede784d25f4f7bb90d566f9ce24b05e62` /
+[Actions 44240714400](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44240714400)，
+首次终态 success；artifact `14400459607` 下载逐项核对。完整并发 1926（329.86
+秒）/串行 1926（636.14 秒），零失败/忽略/过滤、原始名称相同，原 1897 全保留、
+恰增二十九。shared/oracle14/SDK adapter11/真实 HTTP4、旧 runtime5/buy6、99 步及
+55 类型/168 原始字段全部通过。原 SDK 语义/旧断言精确重建，一正十负源审计、
+两正七负串行格式回归和全树 1148 文件/13,883,013 字节及模式/依赖身份核对通过；
+main/真实索引/冻结历史保持。没有本地服务 Cargo 重试、部署或生产操作，未重跑
+终态或另发文档 CI，见 `DAMM_QUOTE_SHARED_READS.md`。
+
 续原 NP-03 DAMM 候选模拟/签名前 preview 源码
 `26e4b8b97e424b0808a248c88fb5a5a30359e034` /
 [Actions 44234932246](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44234932246)
@@ -42,7 +57,7 @@ HTTP 3，旧 original runtime 5/buy runtime 6 及全部 96 步通过；52 类型
 packet/请求和完整 pipeline 见证通过。全树 1141 文件/13,804,808 字节及模式、
 identity/依赖哈希一致；源码审计一正八负、串行格式两正七负通过，main/索引/
 冻结历史保持。未部署，不本地 Cargo 重试、不重跑终态或另发文档 CI。前面
-三个失败候选留证而非重跑，见 `DAMM_CANDIDATE_SHARED_READS.md`；报价证据链仍未接线。
+三个失败候选留证而非重跑，见 `DAMM_CANDIDATE_SHARED_READS.md`；当时未接线的报价证据现由上方 903d646 独立验收。
 
 续原 NP-03 SDK 原签名/Quote 提交观测源码 `e81dda4d4704747e43010d442565dfa1eade2de8` /
 [Actions 44223334225](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44223334225)
