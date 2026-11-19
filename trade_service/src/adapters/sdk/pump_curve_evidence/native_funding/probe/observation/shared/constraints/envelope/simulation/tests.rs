@@ -31,7 +31,17 @@ async fn fixture(
     provider: SwqosType,
     small_sell: bool,
 ) -> (NativeEnvelopeTemplate, Value) {
-    let (probe, mut response) = observed(side).await;
+    let (probe, response) = observed(side).await;
+    fixture_from_probe(probe, response, side, provider, small_sell)
+}
+
+pub(super) fn fixture_from_probe(
+    probe: crate::adapters::sdk::pump_curve_evidence::native_funding::probe::NativeQuoteProbe,
+    mut response: Value,
+    side: TradeType,
+    provider: SwqosType,
+    small_sell: bool,
+) -> (NativeEnvelopeTemplate, Value) {
     if small_sell {
         assert!(matches!(side, TradeType::Sell));
         let curve = probe

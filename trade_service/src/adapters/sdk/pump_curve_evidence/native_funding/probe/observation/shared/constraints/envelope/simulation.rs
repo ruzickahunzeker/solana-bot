@@ -19,7 +19,7 @@ use solana_client::rpc_response::{Response, RpcSimulateTransactionResult};
 use solana_sdk::{message::VersionedMessage, pubkey::Pubkey, transaction::VersionedTransaction};
 use std::num::NonZeroU64;
 
-struct NativeFinalObservation {
+pub(in crate::adapters::sdk::pump_curve_evidence::native_funding) struct NativeFinalObservation {
     template: NativeEnvelopeTemplate,
     bank: NativePostBank,
     output: NonZeroU64,
@@ -166,7 +166,9 @@ impl NativeEnvelopeTemplate {
 }
 
 impl NativeFinalObservation {
-    fn packet(&self) -> Result<&VersionedTransaction> {
+    pub(in crate::adapters::sdk::pump_curve_evidence::native_funding) fn packet(
+        &self,
+    ) -> Result<&VersionedTransaction> {
         let source = &self.template.source.source.observation;
         ensure!(
             self.output >= self.template.source.minimum
@@ -182,4 +184,5 @@ impl NativeFinalObservation {
     }
 }
 
+mod bank_swap;
 mod tests;

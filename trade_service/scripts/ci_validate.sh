@@ -160,6 +160,7 @@ PY
         step ordinary-storage-ownership cargo test --locked --offline ordinary_storage_ownership_ -- --test-threads=2
         step pump-curve-evidence cargo test --locked --offline pump_curve_evidence:: -- --test-threads=2
         step pump-bank-swap cargo test --locked --offline pump_bank_swap_ -- --test-threads=2
+        step pump-bank-flow cargo test --locked --offline pump_bank_flow_ -- --test-threads=2
         step pump-native-read cargo test --locked --offline pump_native_read_ -- --test-threads=2
         step pump-native-wire cargo test --locked --offline pump_native_wire_ -- --test-threads=2
         step pump-native-adapter cargo test --locked --offline pump_native_adapter_ -- --test-threads=2

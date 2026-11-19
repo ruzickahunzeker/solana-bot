@@ -15,7 +15,7 @@ use solana_sdk::{
 };
 use std::num::NonZeroU64;
 
-struct BankNativeSwap {
+pub(super) struct BankNativeSwap {
     funding: NativeFundingSnapshot,
     input: NonZeroU64,
     minimum: NonZeroU64,
@@ -121,7 +121,7 @@ fn build(
 }
 
 impl NativeFundingSnapshot {
-    fn prepare_native_swap(
+    pub(super) fn prepare_native_swap(
         self,
         input: NonZeroU64,
         minimum: NonZeroU64,
@@ -147,7 +147,10 @@ impl BankNativeSwap {
         Ok(&self.instruction)
     }
 
-    fn into_quote_probe(self, blockhash: Hash) -> Result<super::probe::NativeQuoteProbe> {
+    pub(super) fn into_quote_probe(
+        self,
+        blockhash: Hash,
+    ) -> Result<super::probe::NativeQuoteProbe> {
         self.instruction()?;
         // The existing quote probe still owns discovery floor1 and the unchanged original age.
         self.funding

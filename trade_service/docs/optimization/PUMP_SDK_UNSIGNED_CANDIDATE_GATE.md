@@ -187,7 +187,8 @@ ATA profile, input funding and original age before/after building. The accessor
 reconstructs and compares the full instruction and returns only a shared view.
 No fee estimate is obtained from the SDK's globals and no snapshot age restarts.
 
-Four Rust contracts are written but not compiled/executed: actual fixed SDK
+Four Rust contracts were independently accepted as1bced80 / Actions44441322988 /
+artifact14493071699: actual fixed SDK
 buy/sell x cashback comparisons of full instruction and compiled message;
 integer1/2^53+1/u64MAX and every account key/writable privilege plus changed wire;
 twelve unsupported/damaged/expired/unfunded bank cases per direction; and exact
@@ -202,5 +203,46 @@ ABI behavior, fee schedules, close effects, non-native settlement/Token-2022,
 original Pump nominal journal/intent/signing or rollout. It does not change
 Pool-based owner selection, production API/validation, SDK/vendor, persistence
 or any transaction permission. The preceding wallet coordination CI excludes
-these files and cannot validate them. Preserve the original NP-01 queue and
-independently validate the future source snapshot before accepting this draft.
+these files and cannot validate them. This batch's own logs/source were checked:
+full concurrent2098 (355.74s),serial2098 (692.38s),all2094 parent names retained
+plus exactly four; bank4/Pump60/wallet9/HTTP208,132 ordered zero-exit steps and
+75 types/228 raw compiler fields. Original reader/validator/probe reconstruction
+and ten actual changed-source negatives pass. All1233 snapshot files/14548221
+bytes/modes were audited at publication; successor restoration was separately
+checked before recording acceptance. No deployed ABI, real provider or live
+permission is inferred. Never rerun this terminal batch or publish docs-only CI.
+
+## Same NP-01 Bank-To-Final Readonly Follow-Up
+
+After independent acceptance of parent1bced80 / Actions44441322988, the successor
+connects the existing bank-only builder to the original consuming readonly chain:
+funding snapshot -> native swap -> unsigned discovery probe -> bound bank quote ->
+slippage constraints -> complete envelope -> final bound simulation. The discovery
+floor remains one only in the zero-signature probe. The final swap uses the
+original quote-derived positive minimum; provider/tip, blockhash, original age
+and the same runtime/selected URL flow through without a retry or backup lane.
+
+The resulting observation exposes only its existing shared packet accessor and
+remains confined to the original cfg(test) native-funding subtree. The builder,
+simulator and all old assertions are unchanged apart from subtree visibility.
+The old final-response fixture is factored to accept an existing probe and an
+explicit side; reconstructing the old function retains its body byte-for-byte.
+No new store, parser, signer, owner, budget, production dispatcher or API is added.
+
+Three new Rust contracts are pending, not compiled or executed: buy/sell with
+Default/Temporal compare exact discovery/final request bodies, original IDs and
+primary URL, complete frozen bytes/zero signature, original age, bank slots and
+derived minimum; seven failure cases stop at the original phase with no backup
+or retry; actual task abort/join at both transport boundaries releases the
+original semaphore and cannot continue after the transport gate is released.
+The SDK fixture is only a comparison oracle, not a production payer or quote.
+
+Local format/policy/source checks pass: original builder/simulator/fixture/tests
+are reconstructed, 994 other source/dependency blobs stay unchanged and eight
+actual changed-source negatives are rejected. This is not Rust or live proof.
+The prospective child expects full2101 each, all2098 parent names plus exactly
+three,133 ordered steps,Pump63/flow3 and unchanged75 types/228 raw field rejects.
+The exact parent artifact/source has been independently accepted; the successor
+still needs its own Rust result. Never inherit results or rerun a terminal batch.
+All original profile, deployed ABI,
+provider/rent, intent/journal/signing and production boundaries above remain.
