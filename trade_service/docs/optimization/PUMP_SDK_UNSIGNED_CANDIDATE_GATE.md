@@ -229,7 +229,8 @@ The old final-response fixture is factored to accept an existing probe and an
 explicit side; reconstructing the old function retains its body byte-for-byte.
 No new store, parser, signer, owner, budget, production dispatcher or API is added.
 
-Three new Rust contracts are pending, not compiled or executed: buy/sell with
+Three Rust contracts were independently accepted asf84c283 / Actions44445933880 /
+artifact14495271521: buy/sell with
 Default/Temporal compare exact discovery/final request bodies, original IDs and
 primary URL, complete frozen bytes/zero signature, original age, bank slots and
 derived minimum; seven failure cases stop at the original phase with no backup
@@ -237,12 +238,54 @@ or retry; actual task abort/join at both transport boundaries releases the
 original semaphore and cannot continue after the transport gate is released.
 The SDK fixture is only a comparison oracle, not a production payer or quote.
 
-Local format/policy/source checks pass: original builder/simulator/fixture/tests
-are reconstructed, 994 other source/dependency blobs stay unchanged and eight
-actual changed-source negatives are rejected. This is not Rust or live proof.
-The prospective child expects full2101 each, all2098 parent names plus exactly
-three,133 ordered steps,Pump63/flow3 and unchanged75 types/228 raw field rejects.
-The exact parent artifact/source has been independently accepted; the successor
-still needs its own Rust result. Never inherit results or rerun a terminal batch.
+Independent artifact/source checks verify full concurrent2101 (381.24s),serial
+2101 (733.97s),all2098 parent names retained plus exactly three,133 ordered
+zero-exit steps,Pump63/flow3/bank4/wallet9/HTTP208 and75 types/228 raw field rejects.
+Original builder/simulator/fixture/tests reconstruct,994 other source/dependency
+blobs are unchanged and eight actual changed-source negatives reject. All1235
+files/14566203 bytes/modes were audited at publication; successor restoration
+was separately checked before recording acceptance. Never inherit results or
+rerun this terminal batch; records travel with actual intent-binding source.
 All original profile, deployed ABI,
 provider/rent, intent/journal/signing and production boundaries above remain.
+
+## Same NP-01 Original Admission Binding
+
+Following independent acceptance off84c283 / Actions44445933880, this successor
+follow-up consumes the original final observation into a private non-Clone,
+non-serializable holder borrowing the actual AdmittedTrade and the same original
+reservation. Every shared packet access rechecks reservation pointer identity,
+the original wallet ID/public key, literal key, direct Durable Live SDK/Pump
+intent, mint/WSOL/optional canonical curve hint, no aggregator or hop, exact
+positive input, slippage, tip bits and the unchanged requested-provider policy.
+No new reservation, hash, store, claim selector, profile decoder, signer, SDK
+initializer, RPC or broadcast capability is introduced.
+
+Native buy binds the admitted SOL integer. Partial sell uses the original
+preparation balance with the existing checked-u64 multiplication/integer division
+semantics, not a new quote-bank holding or float. The prototype has no close
+effects; the existing ordinary sell projection closes on100%, so that profile
+is explicitly excluded here instead of pretending a swap-only message matches
+it. This exclusion is test-only and changes no current production behavior.
+Missing balance, overflow, zero rounding and mismatched amount are rejected.
+Original timestamp and all full-message checks remain in the old packet path.
+
+Four Rust tests are written but uncompiled/unexecuted: actual temporary-SQLite
+admission buy/partial-sell with Default/Temporal retains full frozen zero-signed
+bytes, writes no claim and the original Pump claim still rejects; eighteen
+command mutations per direction/provider and a wrong public key reject while
+compatible absent hints/Auto retain original semantics; percentage boundaries/missing/overflowing source
+balance and close-on-full-sell reject; Memory/Shadow, switched reservation,
+nonzero signature and expired source reject. The old fake-transport fixture is
+factored with an optional sell-balance fixture; its original None path and all
+old assertions reconstruct byte-for-byte. These fixtures prove no real account
+or provider behavior.
+
+Local format/policy and source reconstruction pass, including997 other original
+source/dependency blobs and fourteen actual changed-source negatives. Prospective
+CI expects full2105 each,all2101 parent names plus exactly four,134 steps and
+unchanged75 types/228 raw field rejects,Pump67/intent4/flow3/bank4/HTTP208.
+Parentf84 has independently passed; its result cannot validate this source.
+Protocol-specific nominal persistence/reconstruction,
+intent-to-original-journal handoff, setup/rent/close and real ABI/provider evidence
+are still the existing NP-01 work, not a second plan or permission to sign.

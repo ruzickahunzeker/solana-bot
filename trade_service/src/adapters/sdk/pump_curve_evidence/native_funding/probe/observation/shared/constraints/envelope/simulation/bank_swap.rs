@@ -36,4 +36,5 @@ impl NativeFundingSnapshot {
     }
 }
 
+mod intent;
 mod tests;

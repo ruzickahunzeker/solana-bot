@@ -37,8 +37,20 @@ struct Case {
 }
 
 async fn case(side: TradeType, provider: SwqosType) -> Case {
+    case_with_balance(side, provider, None).await
+}
+
+async fn case_with_balance(side: TradeType, provider: SwqosType, balance: Option<u64>) -> Case {
     // The unchanged SDK fixtures are only an oracle; the path under test consumes public bank data.
-    let (probe, response) = observed(side).await;
+    let (mut probe, mut response) = observed(side).await;
+    if let Some(balance) = balance {
+        assert!(matches!(side, TradeType::Sell));
+        probe.funding.user_base_units = Some(balance);
+        response["value"]["preTokenBalances"][0]["uiTokenAmount"]["amount"] =
+            json!(balance.to_string());
+        response["value"]["postTokenBalances"][0]["uiTokenAmount"]["amount"] =
+            json!(balance.checked_sub(probe.input.get()).unwrap().to_string());
+    }
     let started = probe.funding.started;
     let buyback = probe.instruction.accounts.last().unwrap().pubkey;
     let quote = response_with_bank(&probe, response.clone());
@@ -66,6 +78,9 @@ async fn case(side: TradeType, provider: SwqosType) -> Case {
     }
     .test_body();
     let (mut bank, _, input) = original_bank(side).await;
+    if let Some(balance) = balance {
+        bank.user_base_units = Some(balance);
+    }
     assert_eq!(
         bank.keys,
         template.source.source.observation.probe.funding.keys
@@ -142,6 +157,29 @@ impl ReadHttpTransport for Tape {
 
 fn runtime(tape: Tape) -> SharedReadRuntime<Tape> {
     SharedReadRuntime::with_test_transport(&[PRIMARY.into(), BACKUP.into()], tape)
+}
+
+pub(super) async fn final_for_intent(
+    side: TradeType,
+    provider: SwqosType,
+) -> NativeFinalObservation {
+    let balance = matches!(side, TradeType::Sell).then_some(10_000);
+    let c = case_with_balance(side, provider, balance).await;
+    let runtime = runtime(Tape::new(c.expected, c.results));
+    c.bank
+        .observe_complete(
+            &runtime,
+            PRIMARY,
+            c.input,
+            c.buyback,
+            Hash::new_from_array([10; 32]),
+            1_500,
+            provider,
+            0.0001,
+            c.tip,
+        )
+        .await
+        .unwrap()
 }
 
 #[tokio::test]

@@ -6,13 +6,22 @@
 
 ## 当前任务
 
-- 同一NP01后继已在本地串联原账户构建、报价、滑点约束和完整消息只读模拟，
-  仍仅原测试子树，不接生产分派/签名/账本。三项新增Rust合同尚未编译执行；
-  覆盖买卖及Default/Temporal、两阶段精确请求、七类失败和两读取边界取消/join。
-  修正共享夹具提取时漏传的side参数，原夹具/旧断言可逐字重建；源码核对994个
-  其他原文件与八个改源负例、格式/策略检查通过，不替代Rust验收。预期后继
-  完整各2101、保留原2098/恰增三项、133步及75类型228字段。父批已按下方
-  独立验收；后继必须取得自身Rust结果，不能继承父批验收或另发仅文档CI。
+- 同一NP01本地后继补原入场意图绑定，四项Rust合同未编译执行。私有对象消费原
+  最终模拟证据并借用同一AdmittedTrade/原reservation，逐次只读packet复核钱包/
+  字面key、direct Durable Live SDK/Pump、Mint/Quote/池提示、整数买入/原余额比例、
+  滑点/小费bits及复用原MEV政策；原profile无关闭效果，明确排除100%卖出。
+  不改生产claim selector/metadata/账本/签名，原Pump claim仍拒绝。源码核对997个
+  其他原文件/十四改源负例及格式/策略通过，不算Rust验收；预期完整各2105、原
+  2101保留/恰增四项、134步与75类型228字段。父批f84c283已按下方独立验收；
+  后继须取得自身Rust结果，不新增任务/分母或继承验收，不另发仅文档CI。
+- 原NP01账户到最终只读模拟串联已独立验收：`f84c283` /
+  [Actions44445933880](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44445933880)
+  / artifact14495271521。并发2101（381.24秒）、串行2101（733.97秒），原2098
+  名称全保留/恰增三项；flow3/bank4/Pump63/wallet9/HTTP208、133有序步骤及75类型
+  228原始字段通过。源码/锁定身份、原构建/模拟/夹具/旧断言重建与八改源负例通过；
+  发布时全1235文件14566203字节/模式已核对。复用原runtime/URL/年龄/派生最小量，
+  覆盖买卖及Default/Temporal、失败和取消，不证明实网或签名/账本接入；记录随
+  实际意图后继源码提交，终态不重跑，不扩大原native/classic/existing-ATA范围。
 - 原NP01[Pump纯账户构建](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)已独立验收：
   `1bced80` / [Actions44441322988](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44441322988)
   / artifact14493071699。并发2098（355.74秒）、串行2098（692.38秒），原2094
