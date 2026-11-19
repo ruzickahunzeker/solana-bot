@@ -324,6 +324,7 @@ mod budget;
 mod destinations;
 #[cfg(test)]
 mod instruction_tests;
+mod native_swap;
 mod probe;
 #[cfg(test)]
 mod tests;

@@ -7,14 +7,14 @@ use solana_sdk::{
 };
 use std::{num::NonZeroU64, time::Instant};
 
-struct NativeQuoteProbe {
+pub(super) struct NativeQuoteProbe {
     funding: NativeFundingSnapshot,
     transaction: Transaction,
     instruction: Instruction,
     input: NonZeroU64,
 }
 
-fn fresh(started: Instant) -> Result<()> {
+pub(super) fn fresh(started: Instant) -> Result<()> {
     ensure!(
         Instant::now()
             .checked_duration_since(started)
@@ -25,7 +25,7 @@ fn fresh(started: Instant) -> Result<()> {
 }
 
 impl NativeFundingSnapshot {
-    fn prepare_quote_probe(
+    pub(super) fn prepare_quote_probe(
         self,
         mut instruction: Instruction,
         expected_input: NonZeroU64,
@@ -87,7 +87,7 @@ impl NativeFundingSnapshot {
 }
 
 impl NativeQuoteProbe {
-    fn packet(&self) -> Result<&Transaction> {
+    pub(super) fn packet(&self) -> Result<&Transaction> {
         fresh(self.funding.started)?;
         Ok(&self.transaction)
     }

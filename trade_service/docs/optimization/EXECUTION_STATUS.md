@@ -6,15 +6,21 @@
 
 ## 当前任务
 
-- 当前续原NP03[钱包管理协调](APP_STATE_RESOURCE_OWNERSHIP.md)：原Registry持有
-  管理互斥范围，创建/导入/删除与靓号导入在原仓储变更到安装/移除之间保持同一
-  不透明范围，安装/移除独占借用并核对Registry身份。九项Rust合同待独立验收，
-  含实际临时SQLite恢复/补偿及取消；首批f07aa68 / Actions44432639535 /
-  artifact14488635528编译/链接及75类型228字段通过，但原缓存并发断言失败，
-  钱包专项与完整两套未执行。失败断言在无写入门闩时读取DashMap逐分片len，
-  可能混合淘汰前后计数；修正仅在原断言外持原writes锁，上限/断言/生产缓存保持。
-  不重跑首批，不混入本地Pump纯账户构建后继；不改变原部分失败/取消后状态，
-  不宣称SDK worker已可取消，完整验收仍待修正快照的独立CI。
+- 当前续原NP01[Pump纯账户构建](PUMP_SDK_UNSIGNED_CANDIDATE_GATE.md)：原测试
+  原型新增不持Keypair/SDK客户端/RPC的冻结原生V1指令，从原账户快照绑定整数金额、
+  角色与目的地址，复用原校验和零签名探针。四项Rust合同未编译/执行，预期完整各
+  2098、原2094保留/恰增四项、132步骤及75类型228字段；源码重建/十负例/格式
+  通过不替代Rust验收。不接签名/账本/生产、不扩大现有原生/经典SPL/已有ATA范围。
+- 原NP03[钱包管理协调](APP_STATE_RESOURCE_OWNERSHIP.md)及缓存计数观察修正已
+  独立验收：`2ab9cd3` /
+  [Actions44435888425](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44435888425)
+  / artifact14490397618。并发2094（399.89秒）、串行2094（758.50秒），原2085
+  名称全保留/恰增九项；wallet9/cache3、131有序步骤及75类型228原始字段通过。
+  原Registry互斥范围跨仓储变更/安装/移除，含实际临时SQLite恢复/补偿与取消。
+  首批f07只在无门闩的逐分片len断言失败；修正仅持原写入锁观测，生产缓存/原
+  断言/上限和钱包代码不改。源码/锁定身份/原代码与全部blob已核对，不重跑首批
+  或终态、不另发文档CI。原部分失败/活动取消后状态保持，SDK worker/跨进程及
+  真实环境门槛仍未完成；当前Pump后继不在此源码或结果内，不能继承验收。
 - 原[NP04后端合同](BACKEND_CONSTRUCTION_CONTRACT.md)已独立验收：`d5303e2` /
   [Actions44382091879](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44382091879)
   / artifact14465763941。并发2085（380.83秒）、串行2085（733.72秒），原2078

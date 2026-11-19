@@ -167,3 +167,40 @@ become a regression or fall back to another execution after owner/signing
 acquisition. Preparation, supported-profile selection and fail-closed policy
 must be reviewed together before changing actual execution dispatch. This
 remains the existing NP-01 queue, not a parallel journal or a new task.
+
+## Original NP-01 Bank-Only Instruction Draft
+
+The fixed SDK's actual native instruction builder still takes SwapParams with
+an Arc<Keypair>, even when callers only want an unsigned instruction. Its amount
+encoders are pub(crate) inside the SDK, not publicly callable service helpers.
+Do not change vendor visibility or copy its whole initializer/executor to evade
+the project's presigning boundary. The same test-gated native prototype now has
+a private BankNativeSwap owning the existing public-account funding snapshot,
+positive integer input/minimum, bank-selected buyback and exact native V1 swap.
+It does not carry Keypair, TradingClient, SDK SwapParams, RPC or sender capability.
+
+The pure construction uses the original bank roles, creator/PDA and selected
+Global destinations, exact native buy/sell discriminator and two little-endian
+u64 fields, plus the SDK's current legacy buy volume byte. It reuses the original
+role/destination/amount validators, checks native/classic-SPL/incomplete/existing-
+ATA profile, input funding and original age before/after building. The accessor
+reconstructs and compares the full instruction and returns only a shared view.
+No fee estimate is obtained from the SDK's globals and no snapshot age restarts.
+
+Four Rust contracts are written but not compiled/executed: actual fixed SDK
+buy/sell x cashback comparisons of full instruction and compiled message;
+integer1/2^53+1/u64MAX and every account key/writable privilege plus changed wire;
+twelve unsupported/damaged/expired/unfunded bank cases per direction; and exact
+zero-signature handoff into the old discovery probe with its original floor1,
+hash and age rejection. The SDK comparison uses the helper's own positive
+minimum for ABI comparison, not as a trusted quote. Only its random buyback meta
+is pinned to a member of the same bank set; the old SDK tests remain untouched.
+
+This is still an offline native/classic/existing-ATA prototype. It does not solve
+ATA/volume setup rent, quote provider truth, deployed shorter-wire/partial-fill
+ABI behavior, fee schedules, close effects, non-native settlement/Token-2022,
+original Pump nominal journal/intent/signing or rollout. It does not change
+Pool-based owner selection, production API/validation, SDK/vendor, persistence
+or any transaction permission. The preceding wallet coordination CI excludes
+these files and cannot validate them. Preserve the original NP-01 queue and
+independently validate the future source snapshot before accepting this draft.

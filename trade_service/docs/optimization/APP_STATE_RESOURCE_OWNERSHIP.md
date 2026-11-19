@@ -268,7 +268,7 @@ test competing activation/disable/cancellation, and distinguish registry
 ownership from actual SDK task cleanup. No extra reservation/journal or SDK
 initializer is introduced by this review; current wallet source is untouched.
 
-## Original Wallet Mutation Coordination Draft
+## Original Wallet Mutation Coordination
 
 Continuation of the same NP-03 / TS-04/09 wallet lifecycle gap above, not a new
 wallet store, reservation, key manager or SDK initialization strategy. The
@@ -279,7 +279,7 @@ Application sees only an associated Send scope through its existing runtime
 port, and passes it exclusively to install/remove as a mutable borrow, preventing
 concurrent use of one scope for multiple installations. Concrete guard/Registry types remain
 outside Application/Domain/Protocol and the existing compiler gate adds that
-one selected guard type. Actual compiler validation is still pending.
+one selected guard type. The actual compiler gate passed75 types/228 raw fields.
 
 Create/import obtains the scope before its original repository mutation and
 holds it through install and any existing disable compensation. Delete obtains
@@ -309,7 +309,7 @@ key-memory erasure is claimed. Scope drop only releases management coordination.
 It does not revoke wallet Arcs already held by trades or repair cross-process
 database races. These remain original lifecycle/SDK ownership gaps.
 
-Nine Rust contracts are written but not executed: create/import versus delete,
+Nine Rust contracts were independently executed: create/import versus delete,
 two separate service facades sharing one runtime, seven original failure paths,
 queued and active cancellation with actual abort/join, wrong-Registry rejection
 before initialization/removal, cloned adapters/independent Registries, and
@@ -318,6 +318,19 @@ SQLite import/restore/delete with success/failure compensation and a fake runtim
 The latter uses an ephemeral synthetic key only to pass the original import parser;
 its secret is never stored/exported and no SDK client is created. Existing management,
 vanity, HTTP and repository tests are retained. Read-only source reconstruction
-and eight changed-source rejection cases passed, not a type check or SDK cleanup
-test. The new CI focused group and both complete suites must independently pass
-before this draft is accepted; it is excluded from the preceding SDK contracts CI.
+and eight changed-source rejection cases passed, not an SDK cleanup test.
+
+First f07aa68/run44432639535/artifact14488635528 passed type check/link and the
+75type/228field gate, but failed an old cache test's unguarded shard-count
+observation before the wallet/full suites. Correction2ab9cd3 changed only that
+test's observation scope plus four records; all wallet/production code stayed.
+[Actions44435888425](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44435888425)
+completed first-run success, artifact14490397618 independently audited full
+concurrent2094 (399.89s), serial2094 (758.50s), all2085 parent names plus exactnine,
+wallet9/cache3 and all131 ordered steps/75types228rawfields. Source identity,
+original/restored compiler success, original wallet control flow/old assertions,
+all1007 original source/script/dependency blobs apart from that test and the
+complete1231file14527400byte snapshot/modes were checked. No terminal rerun or
+documentation-only CI. The subsequent private Pump bank-only builder is outside
+this result and needs independent acceptance. Original SDK worker/key cleanup,
+partial-cancel recovery, cross-process races and real rollout remain pending.

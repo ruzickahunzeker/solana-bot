@@ -128,3 +128,17 @@ policy changes, and no new production helper/state is introduced. Original
 wallet and SDK source/tests/runner stay byte-identical to f07; the local Pump
 bank-only draft is held out. The same capacity tests, nine wallet contracts and
 full concurrent/serial suites must independently pass on the correction.
+
+Correction2ab9cd3 /
+[Actions44435888425](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44435888425)
+completed its first run successfully. Matching artifact14490397618 independently
+passed full2094/2094 (399.89s/758.50s), all2085 accepted parent names plus exactnine
+wallet tests, capacity3/wallet9 and all131 ordered zero-exit steps/75types228raw
+fields. Original/restored compiler success and locked source hashes match.
+Exact correction audit confirms only the count assertion scope plus four records,
+all1007 other source/script/dependency blobs unchanged and all1231file14527400byte
+snapshot/modes verified; the held Pump draft/runner is excluded. The same old
+1024 bound, assertion, test names, write volume and metadata/Arc checks ran.
+Never rerun the terminal failure or success, or inherit this result for later
+Pump construction. This is a coherent observation fix, not a production cache
+policy change, global RPC budget, SDK cleanup or real-node acceptance.

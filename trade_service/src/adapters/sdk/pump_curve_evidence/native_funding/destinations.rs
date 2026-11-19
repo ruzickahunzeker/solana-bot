@@ -43,14 +43,14 @@ struct GlobalFeePrefix {
 }
 
 #[derive(Debug)]
-struct NativeDestinations {
-    protocol_fee: Pubkey,
-    creator_vault: Pubkey,
-    buyback: [Pubkey; 8],
+pub(super) struct NativeDestinations {
+    pub(super) protocol_fee: Pubkey,
+    pub(super) creator_vault: Pubkey,
+    pub(super) buyback: [Pubkey; 8],
 }
 
 impl NativeFundingSnapshot {
-    fn destinations(&self) -> Result<NativeDestinations> {
+    pub(super) fn destinations(&self) -> Result<NativeDestinations> {
         // Do not interpret unknown/paused sharing status as proof of no sharing.
         ensure!(
             !self.curve.curve.mayhem && self.curve.sharing == SharingPrefix::Absent,
