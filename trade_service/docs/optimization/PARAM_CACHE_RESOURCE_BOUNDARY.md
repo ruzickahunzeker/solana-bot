@@ -101,3 +101,30 @@ compiler field rejections and locked identity match. Correction-source audit
 preserves every old assertion and production method; six provider and five
 cache-policy source mutations reject. No terminal job is rerun. The seven
 later independent-backend tests are not part of this accepted snapshot.
+
+## Concurrent Count Observation Correction
+
+The later wallet-coordination snapshot f07aa68 / Actions44432639535 /
+artifact14488635528 completed with a failure in the existing concurrent cache
+test: two worker assertions saw entries.len()>1024. Type check/link,75types/
+228 raw compiler fields and81 preceding steps passed; capacity2 passed/1 failed,
+and neither the nine new wallet tests nor the complete suites ran. This is not
+a complete2094 acceptance, and the terminal job is not rerun.
+
+The original production cache source is byte-identical to its accepted parent.
+All inserts/removes use the same writes gate and evict before inserting a new
+key. The test read DashMap::len outside that gate. The exact locked6.2.1 crate
+archive checksum matches Cargo.lock; its _len reads/accumulates each shard
+separately, not one atomic cardinality snapshot. Reading old shardA, evicting
+there and inserting into shardB, then reading new shardB can sum1025 even when
+both actual states contain1024. This explains why the assertion's observation
+was invalid; it is not a claim that CI traced that exact shard schedule.
+
+The isolated correction holds the original writes gate only around the existing
+capacity assertion, obtaining a coherent count while leaving writer contention,
+four threads, all2048 writes, metadata checks, final bound and Arc release in
+place. The assertion and1024 limit are not relaxed, no writer lock/config/cache
+policy changes, and no new production helper/state is introduced. Original
+wallet and SDK source/tests/runner stay byte-identical to f07; the local Pump
+bank-only draft is held out. The same capacity tests, nine wallet contracts and
+full concurrent/serial suites must independently pass on the correction.

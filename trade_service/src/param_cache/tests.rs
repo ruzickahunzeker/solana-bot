@@ -91,7 +91,12 @@ fn param_cache_capacity_is_shared_by_concurrent_writers_and_releases_original_in
                 for offset in 0..MAX_CANDIDATE_ENTRIES / 2 {
                     let route = hint(writer * MAX_CANDIDATE_ENTRIES + offset);
                     let key = cache.record(&route);
-                    assert!(cache.entries.len() <= MAX_CANDIDATE_ENTRIES);
+                    {
+                        // DashMap::len samples shards separately; hold the original admission
+                        // gate so an eviction/insertion cannot straddle the count snapshot.
+                        let _snapshot = cache.writes.lock().unwrap();
+                        assert!(cache.entries.len() <= MAX_CANDIDATE_ENTRIES);
+                    }
                     if let Some(entry) = cache.get(&key) {
                         assert_eq!(entry.pool, route.pool);
                         assert_eq!(entry.mint, route.mint.to_string());

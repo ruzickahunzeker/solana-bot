@@ -36,6 +36,16 @@
 取消与靓号同Arc范围均待CI。源码重建/八负例/格式/轻量政策通过不替代Rust执行，
 原部分失败/取消后的状态及SDK不可取消限制保持；不改API/SDK/存储或实盘许可。
 
+首批f07aa68 /
+[Actions44432639535](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44432639535)
+终态failure，artifact14488635528已下载独立核对：前81步骤exit0，类型检查/链接、
+75类型/228原始字段与旧SDK独立后端专项通过；缓存专项2过1失败，钱包专项/完整
+并发/串行均未运行。唯一失败是并发写后无门闩的DashMap len断言。锁定crate归档
+SHA与Cargo.lock匹配，原_len逐分片求和；移除旧分片键再插入新分片期间，观察可能
+跨时刻，不能当原子容量快照。原生产缓存写入始终受同一writes锁保护且先删后插。
+修正仅使该断言在原writes锁内观测；原断言/1024上限/三测试名/生产源码不变。
+不重跑终态，不把部分通过当完整2094验收；Pump纯账户后继源码/runner留在修正之外。
+
 前批原NP04 `d5303e2` /
 [Actions44382091879](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44382091879)
 首次success，artifact14465763941已下载独立核对：并发2085（380.83秒）、串行2085
