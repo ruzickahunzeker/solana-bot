@@ -6,6 +6,8 @@ use crate::{
 };
 
 #[cfg(test)]
+mod mutation_tests;
+#[cfg(test)]
 pub(crate) mod test_support;
 #[cfg(test)]
 mod tests;
@@ -116,6 +118,7 @@ where
 
     fn create(&self, input: CreateWalletInput) -> WalletManagementFuture<'_, ManagedWalletView> {
         Box::pin(async move {
+            let mut mutation = self.runtime.begin_mutation().await;
             let result = match input.private_key_base58.as_deref() {
                 Some(secret) => self.repository.import(&input, secret).await,
                 None => self
@@ -128,7 +131,11 @@ where
                 WalletManagementError::new(WalletFailureKind::InvalidRequest, error)
             })?;
             if wallet.enabled {
-                if let Err(error) = self.runtime.install(&wallet.wallet_id, material).await {
+                if let Err(error) = self
+                    .runtime
+                    .install(&mut mutation, &wallet.wallet_id, material)
+                    .await
+                {
                     if created {
                         let _ = self.repository.disable(&wallet.wallet_id).await;
                     }
@@ -163,10 +170,11 @@ where
 
     fn delete<'a>(&'a self, id: &'a str) -> WalletManagementFuture<'a, ManagedWalletView> {
         Box::pin(async move {
+            let mut mutation = self.runtime.begin_mutation().await;
             let wallet = self.repository.disable(id).await.map_err(|error| {
                 WalletManagementError::new(WalletFailureKind::InvalidRequest, error)
             })?;
-            self.runtime.remove(id).map_err(|error| {
+            self.runtime.remove(&mut mutation, id).map_err(|error| {
                 WalletManagementError::new(WalletFailureKind::RemoveFailed, error)
             })?;
             Ok(ManagedWalletView {

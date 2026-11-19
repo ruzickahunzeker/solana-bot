@@ -6,10 +6,18 @@
 
 ## 当前任务
 
-- 当前续原[NP04后端合同](BACKEND_CONSTRUCTION_CONTRACT.md)：七项SDK控制器
-  合同补独立构建/签名/内存发送表示，共用Case不构建候选，复用原临时SQLite与
-  owner/permit，不改原First/Second测试。源码重建/六负例/格式/工作流通过，
-  七项Rust合同仍待独立验收，预期完整各2085/130步/74类型225字段。
+- 当前续原NP03[钱包管理协调](APP_STATE_RESOURCE_OWNERSHIP.md)：原Registry持有
+  管理互斥范围，创建/导入/删除与靓号导入在原仓储变更到安装/移除之间保持同一
+  不透明范围，安装/移除独占借用并核对Registry身份。九项Rust合同待独立验收，
+  含实际临时SQLite恢复/补偿及取消；不改变原部分失败/取消后状态，不宣称SDK
+  worker已可取消。格式/源码重建/八负例/轻量政策通过，不替代Rust编译或执行。
+- 原[NP04后端合同](BACKEND_CONSTRUCTION_CONTRACT.md)已独立验收：`d5303e2` /
+  [Actions44382091879](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44382091879)
+  / artifact14465763941。并发2085（380.83秒）、串行2085（733.72秒），原2078
+  名称全保留、恰增七项；专项7、130有序步骤及74类型/225原始编译字段通过。
+  源码/锁定依赖身份与旧测试/原controller/账本重建、六负例通过。仅既有Durable
+  DAMM sell100/经典SPL/WSOL/Default假后端合同，不增加协议、模式或实盘权限。
+  不重跑终态、不另发文档CI；原资源、Pump原型/签名账本与真实环境门槛继续。
 - 原NP03 [Provider边界](APP_STATE_RESOURCE_OWNERSHIP.md)和
   [1024条候选缓存](PARAM_CACHE_RESOURCE_BOUNDARY.md)已独立验收：`e6c5a6e` /
   [Actions44375225006](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44375225006)

@@ -267,3 +267,57 @@ repository/runtime ports, preserve existing partial-failure/error contracts,
 test competing activation/disable/cancellation, and distinguish registry
 ownership from actual SDK task cleanup. No extra reservation/journal or SDK
 initializer is introduced by this review; current wallet source is untouched.
+
+## Original Wallet Mutation Coordination Draft
+
+Continuation of the same NP-03 / TS-04/09 wallet lifecycle gap above, not a new
+wallet store, reservation, key manager or SDK initialization strategy. The
+original Registry now owns one asynchronous management-mutation mutex. Its
+opaque, non-cloneable borrowed scope binds the original Registry by address;
+add/remove reject a scope from another Registry before initializer/map access.
+Application sees only an associated Send scope through its existing runtime
+port, and passes it exclusively to install/remove as a mutable borrow, preventing
+concurrent use of one scope for multiple installations. Concrete guard/Registry types remain
+outside Application/Domain/Protocol and the existing compiler gate adds that
+one selected guard type. Actual compiler validation is still pending.
+
+Create/import obtains the scope before its original repository mutation and
+holds it through install and any existing disable compensation. Delete obtains
+the same scope before disable and holds it through remove. The generated-wallet
+branch of the existing vanity worker obtains the same original Registry scope
+before import and holds it through add/compensation/result update. Startup is
+still sequential and unchanged. Source inventory found no other production
+Registry add/remove callers. SDK configuration, keys, constructors, providers,
+wallet repository/schema, trade admission/signing/journals and APIs are unchanged.
+
+This intentionally serializes low-frequency management mutations across wallets
+within one Registry/process, not normal trades/read-only wallet queries. No SQL
+transaction is kept open while awaiting SDK initialization. Independent
+Registries do not share a global lock. A stalled initializer may delay other
+management mutations; this step does not add a timeout that would incorrectly
+claim cancellation of SDK background workers, and does not claim bounded waiter
+admission or distributed locking.
+
+Original partial-failure semantics remain: a new/restored wallet's failed install
+attempts disable, retaining the install error even if compensation fails; an
+existing wallet is not compensated. Delete still disables before removal and
+reports the original RemoveFailed if removal fails. Cancellation before scope
+acquisition does not enter repository/runtime code. Cancellation after repository
+mutation still may leave an enabled row without a loaded wallet, exactly as the
+old explicit cancellation contract records; no fake rollback/worker cleanup or
+key-memory erasure is claimed. Scope drop only releases management coordination.
+It does not revoke wallet Arcs already held by trades or repair cross-process
+database races. These remain original lifecycle/SDK ownership gaps.
+
+Nine Rust contracts are written but not executed: create/import versus delete,
+two separate service facades sharing one runtime, seven original failure paths,
+queued and active cancellation with actual abort/join, wrong-Registry rejection
+before initialization/removal, cloned adapters/independent Registries, and
+vanity/management same-Arc coordination without generation, and actual temporary
+SQLite import/restore/delete with success/failure compensation and a fake runtime.
+The latter uses an ephemeral synthetic key only to pass the original import parser;
+its secret is never stored/exported and no SDK client is created. Existing management,
+vanity, HTTP and repository tests are retained. Read-only source reconstruction
+and eight changed-source rejection cases passed, not a type check or SDK cleanup
+test. The new CI focused group and both complete suites must independently pass
+before this draft is accepted; it is excluded from the preceding SDK contracts CI.

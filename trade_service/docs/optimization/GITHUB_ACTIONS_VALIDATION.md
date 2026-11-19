@@ -30,10 +30,20 @@
 
 ## 当前批次
 
-当前续原NP04七项SDK独立后端合同，预期完整各2085、父2078名称全保留/恰增七项、
-130有序步骤及原74类型/225字段。共用Case不预构建候选，原controller/SQLite/owner/
-permit保持，见[同一后端合同](BACKEND_CONSTRUCTION_CONTRACT.md)。源码/负例/格式/
-工作流检查不替代Rust执行；不改API/SDK/钱包/账本，不新增协议、模式或权限。
+当前续原NP03钱包管理协调，九项Rust合同尚未执行，预期完整各2094、父2085名称
+全保留/恰增九项、131有序步骤与75类型/228字段。Application只持关联不透明范围，
+原Registry按身份核对并独占借给安装/移除；实际临时SQLite恢复/补偿、等待/活动
+取消与靓号同Arc范围均待CI。源码重建/八负例/格式/轻量政策通过不替代Rust执行，
+原部分失败/取消后的状态及SDK不可取消限制保持；不改API/SDK/存储或实盘许可。
+
+前批原NP04 `d5303e2` /
+[Actions44382091879](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44382091879)
+首次success，artifact14465763941已下载独立核对：并发2085（380.83秒）、串行2085
+（733.72秒），原2078名称全保留、恰增七项；SDK独立后端专项7、原provider5/cache3/
+config3/surface2/Pump56/HTTP208、130有序步骤及74类型/225原始编译字段通过。
+源码/锁定依赖身份、旧测试/controller/账本/SDK重建与六负例通过，共用Case不构建
+候选。只证明既有Durable DAMM卖出限定profile的假后端合同；当前钱包后继未在
+该源码/CI内，不能继承验收。不重跑终态，记录随真实后继源码提交，不单独发文档CI。
 
 首批3721cf1 / [Actions44371523601](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44371523601)
 终态failure，artifact14459603617已下载核对：类型检查/链接、74类型/225字段、

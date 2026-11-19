@@ -28,7 +28,16 @@ pub(crate) trait WalletRepositoryPort: Send + Sync {
 
 /// Material is opaque to the application, not a signer or executable transaction.
 pub(crate) trait WalletRuntimePort<M: Send>: Send + Sync {
+    type Mutation<'a>: Send
+    where
+        Self: 'a;
+    fn begin_mutation(&self) -> impl Future<Output = Self::Mutation<'_>> + Send;
     fn loaded(&self) -> LoadedWallets;
-    fn install(&self, id: &str, material: M) -> impl Future<Output = anyhow::Result<()>> + Send;
-    fn remove(&self, id: &str) -> anyhow::Result<()>;
+    fn install(
+        &self,
+        mutation: &mut Self::Mutation<'_>,
+        id: &str,
+        material: M,
+    ) -> impl Future<Output = anyhow::Result<()>> + Send;
+    fn remove(&self, mutation: &mut Self::Mutation<'_>, id: &str) -> anyhow::Result<()>;
 }

@@ -49,6 +49,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertTrue({"sdk_trade_config", "sdk_infrastructure_config"} <= types)
         self.assertTrue({"sdk_swqos_config", "sdk_swqos_type", "sdk_swqos_region", "sdk_swqos_transport", "sdk_astralane_transport"} <= types)
         self.assertIn("param_cache", types)
+        self.assertIn("wallet_management_mutation", types)
         self.assertNotIn("allow-imports", boundaries.config_text(policy))
 
     def test_bad_schema_duplicate_names_and_generated_code_are_rejected(self):
@@ -107,6 +108,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertIn("DammQuoteReader<'static>>", source.decode().splitlines()[expected["damm_quote_reader"] - 1])
         self.assertIn("SolTransferReadSession<'static>>", source.decode().splitlines()[expected["sol_transfer_session"] - 1])
         self.assertIn("SolTransferConfirmationReader<'static>>", source.decode().splitlines()[expected["sol_transfer_confirmation_reader"] - 1])
+        self.assertIn("WalletManagementMutation<'static>>", source.decode().splitlines()[expected["wallet_management_mutation"] - 1])
 
     def test_static_lifetime_metadata_cannot_inject_rust_or_replace_path_validation(self):
         policy = boundaries.read_policy()

@@ -11,6 +11,9 @@ use crate::{
     wallets::WalletRegistry,
 };
 
+#[cfg(test)]
+mod mutation_tests;
+
 pub(crate) struct WalletMaterial(String);
 
 impl std::fmt::Debug for WalletMaterial {
@@ -70,22 +73,31 @@ impl WalletRepositoryPort for SdkWalletManagement {
 }
 
 impl WalletRuntimePort<WalletMaterial> for SdkWalletManagement {
+    type Mutation<'a> = crate::wallets::WalletManagementMutation<'a>;
+    async fn begin_mutation(&self) -> Self::Mutation<'_> {
+        self.wallets.begin_management_mutation().await
+    }
     fn loaded(&self) -> LoadedWallets {
         LoadedWallets {
             default_wallet_id: self.wallets.default_wallet_id().to_string(),
             wallets: self.wallets.infos(),
         }
     }
-    async fn install(&self, id: &str, material: WalletMaterial) -> anyhow::Result<()> {
+    async fn install(
+        &self,
+        mutation: &mut Self::Mutation<'_>,
+        id: &str,
+        material: WalletMaterial,
+    ) -> anyhow::Result<()> {
         let config = WalletConfig {
             wallet_id: id.into(),
             private_key_base58: material.0,
         };
-        self.wallets.add(&config).await?;
+        self.wallets.add(mutation, &config).await?;
         Ok(())
     }
-    fn remove(&self, id: &str) -> anyhow::Result<()> {
-        self.wallets.remove(id)
+    fn remove(&self, mutation: &mut Self::Mutation<'_>, id: &str) -> anyhow::Result<()> {
+        self.wallets.remove(mutation, id)
     }
 }
 

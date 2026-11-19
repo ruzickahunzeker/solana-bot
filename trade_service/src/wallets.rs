@@ -13,11 +13,26 @@ use tracing::warn;
 pub struct WalletRegistry {
     default_wallet_id: String,
     wallets: DashMap<String, Arc<SdkTradeClient>>,
+    management_mutation: tokio::sync::Mutex<()>,
     rpc_urls: Vec<String>,
     mev: MevConfig,
     commitment: CommitmentConfig,
     enable_sdk_log: bool,
     broadcast_policy: BroadcastPolicy,
+}
+
+pub struct WalletManagementMutation<'a> {
+    registry: &'a WalletRegistry,
+    _guard: tokio::sync::MutexGuard<'a, ()>,
+}
+
+impl WalletManagementMutation<'_> {
+    fn validate(&self, registry: &WalletRegistry) -> anyhow::Result<()> {
+        if !std::ptr::eq(self.registry, registry) {
+            bail!("wallet mutation belongs to another registry");
+        }
+        Ok(())
+    }
 }
 
 impl WalletRegistry {
@@ -27,6 +42,7 @@ impl WalletRegistry {
         Self {
             default_wallet_id,
             wallets: DashMap::new(),
+            management_mutation: tokio::sync::Mutex::new(()),
             rpc_urls: Vec::new(),
             mev,
             commitment: CommitmentConfig::processed(),
@@ -47,6 +63,7 @@ impl WalletRegistry {
         let registry = Self {
             default_wallet_id,
             wallets: DashMap::new(),
+            management_mutation: tokio::sync::Mutex::new(()),
             rpc_urls,
             mev,
             commitment,
@@ -147,7 +164,20 @@ impl WalletRegistry {
         self.wallets.len()
     }
 
-    pub async fn add(&self, wallet: &WalletConfig) -> anyhow::Result<WalletInfo> {
+    // Hold across repository mutation and runtime installation/removal, not just add().
+    pub(crate) async fn begin_management_mutation(&self) -> WalletManagementMutation<'_> {
+        WalletManagementMutation {
+            registry: self,
+            _guard: self.management_mutation.lock().await,
+        }
+    }
+
+    pub async fn add(
+        &self,
+        mutation: &mut WalletManagementMutation<'_>,
+        wallet: &WalletConfig,
+    ) -> anyhow::Result<WalletInfo> {
+        mutation.validate(self)?;
         if let Some(existing) = self.get(&wallet.wallet_id) {
             return Ok(WalletInfo {
                 wallet_id: wallet.wallet_id.clone(),
@@ -163,7 +193,12 @@ impl WalletRegistry {
         Ok(info)
     }
 
-    pub fn remove(&self, wallet_id: &str) -> anyhow::Result<()> {
+    pub fn remove(
+        &self,
+        mutation: &mut WalletManagementMutation<'_>,
+        wallet_id: &str,
+    ) -> anyhow::Result<()> {
+        mutation.validate(self)?;
         if wallet_id == self.default_wallet_id {
             bail!("default wallet cannot be removed");
         }

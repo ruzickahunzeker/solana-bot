@@ -27,6 +27,7 @@ pub(crate) struct Backend {
     pub state: Arc<Mutex<State>>,
     pub drops: Arc<AtomicUsize>,
     pub install_gate: Option<Arc<Notify>>,
+    pub mutation: Arc<tokio::sync::Mutex<()>>,
 }
 
 impl Backend {
@@ -49,6 +50,7 @@ impl Backend {
             })),
             drops: Arc::default(),
             install_gate: None,
+            mutation: Arc::new(tokio::sync::Mutex::new(())),
         }
     }
     fn event(&self, op: &'static str, detail: String) -> anyhow::Result<()> {
@@ -126,6 +128,10 @@ impl WalletRepositoryPort for Backend {
 }
 
 impl WalletRuntimePort<Material> for Backend {
+    type Mutation<'a> = tokio::sync::MutexGuard<'a, ()>;
+    async fn begin_mutation(&self) -> Self::Mutation<'_> {
+        self.mutation.lock().await
+    }
     fn loaded(&self) -> LoadedWallets {
         self.state.lock().unwrap().events.push("loaded".into());
         LoadedWallets {
@@ -136,7 +142,12 @@ impl WalletRuntimePort<Material> for Backend {
             }],
         }
     }
-    async fn install(&self, id: &str, material: Material) -> anyhow::Result<()> {
+    async fn install(
+        &self,
+        _mutation: &mut Self::Mutation<'_>,
+        id: &str,
+        material: Material,
+    ) -> anyhow::Result<()> {
         let _material = material;
         {
             self.state
@@ -154,7 +165,7 @@ impl WalletRuntimePort<Material> for Backend {
         }
         Ok(())
     }
-    fn remove(&self, id: &str) -> anyhow::Result<()> {
+    fn remove(&self, _mutation: &mut Self::Mutation<'_>, id: &str) -> anyhow::Result<()> {
         self.event("remove", format!("remove:{id}"))
     }
 }

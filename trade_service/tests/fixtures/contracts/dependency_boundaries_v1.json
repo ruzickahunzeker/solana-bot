@@ -49,6 +49,7 @@
     {"id": "trade_storage", "path": "pump_trade_service::persistence::TradePersistence", "probe": "crate::persistence::TradePersistence"},
     {"id": "blockhash_cache", "path": "pump_trade_service::blockhash_cache::BlockhashCache", "probe": "crate::blockhash_cache::BlockhashCache"},
     {"id": "wallet_registry", "path": "pump_trade_service::wallets::WalletRegistry", "probe": "crate::wallets::WalletRegistry"},
+    {"id": "wallet_management_mutation", "path": "pump_trade_service::wallets::WalletManagementMutation", "probe": "crate::wallets::WalletManagementMutation", "static_lifetime": true},
     {"id": "wallet_storage", "path": "pump_trade_service::wallet_repository::WalletRepository", "probe": "crate::wallet_repository::WalletRepository"},
     {"id": "sdk_wallet", "path": "pump_trade_service::sdk_client::SdkTradeClient", "probe": "crate::sdk_client::SdkTradeClient"},
     {"id": "trade_tasks", "path": "pump_trade_service::infrastructure::trade_tasks::TradeTasks", "probe": "crate::infrastructure::trade_tasks::TradeTasks"},

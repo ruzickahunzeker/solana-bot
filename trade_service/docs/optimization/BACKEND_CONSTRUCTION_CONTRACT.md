@@ -82,7 +82,7 @@ PumpAPI 新对接仍暂停；不部署、不重启、不接触生产钱包/数�
 
 Local continuation after the original Record/Tape Quote contracts, not a new
 backend/protocol task. The original SDK First/Second tests still share Engine
-and retain their old assertions. Seven new unexecuted Rust contracts now run
+and retain their old assertions. Seven independently accepted Rust contracts run
 the actual ordinary SDK controller and original SQLite journal with Native
 and an independently constructed Tape candidate/signed representation.
 
@@ -122,3 +122,17 @@ The local runner adds one focused group while retaining both complete suites.
 The fixture-correction e6c5a6e/run44375225006/artifact14463247130 independently
 passed full2078 each (350.04s/681.34s),129steps and74types/225fields. It excludes
 these seven tests, whose coherent successor cannot inherit that acceptance.
+
+The exact successor `d5303e2e7c01414150102f42e115cd9cba748221` /
+[Actions44382091879](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44382091879)
+completed its first run successfully. Downloaded artifact14465763941 independently
+passed full concurrent2085 (380.83s) and serial2085 (733.72s), all2078 parent
+names retained plus exactly seven source-bound new names, focused7 and all130
+ordered zero-exit steps. Original/restored compiler results and74 types/225 raw
+field spans, locked source identity, original tests/controller/journal/SDK and
+six source-policy negatives were checked. Synthetic signatures and same nominal
+bytes remain limited evidence for the explicit fake scenario, not live pool
+freshness, an actual Router, all modes/protocols or production permission.
+Do not rerun this terminal snapshot or publish documentation-only CI. The later
+original NP-03 wallet mutation changes are outside this result and need their
+own compiler/focused/full validation.

@@ -9,6 +9,8 @@ use tokio::sync::Semaphore;
 mod lifecycle;
 
 #[cfg(test)]
+mod mutation_tests;
+#[cfg(test)]
 mod shutdown_tests;
 #[cfg(test)]
 mod tests;
@@ -187,6 +189,7 @@ impl WalletOps {
         let attempts = runtime.attempts.load(Ordering::Relaxed);
         let result = match generated {
             Ok(Some((pubkey, private_key))) => {
+                let mut mutation = self.wallets.begin_management_mutation().await;
                 match self
                     .repository
                     .import(&job.owner_type, &job.owner_id, &job.label, &private_key)
@@ -197,7 +200,7 @@ impl WalletOps {
                             wallet_id: wallet.wallet_id.clone(),
                             private_key_base58: private_key,
                         };
-                        match self.wallets.add(&config).await {
+                        match self.wallets.add(&mut mutation, &config).await {
                             Ok(_) => {
                                 self.repository
                                     .update_vanity_job(

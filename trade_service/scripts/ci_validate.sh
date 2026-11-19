@@ -174,6 +174,7 @@ PY
         step trade-task-admission cargo test --locked --offline trade_task_admission_ -- --test-threads=2
         step execution-task-ownership cargo test --locked --offline execution_task_ownership_ -- --test-threads=2
         step vanity-lifecycle cargo test --locked --offline vanity_lifecycle_ -- --test-threads=2
+        step wallet-mutation cargo test --locked --offline wallet_mutation_ -- --test-threads=2
         step vanity-shutdown cargo test --locked --offline vanity_shutdown_ -- --test-threads=2
         step sol-transfer-shared cargo test --locked --offline sol_transfer_read_ -- --test-threads=2
         step sol-transfer-adapter cargo test --locked --offline sol_transfer_adapter_ -- --test-threads=2
