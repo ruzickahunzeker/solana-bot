@@ -469,7 +469,7 @@ draft is held out of this minimal fix. Publish a new correction, never rerun
 the terminal failed batch; require the same137 steps/full2117 each and exact
 four added tests against accepted3ad before acceptance. No production actions.
 
-## Same NP-01 Original Reservation Comparison Draft
+## Same NP-01 Original Reservation Comparison
 
 The module-gate correction3e3ee2f / Actions44673319012 was independently accepted
 above. This successor is not in that correction and cannot inherit its result.
@@ -488,13 +488,68 @@ bank truth. Origin first requires the unchanged original operation selector;
 Pump claims/signing/recovery remain closed and original journal writes/CAS
 stay unchanged. DAMM paths and old JSON/message bytes stay unchanged.
 
-Five pending Rust tests cover buy/partial-sell with Default/Temporal,19 altered
+Five independently accepted Rust tests cover buy/partial-sell with Default/Temporal,19 altered
 command fields,8 nominally valid metadata changes, a coherent alternative
 percentage with the same wire input, and identical requests admitted under new
 durable/shadow/memory reservations. They verify no original claim/signing rights
 are granted. They use public fixtures/temporary SQLite, no keys/RPC or signing.
 Source reconstruction preserves the old DAMM/origin/producer bodies,1008 other
 source/dependency blobs and rejects10 changed-source negatives. Format/policy
-checks are not Rust acceptance. A future own CI expects full2122 each, all2117
-parent names plus exactly five,138 steps and75 types228 raw field rejections.
+checks are not Rust acceptance. Own e10037a / Actions44677923187 attempt2 /
+artifact14604564014 independently passes concurrent2122 (373.94s),serial2122
+(738.30s),all2117 parent names plus exactly five,138 ordered zero-exit steps,
+75 types228 actual raw compiler field rejections and locked source identity.
+All1248 files/14678418 bytes/modes were checked at publication. Attempt1 never
+started due platform billing; only that zero-step attempt was retried after
+the repository became public and the user resumed the active goal. No billing,
+visibility, workflow or source changes accompanied the retry. Do not rerun
+accepted batches or create docs-only CI; carry these records with real successor
+code. The bank producer remains test-gated, original controller/journal live
+authority and setup/rent/close/ABI/provider gaps remain in the same original work.
 No new task, owner/store, production permission or PumpAPI integration.
+
+## Same NP-01 Read-Only Bank Producer
+
+Following independently accepted e100, the original evidence chain is promoted
+out of its parent test gate. Test modules/oracles remain explicitly test-only,
+all original test names and assertion bodies are retained, and narrow reexports
+expose the same uncloneable bound evidence rather than a copied history object.
+No SDK initializer/key/client, journal owner, configuration or API is added.
+
+The read-only entry accepts the original AdmittedTrade, existing shared runtime,
+one fixed URL and a bounded value context. It rejects wrong scope, mode, key,
+provider, missing hash/slot or expired deadline before any read. The four-account
+read chooses only the base program; the subsequent canonical eight-account read
+must independently validate mint/program/curve/ATA/wallet/Clock. Native buy input
+comes from original lamports; partial sell uses the original verified balance
+and checked integer percentage. It supports only the existing native/classic/
+existing-ATA/no-close prototype. No new setup, rent, Token-2022 or full-sell claim.
+
+The old quote probe and final complete-message simulation use the same runtime,
+URL, bank origin/freshness, positive minimum, fee envelope and message. A caller
+deadline caps the whole sequence, not each stage independently. The resulting
+evidence borrows the original reservation, retains the original private live
+bank and rechecks freshness on packet/record access. Nominal reconstruction
+cannot replace it. Context/provider receivers remain evidence inputs, not new
+sender authorization; provider/deployed ABI/real bank trust and original journal
+controlled signing remain separate existing gates. Original Pump claims/signing/
+recovery stay closed, and no production caller or sender is connected here.
+
+Five pending Rust contracts cover exact four request bodies and original unsigned
+bytes for buy/partial-sell with Default/Temporal;17 pre-read scope/context rejects;
+each failed stage plus absent ATA; four-stage cancellation and whole-deadline
+permit release; coherent history substitution and actual age expiry. They reuse
+public account fixtures, never production wallets/RPC or signing. A fixture-only
+raw-account extraction preserves the old decoder helper byte-for-byte after
+reconstruction; the extra fixture is appended without changing old tests.
+
+The two new capability-bearing types enter the original application/domain/
+protocol compiler gate through public internal aliases:77 types/234 raw field
+rejections are required. Pure history data remains allowed. Source audit restores
+all original readers/decoders/builders/math/freshness/binding/test bodies,993 other
+source/dependency blobs and rejects12 changed-source negatives. Format/policy
+checks are not Rust acceptance. Own CI requires full2127 each, all2122 parent
+names plus exactly five,139 ordered steps and the unchanged old focused groups
+(Pump80 includes the five new entry tests). No new task/store/owner, SDK change,
+deployment or PumpAPI integration. Continue original controller/journal handoff
+only after independently accepting this source, without Pool-only permission.

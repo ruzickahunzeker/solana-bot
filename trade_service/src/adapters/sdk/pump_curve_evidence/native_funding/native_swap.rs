@@ -112,5 +112,6 @@ impl BankNativeSwap {
     }
 }
 
+#[cfg(test)]
 mod tests;
 pub(super) mod wire;

@@ -185,4 +185,6 @@ impl NativeFinalObservation {
 }
 
 mod bank_swap;
+pub(crate) use bank_swap::NativeBoundIntent;
+#[cfg(test)]
 mod tests;

@@ -94,7 +94,13 @@ and the expanded SDK SWQoS/concrete-cache type gate were independently accepted
 in e6c5a6e/run44375225006/artifact14463247130 (full2078 each, provider5/cache3,
 129 steps and74types/225 raw fields). First3721 fixture failure was corrected
 without changing production methods or old assertions, never rerun.
-Seven later SDK controller contracts remain independently pending. Details remain in the existing
+The seven later SDK controller contracts were independently accepted in
+d5303e2/run44382091879/artifact14465763941: focused7 and full2085 each, with
+130 zero-exit steps and74 types225 raw compiler field rejections. The retained
+raw focused/concurrent/serial logs confirm that result; they are not pending
+work and must not be requeued. This remains the original restricted DAMM
+contract scope, not all protocols/modes, a Router integration or chain/live
+acceptance. Details remain in BACKEND_CONSTRUCTION_CONTRACT.md and the existing
 APP_STATE_RESOURCE_OWNERSHIP.md, not a second SDK upgrade or rollout plan.
 
 ## 2026-11-12 本地核对历史

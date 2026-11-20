@@ -91,4 +91,6 @@ impl NativeQuoteProbe {
 mod effects;
 mod post_bank;
 mod shared;
+pub(crate) use shared::NativeBoundIntent;
+#[cfg(test)]
 mod tests;

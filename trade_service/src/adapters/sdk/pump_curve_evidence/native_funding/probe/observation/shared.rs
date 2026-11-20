@@ -55,4 +55,6 @@ impl NativeQuoteProbe {
 }
 
 mod constraints;
+pub(crate) use constraints::NativeBoundIntent;
+#[cfg(test)]
 mod tests;

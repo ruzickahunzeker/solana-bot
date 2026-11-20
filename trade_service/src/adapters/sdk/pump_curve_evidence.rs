@@ -257,4 +257,8 @@ fn decode_sharing(
 
 mod instruction_amounts;
 mod native_funding;
+pub(crate) use native_funding::{
+    prepare_native_evidence, NativeBoundIntent as PumpNativeBankEvidence, NativeEvidenceContext,
+};
+#[cfg(test)]
 mod tests;

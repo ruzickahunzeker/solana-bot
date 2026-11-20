@@ -37,4 +37,6 @@ impl NativeFundingSnapshot {
 }
 
 mod intent;
+pub(crate) use intent::NativeBoundIntent;
+#[cfg(test)]
 mod tests;

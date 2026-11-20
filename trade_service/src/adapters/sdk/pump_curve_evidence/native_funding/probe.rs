@@ -94,4 +94,6 @@ impl NativeQuoteProbe {
 }
 
 mod observation;
+pub(crate) use observation::NativeBoundIntent;
+#[cfg(test)]
 pub(super) mod tests;

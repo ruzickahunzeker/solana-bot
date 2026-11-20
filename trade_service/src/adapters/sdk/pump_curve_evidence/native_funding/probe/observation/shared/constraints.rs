@@ -135,4 +135,6 @@ impl NativeSwapConstraints {
 }
 
 mod envelope;
+pub(crate) use envelope::NativeBoundIntent;
+#[cfg(test)]
 mod tests;

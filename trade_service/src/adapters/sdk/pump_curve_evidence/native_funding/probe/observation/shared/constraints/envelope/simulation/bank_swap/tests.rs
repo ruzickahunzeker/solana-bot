@@ -182,6 +182,64 @@ pub(super) async fn final_for_intent(
         .unwrap()
 }
 
+impl super::intent::NativeBoundIntent<'_> {
+    pub(in crate::adapters::sdk::pump_curve_evidence::native_funding) async fn producer_fixture(
+        side: TradeType,
+        provider: SwqosType,
+    ) -> ([Value; 4], [Value; 4], Vec<u8>, Pubkey, Option<Pubkey>) {
+        use crate::adapters::sdk::pump_curve_evidence::{
+            instruction_amounts::tests::request,
+            native_funding::{destinations::tests::account, instruction_tests::funding_values},
+        };
+        use sol_trade_sdk::{
+            constants::SOL_TOKEN_ACCOUNT, instruction::utils::pumpfun::global_constants,
+        };
+        use solana_program_pack::Pack;
+        use spl_token_interface::state::Account;
+        let sell = matches!(side, TradeType::Sell);
+        let c = case_with_balance(side, provider, sell.then_some(10_000)).await;
+        let params = request(SOL_TOKEN_ACCOUNT, side, sell.then_some(1), true);
+        let (_, mut values) =
+            funding_values(&params, Some(account(global_constants::FEE_RECIPIENT)));
+        if sell {
+            let raw = values[5].as_mut().unwrap();
+            let bytes = raw.data.decode().unwrap();
+            let mut token = Account::unpack(&bytes).unwrap();
+            token.amount = 10_000;
+            let mut bytes = vec![0; Account::LEN];
+            Account::pack(token, &mut bytes).unwrap();
+            raw.data = solana_account_decoder::UiAccountData::Binary(
+                base64::Engine::encode(&base64::engine::general_purpose::STANDARD, bytes),
+                solana_account_decoder::UiAccountEncoding::Base64,
+            );
+        }
+        let mut expected = c.expected;
+        expected[0]["id"] = json!(3);
+        expected[1]["id"] = json!(4);
+        (
+            [
+                json!({"context":{"slot":174},"value":&values[..4]}),
+                json!({"context":{"slot":175},"value":values}),
+                c.results[0].clone(),
+                c.results[1].clone(),
+            ],
+            [
+                json!({"jsonrpc":"2.0","id":1,"method":"getMultipleAccounts","params":[
+                    c.bank.keys[..4].iter().map(ToString::to_string).collect::<Vec<_>>(),
+                    {"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":173}]}),
+                json!({"jsonrpc":"2.0","id":2,"method":"getMultipleAccounts","params":[
+                    c.bank.keys.iter().map(ToString::to_string).collect::<Vec<_>>(),
+                    {"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":174}]}),
+                expected[0].clone(),
+                expected[1].clone(),
+            ],
+            c.frozen,
+            c.buyback,
+            c.tip,
+        )
+    }
+}
+
 #[tokio::test]
 async fn pump_bank_flow_uses_original_quote_and_complete_simulation_with_one_frozen_unsigned_message(
 ) {

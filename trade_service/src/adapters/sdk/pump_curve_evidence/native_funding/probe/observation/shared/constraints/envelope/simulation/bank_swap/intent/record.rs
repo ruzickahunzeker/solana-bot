@@ -8,7 +8,7 @@ use anyhow::{ensure, Context, Result};
 use sol_trade_sdk::swqos::SwqosType;
 
 impl NativeBoundIntent<'_> {
-    fn record(&self) -> Result<PumpNativeCandidateRecord> {
+    pub(in crate::adapters::sdk) fn record(&self) -> Result<PumpNativeCandidateRecord> {
         let packet = self.packet()?;
         let final_bank = &self.observation;
         let envelope = &final_bank.template;
@@ -77,7 +77,11 @@ impl NativeBoundIntent<'_> {
         Ok(record)
     }
 
-    fn check_record(&self, record: &PumpNativeCandidateRecord, message: &[u8]) -> Result<()> {
+    pub(in crate::adapters::sdk) fn check_record(
+        &self,
+        record: &PumpNativeCandidateRecord,
+        message: &[u8],
+    ) -> Result<()> {
         ensure!(
             message == self.packet()?.message.serialize(),
             "native Pump record differs from the original frozen message"
@@ -118,4 +122,5 @@ impl PumpNativeCandidateRecord {
 }
 
 mod reconstruction;
+#[cfg(test)]
 mod tests;

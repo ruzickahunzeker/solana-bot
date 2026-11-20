@@ -24,6 +24,14 @@ pub(super) fn funding_with_global(
     params: &SwapParams,
     supplied_global: Option<UiAccount>,
 ) -> NativeFundingSnapshot {
+    let (plan, values) = funding_values(params, supplied_global);
+    plan.decode(plan.keys(), 175, 174, &values).unwrap()
+}
+
+pub(super) fn funding_values(
+    params: &SwapParams,
+    supplied_global: Option<UiAccount>,
+) -> (NativeFundingPlan, [Option<UiAccount>; NATIVE_ACCOUNTS]) {
     let buy = matches!(params.trade_type, TradeType::Buy);
     let base = if buy {
         params.output_mint
@@ -78,7 +86,7 @@ pub(super) fn funding_with_global(
             .unwrap(),
         )),
     ];
-    plan.decode(plan.keys(), 175, 174, &values).unwrap()
+    (plan, values)
 }
 
 pub(super) async fn build(params: &SwapParams) -> Instruction {

@@ -14,7 +14,7 @@ use crate::{
 use anyhow::{ensure, Context, Result};
 use solana_sdk::transaction::VersionedTransaction;
 
-struct NativeBoundIntent<'a> {
+pub(crate) struct NativeBoundIntent<'a> {
     observation: NativeFinalObservation,
     execution: &'a AdmittedTrade,
     anchor: &'a OrdinaryReservation,
@@ -84,7 +84,10 @@ fn check(observation: &NativeFinalObservation, execution: &AdmittedTrade) -> Res
 }
 
 impl NativeFinalObservation {
-    fn bind_intent(self, execution: &AdmittedTrade) -> Result<NativeBoundIntent<'_>> {
+    pub(in crate::adapters::sdk::pump_curve_evidence::native_funding) fn bind_intent(
+        self,
+        execution: &AdmittedTrade,
+    ) -> Result<NativeBoundIntent<'_>> {
         check(&self, execution)?;
         Ok(NativeBoundIntent {
             observation: self,
@@ -95,7 +98,7 @@ impl NativeFinalObservation {
 }
 
 impl NativeBoundIntent<'_> {
-    fn packet(&self) -> Result<&VersionedTransaction> {
+    pub(in crate::adapters::sdk) fn packet(&self) -> Result<&VersionedTransaction> {
         ensure!(
             std::ptr::eq(self.anchor, self.execution.reservation()),
             "native Pump admission identity changed after binding"
@@ -106,4 +109,5 @@ impl NativeBoundIntent<'_> {
 }
 
 mod record;
+#[cfg(test)]
 mod tests;

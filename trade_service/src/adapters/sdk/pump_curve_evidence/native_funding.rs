@@ -321,10 +321,13 @@ impl NativeFundingSnapshot {
 }
 
 mod budget;
+mod candidate;
+pub(crate) use candidate::{prepare_native_evidence, NativeEvidenceContext};
 mod destinations;
 #[cfg(test)]
 mod instruction_tests;
 mod native_swap;
 mod probe;
+pub(crate) use probe::NativeBoundIntent;
 #[cfg(test)]
 mod tests;

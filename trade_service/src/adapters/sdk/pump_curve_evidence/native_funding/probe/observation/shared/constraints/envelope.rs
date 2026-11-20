@@ -152,4 +152,6 @@ impl NativeEnvelopeTemplate {
 }
 
 mod simulation;
+pub(crate) use simulation::NativeBoundIntent;
+#[cfg(test)]
 mod tests;

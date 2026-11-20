@@ -95,4 +95,5 @@ impl PumpWireAmounts {
     }
 }
 
+#[cfg(test)]
 pub(super) mod tests;
