@@ -28,7 +28,7 @@ async fn admitted(
     let mut request = json!({
         "wallet_id":"fixture-wallet", "pool":"pump", "side":if buy {"buy"} else {"sell"},
         "mint":funding.keys[1].to_string(), "quote_mint":WSOL_MINT,
-        "pool_id":funding.keys[0].to_string(), "execution_method":"sdk", "simulate":false,
+        "execution_method":"sdk", "simulate":false,
         "slippage_bps":1500, "tip_sol":0.0001,
         "use_mev":provider != SwqosType::Default,
         "mev_provider":if provider == SwqosType::Default {"default"} else {"temporal"},

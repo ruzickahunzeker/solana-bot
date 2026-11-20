@@ -1,12 +1,17 @@
 # Trade Service 当前执行状态
 
-更新日期：2026-11-19（Asia/Shanghai）。唯一主计划：[Trade Service 优化计划](../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
+更新日期：2026-11-20（Asia/Shanghai）。唯一主计划：[Trade Service 优化计划](../TRADE_SERVICE_OPTIMIZATION_PLAN_V1.0.md)。
 本页只保留当前检查点；[完整历史](EXECUTION_HISTORY_20261115.md) 是冻结证据，不是待执行队列。
 目标由用户明确恢复为 active；计划或历史记录不能自行暂停/恢复目标。
 
 ## 当前任务
 
-- 同一NP01本地后继补原入场意图绑定，四项Rust合同未编译执行。私有对象消费原
+- 同一NP01入场意图绑定首批 `49b9b8e` / Actions44450571354 / artifact14496470144
+  已核对终态failure：前91步成功，类型检查/链接、75类型228字段通过；Pump专项
+  原63项通过、新四项均在同一测试请求的原API准入处失败：Pump不接受pool_id。
+  完整套件未运行。修正只删除新夹具请求中的pool_id；生产校验、绑定实现、旧断言、
+  四个测试名和完整门槛不变。另提交修正版，不重跑失败批次，不视为2105已验收。
+- 同一NP01后继补原入场意图绑定，四项Rust合同已编译但未通过完整验收。私有对象消费原
   最终模拟证据并借用同一AdmittedTrade/原reservation，逐次只读packet复核钱包/
   字面key、direct Durable Live SDK/Pump、Mint/Quote/池提示、整数买入/原余额比例、
   滑点/小费bits及复用原MEV政策；原profile无关闭效果，明确排除100%卖出。

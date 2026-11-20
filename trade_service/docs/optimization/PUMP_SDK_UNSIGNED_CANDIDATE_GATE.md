@@ -270,7 +270,7 @@ it. This exclusion is test-only and changes no current production behavior.
 Missing balance, overflow, zero rounding and mismatched amount are rejected.
 Original timestamp and all full-message checks remain in the old packet path.
 
-Four Rust tests are written but uncompiled/unexecuted: actual temporary-SQLite
+Four Rust tests are written and compiled but not independently accepted: actual temporary-SQLite
 admission buy/partial-sell with Default/Temporal retains full frozen zero-signed
 bytes, writes no claim and the original Pump claim still rejects; eighteen
 command mutations per direction/provider and a wrong public key reject while
@@ -289,3 +289,22 @@ Parentf84 has independently passed; its result cannot validate this source.
 Protocol-specific nominal persistence/reconstruction,
 intent-to-original-journal handoff, setup/rent/close and real ABI/provider evidence
 are still the existing NP-01 work, not a second plan or permission to sign.
+
+### Original Admission Fixture Correction
+
+First snapshot49b9b8e / Actions44450571354 completed failure, matching artifact
+14496470144 independently checked on2026-11-20. Type check, linking,75 types/
+228 raw field rejects and the first91 steps passed. Pump group passed the63
+previous tests but all four new intent tests failed at the same original
+admission helper: `pool_id is not used for this pool`. Full suites and the
+separate intent step were not run. This is not acceptance of2105 tests.
+
+The new fixture supplied a curve hint in the public SDK/Pump request, but the
+unchanged registry/validator forbids that field. The correction removes only
+that field from the fixture request. It does not relax admission, change the
+binding implementation, remove assertions or alter four names. An absent hint
+already exercises the intended public path; mismatched internal hint rejection
+is retained. All production, SDK, metadata, claim and journal source stays
+byte-identical. Publish a minimal correction and validate its own complete
+2105/2105,134 ordered steps and original source identity; never rerun the failed
+terminal batch or use its partial results as complete evidence.
