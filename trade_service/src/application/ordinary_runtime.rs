@@ -84,6 +84,9 @@ impl<'a, J: OrdinaryExecutionStorage, I: TradeExecutionIndex> OrdinaryExecutionS
         } else {
             None
         };
+        if !self.prepared_parent_allows_execution(execution).await {
+            return;
+        }
         if let Err(error) = self.settings.broadcast.ensure_trade_allowed(
             command.execution.method == ExecutionMethod::Sdk && !command.aggregator_sol,
             command.execution.mode.simulate(),

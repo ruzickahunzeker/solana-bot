@@ -6,7 +6,17 @@ use solana_sdk::hash::Hash;
 use std::time::{Duration, Instant};
 
 pub(super) async fn observed(side: TradeType) -> (NativeQuoteProbe, Value) {
-    let (bank, ix, input) = fixture(side).await;
+    observed_for_buyback(side, None).await
+}
+
+pub(in crate::adapters::sdk::pump_curve_evidence::native_funding) async fn observed_for_buyback(
+    side: TradeType,
+    buyback: Option<solana_sdk::pubkey::Pubkey>,
+) -> (NativeQuoteProbe, Value) {
+    let (bank, mut ix, input) = fixture(side).await;
+    if let Some(buyback) = buyback {
+        ix.accounts.last_mut().unwrap().pubkey = buyback;
+    }
     let probe = bank
         .prepare_quote_probe(ix, input, Hash::new_from_array([10; 32]))
         .unwrap();

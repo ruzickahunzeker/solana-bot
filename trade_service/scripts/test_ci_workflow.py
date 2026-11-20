@@ -71,6 +71,7 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertIn("step readiness-settings cargo test --locked --offline readiness_settings -- --test-threads=2", script)
         self.assertIn("step ordinary-intake cargo test --locked --offline ordinary_intake -- --test-threads=2", script)
         self.assertIn("step ordinary-runtime cargo test --locked --offline ordinary_runtime -- --test-threads=2", script)
+        self.assertIn("step pump-runtime-package cargo test --locked --offline pump_runtime_package_ -- --test-threads=2", script)
         self.assertIn("step dependency-boundary-policy python3 scripts/test_dependency_boundaries.py", script)
         self.assertIn("step dependency-boundaries python3 scripts/check_dependency_boundaries.py", script)
         self.assertIn("git diff --exit-code -- Cargo.toml Cargo.lock vendor src tools", script)

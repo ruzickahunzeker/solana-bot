@@ -42,6 +42,10 @@ pub(crate) trait DammEvidenceOracle: Send + Sync {
 
 #[derive(Clone)]
 pub(crate) enum Reply {
+    PumpNativeDiscovery {
+        result: Value,
+        mode: Box<Reply>,
+    },
     PumpNativeFinal {
         result: Value,
         mode: Box<Reply>,
@@ -317,6 +321,7 @@ async fn serve(
         other => (other, None),
     };
     let is_runtime_preview = preview.is_some();
+    let is_pump_native_discovery = matches!(&reply, Reply::PumpNativeDiscovery { .. });
     let is_pump_native_final = matches!(&reply, Reply::PumpNativeFinal { .. });
     let is_pump_native_probe = matches!(&reply, Reply::PumpNativeProbe { .. });
     let is_damm_quote = matches!(&reply, Reply::DammQuote { .. });
@@ -332,6 +337,7 @@ async fn serve(
         _ => None,
     };
     let (reply, parameter_value) = match reply {
+        Reply::PumpNativeDiscovery { result, mode } => (*mode, Some(result)),
         Reply::PumpNativeFinal { result, mode } => (*mode, Some(result)),
         Reply::PumpNativeProbe { result, mode } => (*mode, Some(result)),
         Reply::FixedAccountSnapshot { result, mode, .. } => (*mode, Some(result)),
@@ -537,7 +543,15 @@ async fn serve(
         Reply::QuoteAtaFirstError => Reply::Success,
         other => other,
     };
-    if let Some(count) = fixed_count {
+    if is_pump_native_discovery {
+        let keys = payload["params"][0].as_array().unwrap();
+        assert_eq!(keys.len(), 4);
+        assert_eq!(
+            payload,
+            json!({"jsonrpc":"2.0","id":id,"method":"getMultipleAccounts","params":[
+            keys,{"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":null}]})
+        );
+    } else if let Some(count) = fixed_count {
         assert_eq!(payload["method"], "getMultipleAccounts");
         let keys = payload["params"][0].as_array().unwrap();
         assert_eq!(keys.len(), count);

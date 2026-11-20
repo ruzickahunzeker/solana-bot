@@ -6,15 +6,37 @@
 
 ## 当前任务
 
-- 同一NP01后继正在本地接原controller/journal，尚未提交、编译或验收：新增
+- 同一NP01的实际factory/runtime整包已在本地补齐，尚未提交或Rust验收：真实
+  loopback四步账户/模拟读取，经原认领/controller/SQLite签名字节账本到固定sender；
+  新增八组买卖、坏bank/报价/最终模拟、回执异常/写入失败、取消、单步/整体超时、
+  终态/缺失/不匹配/不可读父记录及广播策略合同。固定sender只接内存RpcSender，
+  SDK/provider发送方法和legacy路径均为panic见证，无外部RPC或生产签名。
+  审查发现原广播拒绝早于父记录保护；现只对原Pump prepared scope在策略前只读
+  核对原父记录，避免覆盖既有签名/终态。原claim/CAS/金额/hash/DTO保持；它不是
+  新claim，亦不替其他协议新增执行权限。取消时server留在任务外并见证客户端
+  断开；无签名非Accepted状态与签名存在两种条件独立覆盖，包含开/关广播策略。
+  八组拟随同一源码包一次集中CI，保留完整并发/串行及字段门禁；当前无活跃CI。
+  仅格式/静态策略/SDK来源检查完成，不能把父批2150套用为本批通过结果。
+- 同一NP01原controller/journal接线 `aa8e993` /
+  [Actions44703868863](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44703868863)
+  / artifact14615947617已独立验收：并发2150（388.51秒）/串行2150（767.54秒），
+  原2127名称全保留/恰增23项，143有序零退出步骤及80类型243原始字段通过。
+  原claim SQL/选择器、DAMM校验和旧reader/sender/lane函数保持，1216其他blob及
+  原测试体核对；全1258文件14813527字节/模式/main/index在验收记录修改前核对。
+  bin警告17（父100）、test1（父2），无抑制或cargo fix。用户已明确授权本批公开
+  推送；只快进原验证分支，不合并main、部署或运行生产交易。
+  新增
   `pump-native-prepared-v1` 与历史intent区分，准备端口保留同次bank证据，原owner/
   SQLite认领增加限定入口，恢复只允许原签名观察。认领前准备顺序及无owner
   准备失败的原库CAS已写入源码；仅Accepted/无签名/无claim可转失败，其他owner/
   结果不改。准备错误不转legacy，只有认领前明确不支持可回旧路径；多lane、V1、
   seed、middleware、原risk gate保留legacy。公开夹具/临时库的候选、签名CAS、
-  竞争、过期、取消和关闭重开观察测试已补，尚无本批Rust验证结果。
-  新三个SDK具体资源进入原三层编译门禁；静态复审不代替Rust或实盘验收。
-  不得用父批2127通过代替本批证据；SDK/API/生产/PumpAPI边界不变。
+  竞争、过期、取消和关闭重开观察已按本批Rust日志核对。新三个SDK具体资源
+  进入原三层编译门禁；成功只覆盖经典SPL/已有ATA/原生买入和1..99%卖出限定范围。
+  当前无活跃CI，不重跑本批或父批。验收记录随下一个完整源码包提交，不发文档CI。
+  后续按同一业务闭环合包，补实际factory HTTP到固定sender及失败/取消/恢复集成；
+  不将真实节点、Token2022/setup/close/其他协议模式及原NP03/04/05门槛记为完成。
+  SDK/API/生产/PumpAPI边界不变。
 - 同一NP01原bank生产链提升及只读入口 `6e4c173` /
   [Actions44686314535](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44686314535)
   / artifact14608760931已独立验收：并发2127（380.14秒）/串行2127（755.19秒），
@@ -42,7 +64,7 @@
   十改源负例通过；发布时全1248文件14678418字节/模式/main/index已核对。
   仓库公开、用户恢复目标后仅重试此前零步骤attempt1；未改计费/可见性或源码。
   当前无活跃CI，不重跑本次成功或旧源码失败。以下等待记录为历史，不重排任务。
-- 原NP01正式controller/journal逐次授权的本地接线见上方未验收后继，bank生产器提升已独立验收。
+- 原NP01正式controller/journal逐次授权的限定接线已由上方aa8独立离线验收。
   现有历史识别和原请求绑定不能替代同次真实账户/新鲜度/费用/ABI/provider证据，
   不放宽原claim、签名或恢复，不新建owner/store。setup/rent/close及其他模式/
   协议、NP03全局资源和真实发布门槛仍保留。验收记录暂本地保存，随真实后继

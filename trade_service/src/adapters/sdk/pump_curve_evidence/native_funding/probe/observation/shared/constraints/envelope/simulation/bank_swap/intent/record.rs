@@ -99,6 +99,23 @@ impl NativeBoundIntent<'_> {
 
 impl PumpNativeCandidateRecord {
     #[cfg(test)]
+    pub(crate) async fn original_http_fixture(
+        side: sol_trade_sdk::swqos::TradeType,
+    ) -> (
+        [serde_json::Value; 4],
+        [serde_json::Value; 4],
+        Vec<u8>,
+        solana_sdk::pubkey::Pubkey,
+        Option<solana_sdk::pubkey::Pubkey>,
+    ) {
+        NativeBoundIntent::producer_fixture_for_buyback(
+            side,
+            SwqosType::Default,
+            Some(sol_trade_sdk::instruction::utils::pumpfun::global_constants::PROTOCOL_EXTRA_FEE_RECIPIENTS[0]),
+        ).await
+    }
+
+    #[cfg(test)]
     pub(crate) async fn history_fixture(
         side: sol_trade_sdk::swqos::TradeType,
         provider: SwqosType,

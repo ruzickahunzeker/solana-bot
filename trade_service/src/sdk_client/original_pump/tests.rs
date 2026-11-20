@@ -26,6 +26,8 @@ use solana_commitment_config::CommitmentConfig;
 use solana_sdk::signature::Keypair;
 use std::{collections::HashMap, future::Future, pin::Pin, sync::atomic::Ordering};
 
+mod runtime;
+
 struct NoRpc(String);
 impl RpcSender for NoRpc {
     fn send<'a, 'f>(

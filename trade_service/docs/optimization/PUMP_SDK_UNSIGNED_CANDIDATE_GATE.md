@@ -566,7 +566,7 @@ No new task/store/owner, SDK change,
 deployment or PumpAPI integration. Continue original controller/journal handoff
 only after independently accepting this source, without Pool-only permission.
 
-## Same NP-01 Original Journal Handoff (Unverified Successor)
+## Same NP-01 Original Journal Handoff (Offline Accepted)
 
 The local successor retains the original bank object through a project-only
 prepared-execution port, not a recovered nominal DTO. Native classic-SPL buy
@@ -599,10 +599,42 @@ in-memory or loopback transports only. They cover strict tags, explicit discover
 and positive bank anchoring, atomic failure/claim competition, expiry at commit,
 runtime cancellation/no fallback, actual original controller signing, uncertain
 receipt and file-reopen signature-only finality. Real factory early-return paths
-are tested without SDK initialization/workers or reads. These tests are authored,
-not yet Rust-validated; static review/fmt/policy are not acceptance. The three
-concrete SDK candidate/context types are added to the original compiler gate.
+are tested without SDK initialization/workers or reads. Own aa8e993 /
+Actions44703868863 attempt1/job136178498686/artifact14615947617 independently
+passes concurrent2150 (388.51s), serial2150 (767.54s), all2127 parent names retained
+plus exactly23 new,143 ordered zero-exit steps and80 types/243 actual raw compiler
+field rejections. Identity/locked manifests,1216 unchanged blobs, original claim
+SQL/selectors/DAMM validators/reader/sender/lane methods and old test bodies match.
+All1258 files14813527 bytes/modes/main/index/history were checked before acceptance
+record edits. Normal bin warnings17 versus parent100; test1 versus2, no suppression.
+Six independent temporary-SQLite checks of the exact committed CAS also passed;
+those alone are not Rust or SQLx acceptance. No terminal rerun or docs-only CI.
 Actual factory successful HTTP-to-original-sender integration, other profiles,
 ABI/provider/bank trust, setup/rent/close and real environment gates remain in
 the original NP-01/03/04/05 scope. No production RPC/wallet/transaction, SDK update,
 deployment or PumpAPI integration is authorized or performed.
+
+## Same NP-01 Factory/Runtime Package (Unverified)
+
+The unpublished package exercises the actual original Pump factory through four
+strict loopback bank/probe/final reads, original claims/controller and signed-byte
+journal, and the fixed original sender with a memory-only RpcSender. Its callback
+checks the original broadcasting stage, signature and persisted packet before
+returning a receipt. SDK/provider workers and legacy fallback panic in the fixture.
+The public unfunded fixture's buyback is selected before compiling any message or
+response account indices; default existing fixture behavior remains unchanged.
+
+Eight contract groups cover buy/partial sell, bad bank/quote/final, wrong receipt
+or failed receipt write, cancellation, separate step/whole preparation deadlines,
+closed/missing/mismatched parents, policy rejection of only an unsigned Accepted
+parent, and unavailable original storage without index overwrite. For cancellation,
+the server survives task abortion and its held oracle must observe disconnection;
+a signed pending send may only be observed, never prepared or sent a second time.
+Status rejection is checked with and without signatures and with broadcasting both
+enabled and disabled. Only the existing Pump prepared scope now reads its original
+parent before broadcast-policy rejection; no new owner/store or claim SQL exists.
+
+Formatting, source/policy and provenance evidence are not Rust acceptance. This
+package does not inherit aa8e993's test result, enable another profile/protocol,
+change SDK/API/dependencies, or authorize deployment or production RPC/transactions.
+Run one coherent source-only CI milestone, not separate jobs for individual edits.

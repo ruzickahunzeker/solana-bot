@@ -1,6 +1,39 @@
 use super::*;
 
 impl<J: OrdinaryExecutionStorage, I: TradeExecutionIndex> OrdinaryExecutionService<'_, J, I> {
+    /// A read guard, not a claim. Outside this profile the existing policy is unchanged.
+    pub(super) async fn prepared_parent_allows_execution(&self, execution: &AdmittedTrade) -> bool {
+        if !self.execution.supports_prepared_sdk()
+            || !crate::application::ordinary_claims::pump_prepared_scope(
+                execution,
+                self.journal.mode(),
+            )
+        {
+            return true;
+        }
+        let a = execution.reservation();
+        // A completed or signed parent must stop even if today's wallet/hash is unavailable.
+        match self.journal.read_record(a.request_id()).await {
+            Ok(Some(parent)) => {
+                if let Err(error) =
+                    crate::application::ordinary_claims::ensure_parent(execution, &parent)
+                {
+                    error!(target: LOG_TARGET, request_id = %a.request_id(), error = %error, "prepared SDK original parent differs; stopped before reads");
+                    return false;
+                }
+                crate::application::ordinary_claims::parent_can_start(&parent)
+            }
+            Ok(None) => {
+                error!(target: LOG_TARGET, request_id = %a.request_id(), "prepared SDK original parent missing; stopped before reads");
+                false
+            }
+            Err(error) => {
+                error!(target: LOG_TARGET, request_id = %a.request_id(), error = %crate::sanitize::redact_urls(&error.to_string()), "prepared SDK original parent unreadable; stopped before reads");
+                false
+            }
+        }
+    }
+
     /// False is only the pre-owner, explicitly unsupported route back to the legacy path.
     pub(super) async fn try_prepared_sdk<C: OrdinaryExecutionClaimer>(
         &self,
@@ -16,7 +49,7 @@ impl<J: OrdinaryExecutionStorage, I: TradeExecutionIndex> OrdinaryExecutionServi
             return false;
         }
         let a = execution.reservation();
-        // Keep the existing missing-wallet/stale-hash error order in the legacy path.
+        // Keep the existing missing-wallet/stale-hash error order for an Accepted parent.
         let Some(wallet) = self.execution.resolve(a.wallet_id()) else {
             return false;
         };

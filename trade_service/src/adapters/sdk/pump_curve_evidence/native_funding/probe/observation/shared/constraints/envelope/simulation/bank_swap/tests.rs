@@ -7,7 +7,10 @@ use crate::adapters::{
         read_http::{HttpReply, ReadRequest},
     },
     sdk::pump_curve_evidence::native_funding::probe::{
-        observation::{post_bank::tests::response_with_bank, tests::observed},
+        observation::{
+            post_bank::tests::response_with_bank,
+            tests::{observed, observed_for_buyback},
+        },
         tests::fixture as original_bank,
     },
 };
@@ -41,8 +44,21 @@ async fn case(side: TradeType, provider: SwqosType) -> Case {
 }
 
 async fn case_with_balance(side: TradeType, provider: SwqosType, balance: Option<u64>) -> Case {
+    case_with_buyback(side, provider, balance, None).await
+}
+
+async fn case_with_buyback(
+    side: TradeType,
+    provider: SwqosType,
+    balance: Option<u64>,
+    buyback: Option<Pubkey>,
+) -> Case {
     // The unchanged SDK fixtures are only an oracle; the path under test consumes public bank data.
-    let (mut probe, mut response) = observed(side).await;
+    let (mut probe, mut response) = if let Some(buyback) = buyback {
+        observed_for_buyback(side, Some(buyback)).await
+    } else {
+        observed(side).await
+    };
     if let Some(balance) = balance {
         assert!(matches!(side, TradeType::Sell));
         probe.funding.user_base_units = Some(balance);
@@ -187,6 +203,14 @@ impl super::intent::NativeBoundIntent<'_> {
         side: TradeType,
         provider: SwqosType,
     ) -> ([Value; 4], [Value; 4], Vec<u8>, Pubkey, Option<Pubkey>) {
+        Self::producer_fixture_for_buyback(side, provider, None).await
+    }
+
+    pub(in crate::adapters::sdk::pump_curve_evidence::native_funding) async fn producer_fixture_for_buyback(
+        side: TradeType,
+        provider: SwqosType,
+        buyback: Option<Pubkey>,
+    ) -> ([Value; 4], [Value; 4], Vec<u8>, Pubkey, Option<Pubkey>) {
         use crate::adapters::sdk::pump_curve_evidence::{
             instruction_amounts::tests::request,
             native_funding::{destinations::tests::account, instruction_tests::funding_values},
@@ -197,7 +221,7 @@ impl super::intent::NativeBoundIntent<'_> {
         use solana_program_pack::Pack;
         use spl_token_interface::state::Account;
         let sell = matches!(side, TradeType::Sell);
-        let c = case_with_balance(side, provider, sell.then_some(10_000)).await;
+        let c = case_with_buyback(side, provider, sell.then_some(10_000), buyback).await;
         let params = request(SOL_TOKEN_ACCOUNT, side, sell.then_some(1), true);
         let (_, mut values) =
             funding_values(&params, Some(account(global_constants::FEE_RECIPIENT)));

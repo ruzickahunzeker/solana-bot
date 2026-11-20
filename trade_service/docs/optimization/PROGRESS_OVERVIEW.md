@@ -6,6 +6,14 @@
 
 ## 统计口径
 
+- 原NP01受控Pump接线aa8e993 / Actions44703868863 / artifact14615947617已
+  独立验收：并发2150（388.51秒）/串行2150（767.54秒）、父2127保留/恰增23，
+  143步骤和80类型243原始字段通过。原claim SQL/选择器与DAMM校验保持，1216
+  其他blob及全1258文件14813527字节/模式核对。原same-bank证据经prepare/认领/
+  逐次授权/签名CAS/原字节账本及原签名只读恢复；仅经典SPL/已有ATA/原生买入/
+  部分卖出，其他profile保留旧路。bin17/test1警告，无抑制；不等于全Pump或实盘。
+  实际factory到固定sender的完整HTTP串联及原剩余协议/资源/发布门槛仍需完成。
+  当前无活跃CI，不重跑本批；后续按完整业务包开发和阶段验收，不新增任务/分母。
 - 原NP01只读bank生产器6e4c173 / Actions44686314535 / artifact14608760931独立
   验收：完整并发2127（380.14秒）/串行2127（755.19秒），父2122保留/恰增五项，
   139步骤/77类型234原始字段/源码身份通过。旧函数/fixture/断言重建、993其他
@@ -461,7 +469,7 @@
 ## 必须继续完成的大项
 
 1. DAMM 直接卖出和两类输入买入的源码/离线子路径已独立验收；买入正式 min_out 不再固定 Some(1)。882e514 已完成买入原 owner/permit 的实际授权、受控签名及原字节账本/固定 sender、runtime 和 claim/扫描，不再把这些子项列为待接线。其他资产/协议/模式及其 opaque worker 的时效与副作用仍未完成；历史签名不构成新执行授权，真实节点和生产门槛继续保留。
-2. 普通 SDK 的全量不可变构建与签名前授权：在已验收的 Durable Live 直接 DAMM 买卖范围之外，继续核对其他协议和模式。Pump被动codec/SQLite识别、e100原请求绑定和6e4c173正常模块/只读bank入口已分别独立验收，不能重新排队。`operation_for_claim`仍只给DAMM原SDK执行权，签名与恢复明确拒绝Pump历史profile；新entry尚无生产调用方。因此正式接线仍须把同次bank/freshness/费用/消息证据交回原controller/journal的prepare、独立readback和逐次authorize，不能仅放宽Pool选择器。已有账户/金额/历史重建测试不重做。池/资产/Token Program、ATA setup/close/rent、ABI/provider和完整消息仍须按原范围补证；不能伪造Quote/新owner，也不以单一路径替代全量授权。
+2. 普通 SDK 的全量不可变构建与签名前授权：直接DAMM与Pump限定接线已有独立离线证据，不能重新排队。aa8e993已把同次Pump bank/freshness/费用/消息证据交回原controller/journal的prepare、原认领、独立readback、签名CAS及逐次authorize；历史intent仍不能签名或恢复执行，正式prepared只能恢复原签名观察。原Pool-only选择器未扩大，限定profile经单独当前证据入口认领。后续集中补实际factory HTTP到固定sender的完整集成、其他协议和模式，以及池/资产/Token Program、ATA setup/close/rent、ABI/provider政策。原账户/金额/历史重建测试不重做，不伪造Quote/新owner，不以局部2150通过代替全量或真实节点验收。
 3. 普通交易唯一广播前 signed journal：C1/C2a/C2b、D1A/D1B1/D1B2 已有该 Durable 子路径的原 owner/签名字节/读回、可选跨重开只读扫描与局部预算源码/离线证据；全部 backend/mode、真实节点/生产恢复和 RPC 全局预算仍待续，不能宣称全普通交易完成。
 4. 受控发送与恢复：只使用已授权并持久化的原字节，保留所有签名证据，不确定状态不换路线/新 key 重签；处理 SDK worker 的后台副作用。
 5. 普通 SOL 聚合 legacy 路径迁移：C2b 仅迁移 Durable Live，Memory/Shadow 仍走原 legacy；独立 quote 账本不替代普通原 authority，最终订单写入不冒充广播前账本。
