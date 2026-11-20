@@ -16,7 +16,7 @@ use sol_trade_sdk::swqos::{SwqosType, TradeType};
 use solana_sdk::signature::Signature;
 use std::time::{Duration, Instant};
 
-async fn admitted(
+pub(super) async fn admitted(
     mode: TradePersistenceMode,
     side: TradeType,
     provider: SwqosType,

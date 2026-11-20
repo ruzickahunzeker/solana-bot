@@ -4,6 +4,8 @@ pub(crate) mod blockhash;
 pub(crate) mod execution_policy;
 pub(crate) mod parameter_read;
 pub(crate) mod preparation_balance;
+#[cfg(test)]
+pub(crate) mod pump_native_candidate;
 pub(crate) mod quote;
 pub(crate) mod readiness;
 pub(crate) mod reconciliation;

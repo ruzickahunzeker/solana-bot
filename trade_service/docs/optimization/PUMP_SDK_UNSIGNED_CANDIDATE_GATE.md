@@ -270,7 +270,7 @@ it. This exclusion is test-only and changes no current production behavior.
 Missing balance, overflow, zero rounding and mismatched amount are rejected.
 Original timestamp and all full-message checks remain in the old packet path.
 
-Four Rust tests are written and compiled but not independently accepted: actual temporary-SQLite
+Four Rust tests were independently accepted in correctedaed9838: actual temporary-SQLite
 admission buy/partial-sell with Default/Temporal retains full frozen zero-signed
 bytes, writes no claim and the original Pump claim still rejects; eighteen
 command mutations per direction/provider and a wrong public key reject while
@@ -281,10 +281,10 @@ factored with an optional sell-balance fixture; its original None path and all
 old assertions reconstruct byte-for-byte. These fixtures prove no real account
 or provider behavior.
 
-Local format/policy and source reconstruction pass, including997 other original
-source/dependency blobs and fourteen actual changed-source negatives. Prospective
-CI expects full2105 each,all2101 parent names plus exactly four,134 steps and
-unchanged75 types/228 raw field rejects,Pump67/intent4/flow3/bank4/HTTP208.
+Local format/policy and original source reconstruction pass, including997 other
+original source/dependency blobs and fourteen actual changed-source negatives.
+Own corrected CI full2105 each,all2101 parent names plus exactly four,134 steps,
+75 types/228 raw field rejects,Pump67/intent4/flow3/bank4/HTTP208 are accepted below.
 Parentf84 has independently passed; its result cannot validate this source.
 Protocol-specific nominal persistence/reconstruction,
 intent-to-original-journal handoff, setup/rent/close and real ABI/provider evidence
@@ -308,3 +308,52 @@ is retained. All production, SDK, metadata, claim and journal source stays
 byte-identical. Publish a minimal correction and validate its own complete
 2105/2105,134 ordered steps and original source identity; never rerun the failed
 terminal batch or use its partial results as complete evidence.
+
+Correctedaed9838 / Actions44657960234 completed success,artifact14596276409
+independently checked: concurrent2105 (360.84s),serial2105 (700.06s),all2101 parent
+names retained plus exactly four; all134 ordered steps,intent4/Pump67/flow3/
+bank4/wallet9/HTTP208 and75 types/228 raw fields pass. Source/locked identity,
+one-field-only correction and1012 other original source/script/dependency blobs
+are unchanged, preserving original intent logic and14 source negatives. All1237
+files/14589862 bytes/modes were checked before publication. Only the test request
+field changed; no original validator/registry/assertion/production behavior did.
+Do not rerun49b or aed; acceptance records travel with actual record successor.
+
+## Same NP-01 Nominal Native Record Draft
+
+Following independent acceptance of correctedaed9838 / Actions44657960234.
+The same admitted-evidence holder now projects a project-owned strict nominal
+record: original request/wallet/literal key/hash, account roles and selected
+destinations, base program/decimals, side and original percentage balance,
+quoted/minimum/final integer output, source/quote/final slots, fee/tip/native
+prefunding arithmetic, actual relay and requested MEV, blockhash and frozen
+message SHA256. Both the new Domain module and original SDK prototype remain
+cfg(test)-gated. No production profile/decoder/owner/claim, DB write or new store
+is enabled. The original SdkPreparedRecord decoder explicitly rejects this tag.
+
+The codec bounds JSON/message sizes, uses strict unknown/duplicate rejection,
+positive integer checked percentage/minimum/budget arithmetic and the original
+tip conversion. It contains no SDK/RPC/key/Instant/owner or signing capability.
+Historical decode only proves nominal consistency, not historical semantic
+message reconstruction, chain truth, freshness or execution authority. A valid
+self-consistent changed address/identity can still be decoded; rebinding to the
+same live holder requires exact original record and full message comparison.
+This distinction is deliberate, not permission to insert an unchecked row.
+
+Four pending Rust contracts cover buy/partial sell with Default/Temporal and
+literal identity/zero signature roundtrip;21 malformed schema/amount/context/
+fee cases plus duplicate/trailing/oversized/mutated-message rejection;20
+nominally valid changes rejected by original bound-evidence comparison; and
+historical decode after expiry cannot regenerate a fresh record/packet or enter
+the old signing-record decoder. Only the original test admission helper gains
+subtree visibility; its body and all old assertions are unchanged.
+
+Local source reconstruction verifies998 other original source/dependency blobs
+and12 actual changed-source negatives, not Rust acceptance. Prospective own CI
+requires full2109 each,all2105 parent names plus exactly four,135 ordered steps,
+Pump71/record4 and unchanged75 types/228 raw field rejects. Independently accept
+the exact parent before publishing; never rerun terminal batches or emit a
+docs-only CI. Next original work still includes semantic historical message
+reconstruction and compatible original-journal/readback integration before any
+production profile/claim/signing dispatch, alongside setup/rent/close/ABI/provider
+evidence. A codec is not a new journal authority or an execution permit.

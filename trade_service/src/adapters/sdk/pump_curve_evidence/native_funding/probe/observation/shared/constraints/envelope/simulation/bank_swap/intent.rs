@@ -105,4 +105,5 @@ impl NativeBoundIntent<'_> {
     }
 }
 
+mod record;
 mod tests;
