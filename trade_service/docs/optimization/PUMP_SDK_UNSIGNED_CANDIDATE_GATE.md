@@ -340,7 +340,7 @@ self-consistent changed address/identity can still be decoded; rebinding to the
 same live holder requires exact original record and full message comparison.
 This distinction is deliberate, not permission to insert an unchecked row.
 
-Four pending Rust contracts cover buy/partial sell with Default/Temporal and
+Four independently accepted Rust contracts cover buy/partial sell with Default/Temporal and
 literal identity/zero signature roundtrip;21 malformed schema/amount/context/
 fee cases plus duplicate/trailing/oversized/mutated-message rejection;20
 nominally valid changes rejected by original bound-evidence comparison; and
@@ -348,12 +348,53 @@ historical decode after expiry cannot regenerate a fresh record/packet or enter
 the old signing-record decoder. Only the original test admission helper gains
 subtree visibility; its body and all old assertions are unchanged.
 
-Local source reconstruction verifies998 other original source/dependency blobs
-and12 actual changed-source negatives, not Rust acceptance. Prospective own CI
-requires full2109 each,all2105 parent names plus exactly four,135 ordered steps,
-Pump71/record4 and unchanged75 types/228 raw field rejects. Independently accept
-the exact parent before publishing; never rerun terminal batches or emit a
-docs-only CI. Next original work still includes semantic historical message
+Own902f5e9 / Actions44662344662 success,artifact14598021039 independently checked:
+concurrent2109 (384.13s),serial2109 (740.25s),all2105 parent names retained plus
+exactly four; all135 ordered steps,Pump71/record4/intent4/flow3/bank4/wallet9/
+HTTP208 and75 types/228 raw field rejects. Source/locked identity and original
+projection/intent/fixture reconstruct,998 other original source/dependency blobs
+and12 actual changed-source negatives pass. All1240 files/14616978 bytes/modes
+were checked at publication; successor encoder/projection reconstruction was
+separately checked before acceptance records. Never rerun terminal batches or
+emit docs-only CI; records travel with actual reconstruction source.
+Next original work still includes semantic historical message
 reconstruction and compatible original-journal/readback integration before any
 production profile/claim/signing dispatch, alongside setup/rent/close/ABI/provider
 evidence. A codec is not a new journal authority or an execution permit.
+
+## Same NP-01 Historical Message Reconstruction Draft
+
+After independent acceptance of parent902f5e9 / Actions44662344662. The original
+native instruction encoder is extracted once into a pure roles/amount helper.
+Inlining that helper reconstructs the exact old builder; original before/after
+freshness, bank-derived destinations/roles, input funding and access checks stay
+in place. The historical path never fabricates a new funding snapshot or age.
+
+The historical validator first validates the bounded nominal record, derives
+the canonical curve/sharing/ATA roles with the original project helpers, checks
+classic SPL, creator vault, fixed priority budget, exact locked SDK provider and
+original requested-MEV policy. It uses the same native encoder, rejects aliased
+swap roles/tip, then builds the original tip/compute/swap envelope and compiles
+the complete zero-signature message with the original blockhash. All serialized
+message bytes must match, not only the supplied hash, account subset or amounts.
+The existing holder calls this semantic check when projecting or comparing a
+record. Historical reconstruction still creates no live permit, original claim,
+SDK client, key, RPC, timestamp or journal write; production decoder is unchanged.
+
+Four Rust contracts are pending: buy/partial sell x Default/Temporal exact full
+historical message/zero signature; every account and each instruction's data/
+program plus six header/order/shape changes rejected even after recomputing
+the record hash;16 role/PDA/program/fee/provider/tip/alias changes rejected; and
+a deliberately coherent altered fee record/message can satisfy historical
+consistency but is rejected by the original bound bank evidence and old signing
+record decoder. This last distinction prevents historical math from being
+misrepresented as bank membership/chain truth or signing authority.
+
+Local reconstruction checks preserve1002 other original source/dependency blobs
+and reject12 actually changed-source negatives. Original encoding/guards/age/
+projection and all old assertions are restored byte-for-byte. No local service
+Rust compile/test/link occurred. Prospective CI requires full2113 each,all2109
+parent names retained plus exactly four,136 steps,Pump75/reconstruction4 and
+unchanged75 types/228 raw field rejects. Accept the exact parent independently
+before publication; no terminal rerun or docs-only CI. Same original-journal
+integration, setup/rent/close/ABI/provider and other original safety gaps remain.

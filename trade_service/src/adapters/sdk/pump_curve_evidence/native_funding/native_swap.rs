@@ -1,18 +1,8 @@
 //! Public-account-only, locked native V1 instruction. No signer or live permission.
 use super::{probe::fresh, NativeFundingSnapshot, Side, TradeAmounts, WireLayout};
 use anyhow::{ensure, Context, Result};
-use sol_trade_sdk::{
-    constants::WSOL_TOKEN_ACCOUNT,
-    instruction::utils::pumpfun::{
-        accounts, get_bonding_curve_v2_pda, get_user_volume_accumulator_pda,
-        BUY_EXACT_SOL_IN_DISCRIMINATOR, SELL_DISCRIMINATOR,
-    },
-};
-use solana_sdk::{
-    hash::Hash,
-    instruction::{AccountMeta, Instruction},
-    pubkey::Pubkey,
-};
+use sol_trade_sdk::constants::WSOL_TOKEN_ACCOUNT;
+use solana_sdk::{hash::Hash, instruction::Instruction, pubkey::Pubkey};
 use std::num::NonZeroU64;
 
 pub(super) struct BankNativeSwap {
@@ -53,54 +43,18 @@ fn build(
         destinations.buyback.contains(&buyback),
         "bank-only native Pump buyback is outside the bank set"
     );
-    let keys = &funding.keys;
-    let curve_v2 = get_bonding_curve_v2_pda(&keys[1]).context("bank-only native Pump curve PDA")?;
-    let mut metas = vec![
-        AccountMeta::new_readonly(keys[2], false),
-        AccountMeta::new(destinations.protocol_fee, false),
-        AccountMeta::new_readonly(keys[1], false),
-        AccountMeta::new(keys[0], false),
-        AccountMeta::new(keys[4], false),
-        AccountMeta::new(keys[5], false),
-        AccountMeta::new(keys[6], true),
-        AccountMeta::new_readonly(solana_system_interface::program::ID, false),
-    ];
-    if buy {
-        metas.push(AccountMeta::new_readonly(spl_token_interface::ID, false));
-        metas.push(AccountMeta::new(destinations.creator_vault, false));
-    } else {
-        metas.push(AccountMeta::new(destinations.creator_vault, false));
-        metas.push(AccountMeta::new_readonly(spl_token_interface::ID, false));
-    }
-    metas.extend([accounts::EVENT_AUTHORITY_META, accounts::PUMPFUN_META]);
-    if buy {
-        metas.push(accounts::GLOBAL_VOLUME_ACCUMULATOR_META);
-        let volume = get_user_volume_accumulator_pda(&keys[6])
-            .context("bank-only native Pump user volume PDA")?;
-        metas.push(AccountMeta::new(volume, false));
-    }
-    metas.extend([accounts::FEE_CONFIG_META, accounts::FEE_PROGRAM_META]);
-    if !buy && funding.curve.curve.cashback {
-        let volume = get_user_volume_accumulator_pda(&keys[6])
-            .context("bank-only native Pump user volume PDA")?;
-        metas.push(AccountMeta::new(volume, false));
-    }
-    metas.extend([
-        AccountMeta::new_readonly(curve_v2, false),
-        AccountMeta::new(buyback, false),
-    ]);
-    let mut data = if buy {
-        BUY_EXACT_SOL_IN_DISCRIMINATOR
-    } else {
-        SELL_DISCRIMINATOR
-    }
-    .to_vec();
-    data.extend_from_slice(&input.get().to_le_bytes());
-    data.extend_from_slice(&minimum.get().to_le_bytes());
-    if buy {
-        data.push(u8::from(funding.curve.curve.cashback));
-    }
-    let instruction = Instruction::new_with_bytes(accounts::PUMPFUN, &data, metas);
+    let instruction = wire::encode(
+        wire::NativeRoles {
+            keys: &funding.keys,
+            protocol_fee: destinations.protocol_fee,
+            creator_vault: destinations.creator_vault,
+            buyback,
+            side: funding.side,
+            cashback: funding.curve.curve.cashback,
+        },
+        input,
+        minimum,
+    )?;
     funding.inspect_native_destinations(&instruction)?;
     let amounts = funding.inspect_native_roles(&instruction)?;
     ensure!(
@@ -159,3 +113,4 @@ impl BankNativeSwap {
 }
 
 mod tests;
+pub(super) mod wire;

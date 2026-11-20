@@ -70,6 +70,7 @@ impl NativeBoundIntent<'_> {
             requested_mev_provider: command.execution.mev_provider,
         };
         let record = PumpNativeCandidateRecord::new(details, &packet.message.serialize())?;
+        reconstruction::validate(&record, &packet.message.serialize())?;
         self.packet()?;
         Ok(record)
     }
@@ -80,6 +81,7 @@ impl NativeBoundIntent<'_> {
             "native Pump record differs from the original frozen message"
         );
         record.validate(message)?;
+        reconstruction::validate(record, message)?;
         ensure!(
             *record == self.record()?,
             "native Pump record differs from the original admitted evidence"
@@ -89,4 +91,5 @@ impl NativeBoundIntent<'_> {
     }
 }
 
+mod reconstruction;
 mod tests;
