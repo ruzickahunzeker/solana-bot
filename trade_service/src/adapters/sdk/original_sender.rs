@@ -60,6 +60,28 @@ impl OriginalSdkSender {
 }
 
 impl<R: SignatureStatusReader> OriginalSdkSender<R> {
+    pub(crate) async fn broadcast_pump(
+        &self,
+        execution: &AdmittedTrade,
+        context: super::pump_prepared::PumpPreparedContext,
+        artifact: &super::pump_prepared::PumpSignedCandidate<'_>,
+        signed: &SignedSubmission,
+        wait_confirmed: bool,
+        verification_ms: u64,
+    ) -> Result<String> {
+        ensure!(
+            context.provider == self.provider && self.sender.get_swqos_type() == self.provider,
+            "native Pump original sender provider changed"
+        );
+        artifact.check_submission(execution, context, signed)?;
+        let direction = if execution.command().amount.side() == crate::domain::trade::Side::Buy {
+            TradeType::Buy
+        } else {
+            TradeType::Sell
+        };
+        self.send_packet_for(direction, signed, wait_confirmed, verification_ms)
+            .await
+    }
     pub(crate) fn freeze_tip(&self, tip_sol: f64) -> Result<Option<Pubkey>> {
         ensure!(
             tip_sol.is_finite() && tip_sol >= 0.0,

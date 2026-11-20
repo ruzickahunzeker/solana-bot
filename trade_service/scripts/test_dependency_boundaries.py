@@ -47,6 +47,7 @@ class DependencyBoundaryTests(unittest.TestCase):
         self.assertTrue({"pump_native_probe_packet", "pump_native_probe_reply"} <= types)
         self.assertTrue({"pump_native_final_packet", "pump_native_final_reply"} <= types)
         self.assertTrue({"pump_bank_evidence", "pump_native_context"} <= types)
+        self.assertTrue({"pump_prepared_candidate", "pump_signed_candidate", "pump_prepared_context"} <= types)
         self.assertTrue({"sdk_trade_config", "sdk_infrastructure_config"} <= types)
         self.assertTrue({"sdk_swqos_config", "sdk_swqos_type", "sdk_swqos_region", "sdk_swqos_transport", "sdk_astralane_transport"} <= types)
         self.assertIn("param_cache", types)

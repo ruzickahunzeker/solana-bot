@@ -6,16 +6,34 @@
 
 ## 当前任务
 
-- 同一NP01本地后继提升原bank生产链为正常模块，并加只读prepare_native_evidence
+- 同一NP01后继正在本地接原controller/journal，尚未提交、编译或验收：新增
+  `pump-native-prepared-v1` 与历史intent区分，准备端口保留同次bank证据，原owner/
+  SQLite认领增加限定入口，恢复只允许原签名观察。认领前准备顺序及无owner
+  准备失败的原库CAS已写入源码；仅Accepted/无签名/无claim可转失败，其他owner/
+  结果不改。准备错误不转legacy，只有认领前明确不支持可回旧路径；多lane、V1、
+  seed、middleware、原risk gate保留legacy。公开夹具/临时库的候选、签名CAS、
+  竞争、过期、取消和关闭重开观察测试已补，尚无本批Rust验证结果。
+  新三个SDK具体资源进入原三层编译门禁；静态复审不代替Rust或实盘验收。
+  不得用父批2127通过代替本批证据；SDK/API/生产/PumpAPI边界不变。
+- 同一NP01原bank生产链提升及只读入口 `6e4c173` /
+  [Actions44686314535](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44686314535)
+  / artifact14608760931已独立验收：并发2127（380.14秒）/串行2127（755.19秒），
+  原2122名称全保留/恰增五项，139有序零退出步骤、77类型234原始字段通过。
+  锁定源码身份、原函数/断言/fixture重建与993其他源码/十二改源负例通过；
+  全1250文件14712170字节/模式/main/index在发布和下载后均核对。
+  类型检查生产bin为100条警告（父批30），测试bin为2条（父批1），新增主要
+  来自尚未实际调用的normal bank链；未添加allow/运行cargo fix，不算接线收尾。
+  当前无活跃CI；只记录本地验收，随实际后继源码提交，不发文档CI或重跑终态。
+- 同一NP01已验收提升原bank生产链为正常模块，并加只读prepare_native_evidence
   入口：从原admission派生钱包/整数金额/部分卖出；前4账户仅选program，后8账户
   才是资金bank，复用原runtime/URL/预算/3秒freshness串联quote及最终完整模拟。
   入口受同一caller总deadline约束，返回不可克隆、借用原reservation的证据对象；
   无key/owner/SQL/发包，原claim/签名/恢复不变。原编码/检查/旧测试可重建，
-  993其他源码/十二改源负例及格式/轻量策略通过，不等于Rust验收。
-  五组新测试待云端：完整四次请求和原字节、读前拒绝、各阶段失败/缺ATA、
+  993其他源码/十二改源负例与Rust制品独立核对。
+  五组新测试已通过：完整四次请求和原字节、读前拒绝、各阶段失败/缺ATA、
   四阶段取消/总deadline与证据过期/自洽历史替换；新两类型进入原三层门禁。
-  预期完整各2127、原2122保留/恰增五项、139步骤、77类型234原始字段。
-  未接生产controller或开放Pump实盘；不能继承e100结果，也不新增任务/分母。
+  未接生产controller或开放新Pump受控profile；原legacy SDK路径不改。
+  不把本批当完整原账本/签名接线，也不新增任务/分母。
 - 原请求绑定 `e10037a` /
   [Actions44677923187](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44677923187)
   attempt2/job136100406289/artifact14604564014已独立验收：并发2122（373.94秒）/
@@ -24,7 +42,7 @@
   十改源负例通过；发布时全1248文件14678418字节/模式/main/index已核对。
   仓库公开、用户恢复目标后仅重试此前零步骤attempt1；未改计费/可见性或源码。
   当前无活跃CI，不重跑本次成功或旧源码失败。以下等待记录为历史，不重排任务。
-- 原NP01正式controller/journal逐次授权仍待接线，bank生产器提升仅为上方本地后继。
+- 原NP01正式controller/journal逐次授权的本地接线见上方未验收后继，bank生产器提升已独立验收。
   现有历史识别和原请求绑定不能替代同次真实账户/新鲜度/费用/ABI/provider证据，
   不放宽原claim、签名或恢复，不新建owner/store。setup/rent/close及其他模式/
   协议、NP03全局资源和真实发布门槛仍保留。验收记录暂本地保存，随真实后继

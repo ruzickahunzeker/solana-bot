@@ -16,6 +16,17 @@ impl crate::application::ports::ordinary_runtime::OrdinaryExecutionStorage for T
     fn sdk_journal(&self) -> Option<Self::SdkJournal> {
         self.ordinary_execution_claims()
     }
+
+    async fn fail_unclaimed_preparation(
+        &self,
+        execution: &crate::application::trade_admission::AdmittedTrade,
+        error: &str,
+    ) -> anyhow::Result<Option<TradeRecordV1>> {
+        self.ordinary_execution_claims()
+            .ok_or_else(|| anyhow::anyhow!("durable SDK preparation failure store unavailable"))?
+            .fail_unclaimed_preparation(execution, error)
+            .await
+    }
 }
 
 impl OrdinaryTradeJournal for TradePersistence {

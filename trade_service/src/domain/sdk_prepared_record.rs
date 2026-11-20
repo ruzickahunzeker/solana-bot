@@ -11,6 +11,7 @@ pub(crate) enum SdkPreparedRecord {
     DammSell(SdkCandidateMetadata),
     DammBuy(DammBuyCandidateRecord),
     PumpNative(PumpNativeCandidateRecord),
+    PumpPrepared(PumpNativeCandidateRecord),
 }
 
 impl SdkPreparedRecord {
@@ -19,6 +20,7 @@ impl SdkPreparedRecord {
             Self::DammBuy(value) => Ok(value),
             Self::DammSell(_) => anyhow::bail!("SDK prepared record is not DAMM buy"),
             Self::PumpNative(_) => anyhow::bail!("SDK prepared record is not DAMM buy"),
+            Self::PumpPrepared(_) => anyhow::bail!("SDK prepared record is not DAMM buy"),
         }
     }
 
@@ -27,6 +29,7 @@ impl SdkPreparedRecord {
             Self::DammSell(value) => value.details().wallet,
             Self::DammBuy(value) => value.details().wallet,
             Self::PumpNative(value) => value.details().wallet,
+            Self::PumpPrepared(value) => value.details().wallet,
         }
     }
 
@@ -35,6 +38,7 @@ impl SdkPreparedRecord {
             Self::DammSell(value) => Ok(value),
             Self::DammBuy(_) => anyhow::bail!("SDK prepared record is not DAMM sell"),
             Self::PumpNative(_) => anyhow::bail!("SDK prepared record is not DAMM sell"),
+            Self::PumpPrepared(_) => anyhow::bail!("SDK prepared record is not DAMM sell"),
         }
     }
 
@@ -42,7 +46,20 @@ impl SdkPreparedRecord {
         match self {
             Self::DammSell(value) => value.validate(message),
             Self::DammBuy(value) => value.validate(message),
-            Self::PumpNative(value) => value.validate(message),
+            Self::PumpNative(value) => {
+                ensure!(
+                    !value.is_prepared(),
+                    "historical Pump record has a prepared tag"
+                );
+                value.validate(message)
+            }
+            Self::PumpPrepared(value) => {
+                ensure!(
+                    value.is_prepared(),
+                    "prepared Pump record has a historical tag"
+                );
+                value.validate(message)
+            }
         }
     }
 
@@ -51,7 +68,10 @@ impl SdkPreparedRecord {
         match self {
             Self::DammSell(value) => value.encode(message),
             Self::DammBuy(value) => value.encode(message),
-            Self::PumpNative(value) => value.encode(message),
+            Self::PumpNative(value) | Self::PumpPrepared(value) => {
+                self.validate(message)?;
+                value.encode(message)
+            }
         }
     }
 
@@ -73,6 +93,9 @@ impl SdkPreparedRecord {
                 json, message,
             )?)),
             (1, "pump-native-intent-v1") => Ok(Self::PumpNative(
+                PumpNativeCandidateRecord::decode(json, message)?,
+            )),
+            (1, "pump-native-prepared-v1") => Ok(Self::PumpPrepared(
                 PumpNativeCandidateRecord::decode(json, message)?,
             )),
             _ => anyhow::bail!("unsupported SDK prepared record version or profile"),

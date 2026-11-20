@@ -32,6 +32,7 @@ struct Tape {
     requests: Mutex<Vec<Value>>,
     fail_at: Option<usize>,
     hold_at: Option<usize>,
+    discovery: bool,
     reached: Notify,
     release: Notify,
 }
@@ -51,7 +52,11 @@ impl ReadHttpTransport for Tape {
                     assert_eq!(body["method"], "getMultipleAccounts");
                     let count = if phase == 0 { 4 } else { 8 };
                     assert_eq!(body["params"][0].as_array().unwrap().len(), count);
-                    assert_eq!(body["params"][1]["minContextSlot"], json!(173 + phase));
+                    if self.discovery && phase == 0 {
+                        assert!(body["params"][1]["minContextSlot"].is_null());
+                    } else {
+                        assert_eq!(body["params"][1]["minContextSlot"], json!(173 + phase));
+                    }
                 }
                 2 => {
                     assert!(matches!(request, ReadRequest::PumpNativeProbe { .. }));
@@ -91,11 +96,12 @@ async fn tape(side: TradeType, provider: SwqosType) -> (Tape, NativeEvidenceCont
             requests: Mutex::default(),
             fail_at: None,
             hold_at: None,
+            discovery: false,
             reached: Notify::new(),
             release: Notify::new(),
         },
         NativeEvidenceContext {
-            minimum_slot: 173,
+            minimum_slot: Some(173),
             blockhash: Hash::new_from_array([10; 32]),
             provider,
             buyback,
@@ -203,7 +209,7 @@ async fn pump_bank_producer_rejects_changed_scope_context_and_provider_before_an
             "reservation" => {}
             "zero" => command.amount = TradeAmount::BuySol { lamports: 0 },
             "close" => command.amount = TradeAmount::SellPercent { percent: 100 },
-            "slot" => context.minimum_slot = 0,
+            "slot" => context.minimum_slot = Some(0),
             "hash" => context.blockhash = Hash::default(),
             "deadline" => context.deadline = Instant::now(),
             "provider" => context.provider = SwqosType::Temporal,
@@ -262,6 +268,61 @@ async fn pump_bank_producer_stops_at_failed_bank_or_simulation_without_backup_or
     );
     assert_eq!(runtime.test_transport().requests.lock().unwrap().len(), 2);
     released(&runtime);
+}
+
+#[tokio::test]
+async fn pump_bank_discovery_without_minimum_still_anchors_funding_to_real_positive_slot() {
+    let (f, _, _) =
+        PumpNativeCandidateRecord::history_fixture(TradeType::Buy, SwqosType::Default).await;
+    let (mut tape, mut context, frozen) = tape(TradeType::Buy, SwqosType::Default).await;
+    context.minimum_slot = None;
+    tape.discovery = true;
+    tape.expected_requests[0]["params"][1]["minContextSlot"] = Value::Null;
+    let runtime = runtime(tape);
+    let proof = prepare_native_evidence(&f.execution, &runtime, PRIMARY, context)
+        .await
+        .unwrap();
+    assert_eq!(bincode::serialize(proof.packet().unwrap()).unwrap(), frozen);
+    let requests = runtime.test_transport().requests.lock().unwrap();
+    assert_eq!(requests.len(), 4);
+    assert!(requests[0]["params"][1]["minContextSlot"].is_null());
+    assert_eq!(requests[1]["params"][1]["minContextSlot"], json!(174));
+    assert_eq!(proof.record().unwrap().details().source_slot, 175);
+    drop(requests);
+    released(&runtime);
+}
+
+#[tokio::test]
+async fn pump_bank_discovery_zero_or_malformed_response_is_not_unsupported_or_a_fallback() {
+    let (f, _, _) =
+        PumpNativeCandidateRecord::history_fixture(TradeType::Buy, SwqosType::Default).await;
+    for damage in ["slot", "curve", "rpc", "ata"] {
+        let (mut tape, mut context, _) = tape(TradeType::Buy, SwqosType::Default).await;
+        context.minimum_slot = None;
+        tape.discovery = true;
+        tape.expected_requests[0]["params"][1]["minContextSlot"] = Value::Null;
+        match damage {
+            "slot" => tape.results[0]["context"]["slot"] = json!(0),
+            "curve" => tape.results[0]["value"][0] = Value::Null,
+            "rpc" => tape.fail_at = Some(0),
+            _ => tape.results[1]["value"][5] = Value::Null,
+        }
+        let runtime = runtime(tape);
+        let error = prepare_native_evidence(&f.execution, &runtime, PRIMARY, context)
+            .await
+            .err()
+            .unwrap();
+        assert_eq!(
+            error.is::<NativeProfileUnsupported>(),
+            damage == "ata",
+            "{damage}: {error}"
+        );
+        assert_eq!(
+            runtime.test_transport().requests.lock().unwrap().len(),
+            if damage == "ata" { 2 } else { 1 }
+        );
+        released(&runtime);
+    }
 }
 
 #[tokio::test]

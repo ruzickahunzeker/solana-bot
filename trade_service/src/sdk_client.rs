@@ -49,6 +49,7 @@ mod lane_preparation;
 #[cfg(test)]
 mod ordinary_param_contract_tests;
 mod original_damm;
+mod original_pump;
 #[cfg(test)]
 mod param_contract_tests;
 pub(crate) mod sol_transfer;

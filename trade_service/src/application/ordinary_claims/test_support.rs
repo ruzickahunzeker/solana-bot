@@ -20,6 +20,54 @@ pub(crate) struct Fixture {
     pub(crate) record: TradeRecordV1,
 }
 
+/// Test double only: nominal bytes suffice for port tests, never for the real bank adapter.
+pub(crate) struct NominalPumpPreparation {
+    pub(crate) metadata: crate::domain::sdk_prepared_record::SdkPreparedRecord,
+    pub(crate) message: Vec<u8>,
+}
+
+impl NominalPumpPreparation {
+    pub(crate) fn new(
+        record: crate::domain::pump_native_candidate::PumpNativeCandidateRecord,
+        message: Vec<u8>,
+    ) -> Self {
+        Self {
+            metadata: crate::domain::sdk_prepared_record::SdkPreparedRecord::PumpPrepared(
+                record.into_prepared(&message).unwrap(),
+            ),
+            message,
+        }
+    }
+}
+
+impl crate::application::ports::ordinary_execution::PreparedSdkExecution
+    for NominalPumpPreparation
+{
+    fn metadata(&self) -> &crate::domain::sdk_prepared_record::SdkPreparedRecord {
+        &self.metadata
+    }
+    fn message(&self) -> &[u8] {
+        &self.message
+    }
+    fn validate_current(&self, execution: &AdmittedTrade) -> anyhow::Result<()> {
+        crate::application::sdk_preparation::validate_origin(
+            execution,
+            &self.metadata,
+            &self.message,
+        )
+    }
+    fn execute<'a>(
+        self: Box<Self>,
+        _: &'a AdmittedTrade,
+        _: crate::application::ports::ordinary_claims::ExecutionOwner,
+    ) -> crate::application::ports::ordinary_execution::JournaledSdkFuture<'a>
+    where
+        Self: 'a,
+    {
+        Box::pin(async { panic!("nominal Pump port double cannot execute or sign") })
+    }
+}
+
 impl Fixture {
     pub(crate) fn claims(&self) -> RuntimeExecutionClaims {
         RuntimeExecutionClaims::new(

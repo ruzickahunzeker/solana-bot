@@ -6,10 +6,12 @@
 
 ## 统计口径
 
-- 本地原NP01只读bank生产器后继待独立Rust验证：正常模块提升、同一原admission/
-  四次共享读取/总deadline，仍无原执行权或签名/恢复。五组测试和两类型门禁预期
-  完整各2127/139步骤/77类型234字段；旧函数/fixture/断言重建、993其他源码/
-  十二负例及轻量策略通过不算Rust通过。e100结果只覆盖父版本，不新增任务或分母。
+- 原NP01只读bank生产器6e4c173 / Actions44686314535 / artifact14608760931独立
+  验收：完整并发2127（380.14秒）/串行2127（755.19秒），父2122保留/恰增五项，
+  139步骤/77类型234原始字段/源码身份通过。旧函数/fixture/断言重建、993其他
+  源码/十二负例及全1250文件14712170字节/模式核对通过。仍无原执行权或签名/
+  恢复接线，原legacy SDK不变；正常模块未调用导致bin警告100（父30）、test2
+  （父1），没有抑制。当前无活跃CI，不因新测试数增加就声称整体完成或扩大分母。
 - 原请求绑定e10037a / Actions44677923187的attempt2/artifact14604564014已独立
   验收：完整并发2122（373.94秒）/串行2122（738.30秒）、原2117保留/恰增五项，
   138步骤与75类型228字段/源码锁定身份通过。原逻辑重建和1008其他源码/十负例
@@ -459,7 +461,7 @@
 ## 必须继续完成的大项
 
 1. DAMM 直接卖出和两类输入买入的源码/离线子路径已独立验收；买入正式 min_out 不再固定 Some(1)。882e514 已完成买入原 owner/permit 的实际授权、受控签名及原字节账本/固定 sender、runtime 和 claim/扫描，不再把这些子项列为待接线。其他资产/协议/模式及其 opaque worker 的时效与副作用仍未完成；历史签名不构成新执行授权，真实节点和生产门槛继续保留。
-2. 普通 SDK 的全量不可变构建与签名前授权：在已验收的 Durable Live 直接 DAMM 买卖范围之外，继续核对其他协议和模式。Pump被动codec/SQLite识别及e100原请求绑定已独立验收；e100版本bank生产器仍为cfg(test)，当前本地正常模块/只读入口提升尚待自身Rust验收。`operation_for_claim`仍只给DAMM原SDK执行权，签名与恢复明确拒绝Pump历史profile。因此正式接线仍须把同次bank/freshness/费用/消息证据交回原controller/journal的prepare、独立readback和逐次authorize，不能仅放宽Pool选择器。已有账户/金额/历史重建测试不重做。池/资产/Token Program、ATA setup/close/rent、ABI/provider和完整消息仍须按原范围补证；不能伪造Quote/新owner，也不以单一路径替代全量授权。
+2. 普通 SDK 的全量不可变构建与签名前授权：在已验收的 Durable Live 直接 DAMM 买卖范围之外，继续核对其他协议和模式。Pump被动codec/SQLite识别、e100原请求绑定和6e4c173正常模块/只读bank入口已分别独立验收，不能重新排队。`operation_for_claim`仍只给DAMM原SDK执行权，签名与恢复明确拒绝Pump历史profile；新entry尚无生产调用方。因此正式接线仍须把同次bank/freshness/费用/消息证据交回原controller/journal的prepare、独立readback和逐次authorize，不能仅放宽Pool选择器。已有账户/金额/历史重建测试不重做。池/资产/Token Program、ATA setup/close/rent、ABI/provider和完整消息仍须按原范围补证；不能伪造Quote/新owner，也不以单一路径替代全量授权。
 3. 普通交易唯一广播前 signed journal：C1/C2a/C2b、D1A/D1B1/D1B2 已有该 Durable 子路径的原 owner/签名字节/读回、可选跨重开只读扫描与局部预算源码/离线证据；全部 backend/mode、真实节点/生产恢复和 RPC 全局预算仍待续，不能宣称全普通交易完成。
 4. 受控发送与恢复：只使用已授权并持久化的原字节，保留所有签名证据，不确定状态不换路线/新 key 重签；处理 SDK worker 的后台副作用。
 5. 普通 SOL 聚合 legacy 路径迁移：C2b 仅迁移 Durable Live，Memory/Shadow 仍走原 legacy；独立 quote 账本不替代普通原 authority，最终订单写入不冒充广播前账本。

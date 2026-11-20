@@ -19,6 +19,7 @@ use crate::{
 
 const MIGRATION: &str = include_str!("../../../migrations/004_ordinary_execution_claims.sql");
 mod operation_upgrade;
+mod preclaim_failure;
 mod sdk_observation_index;
 
 pub(crate) struct RuntimeExecutionClaims {
@@ -42,6 +43,19 @@ impl RuntimeExecutionClaims {
 }
 
 impl OrdinaryExecutionClaimer for RuntimeExecutionClaims {
+    async fn claim_prepared_sdk(
+        &self,
+        execution: &AdmittedTrade,
+        prepared: &dyn crate::application::ports::ordinary_execution::PreparedSdkExecution,
+    ) -> Result<ExecutionClaim> {
+        let mode = OrdinaryTradeJournal::mode(self.journal.as_ref());
+        crate::application::ordinary_claims::validate_prepared_claim(execution, mode, prepared)?;
+        self.journal
+            .ordinary_execution_claims()
+            .context("durable prepared SDK claims unavailable")?
+            .claim_prepared_sdk(execution, prepared)
+            .await
+    }
     async fn claim(&self, execution: &AdmittedTrade) -> Result<ExecutionClaim> {
         let mode = OrdinaryTradeJournal::mode(self.journal.as_ref());
         let operation = operation_for_claim(execution, mode)?;
@@ -136,7 +150,31 @@ impl SqliteOrdinaryExecutionClaims {
     }
 
     pub(crate) async fn claim(&self, execution: &AdmittedTrade) -> Result<ExecutionClaim> {
-        let operation = operation_for_claim(execution, TradeJournalMode::Durable)?;
+        self.claim_checked(execution, None).await
+    }
+
+    pub(crate) async fn claim_prepared_sdk(
+        &self,
+        execution: &AdmittedTrade,
+        prepared: &dyn crate::application::ports::ordinary_execution::PreparedSdkExecution,
+    ) -> Result<ExecutionClaim> {
+        self.claim_checked(execution, Some(prepared)).await
+    }
+
+    async fn claim_checked(
+        &self,
+        execution: &AdmittedTrade,
+        prepared: Option<&dyn crate::application::ports::ordinary_execution::PreparedSdkExecution>,
+    ) -> Result<ExecutionClaim> {
+        let operation = if let Some(prepared) = prepared {
+            crate::application::ordinary_claims::validate_prepared_claim(
+                execution,
+                TradeJournalMode::Durable,
+                prepared,
+            )?
+        } else {
+            operation_for_claim(execution, TradeJournalMode::Durable)?
+        };
         let anchor = execution.reservation();
         let nonce = uuid::Uuid::new_v4().simple().to_string();
         let mut transaction = self.pool.begin().await?;
@@ -210,7 +248,11 @@ impl SqliteOrdinaryExecutionClaims {
             );
         }
         let result = if inserted == 1 {
-            let owner = ExecutionOwner::new(execution, nonce)?;
+            let owner = if let Some(prepared) = prepared {
+                ExecutionOwner::new_prepared(execution, nonce, prepared)?
+            } else {
+                ExecutionOwner::new(execution, nonce)?
+            };
             ensure!(
                 owner.operation() == operation,
                 "ordinary owner operation readback mismatch"
@@ -219,6 +261,9 @@ impl SqliteOrdinaryExecutionClaims {
         } else {
             ExecutionClaim::AlreadyHeld
         };
+        if let Some(prepared) = prepared {
+            prepared.validate_current(execution)?;
+        }
         transaction.commit().await?;
         Ok(result)
     }

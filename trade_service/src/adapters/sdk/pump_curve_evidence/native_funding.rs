@@ -322,6 +322,7 @@ impl NativeFundingSnapshot {
 
 mod budget;
 mod candidate;
+pub(crate) use candidate::NativeProfileUnsupported;
 pub(crate) use candidate::{prepare_native_evidence, NativeEvidenceContext};
 mod destinations;
 #[cfg(test)]

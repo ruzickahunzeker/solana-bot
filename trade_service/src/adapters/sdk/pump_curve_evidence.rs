@@ -102,6 +102,22 @@ impl PumpCurveAccounts {
         .await
     }
 
+    async fn discover<T: ReadHttpTransport>(
+        &self,
+        runtime: &SharedReadRuntime<T>,
+        url: &str,
+        caller_deadline: Instant,
+    ) -> anyhow::Result<PumpCurveEvidence> {
+        read_bank(
+            runtime,
+            url,
+            caller_deadline,
+            self.keys.discovery_query(),
+            |slot, values| self.decode(self.keys(), slot, slot, values),
+        )
+        .await
+    }
+
     // Only a successful, complete read may be passed here. Transport failure is not absence.
     fn decode(
         &self,
@@ -259,6 +275,7 @@ mod instruction_amounts;
 mod native_funding;
 pub(crate) use native_funding::{
     prepare_native_evidence, NativeBoundIntent as PumpNativeBankEvidence, NativeEvidenceContext,
+    NativeProfileUnsupported,
 };
 #[cfg(test)]
 mod tests;

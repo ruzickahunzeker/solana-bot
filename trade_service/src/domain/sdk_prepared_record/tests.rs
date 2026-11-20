@@ -135,3 +135,50 @@ async fn sdk_prepared_record_limits_and_digest_apply_before_any_journal_permissi
         );
     }
 }
+
+#[tokio::test]
+async fn pump_prepared_tag_is_strictly_distinct_and_never_upgrades_historical_authority() {
+    use crate::domain::pump_native_candidate::PumpNativeCandidateRecord;
+    use sol_trade_sdk::swqos::TradeType;
+    let (_, history, message) =
+        PumpNativeCandidateRecord::history_fixture(TradeType::Buy, SwqosType::Default).await;
+    let original_json = history.encode(&message).unwrap();
+    let prepared = history.into_prepared(&message).unwrap();
+    let prepared_json = prepared.encode(&message).unwrap();
+    assert_eq!(
+        prepared_json,
+        original_json.replacen("pump-native-intent-v1", "pump-native-prepared-v1", 1)
+    );
+    let decoded = SdkPreparedRecord::decode(&prepared_json, &message).unwrap();
+    assert!(matches!(decoded, SdkPreparedRecord::PumpPrepared(_)));
+    assert_eq!(decoded.encode(&message).unwrap(), prepared_json);
+    assert!(decoded.buy().is_err() && decoded.sell().is_err());
+    let historical = SdkPreparedRecord::decode(&original_json, &message).unwrap();
+    assert!(matches!(historical, SdkPreparedRecord::PumpNative(_)));
+    assert_eq!(historical.encode(&message).unwrap(), original_json);
+    let wrong_enum = SdkPreparedRecord::PumpNative(prepared);
+    assert!(wrong_enum.validate(&message).is_err());
+    assert!(wrong_enum.encode(&message).is_err());
+    assert!(
+        crate::adapters::sdk::prepared_candidate::validate_candidate(&wrong_enum, &message)
+            .is_err()
+    );
+    let SdkPreparedRecord::PumpNative(history) = historical else {
+        unreachable!()
+    };
+    let wrong_enum = SdkPreparedRecord::PumpPrepared(history);
+    assert!(wrong_enum.validate(&message).is_err());
+    assert!(wrong_enum.encode(&message).is_err());
+    assert!(
+        crate::adapters::sdk::prepared_candidate::validate_candidate(&wrong_enum, &message)
+            .is_err()
+    );
+    for field in ["version", "profile", "details", "message_sha256"] {
+        let value: serde_json::Value = serde_json::from_str(&prepared_json).unwrap();
+        let duplicate = format!("{{\"{field}\":{},{}", value[field], &prepared_json[1..]);
+        assert!(
+            SdkPreparedRecord::decode(&duplicate, &message).is_err(),
+            "{field}"
+        );
+    }
+}

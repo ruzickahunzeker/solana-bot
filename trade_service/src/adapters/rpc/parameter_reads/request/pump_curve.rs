@@ -51,6 +51,14 @@ impl PumpCurveKeys {
     pub(crate) fn query(&self, minimum_slot: u64) -> Result<ParameterQuery> {
         snapshot_query(&self.addresses, minimum_slot)
     }
+
+    pub(crate) fn discovery_query(&self) -> ParameterQuery {
+        let keys: Vec<_> = self.addresses.iter().map(Pubkey::to_string).collect();
+        ParameterQuery {
+            kind: Kind::Accounts(ACCOUNT_COUNT),
+            params: json!([keys, {"encoding":"base64","commitment":"processed","dataSlice":null,"minContextSlot":null}]),
+        }
+    }
 }
 
 pub(crate) struct PumpNativeFundingKeys([Pubkey; NATIVE_ACCOUNTS]);

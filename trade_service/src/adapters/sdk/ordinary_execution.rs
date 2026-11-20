@@ -46,6 +46,9 @@ struct ResolvedSdkWallet {
 }
 
 impl OrdinaryExecutionBackend for SdkOrdinaryExecutionBackend {
+    fn supports_prepared_sdk(&self) -> bool {
+        true
+    }
     fn resolve(&self, wallet_id: &str) -> Option<Box<dyn OrdinaryExecutionWallet>> {
         self.wallets.get(wallet_id).map(|client| {
             Box::new(ResolvedSdkWallet {
@@ -59,6 +62,21 @@ impl OrdinaryExecutionBackend for SdkOrdinaryExecutionBackend {
 }
 
 impl OrdinaryExecutionWallet for ResolvedSdkWallet {
+    fn prepare_original_sdk<'a>(
+        &'a self,
+        execution: &'a crate::application::trade_admission::AdmittedTrade,
+        context: SdkExecutionContext,
+    ) -> crate::application::ports::ordinary_execution::PreparedSdkFuture<'a> {
+        Box::pin(async move {
+            let journal = self
+                .journal
+                .ordinary_execution_claims()
+                .ok_or_else(|| anyhow::anyhow!("original prepared SDK journal unavailable"))?;
+            self.client
+                .prepare_original_pump(execution, context, self.read_rpc.clone(), journal)
+                .await
+        })
+    }
     fn sdk_journaled<'a>(
         &'a self,
         execution: &'a crate::application::trade_admission::AdmittedTrade,

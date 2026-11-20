@@ -535,7 +535,7 @@ sender authorization; provider/deployed ABI/real bank trust and original journal
 controlled signing remain separate existing gates. Original Pump claims/signing/
 recovery stay closed, and no production caller or sender is connected here.
 
-Five pending Rust contracts cover exact four request bodies and original unsigned
+Five independently accepted Rust contracts cover exact four request bodies and original unsigned
 bytes for buy/partial-sell with Default/Temporal;17 pre-read scope/context rejects;
 each failed stage plus absent ATA; four-stage cancellation and whole-deadline
 permit release; coherent history substitution and actual age expiry. They reuse
@@ -548,8 +548,61 @@ protocol compiler gate through public internal aliases:77 types/234 raw field
 rejections are required. Pure history data remains allowed. Source audit restores
 all original readers/decoders/builders/math/freshness/binding/test bodies,993 other
 source/dependency blobs and rejects12 changed-source negatives. Format/policy
-checks are not Rust acceptance. Own CI requires full2127 each, all2122 parent
-names plus exactly five,139 ordered steps and the unchanged old focused groups
-(Pump80 includes the five new entry tests). No new task/store/owner, SDK change,
+checks are not Rust acceptance. Own6e4c173 / Actions44686314535 /
+artifact14608760931 independently passes concurrent2127 (380.14s),serial2127
+(755.19s),all2122 parent names plus exactly five,139 ordered zero-exit steps,
+77 types234 raw compiler field rejections and locked source identity. Original
+functions/old assertions and993 other source/dependency blobs/12 negatives pass;
+all1250 files14712170 bytes/modes/main/index were checked at publication and
+after artifact download. Pump80 includes the five new entry tests.
+
+Normal bin type-check reports100 warnings versus30 in accepted e100, test bin2
+versus1; most new diagnostics are the intentionally not-yet-called normal bank
+chain and its facade exports. No allow attributes, cargo fix or production
+activation were used to hide them. They remain an integration cleanup issue,
+not proof of execution authority or performance. Current CI is terminal success,
+never rerun it or create docs-only CI; carry acceptance with real successor code.
+No new task/store/owner, SDK change,
 deployment or PumpAPI integration. Continue original controller/journal handoff
 only after independently accepting this source, without Pool-only permission.
+
+## Same NP-01 Original Journal Handoff (Unverified Successor)
+
+The local successor retains the original bank object through a project-only
+prepared-execution port, not a recovered nominal DTO. Native classic-SPL buy
+with existing ATA and partial sell (1..99) are prepared before the original
+Accepted-parent claim. Other modes/profiles keep the original path: multiple
+selected lanes, V1, seed optimization, middleware and an existing SDK risk gate
+are classified unsupported before RPC. A malformed bank, RPC failure or expired
+evidence is an error, never an excuse to enter legacy after preparation.
+
+The same original owner/SQLite claims table, operation, insert/CAS/signature
+journal and controller remain authoritative. The qualified claim validates the
+current backend before the write transaction, during owner construction and
+before commit. AlreadyHeld, uncertain commit and later failure never re-claim,
+fallback or sign again. Preparation failure without an owner uses the original
+parent CAS only if Accepted/unsigned/unclaimed, with identity and readback checks;
+it cannot mirror Unknown or Failed over another owner's result.
+
+`pump-native-prepared-v1` is distinct from historical `pump-native-intent-v1`.
+The latter stays unable to claim, sign or recover. The new tag alone also grants
+no key: only the original controller's completed signing CAS plus the retained
+fresh bank authorize the exact message. Key acquisition, signature validation,
+signed readback and broadcast repeat these bindings. Recovery only observes the
+already-persisted original signature; no prepared object/owner is restored.
+Old DAMM codecs, API/hash/amount semantics, migrations and dependency bytes stay
+unchanged. Older binaries cannot understand this new tag: no rolling rollback
+or deployment is authorized by this source batch, especially with pending rows.
+
+Added contracts use public unfunded fixture identities, temporary SQLite and
+in-memory or loopback transports only. They cover strict tags, explicit discovery
+and positive bank anchoring, atomic failure/claim competition, expiry at commit,
+runtime cancellation/no fallback, actual original controller signing, uncertain
+receipt and file-reopen signature-only finality. Real factory early-return paths
+are tested without SDK initialization/workers or reads. These tests are authored,
+not yet Rust-validated; static review/fmt/policy are not acceptance. The three
+concrete SDK candidate/context types are added to the original compiler gate.
+Actual factory successful HTTP-to-original-sender integration, other profiles,
+ABI/provider/bank trust, setup/rent/close and real environment gates remain in
+the original NP-01/03/04/05 scope. No production RPC/wallet/transaction, SDK update,
+deployment or PumpAPI integration is authorized or performed.

@@ -12,6 +12,15 @@ pub(crate) trait OrdinaryExecutionStorage: OrdinaryTradeJournal {
     // Ordinary background execution owns this handle across awaits.
     type SdkJournal: OrdinarySdkSubmissionJournal + Send;
     fn sdk_journal(&self) -> Option<Self::SdkJournal>;
+
+    /// No owner exists yet. Return a record only after the original durable CAS commits.
+    fn fail_unclaimed_preparation(
+        &self,
+        _execution: &crate::application::trade_admission::AdmittedTrade,
+        _error: &str,
+    ) -> impl std::future::Future<Output = anyhow::Result<Option<TradeRecordV1>>> + Send {
+        async { anyhow::bail!("unclaimed SDK failure storage unavailable") }
+    }
 }
 
 pub(crate) trait TradeExecutionIndex: TradeRecordIndex {

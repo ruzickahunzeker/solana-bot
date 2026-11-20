@@ -22,6 +22,7 @@ pub(crate) mod protocol_params;
 pub(crate) mod provider_config;
 pub(crate) mod pump_curve_evidence;
 pub(crate) mod pump_native_message;
+pub(crate) mod pump_prepared;
 pub(crate) mod pumpapi_accounts;
 pub(crate) mod pumpapi_assets;
 pub(crate) mod pumpapi_cpmm;

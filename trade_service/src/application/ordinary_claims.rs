@@ -100,6 +100,45 @@ pub(crate) fn ensure_parent(
     Ok(())
 }
 
+/// Profile scope only; the original SDK owner still needs a current prepared backend.
+pub(crate) fn pump_prepared_scope(execution: &AdmittedTrade, mode: TradeJournalMode) -> bool {
+    let c = execution.command();
+    execution.reservation().mode() == mode
+        && mode == TradeJournalMode::Durable
+        && c.wallet_id == execution.reservation().wallet_id()
+        && c.idempotency_key == execution.reservation().idempotency_key()
+        && c.execution.method == ExecutionMethod::Sdk
+        && !c.execution.mode.simulate()
+        && !c.aggregator_sol
+        && c.route.pool == Pool::Pump
+        && c.route.pool_id.is_none()
+        && c.route.quote_mint.to_string() == WSOL_MINT
+        && c.route.sol_hop_pool.is_none()
+        && c.route.sol_hop_pool_id.is_none()
+        && matches!(
+            c.amount,
+            TradeAmount::BuySol { lamports: 1.. } | TradeAmount::SellPercent { percent: 1..=99 }
+        )
+}
+
+pub(crate) fn validate_prepared_claim(
+    execution: &AdmittedTrade,
+    mode: TradeJournalMode,
+    prepared: &dyn super::ports::ordinary_execution::PreparedSdkExecution,
+) -> anyhow::Result<ClaimOperation> {
+    anyhow::ensure!(
+        pump_prepared_scope(execution, mode)
+            && matches!(
+                prepared.metadata(),
+                crate::domain::sdk_prepared_record::SdkPreparedRecord::PumpPrepared(_)
+            ),
+        "prepared SDK claim requires the original Pump native profile"
+    );
+    prepared.validate_current(execution)?;
+    super::sdk_preparation::validate_origin(execution, prepared.metadata(), prepared.message())?;
+    Ok(ClaimOperation::SdkTrade)
+}
+
 pub(crate) fn parent_can_start(parent: &TradeRecordV1) -> bool {
     parent.status == TradeStatus::Accepted && parent.signature.is_none()
 }

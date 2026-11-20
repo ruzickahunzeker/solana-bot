@@ -32,6 +32,7 @@ pub(crate) struct ExecutionOwner {
     wallet_pubkey: String,
     idempotency_key: String,
     command: TradeCommand,
+    prepared_pump: bool,
 }
 
 impl std::fmt::Debug for ExecutionOwner {
@@ -42,6 +43,22 @@ impl std::fmt::Debug for ExecutionOwner {
 
 impl ExecutionOwner {
     pub(crate) fn new(execution: &AdmittedTrade, nonce: String) -> anyhow::Result<Self> {
+        Self::checked(execution, nonce, None)
+    }
+
+    pub(crate) fn new_prepared(
+        execution: &AdmittedTrade,
+        nonce: String,
+        prepared: &dyn super::ordinary_execution::PreparedSdkExecution,
+    ) -> anyhow::Result<Self> {
+        Self::checked(execution, nonce, Some(prepared))
+    }
+
+    fn checked(
+        execution: &AdmittedTrade,
+        nonce: String,
+        prepared: Option<&dyn super::ordinary_execution::PreparedSdkExecution>,
+    ) -> anyhow::Result<Self> {
         anyhow::ensure!(
             nonce.len() == 32 && nonce.bytes().all(|byte| byte.is_ascii_hexdigit()),
             "invalid ordinary execution owner"
@@ -53,7 +70,15 @@ impl ExecutionOwner {
                 && command.idempotency_key == anchor.idempotency_key(),
             "ordinary execution command identity mismatch"
         );
-        let operation = operation_for_claim(execution, anchor.mode())?;
+        let operation = if let Some(prepared) = prepared {
+            crate::application::ordinary_claims::validate_prepared_claim(
+                execution,
+                anchor.mode(),
+                prepared,
+            )?
+        } else {
+            operation_for_claim(execution, anchor.mode())?
+        };
         Ok(Self {
             request_id: execution.reservation().request_id().into(),
             request_hash: execution.reservation().request_hash().into(),
@@ -64,6 +89,7 @@ impl ExecutionOwner {
             wallet_pubkey: anchor.wallet_pubkey().into(),
             idempotency_key: anchor.idempotency_key().into(),
             command: command.clone(),
+            prepared_pump: prepared.is_some(),
         })
     }
     pub(crate) fn ensure_binding(&self, execution: &AdmittedTrade) -> anyhow::Result<()> {
@@ -73,8 +99,17 @@ impl ExecutionOwner {
                 && self.mode == execution.reservation().mode(),
             "ordinary execution owner mismatch"
         );
+        let operation = if self.prepared_pump {
+            anyhow::ensure!(
+                crate::application::ordinary_claims::pump_prepared_scope(execution, self.mode),
+                "prepared owner scope changed"
+            );
+            ClaimOperation::SdkTrade
+        } else {
+            operation_for_claim(execution, self.mode)?
+        };
         anyhow::ensure!(
-            self.operation == operation_for_claim(execution, self.mode)?
+            self.operation == operation
                 && self.wallet_id == execution.reservation().wallet_id()
                 && self.wallet_pubkey == execution.reservation().wallet_pubkey()
                 && self.idempotency_key == execution.reservation().idempotency_key()
@@ -111,6 +146,7 @@ impl ExecutionOwner {
             wallet_pubkey: anchor.wallet_pubkey().into(),
             idempotency_key: anchor.idempotency_key().into(),
             command: execution.command().clone(),
+            prepared_pump: false,
         }
     }
 }
@@ -168,11 +204,19 @@ impl PartialEq for ExecutionOwner {
             && self.wallet_pubkey == other.wallet_pubkey
             && self.idempotency_key == other.idempotency_key
             && same_command(&self.command, &other.command)
+            && self.prepared_pump == other.prepared_pump
     }
 }
 impl Eq for ExecutionOwner {}
 
 pub(crate) trait OrdinaryExecutionClaimer: Sync {
+    fn claim_prepared_sdk(
+        &self,
+        _execution: &AdmittedTrade,
+        _prepared: &dyn super::ordinary_execution::PreparedSdkExecution,
+    ) -> impl Future<Output = anyhow::Result<ExecutionClaim>> + Send {
+        async { anyhow::bail!("prepared SDK claims are unavailable") }
+    }
     fn claim(
         &self,
         execution: &AdmittedTrade,

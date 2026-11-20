@@ -1,5 +1,5 @@
 //! Read-only bank evidence entry. It has no execution owner, key or broadcast capability.
-use super::{NativeBoundIntent, NativeFundingPlan, PumpCurveAccounts};
+use super::{NativeBoundIntent, NativeFundingPlan, PumpCurveAccounts, Side};
 use crate::{
     adapters::{
         rpc::{read_http::ReadHttpTransport, read_runtime::SharedReadRuntime},
@@ -14,13 +14,23 @@ use solana_sdk::{hash::Hash, pubkey::Pubkey};
 use std::{num::NonZeroU64, time::Instant};
 
 pub(crate) struct NativeEvidenceContext {
-    pub minimum_slot: u64,
+    pub minimum_slot: Option<u64>,
     pub blockhash: Hash,
     pub provider: SwqosType,
     pub buyback: Pubkey,
     pub tip_destination: Option<Pubkey>,
     pub deadline: Instant,
 }
+
+#[derive(Debug)]
+pub(crate) struct NativeProfileUnsupported(&'static str);
+
+impl std::fmt::Display for NativeProfileUnsupported {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.0)
+    }
+}
+impl std::error::Error for NativeProfileUnsupported {}
 
 pub(crate) async fn prepare_native_evidence<'a, T: ReadHttpTransport>(
     execution: &'a AdmittedTrade,
@@ -53,7 +63,7 @@ pub(crate) async fn prepare_native_evidence<'a, T: ReadHttpTransport>(
         "native Pump evidence requires its original direct durable native intent"
     );
     ensure!(
-        context.minimum_slot > 0
+        context.minimum_slot.is_none_or(|slot| slot > 0)
             && context.blockhash != Hash::default()
             && context.deadline > Instant::now(),
         "native Pump evidence context is missing or expired"
@@ -73,13 +83,17 @@ pub(crate) async fn prepare_native_evidence<'a, T: ReadHttpTransport>(
     )?;
     tokio::time::timeout_at(tokio::time::Instant::from_std(context.deadline), async {
         // The first read chooses a program only; the second full bank remains the authority.
-        let discovered = curve
-            .read(runtime, url, context.minimum_slot, context.deadline)
-            .await?;
-        ensure!(
-            discovered.base_mint_layout.program == spl_token_interface::ID,
-            "native Pump evidence requires classic SPL Token"
-        );
+        let discovered = if let Some(minimum) = context.minimum_slot {
+            curve.read(runtime, url, minimum, context.deadline).await?
+        } else {
+            curve.discover(runtime, url, context.deadline).await?
+        };
+        if discovered.base_mint_layout.program != spl_token_interface::ID {
+            return Err(NativeProfileUnsupported(
+                "native Pump controlled profile requires classic SPL Token",
+            )
+            .into());
+        }
         let funding = NativeFundingPlan::new(
             curve,
             wallet,
@@ -88,6 +102,20 @@ pub(crate) async fn prepare_native_evidence<'a, T: ReadHttpTransport>(
         )?
         .read(runtime, url, discovered.slot, context.deadline)
         .await?;
+        if funding.curve.curve.mayhem
+            || funding.curve.sharing != super::super::SharingPrefix::Absent
+        {
+            return Err(NativeProfileUnsupported(
+                "native Pump controlled profile does not support sharing or mayhem",
+            )
+            .into());
+        }
+        if funding.side == Side::Buy && funding.user_base_units.is_none() {
+            return Err(NativeProfileUnsupported(
+                "native Pump controlled profile requires an existing user ATA",
+            )
+            .into());
+        }
         let input = match command.amount {
             TradeAmount::BuySol { lamports } => lamports,
             TradeAmount::SellPercent { percent } => funding

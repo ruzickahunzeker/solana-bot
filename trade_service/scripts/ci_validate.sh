@@ -167,6 +167,10 @@ PY
         step pump-native-history cargo test --locked --offline pump_native_history_ -- --test-threads=2
         step pump-history-intent cargo test --locked --offline pump_history_intent_ -- --test-threads=2
         step pump-bank-producer cargo test --locked --offline pump_bank_producer_ -- --test-threads=2
+        step pump-bank-discovery cargo test --locked --offline pump_bank_discovery_ -- --test-threads=2
+        step pump-preclaim-failure cargo test --locked --offline pump_preclaim_failure_ -- --test-threads=2
+        step pump-prepared-boundary cargo test --locked --offline pump_prepared_ -- --test-threads=2
+        step pump-original-handoff cargo test --locked --offline pump_original_ -- --test-threads=2
         step pump-native-read cargo test --locked --offline pump_native_read_ -- --test-threads=2
         step pump-native-wire cargo test --locked --offline pump_native_wire_ -- --test-threads=2
         step pump-native-adapter cargo test --locked --offline pump_native_adapter_ -- --test-threads=2

@@ -21,6 +21,13 @@ pub(crate) fn validate_origin(
     metadata: &SdkPreparedRecord,
     message: &[u8],
 ) -> Result<()> {
+    if matches!(metadata, SdkPreparedRecord::PumpPrepared(_)) {
+        ensure!(
+            super::ordinary_claims::pump_prepared_scope(execution, TradeJournalMode::Durable),
+            "prepared Pump candidate requires its original durable native intent"
+        );
+        return validate_candidate_intent(execution, metadata, message);
+    }
     ensure!(
         operation_for_claim(execution, TradeJournalMode::Durable)? == ClaimOperation::SdkTrade,
         "SDK preparation requires its original durable operation"
@@ -35,8 +42,10 @@ pub(crate) fn validate_candidate_intent(
     message: &[u8],
 ) -> Result<()> {
     metadata.validate(message)?;
-    if let (Pool::Pump, SdkPreparedRecord::PumpNative(record)) =
-        (execution.command().route.pool, metadata)
+    if let (
+        Pool::Pump,
+        SdkPreparedRecord::PumpNative(record) | SdkPreparedRecord::PumpPrepared(record),
+    ) = (execution.command().route.pool, metadata)
     {
         return validate_pump_history_intent(execution, record);
     }

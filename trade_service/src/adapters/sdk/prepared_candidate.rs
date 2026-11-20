@@ -12,7 +12,8 @@ pub(crate) fn validate_candidate(metadata: &SdkPreparedRecord, message: &[u8]) -
         SdkPreparedRecord::DammBuy(record) => {
             super::damm_probe::validate_buy_record(record, message)
         }
-        SdkPreparedRecord::PumpNative(record) => {
+        SdkPreparedRecord::PumpNative(record) | SdkPreparedRecord::PumpPrepared(record) => {
+            metadata.validate(message)?;
             super::pump_native_message::validate(record, message)
         }
     }

@@ -27,6 +27,8 @@ use crate::{
 
 const LOG_TARGET: &str = concat!(env!("CARGO_CRATE_NAME"), "::executor");
 
+mod prepared;
+
 #[cfg(test)]
 mod tests;
 
@@ -95,6 +97,9 @@ impl<'a, J: OrdinaryExecutionStorage, I: TradeExecutionIndex> OrdinaryExecutionS
             persist_update(self.journal, record.as_ref()).await;
             return;
         }
+        if self.try_prepared_sdk(execution, claims).await {
+            return;
+        }
         if matches!(
             crate::application::ordinary_claims::operation_for_claim(execution, reservation.mode()),
             Ok(crate::application::ordinary_claims::ClaimOperation::SdkTrade)
@@ -110,29 +115,7 @@ impl<'a, J: OrdinaryExecutionStorage, I: TradeExecutionIndex> OrdinaryExecutionS
         }
         let idempotency_key = reservation.idempotency_key().to_owned();
         let wallet_id = reservation.wallet_id().to_owned();
-        let detail = describe_trade(
-            command.amount.side(),
-            command.amount.buy_units(),
-            command.amount.sell_percent(),
-        );
-        info!(
-            target: LOG_TARGET,
-            request_id = %request_id,
-            wallet_id = %wallet_id,
-            idempotency_key = %idempotency_key,
-            request_hash = %reservation.request_hash(),
-            reservation_mode = ?reservation.mode(),
-            side = ?command.amount.side(),
-            pool = ?command.route.pool,
-            mint = %command.route.mint,
-            %detail,
-            status = "building_tx",
-            "trade execution started"
-        );
-        let building = self
-            .index
-            .update_status(&request_id, TradeStatus::BuildingTx, None, None);
-        if !persist_before_execution(self.journal, building.as_ref()).await {
+        if !self.begin_execution(execution).await {
             return;
         }
 
@@ -216,6 +199,37 @@ impl<'a, J: OrdinaryExecutionStorage, I: TradeExecutionIndex> OrdinaryExecutionS
             .await;
         self.finish_trade(&request_id, &idempotency_key, command, result, simulate)
             .await;
+    }
+
+    async fn begin_execution(&self, execution: &AdmittedTrade) -> bool {
+        let reservation = execution.reservation();
+        let request_id = reservation.request_id().to_owned();
+        let command = execution.command();
+        let wallet_id = reservation.wallet_id().to_owned();
+        let idempotency_key = reservation.idempotency_key().to_owned();
+        let detail = describe_trade(
+            command.amount.side(),
+            command.amount.buy_units(),
+            command.amount.sell_percent(),
+        );
+        info!(
+            target: LOG_TARGET,
+            request_id = %request_id,
+            wallet_id = %wallet_id,
+            idempotency_key = %idempotency_key,
+            request_hash = %reservation.request_hash(),
+            reservation_mode = ?reservation.mode(),
+            side = ?command.amount.side(),
+            pool = ?command.route.pool,
+            mint = %command.route.mint,
+            %detail,
+            status = "building_tx",
+            "trade execution started"
+        );
+        let building = self
+            .index
+            .update_status(&request_id, TradeStatus::BuildingTx, None, None);
+        persist_before_execution(self.journal, building.as_ref()).await
     }
 
     async fn execute_original_sdk(&self, execution: &AdmittedTrade, owner: ExecutionOwner) {

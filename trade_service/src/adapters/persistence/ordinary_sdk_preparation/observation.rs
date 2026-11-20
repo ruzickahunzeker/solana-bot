@@ -71,6 +71,16 @@ pub(in crate::adapters::persistence) async fn capture_checked(
         "SDK observation requires already-persisted original signed bytes"
     );
     let request: TradeRequest = serde_json::from_str(&request_json)?;
+    if let SdkPreparedRecord::PumpPrepared(record) = &candidate.metadata {
+        let d = record.details();
+        ensure!(
+            d.request_id == request_id
+                && d.wallet_id == parent.wallet_id
+                && d.idempotency_key == key
+                && d.request_hash == hash,
+            "Pump observation belongs to a different original reservation"
+        );
+    }
     let normalized = TradeValidator::new(&SdkAddressParser)
         .replay_sdk_candidate(&request.validation_input(), &candidate.metadata)?;
     ensure!(

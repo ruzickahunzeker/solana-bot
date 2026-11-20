@@ -182,7 +182,7 @@ impl<'a> LaneExecution<'a> {
         }
     }
 
-    fn execution_client(&self) -> anyhow::Result<TradingClient> {
+    pub(super) fn execution_client(&self) -> anyhow::Result<TradingClient> {
         let original = &self.lane.client;
         // A per-invocation view avoids changing shared clients used by other backends.
         let mut client = original.clone();

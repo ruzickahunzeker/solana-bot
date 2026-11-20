@@ -53,6 +53,8 @@ pub(crate) struct PumpNativeDetails {
 enum NativeProfile {
     #[serde(rename = "pump-native-intent-v1")]
     NativeIntentV1,
+    #[serde(rename = "pump-native-prepared-v1")]
+    NativePreparedV1,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,6 +80,16 @@ impl PumpNativeCandidateRecord {
 
     pub(crate) fn details(&self) -> &PumpNativeDetails {
         &self.details
+    }
+
+    pub(crate) fn into_prepared(mut self, message: &[u8]) -> Result<Self> {
+        self.validate(message)?;
+        self.profile = NativeProfile::NativePreparedV1;
+        Ok(self)
+    }
+
+    pub(crate) fn is_prepared(&self) -> bool {
+        self.profile == NativeProfile::NativePreparedV1
     }
 
     pub(crate) fn validate(&self, message: &[u8]) -> Result<()> {

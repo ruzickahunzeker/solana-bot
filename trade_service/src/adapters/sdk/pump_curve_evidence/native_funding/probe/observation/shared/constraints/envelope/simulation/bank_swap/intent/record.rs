@@ -121,6 +121,19 @@ impl PumpNativeCandidateRecord {
     }
 }
 
+#[cfg(test)]
+impl<'a> NativeBoundIntent<'a> {
+    pub(in crate::adapters::sdk) async fn original_fixture(
+        execution: &'a crate::application::trade_admission::AdmittedTrade,
+        side: sol_trade_sdk::swqos::TradeType,
+        provider: SwqosType,
+    ) -> Result<Self> {
+        super::super::tests::final_for_intent(side, provider)
+            .await
+            .bind_intent(execution)
+    }
+}
+
 mod reconstruction;
 #[cfg(test)]
 mod tests;

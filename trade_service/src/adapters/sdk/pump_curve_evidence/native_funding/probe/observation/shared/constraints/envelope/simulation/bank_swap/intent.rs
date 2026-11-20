@@ -98,6 +98,17 @@ impl NativeFinalObservation {
 }
 
 impl NativeBoundIntent<'_> {
+    pub(in crate::adapters::sdk) fn ensure_execution(
+        &self,
+        execution: &AdmittedTrade,
+    ) -> Result<()> {
+        ensure!(
+            std::ptr::eq(self.execution, execution),
+            "native Pump evidence has a different admitted execution"
+        );
+        self.packet()?;
+        Ok(())
+    }
     pub(in crate::adapters::sdk) fn packet(&self) -> Result<&VersionedTransaction> {
         ensure!(
             std::ptr::eq(self.anchor, self.execution.reservation()),
