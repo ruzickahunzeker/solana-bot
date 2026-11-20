@@ -6,13 +6,29 @@
 
 ## 当前任务
 
-- 同一NP01本地后继补历史消息语义重建：提取原native编码为同一纯函数，原bank
+- 同一NP01本地后继接原SdkPreparedRecord的被动历史tag和原SQLite候选读回。
+  纯domain codec/SDK语义重建提升至正式模块，原测试路径仅桥接，同一编码/旧消息
+  及DAMM分支不变。只读识别不开放Pump claim、origin、恢复或签名；新profile在
+  validate_signed_candidate明确拒绝，原写入/CAS/DDL/API不变，也未部署或写生产库。
+  四项Rust合同未编译执行，含原真实临时SQLite读回/坏记录/文件重开与闭库前拒绝；
+  旧四处unknown-tag断言改为识别历史后明确拒绝签名，旧测试名和其余断言保持。
+  原分支/编码/测试体重建、996个其他源码/十改源负例通过，不算Rust验收。父批
+  3ad246b已按下方独立验收，后继仍须自身Rust结果；预期完整各2117、原2113保留/
+  恰增四项、137步骤与75类型228字段。旧release仍拒绝新tag，新tag尚无生产写入方。
+- 原NP01历史消息重建 `3ad246b` /
+  [Actions44667188021](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44667188021)
+  / artifact14600965320已独立验收：并发2113（383.63秒）、串行2113（739.22秒），
+  原2109名称全保留/恰增四项；reconstruction4/Pump75/record4/intent4及全部136
+  有序步骤、75类型228原始字段通过。源码/锁定身份、原编码/guards/年龄/投影
+  重建与1002其他源码/十二改源负例通过；发布时全1243文件14635611字节/模式
+  已核对。只是历史语义一致性，不证明真实账户或签名权限；终态不重跑，记录随
+  实际被动codec/SQLite后继提交，不另发文档CI。
+- 同一NP01已验收历史消息语义重建：提取原native编码为同一纯函数，原bank
   构建前后年龄/余额/角色校验保留；从历史项目记录推导规范PDA/ATA/creator地址，
   核对classic program/固定priority/MEV/账户不重叠，重建完整指令后逐字节比对消息。
-  原生产profile/账本/签名未接，历史一致性不等于真实账户证据。四项Rust合同尚未
-  编译执行；原编码/guards/投影重建、1002个其他源码/十二改源负例通过，不算
-  Rust验收。父批902f5e9已按下方独立验收，后继仍须自身Rust结果；预期完整
-  各2113、保留2109/恰增四项、136步及75类型228字段，不新增任务/分母。
+  原生产profile/账本/签名未接，历史一致性不等于真实账户证据。四项Rust合同
+  由上方独立验收；原编码/guards/投影重建与Rust证据分别保留，未继承902f结果。
+  当前被动codec/SQLite后继仍须自身证据，不新增任务/分母。
 - 原NP01候选历史记录 `902f5e9` /
   [Actions44662344662](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44662344662)
   / artifact14598021039已独立验收：并发2109（384.13秒）、串行2109（740.25秒），

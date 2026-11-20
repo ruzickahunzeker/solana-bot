@@ -30,6 +30,25 @@
 
 ## 当前批次
 
+3ad246b的历史重建四项已按下方独立验收，不包括后继四项原codec/SQLite
+被动历史识别。后继预期完整各2117、保留2113/恰增四项、137步骤，
+native-history4/Pump75/reconstruction4/record4/intent4及75类型228字段。旧codec
+只新增一个严格历史tag，DAMM编码和原数据库列不变；新tag明确禁止签名/恢复，
+原Pump claim准入不改，原SQLite写入/CAS/发包源码不改。公开API/SDK/配置不变。
+四处原unknown-tag断言随能力变化改为“可读且拒绝签名”，测试名及其余断言保留；
+996个其他源码、原代码/测试重建和十个改源负例、格式/策略通过不替代Rust运行。
+先独立验收父批后发布，不重跑终态或另发文档CI，不访问真实钱包/RPC/生产库。
+
+原历史重建 `3ad246b` /
+[Actions44667188021](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44667188021)
+首次success，artifact14600965320已下载独立核对：并发2113（383.63秒）、串行
+2113（739.22秒），原2109全保留/恰增四项；reconstruction4/Pump75/record4/
+intent4/flow3/bank4/wallet9/HTTP208及全部136有序步骤、75类型228原始编译字段
+通过。源码/锁定身份、原编码/guards/年龄/投影重建、1002其他源码和十二改源
+负例通过；发布时全1243文件14635611字节/模式已核对。后继实际codec/SQLite
+接线源码另核对，不据其当前改动重跑父批工作树比较；不将历史一致性当链上
+账户/时效或签名许可。记录随实际后继提交，不重跑终态或另发文档CI。
+
 902f5e9的候选记录四项已按下方独立验收，不包括后继四项历史语义重建。
 后继预期完整各2113、保留2109/恰增四项、136步、Pump75/
 reconstruction4及原record4/intent4/flow3/bank4/wallet9/HTTP208、75类型228字段。

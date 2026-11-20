@@ -12,6 +12,9 @@ pub(crate) fn validate_candidate(metadata: &SdkPreparedRecord, message: &[u8]) -
         SdkPreparedRecord::DammBuy(record) => {
             super::damm_probe::validate_buy_record(record, message)
         }
+        SdkPreparedRecord::PumpNative(record) => {
+            super::pump_native_message::validate(record, message)
+        }
     }
 }
 
@@ -22,6 +25,10 @@ pub(crate) fn validate_signed_candidate(
     signed: &SignedSubmission,
 ) -> Result<()> {
     validate_candidate(metadata, message)?;
+    ensure!(
+        !matches!(metadata, SdkPreparedRecord::PumpNative(_)),
+        "historical Pump candidate cannot enter signing"
+    );
     ensure!(
         !signed.bytes.is_empty() && signed.bytes.len() <= 1232,
         "SDK signed packet size is invalid"

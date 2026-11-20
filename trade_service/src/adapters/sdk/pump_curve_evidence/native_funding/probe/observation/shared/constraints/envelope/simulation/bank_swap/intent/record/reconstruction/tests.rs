@@ -1,8 +1,5 @@
 use super::*;
-use crate::{
-    config::TradePersistenceMode,
-    domain::{sdk_prepared_record::SdkPreparedRecord, trade::MevProvider},
-};
+use crate::{config::TradePersistenceMode, domain::trade::MevProvider};
 use sol_trade_sdk::swqos::TradeType;
 use solana_sdk::{message::VersionedMessage, signature::Signature};
 
@@ -32,7 +29,9 @@ async fn pump_native_reconstruction_matches_original_full_unsigned_message_witho
                 record.details().wallet
             );
             validate(&historical, &message).unwrap();
-            assert!(SdkPreparedRecord::decode(&encoded, &message).is_err());
+            crate::adapters::sdk::pump_native_message::assert_native_history_only(
+                &encoded, &message,
+            );
         }
     }
 }
@@ -168,10 +167,9 @@ async fn pump_native_reconstruction_consistency_is_not_original_account_truth_or
     // Pure historical consistency cannot prove membership in the actual bank's fee set.
     assert!(bound.check_record(&coherent, &changed_message).is_err());
     assert!(bound.check_record(&coherent, &message).is_err());
-    assert!(SdkPreparedRecord::decode(
+    crate::adapters::sdk::pump_native_message::assert_native_history_only(
         &coherent.encode(&changed_message).unwrap(),
-        &changed_message
-    )
-    .is_err());
+        &changed_message,
+    );
     bound.check_record(&original, &message).unwrap();
 }

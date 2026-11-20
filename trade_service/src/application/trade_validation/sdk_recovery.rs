@@ -17,6 +17,9 @@ impl TradeValidator<'_> {
                 self.replay_sdk_observation(request, record.details())
             }
             SdkPreparedRecord::DammBuy(record) => self.replay_sdk_buy(request, record.details()),
+            SdkPreparedRecord::PumpNative(_) => {
+                anyhow::bail!("historical Pump candidate recovery is not enabled")
+            }
         }
     }
 

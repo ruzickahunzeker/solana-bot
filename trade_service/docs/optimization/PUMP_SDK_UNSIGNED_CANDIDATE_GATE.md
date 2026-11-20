@@ -381,7 +381,7 @@ The existing holder calls this semantic check when projecting or comparing a
 record. Historical reconstruction still creates no live permit, original claim,
 SDK client, key, RPC, timestamp or journal write; production decoder is unchanged.
 
-Four Rust contracts are pending: buy/partial sell x Default/Temporal exact full
+Four independently accepted Rust contracts cover buy/partial sell x Default/Temporal exact full
 historical message/zero signature; every account and each instruction's data/
 program plus six header/order/shape changes rejected even after recomputing
 the record hash;16 role/PDA/program/fee/provider/tip/alias changes rejected; and
@@ -390,11 +390,54 @@ consistency but is rejected by the original bound bank evidence and old signing
 record decoder. This last distinction prevents historical math from being
 misrepresented as bank membership/chain truth or signing authority.
 
-Local reconstruction checks preserve1002 other original source/dependency blobs
-and reject12 actually changed-source negatives. Original encoding/guards/age/
-projection and all old assertions are restored byte-for-byte. No local service
-Rust compile/test/link occurred. Prospective CI requires full2113 each,all2109
-parent names retained plus exactly four,136 steps,Pump75/reconstruction4 and
-unchanged75 types/228 raw field rejects. Accept the exact parent independently
-before publication; no terminal rerun or docs-only CI. Same original-journal
+Own3ad246b / Actions44667188021 success,artifact14600965320 independently checked:
+concurrent2113 (383.63s),serial2113 (739.22s),all2109 parent names retained plus
+exactly four; all136 ordered steps,Pump75/reconstruction4/record4/intent4/flow3/
+bank4/wallet9/HTTP208 and75 types/228 raw field rejects pass. Source/locked identity,
+exact original encoder/guards/age/projection reconstruction,1002 other original
+source/dependency blobs and12 actual changed-source negatives pass. All1243
+files/14635611 bytes/modes were checked before publication; passive successor
+code/body reconstruction was separately checked before acceptance records.
+No local service Rust compile/test/link occurred. Never rerun terminal batches
+or emit docs-only CI; records travel with actual passive-history source. Same original-journal
 integration, setup/rent/close/ABI/provider and other original safety gaps remain.
+
+## Same NP-01 Passive Original Codec And SQLite Draft
+
+Following independent acceptance of parent3ad246b / Actions44667188021. This is the first
+passive compatibility wiring into the original SdkPreparedRecord and original
+SQLite row validator, not another store or execution authority. The pure domain
+schema and exact SDK semantic reconstruction/encoder move to normal modules;
+the original test paths bridge to the same functions, retaining all old test
+names and the previous encoding/guards. No SDK initializer, RPC or signer moves.
+
+The original strict decoder gains only pump-native-intent-v1. All previous DAMM
+JSON bytes/branches stay unchanged, with no enum envelope, DDL or new columns.
+Original row validation reconstructs this profile and checks canonical JSON/
+digest through its existing code. Original claim admission/origin/writing/CAS/
+senders do not change. Pump still cannot acquire the original operation owner.
+Signed-candidate validation explicitly rejects this historical-only profile,
+and historical execution recovery rejects it too; reading metadata is not
+admission or signing. Older releases still reject the new tag. There is no
+production writer or deployment in this batch; actual writing/rollback support
+needs its later separate original-journal compatibility evidence.
+
+Four pending Rust contracts use only original temporary SQLite/public fixtures:
+strict codec recognition plus original Pump claim/replay rejection; actual raw
+row readback cannot replace an existing DAMM owner or advance prepare/signing,
+including rejection before SQL on a closed pool; six malformed tag/hash/rehash-
+wire cases fail original row validation without mutation; file reopen preserves
+original columns/nonce/message with no signature/owner recovery or observation.
+The four older unknown-tag assertions intentionally become stronger recognized-
+history checks with explicit signing rejection, and retain their other body/
+assertions. Existing old DAMM codec and file/recovery regressions are not replaced.
+
+Local source audit reconstructs exact old DAMM/codec/semantic bodies and old
+tests except those documented tag checks;996 other original source/dependency
+blobs remain unchanged and10 actual changed-source negatives reject. No local
+service Rust compilation occurs. Prospective own CI requires full2117 each,
+all2113 parent names plus exactly four,137 steps,native-history4 and unchanged
+Pump75/old groups/75 types228 raw rejects. Accept exact parent evidence before
+publishing; no inherited acceptance, terminal rerun or docs-only CI. Live bank
+evidence-to-original-journal writing/signing, startup/rent/close/provider/ABI and
+all other original gates remain. This draft does not resume PumpAPI integration.

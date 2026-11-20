@@ -91,5 +91,29 @@ impl NativeBoundIntent<'_> {
     }
 }
 
+impl PumpNativeCandidateRecord {
+    #[cfg(test)]
+    pub(crate) async fn history_fixture(
+        side: sol_trade_sdk::swqos::TradeType,
+        provider: SwqosType,
+    ) -> (
+        crate::application::ordinary_claims::test_support::Fixture,
+        Self,
+        Vec<u8>,
+    ) {
+        let (fixture, observation) =
+            super::tests::admitted(crate::config::TradePersistenceMode::Durable, side, provider)
+                .await;
+        let (record, message) = {
+            let bound = observation.bind_intent(&fixture.execution).unwrap();
+            (
+                bound.record().unwrap(),
+                bound.packet().unwrap().message.serialize(),
+            )
+        };
+        (fixture, record, message)
+    }
+}
+
 mod reconstruction;
 mod tests;

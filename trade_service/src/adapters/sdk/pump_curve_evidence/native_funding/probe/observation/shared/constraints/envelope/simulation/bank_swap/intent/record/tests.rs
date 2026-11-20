@@ -1,10 +1,7 @@
 use super::*;
 use crate::{
     config::TradePersistenceMode,
-    domain::{
-        preparation_balance::MAX_BALANCE_AGE, sdk_prepared_record::SdkPreparedRecord,
-        trade::MevProvider,
-    },
+    domain::{preparation_balance::MAX_BALANCE_AGE, trade::MevProvider},
 };
 use serde_json::{json, Value};
 use sol_trade_sdk::swqos::TradeType;
@@ -53,8 +50,10 @@ async fn pump_native_record_round_trips_original_identity_integer_budget_and_fro
                 }
             );
             assert_eq!(bound.packet().unwrap().signatures, [Signature::default()]);
-            // The original journal decoder still rejects this test-gated nominal profile.
-            assert!(SdkPreparedRecord::decode(&encoded, &message).is_err());
+            // Recognizing history must not grant a DAMM projection or signing profile.
+            crate::adapters::sdk::pump_native_message::assert_native_history_only(
+                &encoded, &message,
+            );
             assert!(!encoded.contains("started") && !encoded.contains("signature"));
         }
     }
@@ -209,5 +208,5 @@ async fn pump_native_record_decode_never_renews_original_age_or_yields_a_signing
     assert!(bound.check_record(&historical, &message).is_err());
     assert!(bound.record().is_err());
     assert!(bound.packet().is_err());
-    assert!(SdkPreparedRecord::decode(&encoded, &message).is_err());
+    crate::adapters::sdk::pump_native_message::assert_native_history_only(&encoded, &message);
 }
