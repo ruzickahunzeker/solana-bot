@@ -441,3 +441,19 @@ Pump75/old groups/75 types228 raw rejects. Accept exact parent evidence before
 publishing; no inherited acceptance, terminal rerun or docs-only CI. Live bank
 evidence-to-original-journal writing/signing, startup/rent/close/provider/ABI and
 all other original gates remain. This draft does not resume PumpAPI integration.
+
+### Original Module-Gate Correction
+
+Own8a1d170 / Actions44671917774 failed, artifact14599604835 independently audited:
+ten successful steps, then all-target type-check E0432. The normal historical
+reconstructor imported the pure pump_curve PDA/account-key/query-description
+module while its declaration was still cfg(test). Linked tests, full2117 and
+the compiler boundary negatives did not run. No inherited Rust acceptance.
+
+The correction removes only that declaration's cfg(test). The module contents,
+all original tests, original claim selector, signing/recovery rejection, journal
+writes, API and SDK remain unchanged. Query descriptions acquire no RPC client
+or sender and the module contains no signer. The separate historical-intent
+draft is held out of this minimal fix. Publish a new correction, never rerun
+the terminal failed batch; require the same137 steps/full2117 each and exact
+four added tests against accepted3ad before acceptance. No production actions.

@@ -6,6 +6,15 @@
 
 ## 当前任务
 
+- 原NP01被动codec/SQLite批次 `8a1d170` /
+  [Actions44671917774](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44671917774)
+  / artifact14599604835终态failure已核对：前十步成功，all-target类型检查唯一
+  E0432来自正式历史重建器引用仍被cfg(test)屏蔽的纯pump_curve地址模块。
+  Rust测试/链接、完整套件及真实编译字段门禁未执行，不能声明2117已通过。
+  修正只移除该纯模块声明的一处测试门槛，其内容、测试、原claim/签名拒绝与
+  API/SDK/写入规则不变；后继请求核对草稿隔离，不进入修正提交。
+  不重跑失败批次，另发最小修正到原验证分支，独立验证相同2117/137门槛。
+  下方“本地后继”段落为8a发布前设计，不是新的待执行队列或已验收结果。
 - 同一NP01本地后继接原SdkPreparedRecord的被动历史tag和原SQLite候选读回。
   纯domain codec/SDK语义重建提升至正式模块，原测试路径仅桥接，同一编码/旧消息
   及DAMM分支不变。只读识别不开放Pump claim、origin、恢复或签名；新profile在
