@@ -12,6 +12,9 @@ use crate::{
 };
 use anyhow::{ensure, Result};
 
+mod pump;
+pub(crate) use pump::validate_intent as validate_pump_history_intent;
+
 /// Intent binding only. Persisted nominal metadata never grants signing authority.
 pub(crate) fn validate_origin(
     execution: &AdmittedTrade,
@@ -32,6 +35,11 @@ pub(crate) fn validate_candidate_intent(
     message: &[u8],
 ) -> Result<()> {
     metadata.validate(message)?;
+    if let (Pool::Pump, SdkPreparedRecord::PumpNative(record)) =
+        (execution.command().route.pool, metadata)
+    {
+        return validate_pump_history_intent(execution, record);
+    }
     let c = execution.command();
     ensure!(
         c.route.pool == Pool::MeteoraDammV2

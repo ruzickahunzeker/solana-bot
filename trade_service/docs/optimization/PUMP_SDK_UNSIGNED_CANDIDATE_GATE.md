@@ -422,7 +422,7 @@ admission or signing. Older releases still reject the new tag. There is no
 production writer or deployment in this batch; actual writing/rollback support
 needs its later separate original-journal compatibility evidence.
 
-Four pending Rust contracts use only original temporary SQLite/public fixtures:
+Four Rust contracts use only original temporary SQLite/public fixtures:
 strict codec recognition plus original Pump claim/replay rejection; actual raw
 row readback cannot replace an existing DAMM owner or advance prepare/signing,
 including rejection before SQL on a closed pool; six malformed tag/hash/rehash-
@@ -442,6 +442,17 @@ publishing; no inherited acceptance, terminal rerun or docs-only CI. Live bank
 evidence-to-original-journal writing/signing, startup/rent/close/provider/ABI and
 all other original gates remain. This draft does not resume PumpAPI integration.
 
+Passive history and its gate correction were independently accepted in3e3ee2f /
+Actions44673319012 / artifact14602911023: concurrent2117 (404.04s),serial2117
+(763.58s),all2113 accepted3ad names plus exactly four;137 ordered zero-exit steps,
+75 types228 raw compiler field rejections and locked source identity pass. The
+one-declaration correction preserves1241 other blobs/modes; the complete1246
+file/14658660-byte snapshot was checked at publication. The original8a source
+reconstruction/996 other source blobs/10 negatives were separately checked,
+not rerun against intentional child edits. History recognition does not grant
+freshness, an owner, signing or execution recovery. No terminal or docs-only CI
+rerun; evidence travels with the actual original-reservation successor.
+
 ### Original Module-Gate Correction
 
 Own8a1d170 / Actions44671917774 failed, artifact14599604835 independently audited:
@@ -457,3 +468,33 @@ or sender and the module contains no signer. The separate historical-intent
 draft is held out of this minimal fix. Publish a new correction, never rerun
 the terminal failed batch; require the same137 steps/full2117 each and exact
 four added tests against accepted3ad before acceptance. No production actions.
+
+## Same NP-01 Original Reservation Comparison Draft
+
+The module-gate correction3e3ee2f / Actions44673319012 was independently accepted
+above. This successor is not in that correction and cannot inherit its result.
+The existing application candidate-intent entry compares native Pump history
+against the original admitted reservation, not a reconstructed execution owner.
+The original bank-bound projection reuses the same pure comparison after its
+unchanged nominal and semantic checks, before its final freshness recheck.
+
+Binding includes exact request/wallet IDs, wallet public key, literal idempotency
+key and request hash, durable/direct/live SDK/native SOL route, mint/curve,
+integer input, original partial-sell percentage, slippage, bit-exact requested
+tip and original optional MEV fields. Recalculated matching inputs cannot hide
+a different user percentage. No trimming, new fingerprint, new reservation or
+fresh timestamp is introduced. Historical balances still cannot prove current
+bank truth. Origin first requires the unchanged original operation selector;
+Pump claims/signing/recovery remain closed and original journal writes/CAS
+stay unchanged. DAMM paths and old JSON/message bytes stay unchanged.
+
+Five pending Rust tests cover buy/partial-sell with Default/Temporal,19 altered
+command fields,8 nominally valid metadata changes, a coherent alternative
+percentage with the same wire input, and identical requests admitted under new
+durable/shadow/memory reservations. They verify no original claim/signing rights
+are granted. They use public fixtures/temporary SQLite, no keys/RPC or signing.
+Source reconstruction preserves the old DAMM/origin/producer bodies,1008 other
+source/dependency blobs and rejects10 changed-source negatives. Format/policy
+checks are not Rust acceptance. A future own CI expects full2122 each, all2117
+parent names plus exactly five,138 steps and75 types228 raw field rejections.
+No new task, owner/store, production permission or PumpAPI integration.

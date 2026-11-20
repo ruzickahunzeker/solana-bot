@@ -6,6 +6,22 @@
 
 ## 当前任务
 
+- 同一NP01本地后继为原请求核对，父批3e3ee2f已独立验收见下方。
+  application纯比较原reservation的钱包/字面key/hash、路线/整数金额/部分卖出/
+  费用/MEV，原bank记录投影复用此比较；原origin先查claim、签名和恢复拒绝不变。
+  五组测试尚未Rust运行，覆盖命令篡改、名义合法的外来身份、同输入不同卖出比例、
+  同请求新reservation及Memory/Shadow。格式/策略、原代码重建/1008其他源码/
+  十改源负例通过不等于Rust通过。后继仍须自身验收：预期完整各2122、原2117
+  名称保留/恰增五项、138步骤和75类型228字段，不新增任务/分母。
+- 原codec/SQLite被动历史识别及一处模块门槛修正 `3e3ee2f` /
+  [Actions44673319012](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44673319012)
+  / artifact14602911023已独立验收：并发2117（404.04秒）、串行2117（763.58秒），
+  3ad原2113名称全保留/恰增四项，全部137有序步骤和75类型228原始字段通过。
+  源码/锁定身份、最小一处cfg(test)删除及1241其他blob/模式不变已核对；发布时
+  全1246文件14658660字节经隔离索引核对，main/真实index不动。原8a源码重建/
+  996其他源码/十负例已有独立记录，不以当前后继改动重跑父批工作树审查。
+  仅历史识别，不授予Pump执行/恢复/签名或生产权限；终态不重跑，记录随真实
+  原请求核对后继提交，不另发文档CI。
 - 原NP01被动codec/SQLite批次 `8a1d170` /
   [Actions44671917774](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44671917774)
   / artifact14599604835终态failure已核对：前十步成功，all-target类型检查唯一
@@ -15,15 +31,14 @@
   API/SDK/写入规则不变；后继请求核对草稿隔离，不进入修正提交。
   不重跑失败批次，另发最小修正到原验证分支，独立验证相同2117/137门槛。
   下方“本地后继”段落为8a发布前设计，不是新的待执行队列或已验收结果。
-- 同一NP01本地后继接原SdkPreparedRecord的被动历史tag和原SQLite候选读回。
+- 同一NP01已验收原SdkPreparedRecord被动历史tag和原SQLite候选读回。
   纯domain codec/SDK语义重建提升至正式模块，原测试路径仅桥接，同一编码/旧消息
   及DAMM分支不变。只读识别不开放Pump claim、origin、恢复或签名；新profile在
   validate_signed_candidate明确拒绝，原写入/CAS/DDL/API不变，也未部署或写生产库。
-  四项Rust合同未编译执行，含原真实临时SQLite读回/坏记录/文件重开与闭库前拒绝；
+  四项Rust合同由3e批次独立运行通过，含临时SQLite读回/坏记录/文件重开与闭库前拒绝；
   旧四处unknown-tag断言改为识别历史后明确拒绝签名，旧测试名和其余断言保持。
-  原分支/编码/测试体重建、996个其他源码/十改源负例通过，不算Rust验收。父批
-  3ad246b已按下方独立验收，后继仍须自身Rust结果；预期完整各2117、原2113保留/
-  恰增四项、137步骤与75类型228字段。旧release仍拒绝新tag，新tag尚无生产写入方。
+  原分支/编码/测试体重建、996其他源码/十改源负例与Rust运行证据分开记录。
+  旧release仍拒绝新tag，新tag尚无生产写入方；后续原请求绑定不继承本批结果。
 - 原NP01历史消息重建 `3ad246b` /
   [Actions44667188021](https://github.com/ruzickahunzeker/solana-bot/actions/runs/44667188021)
   / artifact14600965320已独立验收：并发2113（383.63秒）、串行2113（739.22秒），

@@ -1,6 +1,7 @@
 use super::NativeBoundIntent;
 use crate::{
     adapters::sdk::damm_instructions::tip_lamports,
+    application::sdk_preparation::validate_pump_history_intent,
     domain::pump_native_candidate::{PumpNativeCandidateRecord, PumpNativeDetails},
 };
 use anyhow::{ensure, Context, Result};
@@ -71,6 +72,7 @@ impl NativeBoundIntent<'_> {
         };
         let record = PumpNativeCandidateRecord::new(details, &packet.message.serialize())?;
         reconstruction::validate(&record, &packet.message.serialize())?;
+        validate_pump_history_intent(self.execution, &record)?;
         self.packet()?;
         Ok(record)
     }
